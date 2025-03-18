@@ -4,7 +4,7 @@ CFLAGS=-Wall -g3
 LD=$(CC)
 LDFLAGS=$(CFLAGS)
 BINARY=toy
-GENERATED_SOURCES=lex.yy.c
+GENERATED_SOURCES=lex.yy.c parser.tab.c
 SOURCES=$(sort $(wildcard *.c) $(GENERATED_SOURCES))
 OBJECTS=$(SOURCES:.c=.o)
 HEADERS=$(wildcard *.h)
@@ -19,7 +19,10 @@ $(BINARY): $(OBJECTS)
 	$(CC) -c $(CFLAGS) -o "$@" $<
 
 lex.yy.c: lexer.l
-	flex $<
+	flex --debug $<
+
+parser.tab.c: parser.y
+	bison --debug $<
 
 .PHONY: clean
 clean:
@@ -27,4 +30,4 @@ clean:
 
 .PHONY: test
 test: $(BINARY)
-	./$(BINARY) sample-program.toy
+	./$(BINARY) sample-program.toy 2>&1 | less

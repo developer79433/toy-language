@@ -1,8 +1,23 @@
 /* scanner for a toy Pascal-like language */
 
 %{
-/* need this for the call to atof() below */
-#include <math.h>
+
+enum yytokentype {
+        T_BOOLEAN = 258,
+        T_FLOAT,
+        T_STRING,
+        T_OPERATOR,
+        T_EQUAL,
+        T_COMMA,
+        T_SEMICOLON,
+        T_IF,
+        T_FOR,
+        T_WHILE,
+        T_VAR,
+        T_FUN,
+        T_IDENTIFIER
+};
+
 %}
 
 %option noyywrap
@@ -15,29 +30,25 @@ SEMICOLON  ";"
 
 %%
 
-{DIGIT}+    {
-            printf( "An integer: %s (%d)\n", yytext,
-                    atoi( yytext ) );
-            }
+{DIGIT}+("."{DIGIT}*)?        { return T_FLOAT; }
 
-{DIGIT}+"."{DIGIT}*        {
-            printf( "A float: %s (%g)\n", yytext,
-                    atof( yytext ) );
-            }
+if { return T_IF; }
+for { return T_FOR; }
+while { return T_WHILE; }
+var { return T_VAR; }
+fun { return T_FUN; }
 
-if|then|begin|end|procedure|function        {
-            printf( "A keyword: %s\n", yytext );
-            }
+{IDENTIFIER}        { return T_IDENTIFIER; }
 
-{IDENTIFIER}        printf( "An identifier: %s\n", yytext );
+"+"|"-"|"*"|"/"|"."   { return T_OPERATOR; }
 
-"+"|"-"|"*"|"/"|"="   printf( "An operator: %s\n", yytext );
+"=" { return T_EQUAL; }
+";" { return T_SEMICOLON; }
+"," { return T_COMMA; }
 
-";" printf( "Semicolon: %s\n", yytext );
+"//"[^\n]*     /* eat C++-style single-line comments */
 
-"//"[^\n]*     /* eat C++-style one-line comments */
-
-[ \t\n]+          printf( "Whitespace: \"%s\"\n", yytext );
+[ \t\n]+       /* eat whitespace */
 
 .           printf( "Unrecognized character: %s\n", yytext );
 
@@ -48,14 +59,3 @@ if|then|begin|end|procedure|function        {
 
 %%
 
-int main(int argc, char **argv)
-    {
-    ++argv, --argc;  /* skip over program name */
-    if ( argc > 0 )
-            yyin = fopen( argv[0], "r" );
-    else
-            yyin = stdin;
-
-    yylex();
-    return 0;
-    }

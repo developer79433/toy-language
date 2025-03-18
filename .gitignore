@@ -1,3 +1,4 @@
 /*.o
 /toy
 /lex.yy.c
+/parser.tab.c
