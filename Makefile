@@ -22,7 +22,7 @@ lex.yy.c: lexer.l
 	flex --debug $<
 
 parser.tab.c: parser.y
-	bison --debug $<
+	bison -Wcounterexamples --debug $<
 
 .PHONY: clean
 clean:

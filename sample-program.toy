@@ -1,1 +1,8 @@
-var i = 1;
+"hi mum!";
+var mylist = [123.5, 456, [ 42 ]];
+var mymap = { "Hi mum!": 123};
+var mval = [ 123.5, {"blah": 42}, "hi mum!"];
+fun myfunction() {
+    var i = 0;
+}
+var myfunc = fun() { 42; };
