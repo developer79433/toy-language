@@ -4,6 +4,7 @@
 #include <strings.h>
 
 #include "ast.h"
+#include "interp.h"
 
 extern int yylex (void);
 void yyerror(const char *s);
@@ -349,5 +350,7 @@ int main(int argc, char **argv)
     /* yylex(); */
     int parse_res = yyparse();
     fprintf(stderr, "yyparse() returned %d", parse_res);
+    dump_stmts(program_start);
+    toy_run(program_start);
     return 0;
     }

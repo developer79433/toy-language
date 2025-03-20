@@ -81,6 +81,6 @@ void init_lexer(void)
 {
 #ifdef YYDEBUG
 #define YYERROR_VERBOSE
-    yydebug = 1;
+    /* yydebug = 1; */
 #endif
 }

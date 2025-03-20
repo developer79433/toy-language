@@ -3,10 +3,10 @@ CFLAGS=-Wall -g3
 # -Werror
 LD=$(CC)
 LDFLAGS=$(CFLAGS)
-# BISONFLAGS=--header
-BISONFLAGS=--header -Wcounterexamples --debug
-# FLEXFLAGS=
-FLEXFLAGS=--debug
+BISONFLAGS=--header
+# BISONFLAGS=--header -Wcounterexamples --debug
+FLEXFLAGS=
+# FLEXFLAGS=--debug
 BINARY=toy
 GENERATED_SOURCES=lex.yy.c parser.tab.c
 GENERATED_HEADERS=parser.tab.h
