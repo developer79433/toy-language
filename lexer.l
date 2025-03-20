@@ -2,40 +2,16 @@
 
 %{
 
-enum yytokentype {
-        T_BOOLEAN = 258,
-        T_FLOAT,
-        T_STRING,
-        T_EQUAL,
-        T_COMMA,
-        T_COLON,
-        T_ASTERISK,
-        T_FSLASH,
-        T_DOT,
-        T_LPAREN,
-        T_RPAREN,
-        T_LBRACKET,
-        T_RBRACKET,
-        T_LBRACE,
-        T_RBRACE,
-        T_SEMICOLON,
-        T_PLUS,
-        T_MINUS,
-        T_IF,
-        T_ELSE,
-        T_FOR,
-        T_WHILE,
-        T_VAR,
-        T_FUN,
-        T_AND,
-        T_OR,
-        T_NOT,
-        T_IDENTIFIER
-};
+#include <stdlib.h>
+
+#include "ast.h"
+#include "parser.tab.h"
 
 %}
 
 %option noyywrap
+%option nounput
+%option noinput
 
 %x C_COMMENT
 
@@ -45,24 +21,34 @@ SEMICOLON  ";"
 
 %%
 
--?{DIGIT}+("."-?{DIGIT}*)?        { return T_FLOAT; }
+-?{DIGIT}+("."-?{DIGIT}*)?        { yylval.num = atof(yytext); return T_FLOAT; }
 
-["][^"]*["] { return T_STRING; }
-['][^"]*['] { return T_STRING; }
+["][^"]*["] { yylval.str = strdup(yytext); return T_STRING; }
+['][^"]*['] { yylval.str = strdup(yytext); return T_STRING; }
 
+true { yylval.num = 1; return T_BOOLEAN; }
+false { yylval.num = 0; return T_BOOLEAN; }
 if { return T_IF; }
 else { return T_ELSE; }
+elseif { return T_ELSEIF; }
 for { return T_FOR; }
 while { return T_WHILE; }
 var { return T_VAR; }
-fun { return T_FUN; }
+fun(ction)? { return T_FUN; }
 and { return T_AND; }
 or { return T_OR; }
 not { return T_NOT; }
+in { return T_IN; }
 
-{IDENTIFIER}        { return T_IDENTIFIER; }
+{IDENTIFIER}        { yylval.str = strdup(yytext); return T_IDENTIFIER; }
 
-"=" { return T_EQUAL; }
+"!=" { return T_NEQUAL; }
+"==" { return T_EQUAL; }
+"<" { return T_LT; }
+">" { return T_GT; }
+"<=" { return T_LTE; }
+">=" { return T_GTE; }
+"=" { return T_ASSIGN; }
 ":" { return T_COLON; }
 ";" { return T_SEMICOLON; }
 "," { return T_COMMA; }
@@ -82,7 +68,7 @@ not { return T_NOT; }
 
 [ \t\n]+       /* eat whitespace */
 
-.           printf( "Unrecognized character: %s\n", yytext );
+.           { printf( "Unrecognized character: %s\n", yytext ); abort(); }
 
 "/*"            { BEGIN(C_COMMENT); }
 <C_COMMENT>"*/" { BEGIN(INITIAL); }
@@ -91,3 +77,10 @@ not { return T_NOT; }
 
 %%
 
+void init_lexer(void)
+{
+#ifdef YYDEBUG
+#define YYERROR_VERBOSE
+    yydebug = 1;
+#endif
+}

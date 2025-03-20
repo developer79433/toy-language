@@ -1,7 +1,7 @@
 "hi mum!";
-var mylist = [123.5, 456, [ 42 ]];
-var mymap = { "Hi mum!": 123};
-var mval = [ 123.5, {"blah": 42}, "hi mum!"];
+var mylist = [123.5, 456, [ "surprise!" ]];
+var mymap = { "mykey": 123};
+var mval = [ 345.6, {"blah": 42}, "foo"];
 fun myfunction() {
     var i = 0;
 }
