@@ -2,6 +2,7 @@
 #define TOY_AST_H 1
 
 #include <stdlib.h>
+#include <stdarg.h>
 
 typedef unsigned int toy_bool;
 typedef double toy_num;
@@ -164,6 +165,14 @@ struct toy_stmt_struct {
     };
 };
 
+void fatal_error(const char *fmt, ...);
+void invalid_operand(enum toy_expr_type expr_type, const toy_expr *operand);
+void invalid_expr_type(enum toy_expr_type expr_type);
+void invalid_stmt_type(enum toy_stmt_type stmt_type);
+void invalid_cast(enum toy_expr_type expr_type, const toy_expr *expr);
+void dump_expr(FILE *f, const toy_expr *expr);
+void dump_stmts(FILE *f, const toy_stmt *stmts);
+void dump_stmt(FILE *f, const toy_stmt *stmts);
 toy_stmt *alloc_stmt(enum toy_stmt_type type);
 toy_if_arm *alloc_if_arm(toy_expr *condition, toy_stmt *code);
 toy_str_list *alloc_str_list(const char * str);
