@@ -159,7 +159,7 @@ static const char *toy_expr_type_names[] = {
     "division",
     "equal to",
     "function call",
-    "function declaration"
+    "function declaration",
     "greater than",
     "greater than or equal to",
     "identifier",
@@ -258,9 +258,10 @@ void dump_expr(FILE *f, const toy_expr *expr) {
         }
         dump_expr(f, cur->expr);
         fputs(")\n", f);
+        /* TODO: output code */
         break;
     case EXPR_IDENTIFIER:
-        fprintf(f, "\"%s\"", expr->str);
+        fprintf(f, "%s", expr->str);
         break;
     case EXPR_LIST:
         dump_list(f, expr->list);
@@ -291,7 +292,7 @@ void dump_expr(FILE *f, const toy_expr *expr) {
 
 void dump_stmt(FILE *f, const toy_stmt *stmt)
 {
-    fprintf(f, "\"%s\" {\n}", toy_stmt_type_name(stmt->type));
+    fprintf(f, "\"%s\" {\n", toy_stmt_type_name(stmt->type));
     switch (stmt->type) {
     case STMT_EXPR:
         dump_expr(f, stmt->expr_stmt.expr);

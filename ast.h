@@ -57,7 +57,7 @@ typedef struct toy_assignment_struct {
 } toy_assignment;
 
 enum toy_expr_type {
-    EXPR_AND,
+    EXPR_AND = 0,
     EXPR_ASSIGN,
     EXPR_BOOL,
     EXPR_DIV,
@@ -143,7 +143,7 @@ typedef struct toy_while_stmt_struct {
 } toy_while_stmt;
 
 enum toy_stmt_type {
-    STMT_EXPR,
+    STMT_EXPR = 0,
     STMT_FOR,
     STMT_FUNC_DECL,
     STMT_NULL,

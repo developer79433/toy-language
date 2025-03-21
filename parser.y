@@ -349,7 +349,7 @@ int main(int argc, char **argv)
     init_lexer();
     /* yylex(); */
     int parse_res = yyparse();
-    fprintf(stderr, "yyparse() returned %d", parse_res);
+    fprintf(stderr, "yyparse() returned %d\n", parse_res);
     dump_stmts(stderr, program_start);
     toy_run(program_start);
     return 0;
