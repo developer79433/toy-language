@@ -23,8 +23,18 @@ SEMICOLON  ";"
 
 -?{DIGIT}+("."-?{DIGIT}*)?        { yylval.num = atof(yytext); return T_FLOAT; }
 
-["][^"]*["] { yylval.str = strdup(yytext); return T_STRING; }
-['][^"]*['] { yylval.str = strdup(yytext); return T_STRING; }
+\"([^"\n]*)\" {
+    yylval.str = (char *) malloc(strlen(yytext) - 1);
+    strncpy(yylval.str, &yytext[1], strlen(yytext) - 2);
+    yylval.str[strlen(yytext) - 1] = '\0';
+    return T_STRING;
+}
+\'([^'\n]*)\' {
+    yylval.str = (char *) malloc(strlen(yytext) - 1);
+    strncpy(yylval.str, &yytext[1], strlen(yytext) - 2);
+    yylval.str[strlen(yytext) - 1] = '\0';
+    return T_STRING;
+}
 
 true { yylval.num = 1; return T_BOOLEAN; }
 false { yylval.num = 0; return T_BOOLEAN; }
