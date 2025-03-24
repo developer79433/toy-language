@@ -1,7 +1,8 @@
 #include <string.h>
-#include <malloc.h>
 
+#include "mymalloc.h"
 #include "ast.h"
+#include "map.h"
 
 void fatal_error(const char *fmt, ...)
 {
@@ -33,7 +34,15 @@ void invalid_cast(enum toy_expr_type expr_type, const toy_expr *expr)
     fatal_error("Cannot convert to %s", toy_expr_type_name(expr_type));
 }
 
-#define mymalloc(the_type) ((the_type *) malloc(sizeof(the_type)))
+toy_map_entry *alloc_map_entry(toy_expr *key, toy_expr *value)
+{
+    toy_map_entry *map_entry;
+    map_entry = mymalloc(toy_map_entry);
+    map_entry->key = key;
+    map_entry->value = value;
+    map_entry->next = NULL;
+    return map_entry;
+}
 
 toy_stmt *alloc_stmt(enum toy_stmt_type type)
 {
@@ -64,14 +73,35 @@ toy_str_list *alloc_str_list(const char *str)
     return list;
 }
 
-toy_var_decl *alloc_var_decl()
+toy_var_decl *alloc_var_decl(toy_str name, toy_expr *value)
 {
     toy_var_decl *var_decl;
     var_decl = mymalloc(toy_var_decl);
+    var_decl->name = name;
+    var_decl->value = value;
     var_decl->next = NULL;
-    var_decl->name = NULL;
-    var_decl->value = NULL;
     return var_decl;
+}
+
+toy_expr *alloc_unary_op_expr(enum toy_expr_type expr_type)
+{
+    toy_expr *expr;
+    expr = (toy_expr *) malloc(sizeof(toy_expr) + sizeof(toy_unary_op));
+    expr->type = expr_type;
+    expr->unary_op = (toy_unary_op *) (expr + 1);
+    expr->unary_op->arg = NULL;
+    return expr;
+}
+
+toy_expr *alloc_binary_op_expr(enum toy_expr_type expr_type)
+{
+    toy_expr *expr;
+    expr = (toy_expr *) malloc(sizeof(toy_expr) + sizeof(toy_binary_op));
+    expr->type = expr_type;
+    expr->binary_op = (toy_binary_op *) (expr + 1);
+    expr->binary_op->arg1 = NULL;
+    expr->binary_op->arg2 = NULL;
+    return expr;
 }
 
 toy_expr *alloc_expr(enum toy_expr_type type)
@@ -82,10 +112,11 @@ toy_expr *alloc_expr(enum toy_expr_type type)
     return expr;
 }
 
-toy_expr *alloc_expr_func_decl(void *formalparams, toy_stmt *code)
+toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_stmt *code)
 {
     toy_expr *expr;
     expr = (toy_expr *) malloc(sizeof(toy_expr) + sizeof(toy_func_expr));
+    expr->type = EXPR_FUNC_DECL;
     expr->func_decl = (toy_func_expr *) (expr + 1);
     expr->func_decl->def.name = ""; /* TODO: generated unique name */
     expr->func_decl->def.param_names = formalparams;
@@ -93,7 +124,7 @@ toy_expr *alloc_expr_func_decl(void *formalparams, toy_stmt *code)
     return expr;
 }
 
-toy_list *alloc_toy_list(toy_expr *first_elem)
+toy_list *alloc_list(toy_expr *first_elem)
 {
     toy_list *list;
     list = mymalloc(toy_list);
@@ -152,6 +183,16 @@ toy_list *append_list(toy_list *orig, toy_list *new)
     return orig;
 }
 
+toy_map_entry *append_map_entry(toy_map_entry *orig, toy_map_entry *new)
+{
+    toy_map_entry *tmp = orig;
+    while (tmp->next) {
+        tmp = tmp->next;
+    }
+    tmp->next = new;
+    return orig;
+}
+
 static const char *toy_expr_type_names[] = {
     "logical and",
     "assignment",
@@ -199,134 +240,232 @@ const char *toy_stmt_type_name(enum toy_stmt_type stmt_type)
     return toy_stmt_type_names[stmt_type];
 }
 
-static void dump_list(FILE *f, toy_list *list)
+void dump_list(FILE *f, toy_list *list)
 {
-    fputs("[ ", f);
-    for (toy_list *cur = list; cur; cur = cur->next) {
-        dump_expr(f, cur->expr);
+    int printed_anything = 0;
+    fputc('[', f);
+    if (list) {
+        for (toy_list *cur = list; cur; cur = cur->next) {
+            if (printed_anything) {
+                fputs(", ", f);
+            } else {
+                fputc(' ', f);
+            }
+            dump_expr(f, cur->expr);
+            printed_anything = 1;
+        }
+        if (printed_anything) {
+            fputc(' ', f);
+        }
     }
-    fputs("]\n", f);
+    fputc(']', f);
 }
 
-static void dump_map(FILE *f, toy_map *map)
+void dump_str(FILE *f, const toy_str str)
 {
-    /* TODO */
+    fputc('"', f);
+    for (const char *p = str; *p; p++) {
+        if (*p == '\'' || *p == '"' || *p == '\\') {
+            fputc('\\', f);
+        }
+        fputc(*p, f);
+    }
+    fputc('"', f);
+}
+
+static void dump_str_list(FILE *f, const toy_str_list *list)
+{
+    const toy_str_list *cur;
+    if (list) {
+        for (cur = list; cur->next; cur = cur->next) {
+            dump_str(f, cur->str);
+            fputs(", ", f);
+        }
+        dump_str(f, cur->str);
+    }
+}
+
+static void dump_binary_op(FILE *f, const toy_expr *arg1, const toy_expr *arg2, const char *op)
+{
+    fputc('(', f);
+    dump_expr(f, arg1);
+    fprintf(f, " %s ", op);
+    dump_expr(f, arg2);
+    fputc(')', f);
 }
 
 void dump_expr(FILE *f, const toy_expr *expr) {
-    fprintf(f, "\"%s\" {\n", toy_expr_type_name(expr->type));
-    switch (expr->type) {
-    case EXPR_AND:
-    case EXPR_GT:
-    case EXPR_GTE:
-    case EXPR_DIV:
-    case EXPR_IN:
-    case EXPR_LT:
-    case EXPR_LTE:
-    case EXPR_MINUS:
-    case EXPR_OR:
-    case EXPR_MUL:
-    case EXPR_NEQUAL:
-    case EXPR_PLUS:
-    case EXPR_EQUAL:
-    case EXPR_ASSIGN:
-        fputs("Operand 1 {\n", f);
-        dump_expr(f, expr->binary_op->arg1);
-        fputs("}\nOperand 2 {\n", f);
-        dump_expr(f, expr->binary_op->arg2);
-        fputs("}\n", f);
-        break;
-    case EXPR_BOOL:
-        fputs(expr->bool ? "True" : "False", f);
-        break;
-    case EXPR_FUNC_CALL:
-        fprintf(f, "%s(", expr->func_call->func_name);
-        toy_list *arg;
-        for (arg = expr->func_call->args; arg->next; arg = arg->next) {
+    if (expr) {
+        switch (expr->type) {
+        case EXPR_AND:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "and");
+            break;
+        case EXPR_GT:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, ">");
+            break;
+        case EXPR_GTE:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, ">=");
+            break;
+        case EXPR_DIV:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "/");
+            break;
+        case EXPR_IN:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "in");
+            break;
+        case EXPR_LT:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "<");
+            break;
+        case EXPR_LTE:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "<=");
+            break;
+        case EXPR_MINUS:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "-");
+            break;
+        case EXPR_OR:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "or");
+            break;
+        case EXPR_MUL:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "*");
+            break;
+        case EXPR_NEQUAL:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "!=");
+            break;
+        case EXPR_PLUS:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "+");
+            break;
+        case EXPR_EQUAL:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "==");
+            break;
+        case EXPR_ASSIGN:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "=");
+            break;
+        case EXPR_BOOL:
+            fputs(expr->bool ? "True" : "False", f);
+            break;
+        case EXPR_FUNC_CALL:
+            fprintf(f, "%s(", expr->func_call->func_name);
+            toy_list *arg;
+            for (arg = expr->func_call->args; arg->next; arg = arg->next) {
+                dump_expr(f, arg->expr);
+                fputs(", ", f);
+            }
             dump_expr(f, arg->expr);
-            fputs(", ", f);
+            fputs(")\n", f);
+            break;
+        case EXPR_FUNC_DECL:
+            fprintf(f, "fun %s(", expr->func_decl->def.name);
+            dump_str_list(f, expr->func_decl->def.param_names);
+            fputs(") {\n", f);
+            dump_stmts(f, expr->func_decl->def.code);
+            fputs("}\n", f);
+            break;
+        case EXPR_IDENTIFIER:
+            fprintf(f, "%s", expr->str);
+            break;
+        case EXPR_LIST:
+            dump_list(f, expr->list);
+            break;
+        case EXPR_MAP:
+            dump_map(f, expr->map);
+            break;
+        case EXPR_NOT:
+            fputs("not (", f);
+            dump_expr(f, expr->unary_op->arg);
+            fputs(")", f);
+            break;
+        case EXPR_NUM:
+            fprintf(f, "%f", expr->num);
+            break;
+        case EXPR_STR:
+            dump_str(f, expr->str);
+            break;
+        case EXPR_UNEG:
+            fputs("-", f);
+            dump_expr(f, expr->unary_op->arg);
+            break;
+        default:
+            invalid_expr_type(expr->type);
+            break;
         }
-        dump_expr(f, arg->expr);
-        fputs(")\n", f);
-        break;
-    case EXPR_FUNC_DECL:
-        fprintf(f, "fun %s(", expr->func_call->func_name);
-        toy_list *cur;
-        for (cur = expr->func_call->args; cur->next; cur = cur->next) {
-            dump_expr(f, cur->expr);
-            fputs(", ", f);
-        }
-        dump_expr(f, cur->expr);
-        fputs(")\n", f);
-        /* TODO: output code */
-        break;
-    case EXPR_IDENTIFIER:
-        fprintf(f, "%s", expr->str);
-        break;
-    case EXPR_LIST:
-        dump_list(f, expr->list);
-        break;
-    case EXPR_MAP:
-        dump_map(f, expr->map);
-        break;
-    case EXPR_NOT:
-        fputs("not ", f);
-        dump_expr(f, expr->unary_op->arg);
-        break;
-    case EXPR_NUM:
-        fprintf(f, "\"%f\"", expr->num);
-        break;
-    case EXPR_STR:
-        fprintf(f, "\"%s\"", expr->str);
-        break;
-    case EXPR_UNEG:
-        fputs("-", f);
-        dump_expr(f, expr->unary_op->arg);
-        break;
-    default:
-        invalid_expr_type(expr->type);
-        break;
+    } else {
+        fputs("null", f);
     }
-    fputs("}\n", f);
 }
 
 void dump_stmt(FILE *f, const toy_stmt *stmt)
 {
-    fprintf(f, "\"%s\" {\n", toy_stmt_type_name(stmt->type));
     switch (stmt->type) {
     case STMT_EXPR:
         dump_expr(f, stmt->expr_stmt.expr);
+        fputs(";\n", f);
         break;
     case STMT_FOR:
+        fputs("for (", f);
+        dump_stmt(f, stmt->for_stmt.at_start);
+        fputs("; ", f);
+        dump_expr(f, stmt->for_stmt.condition);
+        fputs("; ", f);
+        dump_stmt(f, stmt->for_stmt.at_end);
+        fputs(") {\n", f);
+        dump_stmts(f, stmt->for_stmt.body);
+        fputs("}\n", f);
         break;
     case STMT_FUNC_DECL:
+        fprintf(f, "fun %s(", stmt->func_decl_stmt.def.name);
+        dump_str_list(f, stmt->func_decl_stmt.def.param_names);
+        fputs(") {\n", f);
+        dump_stmts(f, stmt->func_decl_stmt.def.code);
+        fputs("}\n", f);
         break;
     case STMT_IF:
         {
-            for (toy_if_arm *arm = stmt->if_stmt.arms; arm; arm = arm->next) {
-                fputs("elseif (\n", f);
+            toy_if_arm *arm = stmt->if_stmt.arms;
+            fputs("if (", f);
+            dump_expr(f, arm->condition);
+            fputs(") {\n", f);
+            dump_stmts(f, arm->code);
+            fputs("}", f);
+            for (arm = arm->next; arm; arm = arm->next) {
+                fputs(" elseif (", f);
                 dump_expr(f, arm->condition);
                 fputs(") {\n", f);
                 dump_stmts(f, arm->code);
-                fputs("}\n", f);
+                fputs("}", f);
             }
-            fputs("else (\n", f);
-            dump_stmts(f, stmt->if_stmt.elsepart);
-            fputs("}\n", f);
+            if (stmt->if_stmt.elsepart) {
+                fputs(" else {\n", f);
+                dump_stmts(f, stmt->if_stmt.elsepart);
+                fputs("}\n", f);
+            } else {
+                fputs("\n", f);
+            }
         }
         break;
     case STMT_NULL:
+        fputs(";\n", f);
         break;
     case STMT_VAR_DECL:
-        /* TODO */
+        fputs("var ", f);
+        for (toy_var_decl *decl = stmt->var_decl_stmt; decl; decl = decl->next) {
+            fputs(decl->name, f);
+            if (decl->value) {
+                fputs(" = ", f);
+                dump_expr(f, decl->value);
+            }
+        }
+        fputs(";\n", f);
         break;
     case STMT_WHILE:
+        fputs("while (\n", f);
+        dump_expr(f, stmt->while_stmt.condition);
+        fputs(") {\n", f);
+        dump_stmts(f, stmt->while_stmt.body);
+        fputs("}\n", f);
         break;
     default:
         invalid_stmt_type(stmt->type);
         break;
     }
-    fputs("}\n", f);
 }
 
 void dump_stmts(FILE *f, const toy_stmt *stmts)

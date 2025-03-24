@@ -1,6 +1,7 @@
 #ifndef TOY_AST_H
 #define TOY_AST_H 1
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
@@ -18,8 +19,18 @@ typedef struct toy_list_struct {
     struct toy_list_struct *next;
 } toy_list;
 
+typedef struct toy_map_entry_struct {
+    toy_expr *key;
+    toy_expr *value;
+    struct toy_map_entry_struct *next;
+} toy_map_entry;
+
+/* TODO: dynamic resizing */
+#define NUM_BUCKETS 13
+
 typedef struct toy_map_struct {
-    size_t nitems; /* TODO */
+    size_t num_items;
+    toy_map_entry *buckets[NUM_BUCKETS];
 } toy_map;
 
 typedef struct toy_str_list_struct {
@@ -92,6 +103,7 @@ struct toy_expr_struct {
         toy_list *list;
         toy_map *map;
         toy_func_call *func_call;
+        /* TODO: some of these don't need to be separately allocated */
         toy_unary_op *unary_op;
         toy_binary_op *binary_op;
         toy_func_expr *func_decl;
@@ -104,10 +116,6 @@ typedef struct toy_var_decl_struct {
     toy_expr *value;
     struct toy_var_decl_struct *next;
 } toy_var_decl;
-
-typedef struct toy_var_decl_stmt_struct {
-    toy_var_decl *vardecls;
-} toy_var_decl_stmt;
 
 typedef struct toy_func_decl_stmt_struct {
     toy_func_def def;
@@ -130,7 +138,6 @@ typedef struct toy_if_stmt_struct {
 } toy_if_stmt;
 
 typedef struct toy_for_stmt_struct {
-    toy_var_decl_stmt *decl;
     toy_expr *condition;
     toy_stmt *at_start;
     toy_stmt *at_end;
@@ -160,7 +167,7 @@ struct toy_stmt_struct {
         toy_if_stmt if_stmt;
         toy_for_stmt for_stmt;
         toy_while_stmt while_stmt;
-        toy_var_decl_stmt var_decl_stmt;
+        toy_var_decl *var_decl_stmt;
         toy_func_decl_stmt func_decl_stmt;
     };
 };
@@ -170,21 +177,27 @@ void invalid_operand(enum toy_expr_type expr_type, const toy_expr *operand);
 void invalid_expr_type(enum toy_expr_type expr_type);
 void invalid_stmt_type(enum toy_stmt_type stmt_type);
 void invalid_cast(enum toy_expr_type expr_type, const toy_expr *expr);
+void dump_str(FILE *f, const toy_str str);
+void dump_list(FILE *f, toy_list *list);
 void dump_expr(FILE *f, const toy_expr *expr);
 void dump_stmts(FILE *f, const toy_stmt *stmts);
 void dump_stmt(FILE *f, const toy_stmt *stmts);
 toy_stmt *alloc_stmt(enum toy_stmt_type type);
+toy_map_entry *alloc_map_entry(toy_expr *key, toy_expr *value);
 toy_if_arm *alloc_if_arm(toy_expr *condition, toy_stmt *code);
 toy_str_list *alloc_str_list(const char * str);
-toy_list *alloc_toy_list(toy_expr *first_elem);
-toy_var_decl *alloc_var_decl();
+toy_list *alloc_list(toy_expr *first_elem);
+toy_var_decl *alloc_var_decl(toy_str name, toy_expr *value);
+toy_expr *alloc_unary_op_expr(enum toy_expr_type expr_type);
+toy_expr *alloc_binary_op_expr(enum toy_expr_type expr_type);
 toy_expr *alloc_expr(enum toy_expr_type type);
-toy_expr *alloc_expr_func_decl(void *formalparams, toy_stmt *code);
+toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_stmt *code);
 toy_stmt *append_stmt(toy_stmt *orig, toy_stmt *new);
 toy_var_decl *append_var_decl(toy_var_decl *orig, toy_var_decl *new);
 toy_if_arm *append_if_arm(toy_if_arm *orig, toy_if_arm *new);
 toy_str_list *append_str_list(toy_str_list *orig, toy_str_list *new);
 toy_list *append_list(toy_list *orig, toy_list *new);
+toy_map_entry *append_map_entry(toy_map_entry *orig, toy_map_entry *new);
 const char *toy_expr_type_name(enum toy_expr_type expr_type);
 const char *toy_stmt_type_name(enum toy_stmt_type stmt_type);
 

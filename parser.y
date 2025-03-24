@@ -4,6 +4,7 @@
 #include <strings.h>
 
 #include "ast.h"
+#include "map.h"
 #include "interp.h"
 
 extern int yylex (void);
@@ -42,6 +43,7 @@ static toy_stmt *program_start;
     toy_func_decl_stmt *func_decl;
     toy_if_arm *if_arm;
     toy_str_list *str_list;
+    toy_map_entry *map_entry;
 }
 
 %define parse.error detailed
@@ -55,7 +57,9 @@ static toy_stmt *program_start;
 %type <stmt> stmts stmt elsepart
 %type <if_arm> elseifs
 %type <var_decl> vardecllist
-%type <list> actualargs
+%type <list> actualargs actualarglist
+%type <list> listitems listitemlist
+%type <map_entry> mapitem mapitems mapitemlist
 
 %right T_ASSIGN
 %left T_AND T_OR
@@ -119,33 +123,30 @@ stmt :
     }
     | T_VAR vardecllist T_SEMICOLON {
         $$ = alloc_stmt(STMT_VAR_DECL);
-        $$->var_decl_stmt.vardecls = $2;
+        $$->var_decl_stmt = $2;
     }
 ;
 
 vardecllist :
     vardecl {
-        $$ = alloc_var_decl();
+        $$ = $1;
     }
     | vardecllist T_COMMA vardecl {
-        toy_var_decl *this_var_decl = alloc_var_decl();
         if ($1) {
-            append_var_decl($1, this_var_decl);
+            append_var_decl($1, $3);
             $$ = $1;
         } else {
-            $$ = this_var_decl;
+            $$ = $3;
         }
     }
 ;
 
 vardecl :
     T_IDENTIFIER {
-        $$->name = $1;
-        $$->value = NULL;
+        $$ = alloc_var_decl($1, NULL);
     }
     | T_IDENTIFIER T_ASSIGN expr {
-        $$->name = $1;
-        $$->value = $3;
+        $$ = alloc_var_decl($1, $3);
     }
 ;
 
@@ -212,84 +213,88 @@ expr :
         $$->str = $1;
     }
     | expr T_EQUAL expr {
-        $$ = alloc_expr(EXPR_EQUAL);
+        $$ = alloc_binary_op_expr(EXPR_EQUAL);
         $$->binary_op->arg1 = $1;
         $$->binary_op->arg2 = $3;
     }
     | expr T_NEQUAL expr {
-        $$ = alloc_expr(EXPR_NEQUAL);
+        $$ = alloc_binary_op_expr(EXPR_NEQUAL);
         $$->binary_op->arg1 = $1;
         $$->binary_op->arg2 = $3;
     }
     | expr T_LT expr {
-        $$ = alloc_expr(EXPR_LT);
+        $$ = alloc_binary_op_expr(EXPR_LT);
         $$->binary_op->arg1 = $1;
         $$->binary_op->arg2 = $3;
     }
     | expr T_LTE expr {
-        $$ = alloc_expr(EXPR_LTE);
+        $$ = alloc_binary_op_expr(EXPR_LTE);
         $$->binary_op->arg1 = $1;
         $$->binary_op->arg2 = $3;
     }
     | expr T_GT expr {
-        $$ = alloc_expr(EXPR_GT);
+        $$ = alloc_binary_op_expr(EXPR_GT);
         $$->binary_op->arg1 = $1;
         $$->binary_op->arg2 = $3;
     }
     | expr T_GTE expr {
-        $$ = alloc_expr(EXPR_GTE);
+        $$ = alloc_binary_op_expr(EXPR_GTE);
         $$->binary_op->arg1 = $1;
         $$->binary_op->arg2 = $3;
     }
     | expr T_AND expr {
-        $$ = alloc_expr(EXPR_AND);
+        $$ = alloc_binary_op_expr(EXPR_AND);
         $$->binary_op->arg1 = $1;
         $$->binary_op->arg2 = $3;
     }
     | expr T_OR expr {
-        $$ = alloc_expr(EXPR_OR);
+        $$ = alloc_binary_op_expr(EXPR_OR);
         $$->binary_op->arg1 = $1;
         $$->binary_op->arg2 = $3;
     }
     | expr T_IN expr {
-        $$ = alloc_expr(EXPR_IN);
+        $$ = alloc_binary_op_expr(EXPR_IN);
         $$->binary_op->arg1 = $1;
         $$->binary_op->arg2 = $3;
     }
     | T_NOT expr {
-        $$ = alloc_expr(EXPR_NOT);
+        $$ = alloc_unary_op_expr(EXPR_NOT);
         $$->unary_op->arg = $2;
     }
     | expr T_PLUS expr {
-        $$ = alloc_expr(EXPR_PLUS);
+        $$ = alloc_binary_op_expr(EXPR_PLUS);
         $$->binary_op->arg1 = $1;
         $$->binary_op->arg2 = $3;
     }
     | expr T_MINUS expr {
-        $$ = alloc_expr(EXPR_MINUS);
+        $$ = alloc_binary_op_expr(EXPR_MINUS);
         $$->binary_op->arg1 = $1;
         $$->binary_op->arg2 = $3;
     }
     | expr T_ASTERISK expr {
-        $$ = alloc_expr(EXPR_MUL);
+        $$ = alloc_binary_op_expr(EXPR_MUL);
         $$->binary_op->arg1 = $1;
         $$->binary_op->arg2 = $3;
     }
     | expr T_FSLASH expr {
-        $$ = alloc_expr(EXPR_DIV);
+        $$ = alloc_binary_op_expr(EXPR_DIV);
         $$->binary_op->arg1 = $1;
         $$->binary_op->arg2 = $3;
     }
     | T_MINUS expr {
-        $$ = alloc_expr(EXPR_UNEG);
+        $$ = alloc_unary_op_expr(EXPR_UNEG);
         $$->unary_op->arg = $2;
     }
     | T_LBRACKET listitems T_RBRACKET {
         $$ = alloc_expr(EXPR_LIST);
-        /* TODO: read items */
+        $$->list = $2;
     }
     | T_LBRACE mapitems T_RBRACE {
         $$ = alloc_expr(EXPR_MAP);
+        $$->map = alloc_map();
+        for (toy_map_entry *entry = $2; entry; entry = entry->next) {
+            map_set_expr($$->map, entry->key, entry->value);
+        }
     }
     | T_FUN T_LPAREN formalparams T_RPAREN T_LBRACE stmts T_RBRACE {
         $$ = alloc_expr_func_decl($3, $6);
@@ -313,8 +318,17 @@ actualargs :
     {
         $$ = NULL;
     }
-    | actualargs T_COMMA expr {
-        toy_list *this_entry = alloc_toy_list($3);
+    | actualarglist {
+        $$ = $1;
+    }
+;
+
+actualarglist :
+    expr {
+        $$ = alloc_list($1);
+    }
+    | actualarglist T_COMMA expr {
+        toy_list *this_entry = alloc_list($3);
         if ($1) {
             append_list($1, this_entry);
             $$ = $1;
@@ -324,10 +338,54 @@ actualargs :
     }
 ;
 
-listitems : expr | listitems T_COMMA expr ;
+listitems :
+    /* EMPTY */ {
+        $$ = NULL;
+    }
+    | listitemlist {
+        $$ = $1;
+    }
 
-mapitems : mapitem | mapitems T_COMMA mapitem ;
-mapitem : expr T_COLON expr ;
+listitemlist :
+    expr {
+        $$ = alloc_list($1);
+    }
+    | listitemlist T_COMMA expr {
+        toy_list *this_entry = alloc_list($3);
+        if ($1) {
+            append_list($1, this_entry);
+            $$ = $1;
+        } else {
+            $1 = this_entry;
+        }
+    }
+;
+
+mapitems :
+    /* EMPTY */ {
+        $$ = NULL;
+    }
+    | mapitemlist {
+        $$ = $1;
+    }
+
+mapitemlist :
+    mapitem
+    | mapitemlist T_COMMA mapitem {
+        if ($1) {
+            append_map_entry($1, $3);
+            $$ = $1;
+        } else {
+            $1 = $3;
+        }
+    }
+;
+
+mapitem :
+    expr T_COLON expr {
+        $$ = alloc_map_entry($1, $3);
+    }
+;
 
 %%
 
@@ -340,17 +398,22 @@ int main(int argc, char **argv)
     {
     extern FILE *yyin;
     ++argv, --argc;  /* skip over program name */
-    if ( argc > 0 )
-            yyin = fopen( argv[0], "r" );
-    else
-            yyin = stdin;
+    if (argc > 0) {
+        yyin = fopen( argv[0], "r" );
+    } else {
+        /* yyin = stdin; */
+        yyin = fopen( "sample-program.toy", "r" );
+    }
 
     extern void init_lexer(void);
     init_lexer();
     /* yylex(); */
     int parse_res = yyparse();
-    fprintf(stderr, "yyparse() returned %d\n", parse_res);
+    if (parse_res != 0) {
+        fprintf(stderr, "yyparse() returned %d\n", parse_res);
+        return EXIT_FAILURE;
+    }
     dump_stmts(stderr, program_start);
     toy_run(program_start);
-    return 0;
+    return EXIT_SUCCESS;
     }

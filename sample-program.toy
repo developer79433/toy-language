@@ -1,8 +1,9 @@
 "hi mum!";
 var mylist = [123.5, 456, [ "surprise!" ]];
-var mymap = { "mykey": 123};
+var mymap = { "mykey": 123, "myotherkey": "myothervalue" };
 var mval = [ 345.6, {"blah": 42}, "foo"];
 fun myfunction() {
     var i = 0;
 }
 var myfunc = fun() { 42; };
+var sixty;
