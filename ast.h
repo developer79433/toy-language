@@ -109,12 +109,11 @@ struct toy_expr_struct {
         toy_str str;
         toy_list *list;
         toy_map *map;
-        toy_func_call *func_call;
-        /* TODO: some of these don't need to be separately allocated */
-        toy_unary_op *unary_op;
-        toy_binary_op *binary_op;
-        toy_func_expr *func_decl;
-        toy_assignment *assignment;
+        toy_func_call func_call;
+        toy_unary_op unary_op;
+        toy_binary_op binary_op;
+        toy_func_expr func_decl;
+        toy_assignment assignment;
     };
 };
 

@@ -166,6 +166,16 @@ elseifs :
             $$ = this_arm;
         }
     }
+    | elseifs T_ELSE T_IF T_LPAREN expr T_RPAREN T_LBRACE stmts T_RBRACE {
+        toy_if_arm *this_arm = alloc_if_arm($5, $8);
+        
+        if ($1) {
+            append_if_arm($1, this_arm);
+            $$ = $1;
+        } else {
+            $$ = this_arm;
+        }
+    }
 ;
 
 elsepart :
@@ -292,76 +302,76 @@ expr_no_comma :
     }
     | expr_no_comma T_EQUAL expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_EQUAL);
-        $$->binary_op->arg1 = $1;
-        $$->binary_op->arg2 = $3;
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
     }
     | expr_no_comma T_NEQUAL expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_NEQUAL);
-        $$->binary_op->arg1 = $1;
-        $$->binary_op->arg2 = $3;
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
     }
     | expr_no_comma T_LT expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_LT);
-        $$->binary_op->arg1 = $1;
-        $$->binary_op->arg2 = $3;
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
     }
     | expr_no_comma T_LTE expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_LTE);
-        $$->binary_op->arg1 = $1;
-        $$->binary_op->arg2 = $3;
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
     }
     | expr_no_comma T_GT expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_GT);
-        $$->binary_op->arg1 = $1;
-        $$->binary_op->arg2 = $3;
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
     }
     | expr_no_comma T_GTE expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_GTE);
-        $$->binary_op->arg1 = $1;
-        $$->binary_op->arg2 = $3;
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
     }
     | expr_no_comma T_AND expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_AND);
-        $$->binary_op->arg1 = $1;
-        $$->binary_op->arg2 = $3;
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
     }
     | expr_no_comma T_OR expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_OR);
-        $$->binary_op->arg1 = $1;
-        $$->binary_op->arg2 = $3;
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
     }
     | expr_no_comma T_IN expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_IN);
-        $$->binary_op->arg1 = $1;
-        $$->binary_op->arg2 = $3;
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
     }
     | T_NOT expr_no_comma {
         $$ = alloc_unary_op_expr(EXPR_NOT);
-        $$->unary_op->arg = $2;
+        $$->unary_op.arg = $2;
     }
     | expr_no_comma T_PLUS expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_PLUS);
-        $$->binary_op->arg1 = $1;
-        $$->binary_op->arg2 = $3;
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
     }
     | expr_no_comma T_MINUS expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_MINUS);
-        $$->binary_op->arg1 = $1;
-        $$->binary_op->arg2 = $3;
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
     }
     | expr_no_comma T_ASTERISK expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_MUL);
-        $$->binary_op->arg1 = $1;
-        $$->binary_op->arg2 = $3;
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
     }
     | expr_no_comma T_FSLASH expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_DIV);
-        $$->binary_op->arg1 = $1;
-        $$->binary_op->arg2 = $3;
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
     }
     | T_MINUS expr_no_comma {
         $$ = alloc_unary_op_expr(EXPR_UNEG);
-        $$->unary_op->arg = $2;
+        $$->unary_op.arg = $2;
     }
     | T_LBRACKET listitems T_RBRACKET {
         $$ = alloc_expr(EXPR_LIST);
@@ -379,13 +389,13 @@ expr_no_comma :
     }
     | T_IDENTIFIER T_LPAREN actualargs T_RPAREN {
         $$ = alloc_expr(EXPR_FUNC_CALL);
-        $$->func_call->func_name = $1;
-        $$->func_call->args = $3;
+        $$->func_call.func_name = $1;
+        $$->func_call.args = $3;
     }
     | T_IDENTIFIER T_ASSIGN expr_no_comma {
         $$ = alloc_expr(EXPR_ASSIGN);
-        $$->assignment->lhs = $1;
-        $$->assignment->rhs = $3;
+        $$->assignment.lhs = $1;
+        $$->assignment.rhs = $3;
     }
     | T_LPAREN expr T_RPAREN {
         $$ = $2;
@@ -398,8 +408,8 @@ expr :
     }
     | expr T_COMMA expr {
         $$ = alloc_binary_op_expr(EXPR_COMMA);
-        $$->binary_op->arg1 = $1;
-        $$->binary_op->arg2 = $3;
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
     }
 ;
 

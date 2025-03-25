@@ -378,7 +378,7 @@ void eval_expr(toy_expr *result, const toy_expr *expr)
 {
     switch (expr->type) {
     case EXPR_AND:
-        op_and(result, expr->binary_op->arg1, expr->binary_op->arg2);
+        op_and(result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_ASSIGN:
         /* TODO */
@@ -387,71 +387,71 @@ void eval_expr(toy_expr *result, const toy_expr *expr)
         *result = *expr;
         break;
     case EXPR_COMMA:
-        op_comma(result, expr->binary_op->arg1, expr->binary_op->arg2);
+        op_comma(result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_DIV:
-        op_div(result, expr->binary_op->arg1, expr->binary_op->arg2);
+        op_div(result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_EQUAL:
-        op_equal(result, expr->binary_op->arg1, expr->binary_op->arg2);
+        op_equal(result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_FUNC_CALL:
-        call_func(result, expr->func_call->func_name, expr->func_call->args);
+        call_func(result, expr->func_call.func_name, expr->func_call.args);
         break;
     case EXPR_FUNC_DECL:
         *result = *expr;
         break;
     case EXPR_GT:
-        op_gt(result, expr->binary_op->arg1, expr->binary_op->arg2);
+        op_gt(result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_GTE:
-        op_gte(result, expr->binary_op->arg1, expr->binary_op->arg2);
+        op_gte(result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_IDENTIFIER:
         /* TODO */
         break;
     case EXPR_IN:
-        op_in(result, expr->binary_op->arg1, expr->binary_op->arg2);
+        op_in(result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_LIST:
         *result = *expr;
         break;
     case EXPR_LT:
-        op_lt(result, expr->binary_op->arg1, expr->binary_op->arg2);
+        op_lt(result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_LTE:
-        op_lte(result, expr->binary_op->arg1, expr->binary_op->arg2);
+        op_lte(result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_MAP:
         *result = *expr;
         break;
     case EXPR_MINUS:
-        op_minus(result, expr->binary_op->arg1, expr->binary_op->arg2);
+        op_minus(result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_MUL:
-        op_mul(result, expr->binary_op->arg1, expr->binary_op->arg2);
+        op_mul(result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_NEQUAL:
-        op_equal(result, expr->binary_op->arg1, expr->binary_op->arg2);
+        op_equal(result, expr->binary_op.arg1, expr->binary_op.arg2);
         result->bool = !result->bool;
         break;
     case EXPR_NOT:
-        op_not(result, expr->unary_op->arg);
+        op_not(result, expr->unary_op.arg);
         break;
     case EXPR_NUM:
         *result = *expr;
         break;
     case EXPR_OR:
-        op_or(result, expr->binary_op->arg1, expr->binary_op->arg2);
+        op_or(result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_PLUS:
-        op_plus(result, expr->binary_op->arg1, expr->binary_op->arg2);
+        op_plus(result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_STR:
         *result = *expr;
         break;
     case EXPR_UNEG:
-        op_uneg(result, expr->unary_op->arg);
+        op_uneg(result, expr->unary_op.arg);
         break;
     default:
         invalid_expr_type(expr->type);
