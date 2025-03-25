@@ -6,5 +6,8 @@ fun myfunction() {
     var i = 0;
 }
 var myfunc = fun(formalparam1, formalparam2) { 42; };
-var sixty = 60, noval, bignum = 12345678;
+var sixty = 28 * 2 + 4, noval, bignum = 12345678.9;
 "test", "comma", "operator", "last";
+var neg = -123.45;
+var pos = -67.89 / -1.02;
+var eighty = sixty + 20;

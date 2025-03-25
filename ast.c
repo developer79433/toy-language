@@ -424,7 +424,7 @@ void dump_stmt(FILE *f, const toy_stmt *stmt)
     switch (stmt->type) {
     case STMT_EXPR:
         dump_expr(f, stmt->expr_stmt.expr);
-        fputs(";\n", f);
+        fputs(";", f);
         break;
     case STMT_FOR:
         fputs("for (", f);
@@ -435,14 +435,14 @@ void dump_stmt(FILE *f, const toy_stmt *stmt)
         dump_stmt(f, stmt->for_stmt.at_end);
         fputs(") {\n", f);
         dump_stmts(f, stmt->for_stmt.body);
-        fputs("}\n", f);
+        fputs("}", f);
         break;
     case STMT_FUNC_DECL:
         fprintf(f, "fun %s(", stmt->func_decl_stmt.def.name);
         dump_identifier_list(f, stmt->func_decl_stmt.def.param_names);
         fputs(") {\n", f);
         dump_stmts(f, stmt->func_decl_stmt.def.code);
-        fputs("}\n", f);
+        fputs("}", f);
         break;
     case STMT_IF:
         {
@@ -462,14 +462,12 @@ void dump_stmt(FILE *f, const toy_stmt *stmt)
             if (stmt->if_stmt.elsepart) {
                 fputs(" else {\n", f);
                 dump_stmts(f, stmt->if_stmt.elsepart);
-                fputs("}\n", f);
-            } else {
-                fputs("\n", f);
+                fputs("}", f);
             }
         }
         break;
     case STMT_NULL:
-        fputs(";\n", f);
+        fputc(';', f);
         break;
     case STMT_VAR_DECL:
         fputs("var ", f);
@@ -485,19 +483,20 @@ void dump_stmt(FILE *f, const toy_stmt *stmt)
             }
             output_something = 1;
         }
-        fputs(";\n", f);
+        fputs(";", f);
         break;
     case STMT_WHILE:
         fputs("while (\n", f);
         dump_expr(f, stmt->while_stmt.condition);
         fputs(") {\n", f);
         dump_stmts(f, stmt->while_stmt.body);
-        fputs("}\n", f);
+        fputs("}", f);
         break;
     default:
         invalid_stmt_type(stmt->type);
         break;
     }
+    fputc('\n', f);
 }
 
 void dump_stmts(FILE *f, const toy_stmt *stmts)
