@@ -197,6 +197,7 @@ static const char *toy_expr_type_names[] = {
     "logical and",
     "assignment",
     "boolean",
+    "comma",
     "division",
     "equal to",
     "function call",
@@ -273,15 +274,38 @@ void dump_str(FILE *f, const toy_str str)
     fputc('"', f);
 }
 
-static void dump_str_list(FILE *f, const toy_str_list *list)
+void dump_str_list(FILE *f, const toy_str_list *list)
 {
     const toy_str_list *cur;
     if (list) {
-        for (cur = list; cur->next; cur = cur->next) {
+        int output_something = 0;
+        for (cur = list; cur; cur = cur->next) {
+            if (output_something) {
+                fputs(", ", f);
+            }
             dump_str(f, cur->str);
-            fputs(", ", f);
+            output_something = 1;
         }
-        dump_str(f, cur->str);
+    }
+}
+
+void dump_identifier(FILE *f, const toy_str str)
+{
+    fputs(str, f);
+}
+
+void dump_identifier_list(FILE *f, const toy_str_list *list)
+{
+    const toy_str_list *cur;
+    if (list) {
+        int output_something = 0;
+        for (cur = list; cur; cur = cur->next) {
+            if (output_something) {
+                fputs(", ", f);
+            }
+            dump_identifier(f, cur->str);
+            output_something = 1;
+        }
     }
 }
 
@@ -289,7 +313,7 @@ static void dump_binary_op(FILE *f, const toy_expr *arg1, const toy_expr *arg2, 
 {
     fputc('(', f);
     dump_expr(f, arg1);
-    fprintf(f, " %s ", op);
+    fputs(op, f);
     dump_expr(f, arg2);
     fputc(')', f);
 }
@@ -298,49 +322,22 @@ void dump_expr(FILE *f, const toy_expr *expr) {
     if (expr) {
         switch (expr->type) {
         case EXPR_AND:
-            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "and");
-            break;
-        case EXPR_GT:
-            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, ">");
-            break;
-        case EXPR_GTE:
-            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, ">=");
-            break;
-        case EXPR_DIV:
-            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "/");
-            break;
-        case EXPR_IN:
-            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "in");
-            break;
-        case EXPR_LT:
-            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "<");
-            break;
-        case EXPR_LTE:
-            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "<=");
-            break;
-        case EXPR_MINUS:
-            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "-");
-            break;
-        case EXPR_OR:
-            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "or");
-            break;
-        case EXPR_MUL:
-            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "*");
-            break;
-        case EXPR_NEQUAL:
-            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "!=");
-            break;
-        case EXPR_PLUS:
-            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "+");
-            break;
-        case EXPR_EQUAL:
-            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "==");
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, " and ");
             break;
         case EXPR_ASSIGN:
-            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, "=");
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, " = ");
             break;
         case EXPR_BOOL:
             fputs(expr->bool ? "True" : "False", f);
+            break;
+        case EXPR_COMMA:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, ", ");
+            break;
+        case EXPR_DIV:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, " / ");
+            break;
+        case EXPR_EQUAL:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, " == ");
             break;
         case EXPR_FUNC_CALL:
             fprintf(f, "%s(", expr->func_call->func_name);
@@ -350,23 +347,47 @@ void dump_expr(FILE *f, const toy_expr *expr) {
                 fputs(", ", f);
             }
             dump_expr(f, arg->expr);
-            fputs(")\n", f);
+            fputs(")", f);
             break;
         case EXPR_FUNC_DECL:
             fprintf(f, "fun %s(", expr->func_decl->def.name);
-            dump_str_list(f, expr->func_decl->def.param_names);
+            dump_identifier_list(f, expr->func_decl->def.param_names);
             fputs(") {\n", f);
             dump_stmts(f, expr->func_decl->def.code);
             fputs("}\n", f);
             break;
+        case EXPR_GT:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, " > ");
+            break;
+        case EXPR_GTE:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, " >= ");
+            break;
         case EXPR_IDENTIFIER:
             fprintf(f, "%s", expr->str);
+            break;
+        case EXPR_IN:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, " in ");
             break;
         case EXPR_LIST:
             dump_list(f, expr->list);
             break;
+        case EXPR_LT:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, " < ");
+            break;
+        case EXPR_LTE:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, " <= ");
+            break;
         case EXPR_MAP:
             dump_map(f, expr->map);
+            break;
+        case EXPR_MINUS:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, " - ");
+            break;
+        case EXPR_MUL:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, " * ");
+            break;
+        case EXPR_NEQUAL:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, " != ");
             break;
         case EXPR_NOT:
             fputs("not (", f);
@@ -375,6 +396,12 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             break;
         case EXPR_NUM:
             fprintf(f, "%f", expr->num);
+            break;
+        case EXPR_OR:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, " or ");
+            break;
+        case EXPR_PLUS:
+            dump_binary_op(f, expr->binary_op->arg1, expr->binary_op->arg2, " + ");
             break;
         case EXPR_STR:
             dump_str(f, expr->str);
@@ -412,7 +439,7 @@ void dump_stmt(FILE *f, const toy_stmt *stmt)
         break;
     case STMT_FUNC_DECL:
         fprintf(f, "fun %s(", stmt->func_decl_stmt.def.name);
-        dump_str_list(f, stmt->func_decl_stmt.def.param_names);
+        dump_identifier_list(f, stmt->func_decl_stmt.def.param_names);
         fputs(") {\n", f);
         dump_stmts(f, stmt->func_decl_stmt.def.code);
         fputs("}\n", f);
@@ -446,12 +473,17 @@ void dump_stmt(FILE *f, const toy_stmt *stmt)
         break;
     case STMT_VAR_DECL:
         fputs("var ", f);
+        int output_something = 0;
         for (toy_var_decl *decl = stmt->var_decl_stmt; decl; decl = decl->next) {
+            if (output_something) {
+                fputs(", ", f);
+            }
             fputs(decl->name, f);
             if (decl->value) {
                 fputs(" = ", f);
                 dump_expr(f, decl->value);
             }
+            output_something = 1;
         }
         fputs(";\n", f);
         break;

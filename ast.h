@@ -29,6 +29,12 @@ typedef struct toy_map_entry_struct {
 #define NUM_BUCKETS 13
 
 typedef struct toy_map_struct {
+    /**
+     * TODO: Move these out of the parser and into the interpreter.
+     * The buckets etc are a toy runtime concern - they are irrelevant to parsing.
+     * But at the moment there is no distinction betweent he AST's structures and
+     * those used by the interpreter, so nowhere to move this to.
+     */
     size_t num_items;
     toy_map_entry *buckets[NUM_BUCKETS];
 } toy_map;
@@ -71,6 +77,7 @@ enum toy_expr_type {
     EXPR_AND = 0,
     EXPR_ASSIGN,
     EXPR_BOOL,
+    EXPR_COMMA,
     EXPR_DIV,
     EXPR_EQUAL,
     EXPR_FUNC_CALL,
@@ -178,6 +185,8 @@ void invalid_expr_type(enum toy_expr_type expr_type);
 void invalid_stmt_type(enum toy_stmt_type stmt_type);
 void invalid_cast(enum toy_expr_type expr_type, const toy_expr *expr);
 void dump_str(FILE *f, const toy_str str);
+void dump_identifier(FILE *f, const toy_str str);
+void dump_identifier_list(FILE *f, const toy_str_list *list);
 void dump_list(FILE *f, toy_list *list);
 void dump_expr(FILE *f, const toy_expr *expr);
 void dump_stmts(FILE *f, const toy_stmt *stmts);

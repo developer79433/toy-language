@@ -1,10 +1,10 @@
 "hi mum!";
 var mylist = [123.5, 456, [ "surprise!" ]];
 var mymap = { "mykey": 123, "myotherkey": "myothervalue" };
-var mval = [ 345.6, {"blah": 42}, "foo"];
+var mval = [ 345.6, {"blah": (42, 3)}, "foo"];
 fun myfunction() {
     var i = 0;
 }
-var myfunc = fun() { 42; };
-var sixty;
-"last";
+var myfunc = fun(formalparam1, formalparam2) { 42; };
+var sixty = 60, noval, bignum = 12345678;
+"test", "comma", "operator", "last";

@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include "interp.h"
+#include "map.h"
 
 size_t list_len(const toy_list *list)
 {
@@ -115,6 +116,13 @@ static void op_and(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
     } else {
         result->bool = 0;
     }
+}
+
+static void op_comma(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
+{
+    toy_expr arg_result1;
+    eval_expr(&arg_result1, arg1);
+    eval_expr(result, arg2);
 }
 
 static void op_div(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
@@ -378,6 +386,9 @@ void eval_expr(toy_expr *result, const toy_expr *expr)
     case EXPR_BOOL:
         *result = *expr;
         break;
+    case EXPR_COMMA:
+        op_comma(result, expr->binary_op->arg1, expr->binary_op->arg2);
+        break;
     case EXPR_DIV:
         op_div(result, expr->binary_op->arg1, expr->binary_op->arg2);
         break;
@@ -525,4 +536,27 @@ void toy_run(const toy_stmt *stmt)
     for (const toy_stmt *s = stmt; s; s = s->next) {
         single_step(s);
     }
+}
+
+void test_maps()
+{
+    toy_map *map1 = alloc_map();
+    toy_expr val1;
+    val1.type = EXPR_NUM;
+    val1.num = 42;
+    map_set(map1, "first key", &val1);
+    toy_expr *get1 = map_get(map1, "first key");
+    assert(get1->type == EXPR_NUM);
+    assert(get1->num == 42);
+    toy_expr val2;
+    val2.type = EXPR_STR;
+    val2.str = "second value";
+    map_set(map1, "second key", &val2);
+    toy_expr *get2 = map_get(map1, "second key");
+    assert(get2->type == EXPR_STR);
+    assert(0 == strcmp(get2->str, "second value"));
+    toy_expr *get3 = map_get(map1, "first key");
+    assert(get3->type == EXPR_NUM);
+    assert(get3->num == 42);
+    dump_map(stderr, map1);
 }
