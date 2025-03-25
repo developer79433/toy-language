@@ -93,6 +93,7 @@ stmts :
             $$ = $2;
         }
     }
+    /* TODO: Allow a block instead of a statement */
 ;
 
 stmt :
