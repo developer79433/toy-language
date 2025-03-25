@@ -7,3 +7,4 @@ fun myfunction() {
 }
 var myfunc = fun() { 42; };
 var sixty;
+"last";

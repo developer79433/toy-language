@@ -456,8 +456,23 @@ void single_step(const toy_stmt *stmt)
         eval_expr(&result, stmt->expr_stmt.expr);
         break;
     case STMT_FOR:
+        single_step(stmt->for_stmt.at_start);
+        for (;;) {
+            toy_expr cond_result;
+            eval_expr(&cond_result, stmt->for_stmt.condition);
+            if (EXPR_BOOL != cond_result.type) {
+                invalid_operand(EXPR_BOOL, &cond_result);
+            }
+            assert(EXPR_BOOL == cond_result.type);
+            if (cond_result.bool) {
+                break;
+            }
+            toy_run(stmt->for_stmt.body);
+            single_step(stmt->for_stmt.at_end);
+        }
         break;
     case STMT_FUNC_DECL:
+        /* TODO */
         break;
     case STMT_IF:
         {
@@ -465,6 +480,9 @@ void single_step(const toy_stmt *stmt)
             for (toy_if_arm *arm = stmt->if_stmt.arms; arm; arm = arm->next) {
                 toy_expr cond_result;
                 eval_expr(&cond_result, arm->condition);
+                if (EXPR_BOOL != cond_result.type) {
+                    invalid_operand(EXPR_BOOL, &cond_result);
+                }
                 assert(EXPR_BOOL == cond_result.type);
                 if (cond_result.bool) {
                     toy_run(arm->code);
@@ -483,6 +501,18 @@ void single_step(const toy_stmt *stmt)
         /* TODO */
         break;
     case STMT_WHILE:
+        for(;;) {
+            toy_expr cond_result;
+            eval_expr(&cond_result, stmt->while_stmt.condition);
+            if (EXPR_BOOL != cond_result.type) {
+                invalid_operand(EXPR_BOOL, &cond_result);
+            }
+            assert(EXPR_BOOL == cond_result.type);
+            if (cond_result.bool) {
+                break;
+            }
+            toy_run(stmt->while_stmt.body);
+        }
         break;
     default:
         invalid_stmt_type(stmt->type);

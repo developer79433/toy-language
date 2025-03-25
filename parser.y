@@ -70,22 +70,23 @@ static toy_stmt *program_start;
 
 %%
 
-program : stmts stmt {
+program :
+    stmts {
         program_start = $1;
     }
 ;
 
 stmts :
-    stmts stmt {
+    /* EMPTY */ {
+        $$ = NULL;
+    }
+    | stmts stmt {
         if ($1) {
             append_stmt($1, $2);
             $$ = $1;
         } else {
             $$ = $2;
         }
-    }
-    | /* EMPTY */ {
-        $$ = NULL;
     }
 ;
 
@@ -345,6 +346,7 @@ listitems :
     | listitemlist {
         $$ = $1;
     }
+;
 
 listitemlist :
     expr {
