@@ -14,6 +14,15 @@ struct toy_stmt_struct;
 typedef struct toy_expr_struct toy_expr;
 typedef struct toy_stmt_struct toy_stmt;
 
+typedef struct symbol_table_struct {
+    /* TODO */
+} symbol_table;
+
+typedef struct toy_block_struct {
+    toy_stmt *stmts;
+    symbol_table symbols;
+} toy_block;
+
 typedef struct toy_list_struct {
     toy_expr *expr;
     struct toy_list_struct *next;
@@ -47,7 +56,7 @@ typedef struct toy_str_list_struct {
 typedef struct toy_func_def_struct {
     toy_str name;
     toy_str_list *param_names;
-    toy_stmt *code;
+    toy_block code;
 } toy_func_def;
 
 typedef struct toy_func_expr_struct {
@@ -134,25 +143,25 @@ typedef struct toy_expr_stmt_struct {
 struct toy_if_arm_struct;
 typedef struct toy_if_arm_struct {
     toy_expr *condition;
-    toy_stmt *code;
+    toy_block code;
     struct toy_if_arm_struct *next;
 } toy_if_arm;
 
 typedef struct toy_if_stmt_struct {
     toy_if_arm *arms;
-    toy_stmt *elsepart;
+    toy_block elsepart;
 } toy_if_stmt;
 
 typedef struct toy_for_stmt_struct {
     toy_expr *condition;
     toy_stmt *at_start;
     toy_stmt *at_end;
-    toy_stmt *body;
+    toy_block body;
 } toy_for_stmt;
 
 typedef struct toy_while_stmt_struct {
     toy_expr *condition;
-    toy_stmt *body;
+    toy_block body;
 } toy_while_stmt;
 
 enum toy_stmt_type {
@@ -192,14 +201,14 @@ void dump_stmts(FILE *f, const toy_stmt *stmts);
 void dump_stmt(FILE *f, const toy_stmt *stmts);
 toy_stmt *alloc_stmt(enum toy_stmt_type type);
 toy_map_entry *alloc_map_entry(toy_expr *key, toy_expr *value);
-toy_if_arm *alloc_if_arm(toy_expr *condition, toy_stmt *code);
+toy_if_arm *alloc_if_arm(toy_expr *condition, toy_block *code);
 toy_str_list *alloc_str_list(const char * str);
 toy_list *alloc_list(toy_expr *first_elem);
 toy_var_decl *alloc_var_decl(toy_str name, toy_expr *value);
 toy_expr *alloc_unary_op_expr(enum toy_expr_type expr_type);
 toy_expr *alloc_binary_op_expr(enum toy_expr_type expr_type);
 toy_expr *alloc_expr(enum toy_expr_type type);
-toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_stmt *code);
+toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_block *body);
 toy_stmt *append_stmt(toy_stmt *orig, toy_stmt *new);
 toy_var_decl *append_var_decl(toy_var_decl *orig, toy_var_decl *new);
 toy_if_arm *append_if_arm(toy_if_arm *orig, toy_if_arm *new);

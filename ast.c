@@ -52,12 +52,12 @@ toy_stmt *alloc_stmt(enum toy_stmt_type type)
     return stmt;
 }
 
-toy_if_arm *alloc_if_arm(toy_expr *condition, toy_stmt *code)
+toy_if_arm *alloc_if_arm(toy_expr *condition, toy_block *block)
 {
     toy_if_arm *arm;
     arm = mymalloc(toy_if_arm);
     arm->condition = condition;
-    arm->code = code;
+    arm->code.stmts = block->stmts;
     arm->next = NULL;
     return arm;
 }
@@ -110,14 +110,14 @@ toy_expr *alloc_expr(enum toy_expr_type type)
     return expr;
 }
 
-toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_stmt *code)
+toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_block *body)
 {
     toy_expr *expr;
     expr = mymalloc(toy_expr);
     expr->type = EXPR_FUNC_DECL;
     expr->func_decl.def.name = ""; /* TODO: generated unique name */
     expr->func_decl.def.param_names = formalparams;
-    expr->func_decl.def.code = code;
+    expr->func_decl.def.code.stmts = body->stmts;
     return expr;
 }
 
@@ -350,7 +350,7 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             fprintf(f, "fun %s(", expr->func_decl.def.name);
             dump_identifier_list(f, expr->func_decl.def.param_names);
             fputs(") {\n", f);
-            dump_stmts(f, expr->func_decl.def.code);
+            dump_stmts(f, expr->func_decl.def.code.stmts);
             fputs("}\n", f);
             break;
         case EXPR_GT:
@@ -431,14 +431,14 @@ void dump_stmt(FILE *f, const toy_stmt *stmt)
         fputs("; ", f);
         dump_stmt(f, stmt->for_stmt.at_end);
         fputs(") {\n", f);
-        dump_stmts(f, stmt->for_stmt.body);
+        dump_stmts(f, stmt->for_stmt.body.stmts);
         fputs("}", f);
         break;
     case STMT_FUNC_DECL:
         fprintf(f, "fun %s(", stmt->func_decl_stmt.def.name);
         dump_identifier_list(f, stmt->func_decl_stmt.def.param_names);
         fputs(") {\n", f);
-        dump_stmts(f, stmt->func_decl_stmt.def.code);
+        dump_stmts(f, stmt->func_decl_stmt.def.code.stmts);
         fputs("}", f);
         break;
     case STMT_IF:
@@ -447,18 +447,18 @@ void dump_stmt(FILE *f, const toy_stmt *stmt)
             fputs("if (", f);
             dump_expr(f, arm->condition);
             fputs(") {\n", f);
-            dump_stmts(f, arm->code);
+            dump_stmts(f, arm->code.stmts);
             fputs("}", f);
             for (arm = arm->next; arm; arm = arm->next) {
                 fputs(" elseif (", f);
                 dump_expr(f, arm->condition);
                 fputs(") {\n", f);
-                dump_stmts(f, arm->code);
+                dump_stmts(f, arm->code.stmts);
                 fputs("}", f);
             }
-            if (stmt->if_stmt.elsepart) {
+            if (stmt->if_stmt.elsepart.stmts) {
                 fputs(" else {\n", f);
-                dump_stmts(f, stmt->if_stmt.elsepart);
+                dump_stmts(f, stmt->if_stmt.elsepart.stmts);
                 fputs("}", f);
             }
         }
@@ -486,7 +486,7 @@ void dump_stmt(FILE *f, const toy_stmt *stmt)
         fputs("while (\n", f);
         dump_expr(f, stmt->while_stmt.condition);
         fputs(") {\n", f);
-        dump_stmts(f, stmt->while_stmt.body);
+        dump_stmts(f, stmt->while_stmt.body.stmts);
         fputs("}", f);
         break;
     default:

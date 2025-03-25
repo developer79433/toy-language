@@ -44,6 +44,7 @@ static toy_stmt *program_start;
     toy_var_decl *var_decl;
     toy_func_decl_stmt *func_decl;
     toy_if_arm *if_arm;
+    toy_block block;
     toy_str_list *str_list;
     toy_map_entry *map_entry;
 }
@@ -56,12 +57,13 @@ static toy_stmt *program_start;
 %type <var_decl> vardecl
 %type <expr> expr expr_no_comma
 %type <str_list> formalparams formalparamlist
-%type <stmt> stmts stmt elsepart
+%type <stmt> stmts stmt
 %type <if_arm> elseifs
 %type <var_decl> vardecllist
 %type <list> actualargs actualarglist
 %type <list> listitems listitemlist
 %type <map_entry> mapitem mapitems mapitemlist
+%type <block> block elsepart
 
 %left T_COMMA
 %right T_ASSIGN
@@ -94,23 +96,23 @@ stmts :
 ;
 
 stmt :
-    T_IF T_LPAREN expr T_RPAREN T_LBRACE stmts T_RBRACE elseifs elsepart {
+    T_IF T_LPAREN expr T_RPAREN block elseifs elsepart {
         $$ = alloc_stmt(STMT_IF);
-        $$->if_stmt.arms = alloc_if_arm($3, $6);
-        $$->if_stmt.arms->next = $8;
-        $$->if_stmt.elsepart = $9;
+        $$->if_stmt.arms = alloc_if_arm($3, &$5);
+        $$->if_stmt.arms->next = $6;
+        $$->if_stmt.elsepart = $7;
     }
-    | T_WHILE T_LPAREN expr T_RPAREN T_LBRACE stmts T_RBRACE {
+    | T_WHILE T_LPAREN expr T_RPAREN block {
         $$ = alloc_stmt(STMT_WHILE);
         $$->while_stmt.condition = $3;
-        $$->while_stmt.body = $6;
+        $$->while_stmt.body = $5;
     }
-    | T_FOR T_LPAREN stmt T_SEMICOLON expr T_SEMICOLON stmt T_RPAREN T_LBRACE stmts T_RBRACE {
+    | T_FOR T_LPAREN stmt T_SEMICOLON expr T_SEMICOLON stmt T_RPAREN block {
         $$ = alloc_stmt(STMT_FOR);
         $$->for_stmt.at_start = $3;
         $$->for_stmt.condition = $5;
         $$->for_stmt.at_end = $7;
-        $$->for_stmt.body = $10;
+        $$->for_stmt.body = $9;
     }
     | T_SEMICOLON {
         $$ = alloc_stmt(STMT_NULL);
@@ -119,11 +121,11 @@ stmt :
         $$ = alloc_stmt(STMT_EXPR);
         $$->expr_stmt.expr = $1;
     }
-    | T_FUN T_IDENTIFIER T_LPAREN formalparams T_RPAREN T_LBRACE stmts T_RBRACE {
+    | T_FUN T_IDENTIFIER T_LPAREN formalparams T_RPAREN block {
         $$ = alloc_stmt(STMT_FUNC_DECL);
         $$->func_decl_stmt.def.name = $2;
         $$->func_decl_stmt.def.param_names = $4;
-        $$->func_decl_stmt.def.code = $7;
+        $$->func_decl_stmt.def.code = $6;
     }
     | T_VAR vardecllist T_SEMICOLON {
         $$ = alloc_stmt(STMT_VAR_DECL);
@@ -156,8 +158,8 @@ vardecl :
 
 elseifs :
     { $$ = NULL; }
-    | elseifs T_ELSEIF T_LPAREN expr T_RPAREN T_LBRACE stmts T_RBRACE {
-        toy_if_arm *this_arm = alloc_if_arm($4, $7);
+    | elseifs T_ELSEIF T_LPAREN expr T_RPAREN block {
+        toy_if_arm *this_arm = alloc_if_arm($4, &$6);
         
         if ($1) {
             append_if_arm($1, this_arm);
@@ -166,8 +168,8 @@ elseifs :
             $$ = this_arm;
         }
     }
-    | elseifs T_ELSE T_IF T_LPAREN expr T_RPAREN T_LBRACE stmts T_RBRACE {
-        toy_if_arm *this_arm = alloc_if_arm($5, $8);
+    | elseifs T_ELSE T_IF T_LPAREN expr T_RPAREN block {
+        toy_if_arm *this_arm = alloc_if_arm($5, &$7);
         
         if ($1) {
             append_if_arm($1, this_arm);
@@ -179,9 +181,9 @@ elseifs :
 ;
 
 elsepart :
-    { $$ = NULL; }
-    | T_ELSE T_LBRACE stmts T_RBRACE {
-        $$ = $3;
+    /* EMPTY */ {}
+    | T_ELSE block {
+        $$ = $2;
     }
 ;
 
@@ -384,8 +386,8 @@ expr_no_comma :
             map_set_expr($$->map, entry->key, entry->value);
         }
     }
-    | T_FUN T_LPAREN formalparams T_RPAREN T_LBRACE stmts T_RBRACE {
-        $$ = alloc_expr_func_decl($3, $6);
+    | T_FUN T_LPAREN formalparams T_RPAREN block {
+        $$ = alloc_expr_func_decl($3, &$5);
     }
     | T_IDENTIFIER T_LPAREN actualargs T_RPAREN {
         $$ = alloc_expr(EXPR_FUNC_CALL);
@@ -399,6 +401,12 @@ expr_no_comma :
     }
     | T_LPAREN expr T_RPAREN {
         $$ = $2;
+    }
+;
+
+block :
+    T_LBRACE stmts T_RBRACE {
+        $$.stmts = $2;
     }
 ;
 

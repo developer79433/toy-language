@@ -478,7 +478,7 @@ void single_step(const toy_stmt *stmt)
             if (cond_result.bool) {
                 break;
             }
-            toy_run(stmt->for_stmt.body);
+            toy_run(stmt->for_stmt.body.stmts);
             single_step(stmt->for_stmt.at_end);
         }
         break;
@@ -496,13 +496,13 @@ void single_step(const toy_stmt *stmt)
                 }
                 assert(EXPR_BOOL == cond_result.type);
                 if (cond_result.bool) {
-                    toy_run(arm->code);
+                    toy_run(arm->code.stmts);
                     found_one = 1;
                     break;
                 }
             }
-            if (!found_one) {
-                toy_run(stmt->if_stmt.elsepart);
+            if (!found_one && stmt->if_stmt.elsepart.stmts) {
+                toy_run(stmt->if_stmt.elsepart.stmts);
             }
         }
         break;
@@ -522,7 +522,7 @@ void single_step(const toy_stmt *stmt)
             if (cond_result.bool) {
                 break;
             }
-            toy_run(stmt->while_stmt.body);
+            toy_run(stmt->while_stmt.body.stmts);
         }
         break;
     default:
