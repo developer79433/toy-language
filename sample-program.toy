@@ -34,3 +34,4 @@ for (var i = 0; i < 10; i++, ++i, i--, --i, i = i + 1) {
         print("Odd");
     }
 }
+var tern = (arfle == barfle) ? yes : no;

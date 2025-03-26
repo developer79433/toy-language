@@ -82,6 +82,7 @@ null { return T_NULL; }
 "/" { return T_FSLASH; }
 "." { return T_DOT; }
 "%" { return T_PERCENT; }
+"?" { return T_QUESTION; }
 
 "//"[^\n]*     /* eat C++-style single-line comments */
 

@@ -483,6 +483,9 @@ void eval_expr(toy_expr *result, const toy_expr *expr)
     case EXPR_STR:
         *result = *expr;
         break;
+    case EXPR_TERNARY:
+        /* TODO */
+        break;
     case EXPR_UNEG:
         op_uneg(result, expr->unary_op.arg);
         break;

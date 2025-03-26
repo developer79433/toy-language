@@ -98,6 +98,12 @@ typedef struct toy_prefix_increment_struct {
     toy_str id;
 } toy_prefix_increment;
 
+typedef struct toy_ternary_struct {
+    toy_expr *condition;
+    toy_expr *if_true;
+    toy_expr *if_false;
+} toy_ternary;
+
 enum toy_expr_type {
     EXPR_AND = 0,
     EXPR_ASSIGN,
@@ -128,6 +134,7 @@ enum toy_expr_type {
     EXPR_PREFIX_DECREMENT,
     EXPR_PREFIX_INCREMENT,
     EXPR_STR,
+    EXPR_TERNARY,
     EXPR_UNEG
 };
 
@@ -148,6 +155,7 @@ struct toy_expr_struct {
         toy_postfix_increment postfix_increment;
         toy_prefix_decrement prefix_decrement;
         toy_prefix_increment prefix_increment;
+        toy_ternary ternary;
     };
 };
 

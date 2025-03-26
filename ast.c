@@ -439,6 +439,13 @@ void dump_expr(FILE *f, const toy_expr *expr) {
         case EXPR_STR:
             dump_str(f, expr->str);
             break;
+        case EXPR_TERNARY:
+            dump_expr(f, expr->ternary.condition);
+            fputs(" ? ", f);
+            dump_expr(f, expr->ternary.if_true);
+            fputs(" : ", f);
+            dump_expr(f, expr->ternary.if_false);
+            break;
         case EXPR_UNEG:
             fputs("-", f);
             dump_expr(f, expr->unary_op.arg);
