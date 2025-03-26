@@ -468,6 +468,12 @@ void eval_expr(toy_expr *result, const toy_expr *expr)
     case EXPR_PLUS:
         op_plus(result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
+    case EXPR_POSTFIX_DECREMENT:
+        /* TODO */
+        break;
+    case EXPR_POSTFIX_INCREMENT:
+        /* TODO */
+        break;
     case EXPR_STR:
         *result = *expr;
         break;

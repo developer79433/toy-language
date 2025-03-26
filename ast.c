@@ -215,6 +215,8 @@ static const char *toy_expr_type_names[] = {
     "numeric",
     "logical or",
     "addition",
+    "postfix decrement",
+    "postfix increment",
     "string",
     "unary negation"
 };
@@ -415,6 +417,14 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             break;
         case EXPR_PLUS:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " + ");
+            break;
+        case EXPR_POSTFIX_DECREMENT:
+            dump_identifier(f, expr->postfix_decrement.id);
+            fputs("--", f);
+            break;
+        case EXPR_POSTFIX_INCREMENT:
+            dump_identifier(f, expr->postfix_increment.id);
+            fputs("++", f);
             break;
         case EXPR_STR:
             dump_str(f, expr->str);

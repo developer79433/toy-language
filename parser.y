@@ -15,7 +15,7 @@ static toy_stmt *program_start;
 
 %}
 
-%token T_BOOLEAN T_FLOAT T_STRING T_IDENTIFIER T_EQUAL T_COMMA T_COLON T_ASTERISK T_FSLASH T_DOT T_LPAREN T_RPAREN T_LBRACKET T_RBRACKET T_LBRACE T_RBRACE T_SEMICOLON T_PLUS T_MINUS T_IF T_ELSE T_ELSEIF T_FOR T_WHILE T_VAR T_FUN T_AND T_OR T_NOT T_IN T_RETURN T_BREAK T_CONTINUE T_NULL
+%token T_BOOLEAN T_FLOAT T_STRING T_IDENTIFIER T_EQUAL T_COMMA T_COLON T_ASTERISK T_FSLASH T_DOT T_LPAREN T_RPAREN T_LBRACKET T_RBRACKET T_LBRACE T_RBRACE T_SEMICOLON T_PLUS T_MINUS T_IF T_ELSE T_ELSEIF T_FOR T_WHILE T_VAR T_FUN T_AND T_OR T_NOT T_IN T_RETURN T_BREAK T_CONTINUE T_NULL T_PLUS_PLUS T_MINUS_MINUS
 
 %union {
     toy_bool bool;
@@ -48,6 +48,7 @@ static toy_stmt *program_start;
 %type <map_entry> mapitem mapitems mapitemlist
 %type <block> block elsepart
 
+%left T_PLUS_PLUS T_MINUS_MINUS
 %left T_COMMA
 %right T_ASSIGN
 %left T_AND T_OR
@@ -469,6 +470,14 @@ expr_no_comma :
     }
     | T_LPAREN expr T_RPAREN {
         $$ = $2;
+    }
+    | T_IDENTIFIER T_MINUS_MINUS {
+        $$ = alloc_expr(EXPR_POSTFIX_DECREMENT);
+        $$->postfix_decrement.id = $1;
+    }
+    | T_IDENTIFIER T_PLUS_PLUS {
+        $$ = alloc_expr(EXPR_POSTFIX_INCREMENT);
+        $$->postfix_increment.id = $1;
     }
 ;
 

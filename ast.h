@@ -82,6 +82,14 @@ typedef struct toy_assignment_struct {
     toy_expr *rhs;
 } toy_assignment;
 
+typedef struct toy_postfix_decrement_struct {
+    toy_str id;
+} toy_postfix_decrement;
+
+typedef struct toy_postfix_increment_struct {
+    toy_str id;
+} toy_postfix_increment;
+
 enum toy_expr_type {
     EXPR_AND = 0,
     EXPR_ASSIGN,
@@ -107,6 +115,8 @@ enum toy_expr_type {
     EXPR_NUM,
     EXPR_OR,
     EXPR_PLUS,
+    EXPR_POSTFIX_DECREMENT,
+    EXPR_POSTFIX_INCREMENT,
     EXPR_STR,
     EXPR_UNEG
 };
@@ -124,6 +134,8 @@ struct toy_expr_struct {
         toy_binary_op binary_op;
         toy_func_expr func_decl;
         toy_assignment assignment;
+        toy_postfix_decrement postfix_decrement;
+        toy_postfix_increment postfix_increment;
     };
 };
 
