@@ -49,6 +49,7 @@ and { return T_AND; }
 or { return T_OR; }
 not { return T_NOT; }
 in { return T_IN; }
+return { return T_RETURN; }
 
 {IDENTIFIER}        { yylval.str = strdup(yytext); return T_IDENTIFIER; }
 

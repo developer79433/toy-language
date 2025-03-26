@@ -525,6 +525,9 @@ void single_step(const toy_stmt *stmt)
             toy_run(stmt->while_stmt.body.stmts);
         }
         break;
+    case STMT_RETURN:
+        /* TODO */
+        break;
     default:
         invalid_stmt_type(stmt->type);
         break;

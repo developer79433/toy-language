@@ -31,7 +31,7 @@ static toy_stmt *program_start;
 
 %}
 
-%token T_BOOLEAN T_FLOAT T_STRING T_IDENTIFIER T_EQUAL T_COMMA T_COLON T_ASTERISK T_FSLASH T_DOT T_LPAREN T_RPAREN T_LBRACKET T_RBRACKET T_LBRACE T_RBRACE T_SEMICOLON T_PLUS T_MINUS T_IF T_ELSE T_ELSEIF T_FOR T_WHILE T_VAR T_FUN T_AND T_OR T_NOT T_IN
+%token T_BOOLEAN T_FLOAT T_STRING T_IDENTIFIER T_EQUAL T_COMMA T_COLON T_ASTERISK T_FSLASH T_DOT T_LPAREN T_RPAREN T_LBRACKET T_RBRACKET T_LBRACE T_RBRACE T_SEMICOLON T_PLUS T_MINUS T_IF T_ELSE T_ELSEIF T_FOR T_WHILE T_VAR T_FUN T_AND T_OR T_NOT T_IN T_RETURN
 
 %union {
     toy_bool bool;
@@ -131,6 +131,14 @@ stmt :
     | T_VAR vardecllist T_SEMICOLON {
         $$ = alloc_stmt(STMT_VAR_DECL);
         $$->var_decl_stmt = $2;
+    }
+    | T_RETURN T_SEMICOLON {
+        $$ = alloc_stmt(STMT_RETURN);
+        $$->return_stmt.expr = NULL;
+    }
+    | T_RETURN expr T_SEMICOLON {
+        $$ = alloc_stmt(STMT_RETURN);
+        $$->return_stmt.expr = $2;
     }
 ;
 

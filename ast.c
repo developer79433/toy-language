@@ -489,6 +489,11 @@ void dump_stmt(FILE *f, const toy_stmt *stmt)
         dump_stmts(f, stmt->while_stmt.body.stmts);
         fputs("}", f);
         break;
+    case STMT_RETURN:
+        fputs("return ", f);
+        dump_expr(f, stmt->return_stmt.expr);
+        fputc(';', f);
+        break;
     default:
         invalid_stmt_type(stmt->type);
         break;

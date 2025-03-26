@@ -4,8 +4,9 @@ var mymap = { "mykey": 123, "myotherkey": "myothervalue" };
 var mval = [ 345.6, {"blah": (42, 3)}, "foo"];
 fun myfunction() {
     var i = 0;
+    return i + 1;
 }
-var myfunc = fun(formalparam1, formalparam2) { 42; };
+var myfunc = fun(formalparam1, formalparam2) { 42; return; };
 var sixty = 28 * 2 + 4, noval, bignum = 12345678.9;
 "test", "comma", "operator", "last";
 1 + 2 + 3 + 4;

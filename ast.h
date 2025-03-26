@@ -140,6 +140,10 @@ typedef struct toy_expr_stmt_struct {
     toy_expr *expr;
 } toy_expr_stmt;
 
+typedef struct toy_return_stmt_struct {
+    toy_expr *expr;
+} toy_return_stmt;
+
 struct toy_if_arm_struct;
 typedef struct toy_if_arm_struct {
     toy_expr *condition;
@@ -171,7 +175,8 @@ enum toy_stmt_type {
     STMT_NULL,
     STMT_IF,
     STMT_VAR_DECL,
-    STMT_WHILE
+    STMT_WHILE,
+    STMT_RETURN
 };
 
 struct toy_stmt_struct {
@@ -184,6 +189,7 @@ struct toy_stmt_struct {
         toy_while_stmt while_stmt;
         toy_var_decl *var_decl_stmt;
         toy_func_decl_stmt func_decl_stmt;
+        toy_return_stmt return_stmt;
     };
 };
 
