@@ -90,6 +90,14 @@ typedef struct toy_postfix_increment_struct {
     toy_str id;
 } toy_postfix_increment;
 
+typedef struct toy_prefix_decrement_struct {
+    toy_str id;
+} toy_prefix_decrement;
+
+typedef struct toy_prefix_increment_struct {
+    toy_str id;
+} toy_prefix_increment;
+
 enum toy_expr_type {
     EXPR_AND = 0,
     EXPR_ASSIGN,
@@ -117,6 +125,8 @@ enum toy_expr_type {
     EXPR_PLUS,
     EXPR_POSTFIX_DECREMENT,
     EXPR_POSTFIX_INCREMENT,
+    EXPR_PREFIX_DECREMENT,
+    EXPR_PREFIX_INCREMENT,
     EXPR_STR,
     EXPR_UNEG
 };
@@ -136,6 +146,8 @@ struct toy_expr_struct {
         toy_assignment assignment;
         toy_postfix_decrement postfix_decrement;
         toy_postfix_increment postfix_increment;
+        toy_prefix_decrement prefix_decrement;
+        toy_prefix_increment prefix_increment;
     };
 };
 

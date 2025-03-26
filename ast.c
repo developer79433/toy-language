@@ -217,6 +217,8 @@ static const char *toy_expr_type_names[] = {
     "addition",
     "postfix decrement",
     "postfix increment",
+    "prefix decrement",
+    "prefix increment",
     "string",
     "unary negation"
 };
@@ -425,6 +427,14 @@ void dump_expr(FILE *f, const toy_expr *expr) {
         case EXPR_POSTFIX_INCREMENT:
             dump_identifier(f, expr->postfix_increment.id);
             fputs("++", f);
+            break;
+        case EXPR_PREFIX_DECREMENT:
+            fputs("--", f);
+            dump_identifier(f, expr->prefix_decrement.id);
+            break;
+        case EXPR_PREFIX_INCREMENT:
+            fputs("++", f);
+            dump_identifier(f, expr->prefix_increment.id);
             break;
         case EXPR_STR:
             dump_str(f, expr->str);

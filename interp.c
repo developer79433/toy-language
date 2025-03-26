@@ -474,6 +474,12 @@ void eval_expr(toy_expr *result, const toy_expr *expr)
     case EXPR_POSTFIX_INCREMENT:
         /* TODO */
         break;
+    case EXPR_PREFIX_DECREMENT:
+        /* TODO */
+        break;
+    case EXPR_PREFIX_INCREMENT:
+        /* TODO */
+        break;
     case EXPR_STR:
         *result = *expr;
         break;

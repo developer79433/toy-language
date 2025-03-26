@@ -48,7 +48,6 @@ static toy_stmt *program_start;
 %type <map_entry> mapitem mapitems mapitemlist
 %type <block> block elsepart
 
-%left T_PLUS_PLUS T_MINUS_MINUS
 %left T_COMMA
 %right T_ASSIGN
 %left T_AND T_OR
@@ -478,6 +477,14 @@ expr_no_comma :
     | T_IDENTIFIER T_PLUS_PLUS {
         $$ = alloc_expr(EXPR_POSTFIX_INCREMENT);
         $$->postfix_increment.id = $1;
+    }
+    | T_MINUS_MINUS T_IDENTIFIER {
+        $$ = alloc_expr(EXPR_PREFIX_DECREMENT);
+        $$->prefix_decrement.id = $2;
+    }
+    | T_PLUS_PLUS T_IDENTIFIER {
+        $$ = alloc_expr(EXPR_PREFIX_INCREMENT);
+        $$->prefix_increment.id = $2;
     }
 ;
 
