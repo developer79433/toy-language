@@ -318,6 +318,13 @@ static void dump_binary_op(FILE *f, const toy_expr *arg1, const toy_expr *arg2, 
     fputc(')', f);
 }
 
+static void dump_assignment(FILE *f, const toy_str lhs, const toy_expr *rhs)
+{
+    dump_identifier(f, lhs);
+    fputs(" = ", f);
+    dump_expr(f, rhs);
+}
+
 void dump_expr(FILE *f, const toy_expr *expr) {
     if (expr) {
         switch (expr->type) {
@@ -325,7 +332,7 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " and ");
             break;
         case EXPR_ASSIGN:
-            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " = ");
+            dump_assignment(f, expr->assignment.lhs, expr->assignment.rhs);
             break;
         case EXPR_BOOL:
             fputs(expr->bool ? "True" : "False", f);
@@ -341,12 +348,14 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             break;
         case EXPR_FUNC_CALL:
             fprintf(f, "%s(", expr->func_call.func_name);
-            toy_list *arg;
-            for (arg = expr->func_call.args; arg->next; arg = arg->next) {
+            unsigned int output_something = 0;
+            for (toy_list *arg = expr->func_call.args; arg->next; arg = arg->next) {
+                if (output_something) {
+                    fputs(", ", f);
+                }
                 dump_expr(f, arg->expr);
-                fputs(", ", f);
+                output_something = 1;
             }
-            dump_expr(f, arg->expr);
             fputs(")", f);
             break;
         case EXPR_FUNC_DECL:
@@ -419,22 +428,34 @@ void dump_expr(FILE *f, const toy_expr *expr) {
     }
 }
 
-void dump_stmt(FILE *f, const toy_stmt *stmt)
+void dump_stmt(FILE *f, const toy_stmt *stmt, int append_semicolon)
 {
     switch (stmt->type) {
     case STMT_EXPR:
         dump_expr(f, stmt->expr_stmt.expr);
-        fputs(";", f);
+        if (append_semicolon) {
+            fputc(';', f);
+        }
         break;
     case STMT_FOR:
         fputs("for (", f);
-        dump_stmt(f, stmt->for_stmt.at_start);
+        if (stmt->for_stmt.at_start) {
+            dump_stmt(f, stmt->for_stmt.at_start, 1);
+        }
+        fputc(' ', f);
+        if (stmt->for_stmt.condition) {
+            dump_expr(f, stmt->for_stmt.condition);
+        } else {
+            fputs("true", f);
+        }
         fputs("; ", f);
-        dump_expr(f, stmt->for_stmt.condition);
-        fputs("; ", f);
-        dump_stmt(f, stmt->for_stmt.at_end);
+        if (stmt->for_stmt.at_end) {
+            dump_stmt(f, stmt->for_stmt.at_end, 0);
+        }
         fputs(") {\n", f);
-        dump_stmts(f, stmt->for_stmt.body.stmts);
+        if (stmt->for_stmt.body.stmts) {
+            dump_stmts(f, stmt->for_stmt.body.stmts);
+        }
         fputs("}", f);
         break;
     case STMT_FUNC_DECL:
@@ -467,7 +488,9 @@ void dump_stmt(FILE *f, const toy_stmt *stmt)
         }
         break;
     case STMT_NULL:
-        fputc(';', f);
+        if (append_semicolon) {
+            fputc(';', f);
+        }
         break;
     case STMT_VAR_DECL:
         fputs("var ", f);
@@ -483,7 +506,9 @@ void dump_stmt(FILE *f, const toy_stmt *stmt)
             }
             output_something = 1;
         }
-        fputs(";", f);
+        if (append_semicolon) {
+            fputc(';', f);
+        }
         break;
     case STMT_WHILE:
         fputs("while (\n", f);
@@ -495,24 +520,32 @@ void dump_stmt(FILE *f, const toy_stmt *stmt)
     case STMT_RETURN:
         fputs("return ", f);
         dump_expr(f, stmt->return_stmt.expr);
-        fputc(';', f);
+        if (append_semicolon) {
+            fputc(';', f);
+        }
         break;
     case STMT_BREAK:
-        fputs("break;", f);
+        fputs("break", f);
+        if (append_semicolon) {
+            fputc(';', f);
+        }
         break;
     case STMT_CONTINUE:
-        fputs("continue;", f);
+        fputs("continue", f);
+        if (append_semicolon) {
+            fputc(';', f);
+        }
         break;
     default:
         invalid_stmt_type(stmt->type);
         break;
     }
-    fputc('\n', f);
 }
 
 void dump_stmts(FILE *f, const toy_stmt *stmts)
 {
     for (const toy_stmt *s = stmts; s; s = s->next) {
-        dump_stmt(f, s);
+        dump_stmt(f, s, 1);
+        fputc('\n', f);
     }
 }

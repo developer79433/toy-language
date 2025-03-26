@@ -31,7 +31,7 @@ static toy_stmt *program_start;
 
 %}
 
-%token T_BOOLEAN T_FLOAT T_STRING T_IDENTIFIER T_EQUAL T_COMMA T_COLON T_ASTERISK T_FSLASH T_DOT T_LPAREN T_RPAREN T_LBRACKET T_RBRACKET T_LBRACE T_RBRACE T_SEMICOLON T_PLUS T_MINUS T_IF T_ELSE T_ELSEIF T_FOR T_WHILE T_VAR T_FUN T_AND T_OR T_NOT T_IN T_RETURN T_BREAK T_CONTINUE
+%token T_BOOLEAN T_FLOAT T_STRING T_IDENTIFIER T_EQUAL T_COMMA T_COLON T_ASTERISK T_FSLASH T_DOT T_LPAREN T_RPAREN T_LBRACKET T_RBRACKET T_LBRACE T_RBRACE T_SEMICOLON T_PLUS T_MINUS T_IF T_ELSE T_ELSEIF T_FOR T_WHILE T_VAR T_FUN T_AND T_OR T_NOT T_IN T_RETURN T_BREAK T_CONTINUE T_NULL
 
 %union {
     toy_bool bool;
@@ -42,7 +42,6 @@ static toy_stmt *program_start;
     toy_expr *expr;
     toy_stmt *stmt;
     toy_var_decl *var_decl;
-    toy_func_decl_stmt *func_decl;
     toy_if_arm *if_arm;
     toy_block block;
     toy_str_list *str_list;
@@ -55,9 +54,9 @@ static toy_stmt *program_start;
 %type <num> T_FLOAT
 %type <str> T_STRING T_IDENTIFIER
 %type <var_decl> vardecl
-%type <expr> expr expr_no_comma
+%type <expr> expr expr_no_comma optional_expr
 %type <str_list> formalparams formalparamlist
-%type <stmt> stmts stmt
+%type <stmt> stmts stmt if_stmt while_stmt for_stmt null_stmt expr_stmt func_decl_stmt var_decl_stmt return_stmt break_stmt continue_stmt stmt_requiring_semicolon stmt_in_for_atstart stmt_in_for_atend
 %type <if_arm> elseifs
 %type <var_decl> vardecllist
 %type <list> actualargs actualarglist
@@ -97,54 +96,119 @@ stmts :
 ;
 
 stmt :
+    if_stmt
+    | while_stmt
+    | for_stmt
+    | func_decl_stmt
+    | stmt_requiring_semicolon T_SEMICOLON
+;
+
+stmt_requiring_semicolon:
+    null_stmt
+    | expr_stmt
+    | var_decl_stmt
+    | return_stmt
+    | break_stmt
+    | continue_stmt
+;
+
+stmt_in_for_atstart:
+    null_stmt
+    | expr_stmt
+    | var_decl_stmt
+;
+
+stmt_in_for_atend:
+    null_stmt
+    | expr_stmt
+;
+
+if_stmt:
     T_IF T_LPAREN expr T_RPAREN block elseifs elsepart {
         $$ = alloc_stmt(STMT_IF);
         $$->if_stmt.arms = alloc_if_arm($3, &$5);
         $$->if_stmt.arms->next = $6;
         $$->if_stmt.elsepart = $7;
     }
-    | T_WHILE T_LPAREN expr T_RPAREN block {
+;
+
+while_stmt:
+    T_WHILE T_LPAREN expr T_RPAREN block {
         $$ = alloc_stmt(STMT_WHILE);
         $$->while_stmt.condition = $3;
         $$->while_stmt.body = $5;
     }
-    | T_FOR T_LPAREN stmt T_SEMICOLON expr T_SEMICOLON stmt T_RPAREN block {
+;
+
+for_stmt:
+    T_FOR T_LPAREN stmt_in_for_atstart T_SEMICOLON optional_expr T_SEMICOLON stmt_in_for_atend T_RPAREN block {
         $$ = alloc_stmt(STMT_FOR);
         $$->for_stmt.at_start = $3;
         $$->for_stmt.condition = $5;
         $$->for_stmt.at_end = $7;
         $$->for_stmt.body = $9;
+        /* TODO: crashes */
+        /* dump_stmt(stderr, $$->for_stmt.at_end, 1); */
     }
-    | T_SEMICOLON {
+;
+
+null_stmt:
+    /* EMPTY */ {
         $$ = alloc_stmt(STMT_NULL);
     }
-    | expr T_SEMICOLON {
+;
+
+expr_stmt:
+    expr {
         $$ = alloc_stmt(STMT_EXPR);
         $$->expr_stmt.expr = $1;
     }
-    | T_FUN T_IDENTIFIER T_LPAREN formalparams T_RPAREN block {
+
+func_decl_stmt:
+    T_FUN T_IDENTIFIER T_LPAREN formalparams T_RPAREN block {
         $$ = alloc_stmt(STMT_FUNC_DECL);
         $$->func_decl_stmt.def.name = $2;
         $$->func_decl_stmt.def.param_names = $4;
         $$->func_decl_stmt.def.code = $6;
     }
-    | T_VAR vardecllist T_SEMICOLON {
+;
+
+var_decl_stmt:
+    T_VAR vardecllist {
         $$ = alloc_stmt(STMT_VAR_DECL);
         $$->var_decl_stmt = $2;
     }
-    | T_RETURN T_SEMICOLON {
+;
+
+return_stmt:
+    T_RETURN {
         $$ = alloc_stmt(STMT_RETURN);
         $$->return_stmt.expr = NULL;
     }
-    | T_RETURN expr T_SEMICOLON {
+    | T_RETURN expr {
         $$ = alloc_stmt(STMT_RETURN);
         $$->return_stmt.expr = $2;
     }
-    | T_BREAK T_SEMICOLON {
+;
+
+break_stmt:
+    T_BREAK {
         $$ = alloc_stmt(STMT_BREAK);
     }
-    | T_CONTINUE T_SEMICOLON {
+;
+
+continue_stmt:
+    T_CONTINUE {
         $$ = alloc_stmt(STMT_CONTINUE);
+    }
+;
+
+optional_expr :
+    /* EMPTY */ {
+        $$ = NULL;
+    }
+    | expr {
+        $$ = $1;
     }
 ;
 
@@ -413,6 +477,7 @@ expr_no_comma :
         $$ = alloc_expr(EXPR_ASSIGN);
         $$->assignment.lhs = $1;
         $$->assignment.rhs = $3;
+        dump_expr(stderr, $$);
     }
     | T_LPAREN expr T_RPAREN {
         $$ = $2;

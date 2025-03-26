@@ -22,5 +22,14 @@ if (1 == 2) {
 } else {
     print("else");
 }
+;
 break;
 continue;
+j = j + 1;
+for (var i = 0; i < 10; i = i - 1) {
+    if (count) {
+        break;
+    } else {
+        continue;
+    }
+}

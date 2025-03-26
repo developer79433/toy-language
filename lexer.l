@@ -52,6 +52,7 @@ in { return T_IN; }
 return { return T_RETURN; }
 break { return T_BREAK; }
 continue { return T_CONTINUE; }
+null { return T_NULL; }
 
 {IDENTIFIER}        { yylval.str = strdup(yytext); return T_IDENTIFIER; }
 

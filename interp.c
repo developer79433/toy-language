@@ -467,19 +467,25 @@ void single_step(const toy_stmt *stmt)
         eval_expr(&result, stmt->expr_stmt.expr);
         break;
     case STMT_FOR:
-        single_step(stmt->for_stmt.at_start);
+        if (stmt->for_stmt.at_start) {
+            single_step(stmt->for_stmt.at_start);
+        }
         for (;;) {
-            toy_expr cond_result;
-            eval_expr(&cond_result, stmt->for_stmt.condition);
-            if (EXPR_BOOL != cond_result.type) {
-                invalid_operand(EXPR_BOOL, &cond_result);
-            }
-            assert(EXPR_BOOL == cond_result.type);
-            if (cond_result.bool) {
-                break;
+            if (stmt->for_stmt.condition) {
+                toy_expr cond_result;
+                eval_expr(&cond_result, stmt->for_stmt.condition);
+                if (EXPR_BOOL != cond_result.type) {
+                    invalid_operand(EXPR_BOOL, &cond_result);
+                }
+                assert(EXPR_BOOL == cond_result.type);
+                if (cond_result.bool) {
+                    break;
+                }
             }
             toy_run(stmt->for_stmt.body.stmts);
-            single_step(stmt->for_stmt.at_end);
+            if (stmt->for_stmt.at_end) {
+                single_step(stmt->for_stmt.at_end);
+            }
         }
         break;
     case STMT_FUNC_DECL:

@@ -169,6 +169,7 @@ typedef struct toy_while_stmt_struct {
 } toy_while_stmt;
 
 /* TODO: Sort these alphabetically */
+/* TODO: switch statement */
 enum toy_stmt_type {
     STMT_EXPR = 0,
     STMT_FOR,
@@ -207,7 +208,7 @@ void dump_identifier_list(FILE *f, const toy_str_list *list);
 void dump_list(FILE *f, toy_list *list);
 void dump_expr(FILE *f, const toy_expr *expr);
 void dump_stmts(FILE *f, const toy_stmt *stmts);
-void dump_stmt(FILE *f, const toy_stmt *stmts);
+void dump_stmt(FILE *f, const toy_stmt *stmt, int append_semicolon);
 toy_stmt *alloc_stmt(enum toy_stmt_type type);
 toy_map_entry *alloc_map_entry(toy_expr *key, toy_expr *value);
 toy_if_arm *alloc_if_arm(toy_expr *condition, toy_block *code);
