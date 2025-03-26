@@ -16,8 +16,10 @@
 %x C_COMMENT
 
 DIGIT      [0-9]
-IDENTIFIER [a-z][a-z0-9]*
+IDENTIFIER [a-z][a-z0-9A-Z_]*
 SEMICOLON  ";"
+TRUE (?i:true)
+FALSE (?i:false)
 
 %%
 
@@ -36,8 +38,8 @@ SEMICOLON  ";"
     return T_STRING;
 }
 
-true { yylval.num = 1; return T_BOOLEAN; }
-false { yylval.num = 0; return T_BOOLEAN; }
+{TRUE} { yylval.bool = 1; return T_BOOLEAN; }
+{FALSE} { yylval.bool = 0; return T_BOOLEAN; }
 if { return T_IF; }
 else { return T_ELSE; }
 elseif { return T_ELSEIF; }
@@ -82,7 +84,7 @@ null { return T_NULL; }
 
 [ \t\n]+       /* eat whitespace */
 
-.           { printf( "Unrecognized character: %s\n", yytext ); abort(); }
+.           { fprintf(stderr, "Unrecognized character: %s\n", yytext); abort(); }
 
 "/*"            { BEGIN(C_COMMENT); }
 <C_COMMENT>"*/" { BEGIN(INITIAL); }

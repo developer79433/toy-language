@@ -10,22 +10,6 @@
 extern int yylex (void);
 void yyerror(const char *s);
 #define ELEMENTSOF(arr) (sizeof(arr) / sizeof((arr)[0]))
-static const char *true_strings[] = {
-    "true",
-    "on",
-    "yes",
-    "enable",
-    "enabled"
-};
-
-int bool2int(const char *boolstr) {
-    for (const char **p = &true_strings[0]; p < &true_strings[ELEMENTSOF(true_strings)]; p++) {
-        if (0 == strcasecmp(*p, boolstr)) {
-            return 1;
-        }
-    }
-    return 0;
-}
 
 static toy_stmt *program_start;
 
@@ -477,7 +461,6 @@ expr_no_comma :
         $$ = alloc_expr(EXPR_ASSIGN);
         $$->assignment.lhs = $1;
         $$->assignment.rhs = $3;
-        dump_expr(stderr, $$);
     }
     | T_LPAREN expr T_RPAREN {
         $$ = $2;
@@ -527,7 +510,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "yyparse() returned %d\n", parse_res);
         return EXIT_FAILURE;
     }
-    test_maps();
+    /* test_maps(); */
     dump_stmts(stderr, program_start);
     toy_run(program_start);
     return EXIT_SUCCESS;
