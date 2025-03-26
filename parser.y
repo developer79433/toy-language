@@ -434,6 +434,11 @@ expr_no_comma :
         $$->binary_op.arg1 = $1;
         $$->binary_op.arg2 = $3;
     }
+    | expr_no_comma T_PERCENT expr_no_comma {
+        $$ = alloc_binary_op_expr(EXPR_MODULUS);
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
+    }
     | T_MINUS expr_no_comma {
         $$ = alloc_unary_op_expr(EXPR_UNEG);
         $$->unary_op.arg = $2;

@@ -356,6 +356,24 @@ static void op_plus(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2
     }
 }
 
+static void op_modulus(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
+{
+    toy_expr arg_result1, arg_result2;
+
+    eval_expr(&arg_result1, arg1);
+    if (arg_result1.type != EXPR_NUM) {
+        invalid_operand(EXPR_MODULUS, &arg_result1);
+        return;
+    }
+    eval_expr(&arg_result2, arg2);
+    if (arg_result2.type == EXPR_NUM) {
+        invalid_operand(EXPR_MODULUS, &arg_result2);
+        return;
+    }
+    result->type = EXPR_NUM;
+    result->num = (int) arg_result1.num % (int) arg_result2.num;
+}
+
 static void op_uneg(toy_expr *result, const toy_expr *arg)
 {
     toy_expr arg_result;
@@ -427,6 +445,9 @@ void eval_expr(toy_expr *result, const toy_expr *expr)
         break;
     case EXPR_MINUS:
         op_minus(result, expr->binary_op.arg1, expr->binary_op.arg2);
+        break;
+    case EXPR_MODULUS:
+        op_modulus(result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_MUL:
         op_mul(result, expr->binary_op.arg1, expr->binary_op.arg2);

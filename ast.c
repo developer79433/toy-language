@@ -208,6 +208,7 @@ static const char *toy_expr_type_names[] = {
     "less than or equal to",
     "map",
     "subtraction",
+    "modulus",
     "multiplication",
     "not equal to",
     "logical inverse",
@@ -349,7 +350,7 @@ void dump_expr(FILE *f, const toy_expr *expr) {
         case EXPR_FUNC_CALL:
             fprintf(f, "%s(", expr->func_call.func_name);
             unsigned int output_something = 0;
-            for (toy_list *arg = expr->func_call.args; arg->next; arg = arg->next) {
+            for (toy_list *arg = expr->func_call.args; arg; arg = arg->next) {
                 if (output_something) {
                     fputs(", ", f);
                 }
@@ -391,6 +392,9 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             break;
         case EXPR_MINUS:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " - ");
+            break;
+        case EXPR_MODULUS:
+            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " % ");
             break;
         case EXPR_MUL:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " * ");

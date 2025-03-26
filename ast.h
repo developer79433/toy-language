@@ -100,6 +100,7 @@ enum toy_expr_type {
     EXPR_LTE,
     EXPR_MAP,
     EXPR_MINUS,
+    EXPR_MODULUS,
     EXPR_MUL,
     EXPR_NEQUAL,
     EXPR_NOT,
