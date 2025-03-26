@@ -168,6 +168,7 @@ typedef struct toy_while_stmt_struct {
     toy_block body;
 } toy_while_stmt;
 
+/* TODO: Sort these alphabetically */
 enum toy_stmt_type {
     STMT_EXPR = 0,
     STMT_FOR,
@@ -176,7 +177,9 @@ enum toy_stmt_type {
     STMT_IF,
     STMT_VAR_DECL,
     STMT_WHILE,
-    STMT_RETURN
+    STMT_RETURN,
+    STMT_BREAK,
+    STMT_CONTINUE
 };
 
 struct toy_stmt_struct {

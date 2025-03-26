@@ -528,6 +528,12 @@ void single_step(const toy_stmt *stmt)
     case STMT_RETURN:
         /* TODO */
         break;
+    case STMT_BREAK:
+        /* TODO */
+        break;
+    case STMT_CONTINUE:
+        /* TODO */
+        break;
     default:
         invalid_stmt_type(stmt->type);
         break;

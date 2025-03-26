@@ -230,7 +230,10 @@ static const char *toy_stmt_type_names[] = {
     "null statement",
     "if statement",
     "variable declaration",
-    "while loop"
+    "while loop",
+    "return statement",
+    "break statement",
+    "continue statement"
 };
 
 const char *toy_stmt_type_name(enum toy_stmt_type stmt_type)
@@ -493,6 +496,12 @@ void dump_stmt(FILE *f, const toy_stmt *stmt)
         fputs("return ", f);
         dump_expr(f, stmt->return_stmt.expr);
         fputc(';', f);
+        break;
+    case STMT_BREAK:
+        fputs("break;", f);
+        break;
+    case STMT_CONTINUE:
+        fputs("continue;", f);
         break;
     default:
         invalid_stmt_type(stmt->type);
