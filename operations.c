@@ -3,6 +3,7 @@
 #include <math.h>
 
 #include "operations.h"
+#include "interp.h"
 
 void op_and(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
 {
@@ -326,7 +327,19 @@ void op_ternary(toy_interp *interp, toy_expr *result, toy_expr *condition, toy_e
     }
 }
 
-void op_method_call(toy_interp *interp, toy_str target, toy_str func_name, toy_list *args)
+static toy_expr *lookup_field(toy_expr *target, toy_str field_name)
 {
     /* TODO */
+    return NULL;
+}
+
+void op_method_call(toy_interp *interp, toy_expr *result, toy_str target_name, toy_str method_name, toy_list *args)
+{
+    toy_expr *target = lookup_identifier(interp, target_name);
+    toy_expr *field = lookup_field(target, method_name);
+    if (field->type == EXPR_FUNC_DECL) {
+        run_toy_function(interp, result, &field->func_decl.def.code, field->func_decl.def.param_names, args);
+    } else {
+        invalid_operand(EXPR_FUNC_CALL, field);
+    }
 }

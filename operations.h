@@ -22,6 +22,6 @@ void op_modulus(toy_interp *interp, toy_expr *result, const toy_expr *arg1, cons
 void op_uneg(toy_interp *interp, toy_expr *result, const toy_expr *arg);
 void op_exponent(toy_interp *interp, toy_expr *result, const toy_expr *base, const toy_expr *power);
 void op_ternary(toy_interp *interp, toy_expr *result, toy_expr *condition, toy_expr *if_true, toy_expr *if_false);
-void op_method_call(toy_interp *interp, toy_str target, toy_str func_name, toy_list *args);
+void op_method_call(toy_interp *interp, toy_expr *result, toy_str target_name, toy_str method_name, toy_list *args);
 
 #endif /* OPERATIONS_H */

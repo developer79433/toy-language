@@ -207,7 +207,7 @@ static int is_predefined(toy_str name)
     return 0;
 }
 
-static toy_expr *lookup_identifier(toy_interp *interp, const toy_str name)
+toy_expr *lookup_identifier(toy_interp *interp, const toy_str name)
 {
     for (
         const predefined_constant *constant = &predefined_constants[0];
@@ -289,7 +289,7 @@ static void op_assign(toy_interp *interp, toy_expr *result, toy_str name, toy_ex
     }
 }
 
-static void run_toy_function(toy_interp *interp, toy_expr *result, toy_block *block, toy_str_list *arg_name, toy_list *arg)
+void run_toy_function(toy_interp *interp, toy_expr *result, toy_block *block, toy_str_list *arg_name, toy_list *arg)
 {
     push_context(interp, block);
     /* TODO: set arguments into block environment */
@@ -300,7 +300,7 @@ static void run_toy_function(toy_interp *interp, toy_expr *result, toy_block *bl
     pop_context(interp);
 }
 
-static void call_func(toy_interp *interp, toy_expr *result, toy_str func_name, toy_list *args)
+void call_func(toy_interp *interp, toy_expr *result, toy_str func_name, toy_list *args)
 {
     predefined_func_addr predef = lookup_predefined_function(func_name);
     if (predef) {
@@ -409,7 +409,7 @@ void eval_expr(toy_interp *interp, toy_expr *result, const toy_expr *expr)
         *result = *expr;
         break;
     case EXPR_METHOD_CALL:
-        op_method_call(interp, expr->method_call.target, expr->method_call.func_name, expr->method_call.args);
+        op_method_call(interp, result, expr->method_call.target, expr->method_call.func_name, expr->method_call.args);
         break;
     case EXPR_MINUS:
         op_minus(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
