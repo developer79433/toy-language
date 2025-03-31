@@ -23,5 +23,6 @@ void op_uneg(toy_interp *interp, toy_expr *result, const toy_expr *arg);
 void op_exponent(toy_interp *interp, toy_expr *result, const toy_expr *base, const toy_expr *power);
 void op_ternary(toy_interp *interp, toy_expr *result, toy_expr *condition, toy_expr *if_true, toy_expr *if_false);
 void op_method_call(toy_interp *interp, toy_expr *result, toy_str target_name, toy_str method_name, toy_list *args);
+void op_field_ref(toy_interp *interp, toy_expr *result, toy_str target_name, toy_str field_name);
 
 #endif /* OPERATIONS_H */

@@ -371,7 +371,7 @@ void eval_expr(toy_interp *interp, toy_expr *result, const toy_expr *expr)
         op_exponent(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_FIELD_REF:
-        /* TODO */
+        op_field_ref(interp, result, expr->field_ref.lhs, expr->field_ref.rhs);
         break;
     case EXPR_FUNC_CALL:
         call_func(interp, result, expr->func_call.func_name, expr->func_call.args);
