@@ -11,6 +11,7 @@
 #include "util.h"
 #include "dump.h"
 #include "operations.h"
+#include "constants.h"
 
 toy_bool convert_to_bool(const toy_expr *expr)
 {
@@ -106,34 +107,6 @@ static void pop_context(toy_interp *interp)
     /* TODO */
 }
 
-static const toy_expr null_expr = { .type = EXPR_NULL };
-static toy_expr true_expr = { .type = EXPR_BOOL, .num = 1 };
-static toy_expr false_expr = { .type = EXPR_BOOL, .num = 0 };
-typedef struct predefined_constant_struct {
-    toy_str name;
-    const toy_expr *value;
-} predefined_constant;
-
-static predefined_constant predefined_constants[] = {
-    { "null", &null_expr },
-    { "true", &true_expr },
-    { "false", &false_expr }
-};
-
-static const toy_expr *lookup_predefined_constant(toy_str name)
-{
-    for (
-        const predefined_constant *constant = &predefined_constants[0];
-        constant < &predefined_constants[ELEMENTSOF(predefined_constants)];
-        constant++)
-    {
-        if (0 == strcasecmp(constant->name, name)) {
-            return constant->value;
-        }
-    }
-    return NULL;
-}
-
 typedef void (*predefined_func_addr)(toy_interp *interp, toy_expr *result, toy_list *args);
 
 typedef struct predefined_function_struct {
@@ -209,14 +182,9 @@ static int is_predefined(toy_str name)
 
 toy_expr *lookup_identifier(toy_interp *interp, const toy_str name)
 {
-    for (
-        const predefined_constant *constant = &predefined_constants[0];
-        constant < &predefined_constants[ELEMENTSOF(predefined_constants)];
-        constant++)
-    {
-        if (0 == strcasecmp(constant->name, name)) {
-            return (toy_expr *) constant->value;
-        }
+    toy_expr *predef_const = lookup_predefined_constant(name);
+    if (predef_const) {
+        return predef_const;
     }
     predefined_func_addr func = lookup_predefined_function(name);
     if (func) {
