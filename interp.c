@@ -468,7 +468,9 @@ static const char *predefined_list_len_arg_names[] = {
 static void predefined_print(toy_interp *interp, toy_expr *result, toy_list *args)
 {
     for (toy_list *arg = args; arg; arg = arg->next) {
-        dump_expr(stderr, arg->expr);
+        toy_expr arg_result;
+        eval_expr(interp, &arg_result, arg->expr);
+        dump_expr(stderr, &arg_result);
         fputc('\n', stderr);
     }
     *result = null_expr;

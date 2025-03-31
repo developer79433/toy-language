@@ -223,6 +223,7 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             break;
         }
     } else {
+        /* TODO: Use null_expr */
         fputs("null", f);
     }
 }
