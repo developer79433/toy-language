@@ -32,15 +32,15 @@ static toy_stmt *program_start;
     toy_map_entry *map_entry;
 }
 
-%define parse.error detailed
+%define parse.error verbose
 
 %type <bool> T_BOOLEAN
 %type <num> T_FLOAT
 %type <str> T_STRING T_IDENTIFIER
 %type <var_decl> vardecl
-%type <expr> expr expr_no_comma optional_expr
+%type <expr> expr expr_no_comma optional_expr literal prefix_increment prefix_decrement postfix_increment postfix_decrement ternary assignment_expr bracketed_subexpr function_call_expr function_decl_expr map_expr listexpr unary_neg_expr modulus_expr equal_expr nequal_expr lt_expr lte_expr gt_expr gte_expr in_expr and_expr or_expr not_expr add_expr divide_expr multiply_expr subtract_expr comma_expr_with_side_effect comma_expr_without_side_effect expr_with_side_effect_no_comma expr_without_side_effect_no_comma expr_with_side_effect_allow_comma expr_without_side_effect_allow_comma
 %type <str_list> formalparams formalparamlist
-%type <stmt> stmts stmt if_stmt while_stmt for_stmt null_stmt expr_stmt func_decl_stmt var_decl_stmt return_stmt break_stmt continue_stmt stmt_requiring_semicolon stmt_in_for_atstart stmt_in_for_atend
+%type <stmt> stmts stmt if_stmt while_stmt for_stmt null_stmt expr_stmt func_decl_stmt var_decl_stmt return_stmt break_stmt continue_stmt stmt_requiring_semicolon stmt_in_for_atstart stmt_in_for_atend block_stmt
 %type <if_arm> elseifs
 %type <var_decl> vardecllist
 %type <list> actualargs actualarglist
@@ -49,11 +49,14 @@ static toy_stmt *program_start;
 %type <block> block elsepart
 
 %left T_COMMA
-%right T_ASSIGN
+%right T_ASSIGN T_QUESTION
 %left T_AND T_OR
 %left T_EQUAL T_NEQUAL
-%left T_PLUS T_MINUS T_LT T_LTE T_GT T_GTE T_IN
-%left T_ASTERISK T_FSLASH T_PERCENT
+%left T_PLUS T_MINUS
+%left T_LT T_LTE T_GT T_GTE
+%left T_IN
+%left T_ASTERISK T_FSLASH
+%left T_PERCENT
 %left T_NOT T_UNEG
 
 %%
@@ -84,6 +87,7 @@ stmt :
     | while_stmt
     | for_stmt
     | func_decl_stmt
+    | block_stmt
     | stmt_requiring_semicolon T_SEMICOLON
 ;
 
@@ -136,17 +140,32 @@ for_stmt:
     }
 ;
 
+/**
+ * TODO:
+ * for (elt in list) block
+ * and
+ * for (key, value in map) block
+ */
+
 null_stmt:
     /* EMPTY */ {
         $$ = alloc_stmt(STMT_NULL);
     }
 ;
 
+block_stmt:
+    block {
+        $$ = alloc_stmt(STMT_BLOCK);
+        $$->block_stmt.block = $1;
+    }
+;
+
 expr_stmt:
-    expr {
+    expr_with_side_effect_allow_comma {
         $$ = alloc_stmt(STMT_EXPR);
         $$->expr_stmt.expr = $1;
     }
+;
 
 func_decl_stmt:
     T_FUN T_IDENTIFIER T_LPAREN formalparams T_RPAREN block {
@@ -329,6 +348,7 @@ mapitems :
     | mapitemlist {
         $$ = $1;
     }
+;
 
 mapitemlist :
     mapitem
@@ -343,12 +363,14 @@ mapitemlist :
 ;
 
 mapitem :
-    expr_no_comma T_COLON expr_no_comma {
-        $$ = alloc_map_entry($1, $3);
+    T_STRING T_COLON expr_no_comma {
+        toy_expr *key = alloc_expr(EXPR_STR);
+        key->str = strdup($1);
+        $$ = alloc_map_entry(key, $3);
     }
 ;
 
-expr_no_comma :
+literal:
     T_BOOLEAN {
         $$ = alloc_expr(EXPR_BOOL);
         $$->bool = $1;
@@ -365,128 +387,197 @@ expr_no_comma :
         $$ = alloc_expr(EXPR_IDENTIFIER);
         $$->str = $1;
     }
-    | expr_no_comma T_EQUAL expr_no_comma {
-        $$ = alloc_binary_op_expr(EXPR_EQUAL);
-        $$->binary_op.arg1 = $1;
-        $$->binary_op.arg2 = $3;
+;
+
+/* FIXME: Should allow comma expressions */
+assignment_expr: T_IDENTIFIER T_ASSIGN expr_no_comma {
+        $$ = alloc_expr(EXPR_ASSIGN);
+        $$->assignment.lhs = $1;
+        $$->assignment.rhs = $3;
     }
-    | expr_no_comma T_NEQUAL expr_no_comma {
-        $$ = alloc_binary_op_expr(EXPR_NEQUAL);
-        $$->binary_op.arg1 = $1;
-        $$->binary_op.arg2 = $3;
-    }
-    | expr_no_comma T_LT expr_no_comma {
-        $$ = alloc_binary_op_expr(EXPR_LT);
-        $$->binary_op.arg1 = $1;
-        $$->binary_op.arg2 = $3;
-    }
-    | expr_no_comma T_LTE expr_no_comma {
-        $$ = alloc_binary_op_expr(EXPR_LTE);
-        $$->binary_op.arg1 = $1;
-        $$->binary_op.arg2 = $3;
-    }
-    | expr_no_comma T_GT expr_no_comma {
-        $$ = alloc_binary_op_expr(EXPR_GT);
-        $$->binary_op.arg1 = $1;
-        $$->binary_op.arg2 = $3;
-    }
-    | expr_no_comma T_GTE expr_no_comma {
-        $$ = alloc_binary_op_expr(EXPR_GTE);
-        $$->binary_op.arg1 = $1;
-        $$->binary_op.arg2 = $3;
-    }
-    | expr_no_comma T_AND expr_no_comma {
-        $$ = alloc_binary_op_expr(EXPR_AND);
-        $$->binary_op.arg1 = $1;
-        $$->binary_op.arg2 = $3;
-    }
-    | expr_no_comma T_OR expr_no_comma {
-        $$ = alloc_binary_op_expr(EXPR_OR);
-        $$->binary_op.arg1 = $1;
-        $$->binary_op.arg2 = $3;
-    }
-    | expr_no_comma T_IN expr_no_comma {
+;
+
+in_expr:
+    expr_no_comma T_IN expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_IN);
         $$->binary_op.arg1 = $1;
         $$->binary_op.arg2 = $3;
     }
-    | T_NOT expr_no_comma {
+;
+
+equal_expr:
+    expr_no_comma T_EQUAL expr_no_comma {
+        $$ = alloc_binary_op_expr(EXPR_EQUAL);
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
+    }
+;
+
+nequal_expr:
+    expr_no_comma T_NEQUAL expr_no_comma {
+        $$ = alloc_binary_op_expr(EXPR_NEQUAL);
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
+    }
+;
+
+lt_expr:
+    expr_no_comma T_LT expr_no_comma {
+        $$ = alloc_binary_op_expr(EXPR_LT);
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
+    }
+;
+
+lte_expr:
+    expr_no_comma T_LTE expr_no_comma {
+        $$ = alloc_binary_op_expr(EXPR_LTE);
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
+    }
+;
+
+gt_expr:
+    expr_no_comma T_GT expr_no_comma {
+        $$ = alloc_binary_op_expr(EXPR_GT);
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
+    }
+;
+
+gte_expr:
+    expr_no_comma T_GTE expr_no_comma {
+        $$ = alloc_binary_op_expr(EXPR_GTE);
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
+    }
+;
+
+and_expr:
+    expr_no_comma T_AND expr_no_comma {
+        $$ = alloc_binary_op_expr(EXPR_AND);
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
+    }
+;
+
+or_expr:
+    expr_no_comma T_OR expr_no_comma {
+        $$ = alloc_binary_op_expr(EXPR_OR);
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
+    }
+;
+
+not_expr:
+    T_NOT expr_no_comma {
         $$ = alloc_unary_op_expr(EXPR_NOT);
         $$->unary_op.arg = $2;
     }
-    | expr_no_comma T_PLUS expr_no_comma {
+;
+
+add_expr:
+    expr_no_comma T_PLUS expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_PLUS);
         $$->binary_op.arg1 = $1;
         $$->binary_op.arg2 = $3;
     }
-    | expr_no_comma T_MINUS expr_no_comma {
+;
+
+subtract_expr:
+    expr_no_comma T_MINUS expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_MINUS);
         $$->binary_op.arg1 = $1;
         $$->binary_op.arg2 = $3;
     }
-    | expr_no_comma T_ASTERISK expr_no_comma {
+;
+
+multiply_expr:
+    expr_no_comma T_ASTERISK expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_MUL);
         $$->binary_op.arg1 = $1;
         $$->binary_op.arg2 = $3;
     }
-    | expr_no_comma T_FSLASH expr_no_comma {
+;
+
+divide_expr:
+    expr_no_comma T_FSLASH expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_DIV);
         $$->binary_op.arg1 = $1;
         $$->binary_op.arg2 = $3;
     }
-    | expr_no_comma T_PERCENT expr_no_comma {
+;
+
+modulus_expr: expr_no_comma T_PERCENT expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_MODULUS);
         $$->binary_op.arg1 = $1;
         $$->binary_op.arg2 = $3;
     }
-    | T_MINUS expr_no_comma {
+;
+
+unary_neg_expr: T_MINUS expr_no_comma {
         $$ = alloc_unary_op_expr(EXPR_UNEG);
         $$->unary_op.arg = $2;
     }
-    | T_LBRACKET listitems T_RBRACKET {
+;
+
+listexpr: T_LBRACKET listitems T_RBRACKET {
         $$ = alloc_expr(EXPR_LIST);
         $$->list = $2;
     }
-    | T_LBRACE mapitems T_RBRACE {
+;
+
+map_expr: T_LBRACE mapitems T_RBRACE {
         $$ = alloc_expr(EXPR_MAP);
         $$->map = alloc_map();
         for (toy_map_entry *entry = $2; entry; entry = entry->next) {
             map_set_expr($$->map, entry->key, entry->value);
         }
     }
-    | T_FUN T_LPAREN formalparams T_RPAREN block {
+;
+
+function_decl_expr: T_FUN T_LPAREN formalparams T_RPAREN block {
         $$ = alloc_expr_func_decl($3, &$5);
     }
-    | T_IDENTIFIER T_LPAREN actualargs T_RPAREN {
+;
+
+function_call_expr: T_IDENTIFIER T_LPAREN actualargs T_RPAREN {
         $$ = alloc_expr(EXPR_FUNC_CALL);
         $$->func_call.func_name = $1;
         $$->func_call.args = $3;
     }
-    | T_IDENTIFIER T_ASSIGN expr_no_comma {
-        $$ = alloc_expr(EXPR_ASSIGN);
-        $$->assignment.lhs = $1;
-        $$->assignment.rhs = $3;
-    }
-    | T_LPAREN expr T_RPAREN {
+;
+
+bracketed_subexpr: T_LPAREN expr T_RPAREN {
         $$ = $2;
     }
-    | T_IDENTIFIER T_MINUS_MINUS {
+;
+
+postfix_decrement: T_IDENTIFIER T_MINUS_MINUS {
         $$ = alloc_expr(EXPR_POSTFIX_DECREMENT);
         $$->postfix_decrement.id = $1;
     }
-    | T_IDENTIFIER T_PLUS_PLUS {
+;
+
+postfix_increment: T_IDENTIFIER T_PLUS_PLUS {
         $$ = alloc_expr(EXPR_POSTFIX_INCREMENT);
         $$->postfix_increment.id = $1;
     }
-    | T_MINUS_MINUS T_IDENTIFIER {
+;
+
+prefix_decrement: T_MINUS_MINUS T_IDENTIFIER {
         $$ = alloc_expr(EXPR_PREFIX_DECREMENT);
         $$->prefix_decrement.id = $2;
     }
-    | T_PLUS_PLUS T_IDENTIFIER {
+;
+
+prefix_increment: T_PLUS_PLUS T_IDENTIFIER {
         $$ = alloc_expr(EXPR_PREFIX_INCREMENT);
         $$->prefix_increment.id = $2;
     }
-    | expr T_QUESTION expr T_COLON expr {
+;
+
+ternary: expr_no_comma T_QUESTION expr_no_comma T_COLON expr_no_comma %prec T_QUESTION {
         $$ = alloc_expr(EXPR_TERNARY);
         $$->ternary.condition = $1;
         $$->ternary.if_true = $3;
@@ -494,20 +585,87 @@ expr_no_comma :
     }
 ;
 
-block :
-    T_LBRACE stmts T_RBRACE {
-        $$.stmts = $2;
-    }
-;
-
-expr :
-    expr_no_comma {
-        $$ = $1;
-    }
-    | expr T_COMMA expr {
+comma_expr_with_side_effect:
+    expr_with_side_effect_allow_comma T_COMMA expr_with_side_effect_allow_comma {
         $$ = alloc_binary_op_expr(EXPR_COMMA);
         $$->binary_op.arg1 = $1;
         $$->binary_op.arg2 = $3;
+    }
+;
+
+comma_expr_without_side_effect:
+    expr_without_side_effect_allow_comma T_COMMA expr_without_side_effect_allow_comma {
+        $$ = alloc_binary_op_expr(EXPR_COMMA);
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
+    }
+;
+
+expr_with_side_effect_no_comma :
+    function_call_expr
+    | assignment_expr
+    | postfix_decrement
+    | postfix_increment
+    | prefix_decrement
+    | prefix_increment
+;
+
+expr_with_side_effect_allow_comma :
+    expr_with_side_effect_no_comma
+    | comma_expr_with_side_effect
+;
+
+expr_without_side_effect_no_comma :
+    literal {
+        $$ = $1;
+    }
+    | equal_expr
+    | nequal_expr
+    | lt_expr
+    | lte_expr
+    | gt_expr
+    | gte_expr
+    | and_expr
+    | or_expr
+    | in_expr
+    | not_expr
+    | add_expr
+    | subtract_expr
+    | multiply_expr
+    | divide_expr
+    | map_expr
+    | modulus_expr
+    | unary_neg_expr
+    | listexpr
+    | function_decl_expr
+    | bracketed_subexpr
+    | ternary
+;
+
+expr_without_side_effect_allow_comma :
+    expr_without_side_effect_no_comma
+    | comma_expr_without_side_effect
+;
+
+/*
+for loop: SE required, commas optional
+func args: SE optional, commas forbidden
+map/list: SE optional, commas forbidden
+*/
+
+expr_no_comma :
+    expr_with_side_effect_no_comma
+    | expr_without_side_effect_no_comma
+;
+
+expr :
+    expr_with_side_effect_allow_comma
+    | expr_without_side_effect_allow_comma
+;
+
+block :
+    T_LBRACE stmts T_RBRACE {
+        $$.stmts = $2;
     }
 ;
 
@@ -520,6 +678,9 @@ void yyerror(const char *s)
 
 int main(int argc, char **argv)
 {
+#ifdef YYDEBUG
+    yydebug = 1;
+#endif /* YYDEBUG */
     extern FILE *yyin;
     ++argv, --argc;  /* skip over program name */
     if (argc > 0) {

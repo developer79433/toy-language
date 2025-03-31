@@ -1,10 +1,10 @@
 CC=gcc
-CFLAGS=-Wall -g3
+CFLAGS=-Wall -g3 -DYYDEBUG=1
 # -Werror
 LD=$(CC)
 LDFLAGS=$(CFLAGS)
-BISONFLAGS=--header
-# BISONFLAGS=--header -Wcounterexamples --debug
+# BISONFLAGS=--header
+BISONFLAGS=--header -Wcounterexamples --debug
 FLEXFLAGS=
 # FLEXFLAGS=--debug
 BINARY=toy

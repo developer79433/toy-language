@@ -498,6 +498,9 @@ void eval_expr(toy_expr *result, const toy_expr *expr)
 void single_step(const toy_stmt *stmt)
 {
     switch (stmt->type) {
+    case STMT_BLOCK:
+        toy_run(stmt->block_stmt.block.stmts);
+        break;
     case STMT_EXPR:
         toy_expr result;
         eval_expr(&result, stmt->expr_stmt.expr);

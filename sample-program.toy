@@ -1,4 +1,4 @@
-"hi mum!";
+// "hi mum!";
 var mylist = [123.5, 456, [ "surprise!" ]];
 var mymap = { "mykey": 123, "myotherkey": "myothervalue" };
 var mval = [ 345.6, {"blah": (42, 3)}, "foo"];
@@ -7,12 +7,13 @@ fun myfunction() {
     return i + 1;
 }
 bools = [ true, false, True, False, tRuE, FaLsE ];
-var myfunc = fun(formalparam1, formalparam2) { 42; return; };
+var myfunc = fun(formalparam1, formalparam2) { var x = 42; return; };
 var sixty = 28 * 2 + 4, noval, bignum = 12345678.9;
-"test", "comma", "operator", "last";
-1 + 2 + 3 + 4;
-(1 + 2) * (3 / 4);
-(1 + 2) == (3 / 4);
+var testcomma;
+testcomma = fun() { return "test", "comma", "operator", "last"; };
+print(1 + 2 + 3 + 4);
+print((1 + 2) * (3 / 4));
+print((1 + 2) == (3 / 4));
 var neg = -123.45;
 var pos = -67.89 / -1.02;
 var eighty = sixty + 20;
@@ -35,3 +36,7 @@ for (var i = 0; i < 10; i++, ++i, i--, --i, i = i + 1) {
     }
 }
 var tern = (arfle == barfle) ? yes : no;
+{
+    var testblock = 1;
+    i++;
+}

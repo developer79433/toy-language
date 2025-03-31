@@ -201,10 +201,15 @@ typedef struct toy_while_stmt_struct {
     toy_block body;
 } toy_while_stmt;
 
+typedef struct toy_block_stmt_struct {
+    toy_block block;
+} toy_block_stmt;
+
 /* TODO: Sort these alphabetically */
 /* TODO: switch statement */
 enum toy_stmt_type {
-    STMT_EXPR = 0,
+    STMT_BLOCK = 0,
+    STMT_EXPR,
     STMT_FOR,
     STMT_FUNC_DECL,
     STMT_NULL,
@@ -227,6 +232,7 @@ struct toy_stmt_struct {
         toy_var_decl *var_decl_stmt;
         toy_func_decl_stmt func_decl_stmt;
         toy_return_stmt return_stmt;
+        toy_block_stmt block_stmt;
     };
 };
 

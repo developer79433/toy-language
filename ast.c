@@ -229,6 +229,7 @@ const char *toy_expr_type_name(enum toy_expr_type expr_type)
 }
 
 static const char *toy_stmt_type_names[] = {
+    "block statement",
     "expression statement",
     "for loop",
     "function declaration",
@@ -462,6 +463,11 @@ void dump_expr(FILE *f, const toy_expr *expr) {
 void dump_stmt(FILE *f, const toy_stmt *stmt, int append_semicolon)
 {
     switch (stmt->type) {
+    case STMT_BLOCK:
+        fputs("{\n", f);
+        dump_stmts(f, stmt->block_stmt.block.stmts);
+        fputs("}\n", f);
+        break;
     case STMT_EXPR:
         dump_expr(f, stmt->expr_stmt.expr);
         if (append_semicolon) {
