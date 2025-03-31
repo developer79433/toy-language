@@ -85,6 +85,12 @@ void readonly_identifier(toy_str name)
     fatal_error("Read-only identifier '%s'", name);
 }
 
+void invalid_list_index(toy_list *list, toy_num index)
+{
+    dump_list(stderr, list);
+    fatal_error("Invalid list index %d", index);
+}
+
 toy_map_entry *alloc_map_entry(toy_expr *key, toy_expr *value)
 {
     toy_map_entry *map_entry;
@@ -360,6 +366,12 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             break;
         case EXPR_BOOL:
             fputs(expr->bool ? "True" : "False", f);
+            break;
+        case EXPR_COLLECTION_LOOKUP:
+            dump_identifier(f, expr->collection_lookup.lhs);
+            fputc('[', f);
+            dump_expr(f, expr->collection_lookup.rhs);
+            fputc(']', f);
             break;
         case EXPR_COMMA:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, ", ");

@@ -440,7 +440,7 @@ static void add_variable(toy_interp *interp, const toy_str name, const toy_expr 
     if (value) {
         new_value = (toy_expr *) value;
     } else {
-        new_value = alloc_expr(EXPR_NULL);
+        new_value = &null_expr;
     }
     map_set(interp->symbols, name, new_value);
 }
@@ -472,6 +472,45 @@ static void call_func(toy_interp *interp, toy_expr *result, toy_str func_name, t
     /* TODO */
 }
 
+static toy_expr *lookup_list(toy_list *list, toy_num index)
+{
+    /* FIXME: inefficient */
+    for (size_t i = 0; list; list = list->next, i++) {
+        if (i == index) {
+            return list->expr;
+        }
+    }
+    invalid_list_index(list, index);
+}
+
+static void collection_lookup(toy_interp *interp, toy_expr *result, toy_str identifier, toy_expr *index)
+{
+    toy_expr *collection;
+    collection = lookup_identifier(interp, identifier);
+    if (!collection) {
+        undeclared_identifier(identifier);
+    }
+    if (collection->type == EXPR_LIST) {
+        toy_expr index_result;
+        eval_expr(interp, &index_result, index);
+        if (index_result.type == EXPR_NUM) {
+            *result = *lookup_list(collection->list, index_result.num);
+        } else {
+            invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
+        }
+    } else if (collection->type == EXPR_MAP) {
+        toy_expr index_result;
+        eval_expr(interp, &index_result, index);
+        if (index_result.type == EXPR_STR) {
+            *result = *map_get(collection->map, index_result.str);
+        } else {
+            invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
+        }
+    } else {
+        invalid_operand(EXPR_COLLECTION_LOOKUP, collection);
+    }
+}
+
 void eval_expr(toy_interp *interp, toy_expr *result, const toy_expr *expr)
 {
     switch (expr->type) {
@@ -483,6 +522,9 @@ void eval_expr(toy_interp *interp, toy_expr *result, const toy_expr *expr)
         break;
     case EXPR_BOOL:
         *result = *expr;
+        break;
+    case EXPR_COLLECTION_LOOKUP:
+        collection_lookup(interp, result, expr->collection_lookup.lhs, expr->collection_lookup.rhs);
         break;
     case EXPR_COMMA:
         op_comma(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);

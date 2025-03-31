@@ -104,10 +104,16 @@ typedef struct toy_field_ref_struct {
     toy_str rhs;
 } toy_field_ref;
 
+typedef struct toy_collection_lookup_struct {
+    toy_str lhs;
+    toy_expr *rhs;
+} toy_collection_lookup;
+
 enum toy_expr_type {
     EXPR_AND = 0,
     EXPR_ASSIGN,
     EXPR_BOOL,
+    EXPR_COLLECTION_LOOKUP,
     EXPR_COMMA,
     EXPR_DIV,
     EXPR_EQUAL,
@@ -160,6 +166,7 @@ struct toy_expr_struct {
         toy_prefix_increment prefix_increment;
         toy_ternary ternary;
         toy_field_ref field_ref;
+        toy_collection_lookup collection_lookup;
     };
 };
 
@@ -248,6 +255,7 @@ void invalid_operand(enum toy_expr_type expr_type, const toy_expr *operand);
 void invalid_expr_type(enum toy_expr_type expr_type);
 void invalid_stmt_type(enum toy_stmt_type stmt_type);
 void invalid_cast(enum toy_expr_type expr_type, const toy_expr *expr);
+void invalid_list_index(toy_list *list, toy_num index);
 void dump_str(FILE *f, const toy_str str);
 void dump_identifier(FILE *f, const toy_str str);
 void dump_identifier_list(FILE *f, const toy_str_list *list);
