@@ -531,6 +531,24 @@ static toy_expr *lookup_identifier(toy_interp *interp, const toy_str name)
     return map_get(interp->symbols, name);
 }
 
+static void set_variable(toy_interp *interp, const toy_str name, const toy_expr *value)
+{
+    if (is_predefined(name)) {
+        readonly_identifier(name);
+    }
+    toy_expr *old_value = lookup_identifier(interp, name);
+    if (!old_value) {
+        undeclared_identifier(name);
+    }
+    toy_expr *new_value;
+    if (value) {
+        new_value = (toy_expr *) value;
+    } else {
+        new_value = &null_expr;
+    }
+    map_set(interp->symbols, name, new_value);
+}
+
 static void add_variable(toy_interp *interp, const toy_str name, const toy_expr *value)
 {
     if (is_predefined(name)) {
@@ -577,6 +595,17 @@ static void op_assign(toy_interp *interp, toy_expr *result, toy_str name, toy_ex
     }
 }
 
+static void run_toy_function(toy_interp *interp, toy_expr *result, toy_block *block, toy_str_list *arg_name, toy_list *arg)
+{
+    push_context(interp, block);
+    /* TODO: set arguments into block environment */
+    for (; arg_name && arg; arg_name = arg_name->next, arg = arg->next) {
+        // TODO: set_variable(interp, arg_name, arg);
+    }
+    run_block(interp, block);
+    pop_context(interp);
+}
+
 static void call_func(toy_interp *interp, toy_expr *result, toy_str func_name, toy_list *args)
 {
     predefined_func_addr predef = lookup_predefined_function(func_name);
@@ -585,8 +614,7 @@ static void call_func(toy_interp *interp, toy_expr *result, toy_str func_name, t
     } else {
         toy_expr *expr = lookup_identifier(interp, func_name);
         if (expr->type == EXPR_FUNC_DECL) {
-            /* TODO: function arguments */
-            run_block(interp, &expr->func_decl.def.code);
+            run_toy_function(interp, result, &expr->func_decl.def.code, expr->func_decl.def.param_names, args);
         } else {
             invalid_operand(EXPR_FUNC_CALL, expr);
         }
