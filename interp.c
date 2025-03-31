@@ -401,6 +401,21 @@ static void op_exponent(toy_interp *interp, toy_expr *result, const toy_expr *ba
     result->num = pow(base_result.num, power_result.num);
 }
 
+static void op_ternary(toy_interp *interp, toy_expr *result, toy_expr *condition, toy_expr *if_true, toy_expr *if_false)
+{
+    toy_expr cond_result;
+    eval_expr(interp, &cond_result, condition);
+    if (cond_result.type == EXPR_BOOL) {
+        if (cond_result.bool) {
+            eval_expr(interp, result, if_true);
+        } else {
+            eval_expr(interp, result, if_false);
+        }
+    } else {
+        invalid_operand(EXPR_TERNARY, &cond_result);
+    }
+}
+
 static void push_context(toy_interp *interp, const toy_block *block)
 {
     /* TODO: This needs to be a stack */
@@ -755,7 +770,7 @@ void eval_expr(toy_interp *interp, toy_expr *result, const toy_expr *expr)
         *result = *expr;
         break;
     case EXPR_TERNARY:
-        /* TODO */
+        op_ternary(interp, result, expr->ternary.condition, expr->ternary.if_true, expr->ternary.if_false);
         break;
     case EXPR_UNEG:
         op_uneg(interp, result, expr->unary_op.arg);
