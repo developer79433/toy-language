@@ -9,6 +9,7 @@
 #include "list.h"
 #include "map.h"
 #include "util.h"
+#include "dump.h"
 
 size_t map_len(const toy_map *map)
 {
