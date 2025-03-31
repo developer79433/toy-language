@@ -106,12 +106,12 @@ static void pop_context(toy_interp *interp)
     /* TODO */
 }
 
-static toy_expr null_expr = { .type = EXPR_NULL };
+static const toy_expr null_expr = { .type = EXPR_NULL };
 static toy_expr true_expr = { .type = EXPR_BOOL, .num = 1 };
 static toy_expr false_expr = { .type = EXPR_BOOL, .num = 0 };
 typedef struct predefined_constant_struct {
     toy_str name;
-    toy_expr *value;
+    const toy_expr *value;
 } predefined_constant;
 
 static predefined_constant predefined_constants[] = {
@@ -120,7 +120,7 @@ static predefined_constant predefined_constants[] = {
     { "false", &false_expr }
 };
 
-static toy_expr *lookup_predefined_constant(toy_str name)
+static const toy_expr *lookup_predefined_constant(toy_str name)
 {
     for (
         const predefined_constant *constant = &predefined_constants[0];
@@ -215,7 +215,7 @@ toy_expr *lookup_identifier(toy_interp *interp, const toy_str name)
         constant++)
     {
         if (0 == strcasecmp(constant->name, name)) {
-            return constant->value;
+            return (toy_expr *) constant->value;
         }
     }
     predefined_func_addr func = lookup_predefined_function(name);
@@ -238,7 +238,7 @@ static void set_variable(toy_interp *interp, const toy_str name, const toy_expr 
     if (value) {
         new_value = (toy_expr *) value;
     } else {
-        new_value = &null_expr;
+        new_value = (toy_expr *) &null_expr;
     }
     map_set(interp->symbols, name, new_value);
 }
@@ -256,7 +256,7 @@ static void add_variable(toy_interp *interp, const toy_str name, const toy_expr 
     if (value) {
         new_value = (toy_expr *) value;
     } else {
-        new_value = &null_expr;
+        new_value = (toy_expr *) &null_expr;
     }
     map_set(interp->symbols, name, new_value);
 }
