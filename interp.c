@@ -524,7 +524,10 @@ static toy_expr *lookup_identifier(toy_interp *interp, const toy_str name)
             return constant->value;
         }
     }
-    /* TODO: lookup functions too */
+    predefined_func_addr func = lookup_predefined_function(name);
+    if (func) {
+        return NULL; // TODO: return predefined function
+    }
     return map_get(interp->symbols, name);
 }
 
