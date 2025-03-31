@@ -16,5 +16,6 @@ void eval_expr(toy_interp *interp, toy_expr *result, const toy_expr *expr);
 void single_step(toy_interp *interp, const toy_stmt *stmt);
 void run_block(toy_interp *interp, const toy_block *block);
 void step_out(toy_interp *interp);
+toy_bool convert_to_bool(const toy_expr *expr);
 
 #endif /* TOY_INTERP_H */

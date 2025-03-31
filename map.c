@@ -108,10 +108,23 @@ void map_set_expr(toy_map *map, const toy_expr *key, toy_expr *value)
     }
 }
 
-void map_delete(toy_map *map, const toy_str key)
+toy_bool map_delete(toy_map *map, const toy_str key)
 {
-    /* TODO */
-    map->num_items--;
+    toy_map_entry **bucket = get_bucket(map, key);
+    if (*bucket) {
+        toy_map_entry *entry, **prev;
+        for (entry = *bucket, prev = bucket; entry; prev = &entry, entry = entry->next) {
+            assert(EXPR_STR == entry->key->type);
+            if (0 == strcmp(entry->key->str, key)) {
+                (*prev)->next = entry->next;
+                /* TODO: free(entry); */
+                map->num_items--;
+                return 1;
+            }
+        }
+        return 0; /* No entry */
+    }
+    return 0; /* No bucket, so no entry */
 }
 
 void dump_map(FILE *f, const toy_map *map)
@@ -162,4 +175,9 @@ void dump_map_entries(FILE *f, const toy_map_entry *entries)
     for (; entries; entries = entries->next) {
         dump_map_entry(f, entries);
     }
+}
+
+size_t map_len(const toy_map *map)
+{
+    return map->num_items;
 }

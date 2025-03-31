@@ -11,11 +11,6 @@
 #include "util.h"
 #include "dump.h"
 
-size_t map_len(const toy_map *map)
-{
-    return 0; /* TODO */
-}
-
 toy_bool convert_to_bool(const toy_expr *expr)
 {
     switch (expr->type) {
@@ -414,15 +409,18 @@ static void pop_context(toy_interp *interp)
     /* TODO */
 }
 
-static toy_expr null_expr = { EXPR_NULL };
-
+static toy_expr null_expr = { .type = EXPR_NULL };
+static toy_expr true_expr = { .type = EXPR_BOOL, .num = 1 };
+static toy_expr false_expr = { .type = EXPR_BOOL, .num = 0 };
 typedef struct predefined_constant_struct {
     toy_str name;
     toy_expr *value;
 } predefined_constant;
 
 static predefined_constant predefined_constants[] = {
-    { "null", &null_expr }
+    { "null", &null_expr },
+    { "true", &true_expr },
+    { "false", &false_expr }
 };
 
 static toy_expr *lookup_predefined_constant(toy_str name)
