@@ -332,7 +332,6 @@ static void op_plus(toy_interp *interp, toy_expr *result, const toy_expr *arg1, 
     eval_expr(interp, &arg_result1, arg1);
     if (arg_result1.type == EXPR_NUM) {
         toy_expr arg_result2;
-
         eval_expr(interp, &arg_result2, arg2);
         if (arg_result2.type == EXPR_NUM) {
             result->type = EXPR_NUM;
@@ -343,9 +342,13 @@ static void op_plus(toy_interp *interp, toy_expr *result, const toy_expr *arg1, 
     } else if (arg_result1.type == EXPR_STR) {
         toy_expr arg_result2;
         eval_expr(interp, &arg_result2, arg2);
-        result->type = EXPR_STR;
-        result->str = "";
-        /* TODO: append stringified representation of result2 */
+        if (arg_result2.type == EXPR_STR) {
+            result->type = EXPR_STR;
+            result->str = (toy_str) malloc(strlen(arg_result1.str) + strlen(arg_result2.str) + 1);
+            sprintf(result->str, "%s%s", arg_result1.str, arg_result2.str);
+        } else {
+            invalid_operand(EXPR_PLUS, &arg_result2);
+        }
     }
 }
 
