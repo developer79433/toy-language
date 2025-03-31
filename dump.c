@@ -23,15 +23,20 @@ void dump_list(FILE *f, toy_list *list)
     fputc(']', f);
 }
 
-void dump_str(FILE *f, const toy_str str)
+void print_str(FILE *f, const toy_str str)
 {
-    fputc('"', f);
     for (const char *p = str; *p; p++) {
         if (*p == '\'' || *p == '"' || *p == '\\') {
             fputc('\\', f);
         }
         fputc(*p, f);
     }
+}
+
+void dump_str(FILE *f, const toy_str str)
+{
+    fputc('"', f);
+    print_str(f, str);
     fputc('"', f);
 }
 

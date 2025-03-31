@@ -470,7 +470,11 @@ static void predefined_print(toy_interp *interp, toy_expr *result, toy_list *arg
     for (toy_list *arg = args; arg; arg = arg->next) {
         toy_expr arg_result;
         eval_expr(interp, &arg_result, arg->expr);
-        dump_expr(stderr, &arg_result);
+        if (arg_result.type == EXPR_STR) {
+            print_str(stderr, arg_result.str);
+        } else {
+            dump_expr(stderr, &arg_result);
+        }
         fputc('\n', stderr);
     }
     *result = null_expr;
