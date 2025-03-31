@@ -99,6 +99,11 @@ typedef struct toy_ternary_struct {
     toy_expr *if_false;
 } toy_ternary;
 
+typedef struct toy_field_ref_struct {
+    toy_str lhs;
+    toy_str rhs;
+} toy_field_ref;
+
 enum toy_expr_type {
     EXPR_AND = 0,
     EXPR_ASSIGN,
@@ -107,6 +112,7 @@ enum toy_expr_type {
     EXPR_DIV,
     EXPR_EQUAL,
     EXPR_EXPONENT,
+    EXPR_FIELD_REF,
     EXPR_FUNC_CALL,
     EXPR_FUNC_DECL,
     EXPR_GT,
@@ -122,6 +128,7 @@ enum toy_expr_type {
     EXPR_MUL,
     EXPR_NEQUAL,
     EXPR_NOT,
+    EXPR_NULL,
     EXPR_NUM,
     EXPR_OR,
     EXPR_PLUS,
@@ -152,6 +159,7 @@ struct toy_expr_struct {
         toy_prefix_decrement prefix_decrement;
         toy_prefix_increment prefix_increment;
         toy_ternary ternary;
+        toy_field_ref field_ref;
     };
 };
 
@@ -235,6 +243,7 @@ struct toy_stmt_struct {
 void fatal_error(const char *fmt, ...);
 void undeclared_identifier(toy_str name);
 void duplicate_identifier(toy_str name);
+void readonly_identifier(toy_str name);
 void invalid_operand(enum toy_expr_type expr_type, const toy_expr *operand);
 void invalid_expr_type(enum toy_expr_type expr_type);
 void invalid_stmt_type(enum toy_stmt_type stmt_type);

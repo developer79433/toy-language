@@ -4,6 +4,42 @@
 #include "ast.h"
 #include "map.h"
 
+static const char *toy_expr_type_names[] = {
+    "logical and",
+    "assignment",
+    "boolean",
+    "comma",
+    "division",
+    "equal to",
+    "exponentiation",
+    "field reference",
+    "function call",
+    "function declaration",
+    "greater than",
+    "greater than or equal to",
+    "identifier",
+    "in list",
+    "list",
+    "less than",
+    "less than or equal to",
+    "map",
+    "subtraction",
+    "modulus",
+    "multiplication",
+    "not equal to",
+    "logical negation",
+    "null",
+    "numeric",
+    "logical or",
+    "addition",
+    "postfix decrement",
+    "postfix increment",
+    "prefix decrement",
+    "prefix increment",
+    "string",
+    "unary negation"
+};
+
 void fatal_error(const char *fmt, ...)
 {
     va_list argptr;
@@ -42,6 +78,11 @@ void duplicate_identifier(toy_str name)
 void undeclared_identifier(toy_str name)
 {
     fatal_error("Undeclared identifier '%s'", name);
+}
+
+void readonly_identifier(toy_str name)
+{
+    fatal_error("Read-only identifier '%s'", name);
 }
 
 toy_map_entry *alloc_map_entry(toy_expr *key, toy_expr *value)
@@ -199,40 +240,6 @@ toy_map_entry *append_map_entry(toy_map_entry *orig, toy_map_entry *new)
     tmp->next = new;
     return orig;
 }
-
-static const char *toy_expr_type_names[] = {
-    "logical and",
-    "assignment",
-    "boolean",
-    "comma",
-    "division",
-    "equal to",
-    "exponentiation",
-    "function call",
-    "function declaration",
-    "greater than",
-    "greater than or equal to",
-    "identifier",
-    "in list",
-    "list",
-    "less than",
-    "less than or equal to",
-    "map",
-    "subtraction",
-    "modulus",
-    "multiplication",
-    "not equal to",
-    "logical inverse",
-    "numeric",
-    "logical or",
-    "addition",
-    "postfix decrement",
-    "postfix increment",
-    "prefix decrement",
-    "prefix increment",
-    "string",
-    "unary negation"
-};
 
 const char *toy_expr_type_name(enum toy_expr_type expr_type)
 {
@@ -425,6 +432,9 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             fputs("not (", f);
             dump_expr(f, expr->unary_op.arg);
             fputs(")", f);
+            break;
+        case EXPR_NULL:
+            fputs("null", f);
             break;
         case EXPR_NUM:
             fprintf(f, "%f", expr->num);

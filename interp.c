@@ -417,18 +417,32 @@ static void pop_context(toy_interp *interp)
     /* TODO */
 }
 
+static toy_expr null_expr = { EXPR_NULL };
+
 static toy_expr *lookup_identifier(toy_interp *interp, const toy_str name)
 {
+    if (0 == strcasecmp(name, "null")) {
+        return &null_expr;
+    }
     return map_get(interp->symbols, name);
 }
 
 static void add_variable(toy_interp *interp, const toy_str name, const toy_expr *value)
 {
+    if (0 == strcasecmp(name, "null")) {
+        readonly_identifier(name);
+    }
     toy_expr *existing_value = lookup_identifier(interp, name);
     if (existing_value) {
         duplicate_identifier(name);
     }
-    map_set(interp->symbols, name, (toy_expr *) value);
+    toy_expr *new_value;
+    if (value) {
+        new_value = (toy_expr *) value;
+    } else {
+        new_value = alloc_expr(EXPR_NULL);
+    }
+    map_set(interp->symbols, name, new_value);
 }
 
 static void add_function(toy_interp *interp, const toy_str name, const toy_func_def *def)
@@ -532,6 +546,9 @@ void eval_expr(toy_interp *interp, toy_expr *result, const toy_expr *expr)
         break;
     case EXPR_NOT:
         op_not(interp, result, expr->unary_op.arg);
+        break;
+    case EXPR_NULL:
+        *result = null_expr;
         break;
     case EXPR_NUM:
         *result = *expr;

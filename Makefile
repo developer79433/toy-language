@@ -1,11 +1,12 @@
 CC=gcc
-CFLAGS=-Wall -g3 -DYYDEBUG=1
+# -DYYDEBUG=1
+CFLAGS=-Wall -g3
 # -Werror
 LD=$(CC)
 LIBS=m
 LDFLAGS=$(CFLAGS)
-# BISONFLAGS=--header
-BISONFLAGS=--header -Wcounterexamples --debug
+BISONFLAGS=--header
+# BISONFLAGS=--header -Wcounterexamples --debug
 FLEXFLAGS=
 # FLEXFLAGS=--debug
 BINARY=toy
@@ -34,6 +35,7 @@ parser.tab.c parser.tab.h: parser.y
 clean:
 	rm -f $(BINARY) $(OBJECTS) $(GENERATED_SOURCES) $(GENERATED_HEADERS)
 
+# 2>&1 | less
 .PHONY: test
 test: $(BINARY)
-	./$(BINARY) sample-program.toy 2>&1 | less
+	./$(BINARY) sample-program.toy
