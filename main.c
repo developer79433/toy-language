@@ -4,6 +4,7 @@
 #include "ast.h"
 #include "parser.tab.h"
 #include "interp.h"
+#include "tests.h"
 
 extern toy_stmt *get_program_start(void);
 extern void init_lexer(FILE *f);
@@ -28,9 +29,11 @@ int main(int argc, char **argv)
         fprintf(stderr, "yyparse() returned %d\n", parse_res);
         return EXIT_FAILURE;
     }
-    /* test_maps(); */
+    /* run_tests(); */
     toy_stmt *program_start = get_program_start();
-    dump_stmts(stderr, program_start);
-    toy_run(program_start);
+    /* dump_stmts(stderr, program_start); */
+    toy_interp interp;
+    init_interp(&interp, program_start);
+    step_out(&interp);
     return EXIT_SUCCESS;
 }

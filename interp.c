@@ -102,16 +102,16 @@ toy_bool convert_to_num(const toy_expr *expr)
     return 0;
 }
 
-static void op_and(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
+static void op_and(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
 {
     toy_expr arg_result1;
 
     result->type = EXPR_BOOL;
-    eval_expr(&arg_result1, arg1);
+    eval_expr(interp, &arg_result1, arg1);
     toy_bool bool1 = convert_to_bool(&arg_result1);
     if (bool1) {
         toy_expr arg_result2;
-        eval_expr(&arg_result2, arg2);
+        eval_expr(interp, &arg_result2, arg2);
         toy_bool bool2 = convert_to_bool(&arg_result2);
         result->bool = bool2;
     } else {
@@ -119,23 +119,23 @@ static void op_and(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
     }
 }
 
-static void op_comma(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
+static void op_comma(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
 {
     toy_expr arg_result1;
-    eval_expr(&arg_result1, arg1);
-    eval_expr(result, arg2);
+    eval_expr(interp, &arg_result1, arg1);
+    eval_expr(interp, result, arg2);
 }
 
-static void op_div(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
+static void op_div(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
 {
     toy_expr arg_result1, arg_result2;
 
-    eval_expr(&arg_result1, arg1);
+    eval_expr(interp, &arg_result1, arg1);
     if (arg_result1.type != EXPR_NUM) {
         invalid_cast(EXPR_NUM, &arg_result1);
         return;
     }
-    eval_expr(&arg_result2, arg2);
+    eval_expr(interp, &arg_result2, arg2);
     if (arg_result2.type != EXPR_NUM) {
         invalid_cast(EXPR_NUM, &arg_result2);
         return;
@@ -144,13 +144,13 @@ static void op_div(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
     result->num = arg_result1.num / arg_result2.num;
 }
 
-static void op_equal(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
+static void op_equal(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
 {
     toy_expr arg_result1, arg_result2;
 
     result->type = EXPR_BOOL;
-    eval_expr(&arg_result1, arg1);
-    eval_expr(&arg_result2, arg2);
+    eval_expr(interp, &arg_result1, arg1);
+    eval_expr(interp, &arg_result2, arg2);
     if (arg_result1.type == arg_result2.type) {
         switch (arg_result1.type) {
         case EXPR_BOOL:
@@ -171,16 +171,16 @@ static void op_equal(toy_expr *result, const toy_expr *arg1, const toy_expr *arg
     }
 }
 
-static void op_gt(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
+static void op_gt(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
 {
     toy_expr arg_result1, arg_result2;
 
-    eval_expr(&arg_result1, arg1);
+    eval_expr(interp, &arg_result1, arg1);
     if (arg_result1.type != EXPR_NUM) {
         invalid_cast(EXPR_NUM, &arg_result1);
         return;
     }
-    eval_expr(&arg_result2, arg2);
+    eval_expr(interp, &arg_result2, arg2);
     if (arg_result2.type != EXPR_NUM) {
         invalid_cast(EXPR_NUM, &arg_result2);
         return;
@@ -189,16 +189,16 @@ static void op_gt(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
     result->bool = (arg_result1.num > arg_result2.num);
 }
 
-static void op_gte(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
+static void op_gte(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
 {
     toy_expr arg_result1, arg_result2;
 
-    eval_expr(&arg_result1, arg1);
+    eval_expr(interp, &arg_result1, arg1);
     if (arg_result1.type != EXPR_NUM) {
         invalid_cast(EXPR_NUM, &arg_result1);
         return;
     }
-    eval_expr(&arg_result2, arg2);
+    eval_expr(interp, &arg_result2, arg2);
     if (arg_result2.type != EXPR_NUM) {
         invalid_cast(EXPR_NUM, &arg_result2);
         return;
@@ -207,12 +207,12 @@ static void op_gte(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
     result->bool = (arg_result1.num >= arg_result2.num);
 }
 
-static void op_in(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
+static void op_in(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
 {
     toy_expr arg_result1, arg_result2;
 
-    eval_expr(&arg_result1, arg1);
-    eval_expr(&arg_result2, arg2);
+    eval_expr(interp, &arg_result1, arg1);
+    eval_expr(interp, &arg_result2, arg2);
     if (arg_result2.type != EXPR_LIST) {
         invalid_cast(EXPR_LIST, &arg_result2);
         return;
@@ -224,7 +224,7 @@ static void op_in(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
         list_item = list_item->next
     ) {
         toy_expr comparison_result;
-        op_equal(&comparison_result, &arg_result1, list_item->expr);
+        op_equal(interp, &comparison_result, &arg_result1, list_item->expr);
         assert(comparison_result.type == EXPR_BOOL);
         if (comparison_result.bool) {
             result->bool = 1;
@@ -234,16 +234,16 @@ static void op_in(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
     result->bool = 0;
 }
 
-static void op_lt(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
+static void op_lt(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
 {
     toy_expr arg_result1, arg_result2;
 
-    eval_expr(&arg_result1, arg1);
+    eval_expr(interp, &arg_result1, arg1);
     if (arg_result1.type != EXPR_NUM) {
         invalid_cast(EXPR_NUM, &arg_result1);
         return;
     }
-    eval_expr(&arg_result2, arg2);
+    eval_expr(interp, &arg_result2, arg2);
     if (arg_result2.type != EXPR_NUM) {
         invalid_cast(EXPR_NUM, &arg_result2);
         return;
@@ -252,16 +252,16 @@ static void op_lt(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
     result->bool = (arg_result1.num < arg_result2.num);
 }
 
-static void op_lte(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
+static void op_lte(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
 {
     toy_expr arg_result1, arg_result2;
 
-    eval_expr(&arg_result1, arg1);
+    eval_expr(interp, &arg_result1, arg1);
     if (arg_result1.type != EXPR_NUM) {
         invalid_cast(EXPR_NUM, &arg_result1);
         return;
     }
-    eval_expr(&arg_result2, arg2);
+    eval_expr(interp, &arg_result2, arg2);
     if (arg_result2.type != EXPR_NUM) {
         invalid_cast(EXPR_NUM, &arg_result2);
         return;
@@ -270,16 +270,16 @@ static void op_lte(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
     result->bool = (arg_result1.num <= arg_result2.num);
 }
 
-static void op_minus(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
+static void op_minus(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
 {
     toy_expr arg_result1, arg_result2;
 
-    eval_expr(&arg_result1, arg1);
+    eval_expr(interp, &arg_result1, arg1);
     if (arg_result1.type != EXPR_NUM) {
         invalid_cast(EXPR_NUM, &arg_result1);
         return;
     }
-    eval_expr(&arg_result2, arg2);
+    eval_expr(interp, &arg_result2, arg2);
     if (arg_result2.type != EXPR_NUM) {
         invalid_cast(EXPR_NUM, &arg_result2);
         return;
@@ -288,16 +288,16 @@ static void op_minus(toy_expr *result, const toy_expr *arg1, const toy_expr *arg
     result->num = arg_result1.num - arg_result2.num;
 }
 
-static void op_mul(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
+static void op_mul(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
 {
     toy_expr arg_result1, arg_result2;
 
-    eval_expr(&arg_result1, arg1);
+    eval_expr(interp, &arg_result1, arg1);
     if (arg_result1.type != EXPR_NUM) {
         invalid_cast(EXPR_NUM, &arg_result1);
         return;
     }
-    eval_expr(&arg_result2, arg2);
+    eval_expr(interp, &arg_result2, arg2);
     if (arg_result2.type != EXPR_NUM) {
         invalid_cast(EXPR_NUM, &arg_result2);
         return;
@@ -306,42 +306,42 @@ static void op_mul(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
     result->num = arg_result1.num * arg_result2.num;
 }
 
-static void op_not(toy_expr *result, const toy_expr *arg)
+static void op_not(toy_interp *interp, toy_expr *result, const toy_expr *arg)
 {
     toy_expr arg_result;
 
-    eval_expr(&arg_result, arg);
+    eval_expr(interp, &arg_result, arg);
     toy_bool arg_bool = convert_to_bool(&arg_result);
     result->type = EXPR_BOOL;
     result->bool = !arg_bool;
 }
 
-static void op_or(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
+static void op_or(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
 {
     toy_expr arg_result1;
 
     result->type = EXPR_BOOL;
-    eval_expr(&arg_result1, arg1);
+    eval_expr(interp, &arg_result1, arg1);
     toy_bool bool1 = convert_to_bool(&arg_result1);
     if (bool1) {
         result->bool = 1;
     } else {
         toy_expr arg_result2;
-        eval_expr(&arg_result2, arg2);
+        eval_expr(interp, &arg_result2, arg2);
         toy_bool bool2 = convert_to_bool(&arg_result2);
         result->bool = bool2;
     }
 }
 
-static void op_plus(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
+static void op_plus(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
 {
     toy_expr arg_result1;
 
-    eval_expr(&arg_result1, arg1);
+    eval_expr(interp, &arg_result1, arg1);
     if (arg_result1.type == EXPR_NUM) {
         toy_expr arg_result2;
 
-        eval_expr(&arg_result2, arg2);
+        eval_expr(interp, &arg_result2, arg2);
         if (arg_result2.type == EXPR_NUM) {
             result->type = EXPR_NUM;
             result->num = arg_result1.num + arg_result2.num;
@@ -350,23 +350,23 @@ static void op_plus(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2
         }
     } else if (arg_result1.type == EXPR_STR) {
         toy_expr arg_result2;
-        eval_expr(&arg_result2, arg2);
+        eval_expr(interp, &arg_result2, arg2);
         result->type = EXPR_STR;
         result->str = "";
         /* TODO: append stringified representation of result2 */
     }
 }
 
-static void op_modulus(toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
+static void op_modulus(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
 {
     toy_expr arg_result1, arg_result2;
 
-    eval_expr(&arg_result1, arg1);
+    eval_expr(interp, &arg_result1, arg1);
     if (arg_result1.type != EXPR_NUM) {
         invalid_operand(EXPR_MODULUS, &arg_result1);
         return;
     }
-    eval_expr(&arg_result2, arg2);
+    eval_expr(interp, &arg_result2, arg2);
     if (arg_result2.type != EXPR_NUM) {
         invalid_operand(EXPR_MODULUS, &arg_result2);
         return;
@@ -375,11 +375,11 @@ static void op_modulus(toy_expr *result, const toy_expr *arg1, const toy_expr *a
     result->num = (int) arg_result1.num % (int) arg_result2.num;
 }
 
-static void op_uneg(toy_expr *result, const toy_expr *arg)
+static void op_uneg(toy_interp *interp, toy_expr *result, const toy_expr *arg)
 {
     toy_expr arg_result;
 
-    eval_expr(&arg_result, arg);
+    eval_expr(interp, &arg_result, arg);
     if (arg_result.type != EXPR_NUM) {
         invalid_cast(EXPR_NUM, &arg_result);
         return;
@@ -388,16 +388,16 @@ static void op_uneg(toy_expr *result, const toy_expr *arg)
     result->num = -arg_result.num;
 }
 
-static void op_exponent(toy_expr *result, const toy_expr *base, const toy_expr *power)
+static void op_exponent(toy_interp *interp, toy_expr *result, const toy_expr *base, const toy_expr *power)
 {
     toy_expr base_result, power_result;
 
-    eval_expr(&base_result, base);
+    eval_expr(interp, &base_result, base);
     if (base_result.type != EXPR_NUM) {
         invalid_operand(EXPR_EXPONENT, &base_result);
         return;
     }
-    eval_expr(&power_result, power);
+    eval_expr(interp, &power_result, power);
     if (power_result.type != EXPR_NUM) {
         invalid_operand(EXPR_EXPONENT, &power_result);
         return;
@@ -406,89 +406,141 @@ static void op_exponent(toy_expr *result, const toy_expr *base, const toy_expr *
     result->num = pow(base_result.num, power_result.num);
 }
 
-static void call_func(toy_expr *result, toy_str func_name, toy_list *args)
+static void push_context(toy_interp *interp, const toy_block *block)
+{
+    /* TODO: This needs to be a stack */
+    interp->cur_block = block;
+}
+
+static void pop_context(toy_interp *interp)
 {
     /* TODO */
 }
 
-void eval_expr(toy_expr *result, const toy_expr *expr)
+static toy_expr *lookup_identifier(toy_interp *interp, const toy_str name)
+{
+    return map_get(interp->symbols, name);
+}
+
+static void add_variable(toy_interp *interp, const toy_str name, const toy_expr *value)
+{
+    toy_expr *existing_value = lookup_identifier(interp, name);
+    if (existing_value) {
+        duplicate_identifier(name);
+    }
+    map_set(interp->symbols, name, (toy_expr *) value);
+}
+
+static void add_function(toy_interp *interp, const toy_str name, const toy_func_def *def)
+{
+    toy_expr *existing_value = lookup_identifier(interp, name);
+    if (existing_value) {
+        duplicate_identifier(name);
+    }
+    toy_expr *func_expr = alloc_expr(EXPR_FUNC_DECL);
+    memcpy(&func_expr->func_decl.def, def, sizeof(*def));
+    map_set(interp->symbols, name, func_expr);
+}
+
+static void op_assign(toy_interp *interp, toy_expr *result, toy_str name, toy_expr *new_value)
+{
+    toy_expr *old_value = lookup_identifier(interp, name);
+    if (old_value) {
+        map_set(interp->symbols, name, new_value);
+        *result = *new_value;
+    } else {
+        undeclared_identifier(name);
+    }
+}
+
+static void call_func(toy_interp *interp, toy_expr *result, toy_str func_name, toy_list *args)
+{
+    /* TODO */
+}
+
+void eval_expr(toy_interp *interp, toy_expr *result, const toy_expr *expr)
 {
     switch (expr->type) {
     case EXPR_AND:
-        op_and(result, expr->binary_op.arg1, expr->binary_op.arg2);
+        op_and(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_ASSIGN:
-        /* TODO */
+        op_assign(interp, result, expr->assignment.lhs, expr->assignment.rhs);
         break;
     case EXPR_BOOL:
         *result = *expr;
         break;
     case EXPR_COMMA:
-        op_comma(result, expr->binary_op.arg1, expr->binary_op.arg2);
+        op_comma(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_DIV:
-        op_div(result, expr->binary_op.arg1, expr->binary_op.arg2);
+        op_div(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_EQUAL:
-        op_equal(result, expr->binary_op.arg1, expr->binary_op.arg2);
+        op_equal(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_EXPONENT:
-        op_exponent(result, expr->binary_op.arg1, expr->binary_op.arg2);
+        op_exponent(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_FUNC_CALL:
-        call_func(result, expr->func_call.func_name, expr->func_call.args);
+        call_func(interp, result, expr->func_call.func_name, expr->func_call.args);
         break;
     case EXPR_FUNC_DECL:
         *result = *expr;
         break;
     case EXPR_GT:
-        op_gt(result, expr->binary_op.arg1, expr->binary_op.arg2);
+        op_gt(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_GTE:
-        op_gte(result, expr->binary_op.arg1, expr->binary_op.arg2);
+        op_gte(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_IDENTIFIER:
-        /* TODO */
+        toy_expr *value = lookup_identifier(interp, expr->str);
+        if (value) {
+            *result = *value;
+        } else {
+            undeclared_identifier(expr->str);
+        }
         break;
     case EXPR_IN:
-        op_in(result, expr->binary_op.arg1, expr->binary_op.arg2);
+        op_in(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_LIST:
         *result = *expr;
         break;
     case EXPR_LT:
-        op_lt(result, expr->binary_op.arg1, expr->binary_op.arg2);
+        op_lt(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_LTE:
-        op_lte(result, expr->binary_op.arg1, expr->binary_op.arg2);
+        op_lte(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_MAP:
         *result = *expr;
         break;
     case EXPR_MINUS:
-        op_minus(result, expr->binary_op.arg1, expr->binary_op.arg2);
+        op_minus(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_MODULUS:
-        op_modulus(result, expr->binary_op.arg1, expr->binary_op.arg2);
+        op_modulus(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_MUL:
-        op_mul(result, expr->binary_op.arg1, expr->binary_op.arg2);
+        op_mul(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_NEQUAL:
-        op_equal(result, expr->binary_op.arg1, expr->binary_op.arg2);
+        op_equal(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         result->bool = !result->bool;
         break;
     case EXPR_NOT:
-        op_not(result, expr->unary_op.arg);
+        op_not(interp, result, expr->unary_op.arg);
         break;
     case EXPR_NUM:
         *result = *expr;
         break;
     case EXPR_OR:
-        op_or(result, expr->binary_op.arg1, expr->binary_op.arg2);
+        op_or(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_PLUS:
-        op_plus(result, expr->binary_op.arg1, expr->binary_op.arg2);
+        op_plus(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_POSTFIX_DECREMENT:
         /* TODO */
@@ -509,7 +561,7 @@ void eval_expr(toy_expr *result, const toy_expr *expr)
         /* TODO */
         break;
     case EXPR_UNEG:
-        op_uneg(result, expr->unary_op.arg);
+        op_uneg(interp, result, expr->unary_op.arg);
         break;
     default:
         invalid_expr_type(expr->type);
@@ -517,11 +569,11 @@ void eval_expr(toy_expr *result, const toy_expr *expr)
     }
 }
 
-void single_step(const toy_stmt *stmt)
+void single_step(toy_interp *interp, const toy_stmt *stmt)
 {
     switch (stmt->type) {
     case STMT_BLOCK:
-        toy_run(stmt->block_stmt.block.stmts);
+        run_block(interp, &stmt->block_stmt.block);
         break;
     case STMT_BREAK:
         /* TODO */
@@ -531,16 +583,16 @@ void single_step(const toy_stmt *stmt)
         break;
     case STMT_EXPR:
         toy_expr result;
-        eval_expr(&result, stmt->expr_stmt.expr);
+        eval_expr(interp, &result, stmt->expr_stmt.expr);
         break;
     case STMT_FOR:
         if (stmt->for_stmt.at_start) {
-            single_step(stmt->for_stmt.at_start);
+            single_step(interp, stmt->for_stmt.at_start);
         }
         for (;;) {
             if (stmt->for_stmt.condition) {
                 toy_expr cond_result;
-                eval_expr(&cond_result, stmt->for_stmt.condition);
+                eval_expr(interp, &cond_result, stmt->for_stmt.condition);
                 if (EXPR_BOOL != cond_result.type) {
                     invalid_operand(EXPR_BOOL, &cond_result);
                 }
@@ -549,33 +601,33 @@ void single_step(const toy_stmt *stmt)
                     break;
                 }
             }
-            toy_run(stmt->for_stmt.body.stmts);
+            run_block(interp, &stmt->for_stmt.body);
             if (stmt->for_stmt.at_end) {
-                single_step(stmt->for_stmt.at_end);
+                single_step(interp, stmt->for_stmt.at_end);
             }
         }
         break;
     case STMT_FUNC_DECL:
-        /* TODO */
+        add_function(interp, stmt->func_decl_stmt.def.name, &stmt->func_decl_stmt.def);
         break;
     case STMT_IF:
         {
             unsigned int found_one = 0;
             for (toy_if_arm *arm = stmt->if_stmt.arms; arm; arm = arm->next) {
                 toy_expr cond_result;
-                eval_expr(&cond_result, arm->condition);
+                eval_expr(interp, &cond_result, arm->condition);
                 if (EXPR_BOOL != cond_result.type) {
                     invalid_operand(EXPR_BOOL, &cond_result);
                 }
                 assert(EXPR_BOOL == cond_result.type);
                 if (cond_result.bool) {
-                    toy_run(arm->code.stmts);
+                    run_block(interp, &arm->code);
                     found_one = 1;
                     break;
                 }
             }
             if (!found_one && stmt->if_stmt.elsepart.stmts) {
-                toy_run(stmt->if_stmt.elsepart.stmts);
+                run_block(interp, &stmt->if_stmt.elsepart);
             }
         }
         break;
@@ -585,12 +637,12 @@ void single_step(const toy_stmt *stmt)
         /* TODO */
         break;
     case STMT_VAR_DECL:
-        /* TODO */
+        add_variable(interp, stmt->var_decl_stmt->name, stmt->var_decl_stmt->value);
         break;
     case STMT_WHILE:
         for(;;) {
             toy_expr cond_result;
-            eval_expr(&cond_result, stmt->while_stmt.condition);
+            eval_expr(interp, &cond_result, stmt->while_stmt.condition);
             if (EXPR_BOOL != cond_result.type) {
                 invalid_operand(EXPR_BOOL, &cond_result);
             }
@@ -598,7 +650,7 @@ void single_step(const toy_stmt *stmt)
             if (cond_result.bool) {
                 break;
             }
-            toy_run(stmt->while_stmt.body.stmts);
+            run_block(interp, &stmt->while_stmt.body);
         }
         break;
     default:
@@ -607,32 +659,24 @@ void single_step(const toy_stmt *stmt)
     }
 }
 
-void toy_run(const toy_stmt *stmt)
+void step_out(toy_interp *interp)
 {
-    for (const toy_stmt *s = stmt; s; s = s->next) {
-        single_step(s);
+    for (const toy_stmt *s = interp->cur_block->stmts; s; s = s->next) {
+        single_step(interp, s);
     }
+    dump_map(stderr, interp->symbols);
 }
 
-void test_maps()
+void run_block(toy_interp *interp, const toy_block *block)
 {
-    toy_map *map1 = alloc_map();
-    toy_expr val1;
-    val1.type = EXPR_NUM;
-    val1.num = 42;
-    map_set(map1, "first key", &val1);
-    toy_expr *get1 = map_get(map1, "first key");
-    assert(get1->type == EXPR_NUM);
-    assert(get1->num == 42);
-    toy_expr val2;
-    val2.type = EXPR_STR;
-    val2.str = "second value";
-    map_set(map1, "second key", &val2);
-    toy_expr *get2 = map_get(map1, "second key");
-    assert(get2->type == EXPR_STR);
-    assert(0 == strcmp(get2->str, "second value"));
-    toy_expr *get3 = map_get(map1, "first key");
-    assert(get3->type == EXPR_NUM);
-    assert(get3->num == 42);
-    dump_map(stderr, map1);
+    push_context(interp, block);
+    step_out(interp);
+    pop_context(interp);
+}
+
+void init_interp(toy_interp *interp, const toy_stmt *program)
+{
+    interp->top_block.stmts = (toy_stmt *) program;
+    interp->cur_block = &interp->top_block;
+    interp->symbols = alloc_map();
 }

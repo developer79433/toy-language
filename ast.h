@@ -14,13 +14,8 @@ struct toy_stmt_struct;
 typedef struct toy_expr_struct toy_expr;
 typedef struct toy_stmt_struct toy_stmt;
 
-typedef struct symbol_table_struct {
-    /* TODO */
-} symbol_table;
-
 typedef struct toy_block_struct {
     toy_stmt *stmts;
-    symbol_table symbols;
 } toy_block;
 
 typedef struct toy_list_struct {
@@ -238,6 +233,8 @@ struct toy_stmt_struct {
 };
 
 void fatal_error(const char *fmt, ...);
+void undeclared_identifier(toy_str name);
+void duplicate_identifier(toy_str name);
 void invalid_operand(enum toy_expr_type expr_type, const toy_expr *operand);
 void invalid_expr_type(enum toy_expr_type expr_type);
 void invalid_stmt_type(enum toy_stmt_type stmt_type);

@@ -34,6 +34,16 @@ void invalid_cast(enum toy_expr_type expr_type, const toy_expr *expr)
     fatal_error("Cannot convert to %s", toy_expr_type_name(expr_type));
 }
 
+void duplicate_identifier(toy_str name)
+{
+    fatal_error("Attempt to redeclare identifier '%s'", name);
+}
+
+void undeclared_identifier(toy_str name)
+{
+    fatal_error("Undeclared identifier '%s'", name);
+}
+
 toy_map_entry *alloc_map_entry(toy_expr *key, toy_expr *value)
 {
     toy_map_entry *map_entry;
