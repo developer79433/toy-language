@@ -106,6 +106,12 @@ typedef struct toy_field_ref_struct {
     toy_str rhs;
 } toy_field_ref;
 
+typedef struct toy_method_call_struct {
+    toy_str target;
+    toy_str func_name;
+    toy_list *args;
+} toy_method_call;
+
 typedef struct toy_collection_lookup_struct {
     toy_str lhs;
     toy_expr *rhs;
@@ -131,6 +137,7 @@ enum toy_expr_type {
     EXPR_LT,
     EXPR_LTE,
     EXPR_MAP,
+    EXPR_METHOD_CALL,
     EXPR_MINUS,
     EXPR_MODULUS,
     EXPR_MUL,
@@ -158,6 +165,7 @@ struct toy_expr_struct {
         toy_list *list;
         toy_map *map;
         toy_func_call func_call;
+        toy_method_call method_call;
         toy_unary_op unary_op;
         toy_binary_op binary_op;
         toy_func_expr func_decl;

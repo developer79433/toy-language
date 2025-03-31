@@ -25,6 +25,7 @@ static const char *toy_expr_type_names[] = {
     "less than",
     "less than or equal to",
     "map",
+    "method call",
     "subtraction",
     "modulus",
     "multiplication",

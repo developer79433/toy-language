@@ -36,7 +36,7 @@ static toy_stmt *program_start;
 %type <num> T_FLOAT
 %type <str> T_STRING T_IDENTIFIER
 %type <var_decl> vardecl
-%type <expr> expr expr_no_comma optional_expr literal prefix_increment prefix_decrement postfix_increment postfix_decrement ternary assignment_expr bracketed_subexpr function_call_expr function_decl_expr map_expr listexpr unary_neg_expr modulus_expr equal_expr nequal_expr lt_expr lte_expr gt_expr gte_expr in_expr and_expr or_expr not_expr add_expr divide_expr multiply_expr subtract_expr comma_expr_with_side_effect comma_expr_without_side_effect expr_with_side_effect_no_comma expr_without_side_effect_no_comma expr_with_side_effect_allow_comma expr_without_side_effect_allow_comma exponent_expr field_ref_expr collection_lookup_expr
+%type <expr> expr expr_no_comma optional_expr literal prefix_increment prefix_decrement postfix_increment postfix_decrement ternary assignment_expr bracketed_subexpr function_call_expr function_decl_expr map_expr listexpr unary_neg_expr modulus_expr equal_expr nequal_expr lt_expr lte_expr gt_expr gte_expr in_expr and_expr or_expr not_expr add_expr divide_expr multiply_expr subtract_expr comma_expr_with_side_effect comma_expr_without_side_effect expr_with_side_effect_no_comma expr_without_side_effect_no_comma expr_with_side_effect_allow_comma expr_without_side_effect_allow_comma exponent_expr field_ref_expr collection_lookup_expr method_call_expr
 %type <str_list> formalparams formalparamlist
 %type <stmt> stmts stmt if_stmt while_stmt for_stmt null_stmt expr_stmt func_decl_stmt var_decl_stmt return_stmt break_stmt continue_stmt stmt_requiring_semicolon stmt_in_for_atstart stmt_in_for_atend block_stmt
 %type <if_arm> elseifs
@@ -573,6 +573,15 @@ function_call_expr: T_IDENTIFIER T_LPAREN actualargs T_RPAREN {
     }
 ;
 
+method_call_expr:
+    T_IDENTIFIER T_DOT T_IDENTIFIER T_LPAREN actualargs T_RPAREN {
+        $$ = alloc_expr(EXPR_METHOD_CALL);
+        $$->method_call.target = $1;
+        $$->method_call.func_name = $3;
+        $$->method_call.args = $5;
+    }
+;
+
 bracketed_subexpr: T_LPAREN expr T_RPAREN {
         $$ = $2;
     }
@@ -628,6 +637,7 @@ comma_expr_without_side_effect:
 
 expr_with_side_effect_no_comma :
     function_call_expr
+    | method_call_expr
     | assignment_expr
     | postfix_decrement
     | postfix_increment

@@ -91,6 +91,11 @@ static void dump_assignment(FILE *f, const toy_str lhs, const toy_expr *rhs)
     dump_expr(f, rhs);
 }
 
+static void dump_method_call(FILE *f, toy_str target, toy_str func_name, toy_list *args)
+{
+    /* TODO */
+}
+
 void dump_expr(FILE *f, const toy_expr *expr) {
     if (expr) {
         switch (expr->type) {
@@ -121,6 +126,9 @@ void dump_expr(FILE *f, const toy_expr *expr) {
         case EXPR_EXPONENT:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " ** ");
             break;
+        case EXPR_FIELD_REF:
+            /* TODO */
+            break;
         case EXPR_FUNC_CALL:
             fprintf(f, "%s(", expr->func_call.func_name);
             unsigned int output_something = 0;
@@ -134,6 +142,7 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             fputs(")", f);
             break;
         case EXPR_FUNC_DECL:
+            /* TODO: factor this out */
             fprintf(f, "fun %s(", expr->func_decl.def.name);
             dump_identifier_list(f, expr->func_decl.def.param_names);
             fputs(") {\n", f);
@@ -163,6 +172,9 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             break;
         case EXPR_MAP:
             dump_map(f, expr->map);
+            break;
+        case EXPR_METHOD_CALL:
+            dump_method_call(f, expr->method_call.target, expr->method_call.func_name, expr->method_call.args);
             break;
         case EXPR_MINUS:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " - ");

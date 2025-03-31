@@ -325,3 +325,8 @@ void op_ternary(toy_interp *interp, toy_expr *result, toy_expr *condition, toy_e
         invalid_operand(EXPR_TERNARY, &cond_result);
     }
 }
+
+void op_method_call(toy_interp *interp, toy_str target, toy_str func_name, toy_list *args)
+{
+    /* TODO */
+}

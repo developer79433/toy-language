@@ -370,6 +370,9 @@ void eval_expr(toy_interp *interp, toy_expr *result, const toy_expr *expr)
     case EXPR_EXPONENT:
         op_exponent(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
+    case EXPR_FIELD_REF:
+        /* TODO */
+        break;
     case EXPR_FUNC_CALL:
         call_func(interp, result, expr->func_call.func_name, expr->func_call.args);
         break;
@@ -404,6 +407,9 @@ void eval_expr(toy_interp *interp, toy_expr *result, const toy_expr *expr)
         break;
     case EXPR_MAP:
         *result = *expr;
+        break;
+    case EXPR_METHOD_CALL:
+        op_method_call(interp, expr->method_call.target, expr->method_call.func_name, expr->method_call.args);
         break;
     case EXPR_MINUS:
         op_minus(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
