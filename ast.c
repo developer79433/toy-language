@@ -2,6 +2,7 @@
 
 #include "mymalloc.h"
 #include "ast.h"
+#include "list.h"
 #include "map.h"
 
 static const char *toy_expr_type_names[] = {
@@ -89,6 +90,12 @@ void invalid_list_index(toy_list *list, toy_num index)
 {
     dump_list(stderr, list);
     fatal_error("Invalid list index %d", index);
+}
+
+void too_many_arguments(toy_num expected, toy_list *args)
+{
+    dump_list(stderr, args);
+    fatal_error("Too many arguments: expected %d, received %d", expected, list_len(args));
 }
 
 toy_map_entry *alloc_map_entry(toy_expr *key, toy_expr *value)

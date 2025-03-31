@@ -2,17 +2,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <math.h>
 
 #include "interp.h"
+#include "list.h"
 #include "map.h"
-
-size_t list_len(const toy_list *list)
-{
-    size_t size;
-    for (size = 1; list->next; list = list->next) { size++; }
-    return size;
-}
+#include "util.h"
 
 size_t map_len(const toy_map *map)
 {
@@ -419,17 +415,105 @@ static void pop_context(toy_interp *interp)
 
 static toy_expr null_expr = { EXPR_NULL };
 
+typedef struct predefined_constant_struct {
+    toy_str name;
+    toy_expr *value;
+} predefined_constant;
+
+static predefined_constant predefined_constants[] = {
+    { "null", &null_expr }
+};
+
+static toy_expr *lookup_predefined_constant(toy_str name)
+{
+    for (
+        const predefined_constant *constant = &predefined_constants[0];
+        constant < &predefined_constants[ELEMENTSOF(predefined_constants)];
+        constant++)
+    {
+        if (0 == strcasecmp(constant->name, name)) {
+            return constant->value;
+        }
+    }
+    return NULL;
+}
+
+typedef void (*predefined_func_addr)(toy_interp *interp, toy_expr *result, toy_list *args);
+
+typedef struct predefined_function_struct {
+    toy_str name;
+    predefined_func_addr func;
+} predefined_function;
+
+static void predefined_list_len(toy_interp *interp, toy_expr *result, toy_list *args)
+{
+    if (args->next) {
+        too_many_arguments(1, args);
+    }
+    toy_expr *arg1 = args->expr;
+    if (arg1->type != EXPR_LIST) {
+        invalid_operand(EXPR_LIST, arg1);
+    }
+    result->type = EXPR_NUM;
+    result->num = list_len(arg1->list);
+}
+
+static void predefined_print(toy_interp *interp, toy_expr *result, toy_list *args)
+{
+    for (toy_list *arg = args; arg; arg = arg->next) {
+        dump_expr(stderr, arg->expr);
+    }
+    *result = null_expr;
+}
+
+static predefined_function predefined_functions[] = {
+    { "len", predefined_list_len },
+    { "print", predefined_print }
+};
+
+static predefined_func_addr lookup_predefined_function(toy_str name)
+{
+    for (
+        const predefined_function *function = &predefined_functions[0];
+        function < &predefined_functions[ELEMENTSOF(predefined_functions)];
+        function++)
+    {
+        if (0 == strcasecmp(function->name, name)) {
+            return function->func;
+        }
+    }
+    return 0;
+}
+
+static int is_predefined(toy_str name)
+{
+    if (lookup_predefined_constant(name)) {
+        return 1;
+    }
+    if (lookup_predefined_function(name)) {
+        return 1;
+    }
+    return 0;
+}
+
 static toy_expr *lookup_identifier(toy_interp *interp, const toy_str name)
 {
-    if (0 == strcasecmp(name, "null")) {
-        return &null_expr;
+    for (
+        const predefined_constant *constant = &predefined_constants[0];
+        constant < &predefined_constants[ELEMENTSOF(predefined_constants)];
+        constant++)
+    {
+        if (0 == strcasecmp(constant->name, name)) {
+            return constant->value;
+        }
     }
+    /* TODO: lookup functions too */
     return map_get(interp->symbols, name);
 }
 
 static void add_variable(toy_interp *interp, const toy_str name, const toy_expr *value)
 {
-    if (0 == strcasecmp(name, "null")) {
+    if (is_predefined(name)) {
         readonly_identifier(name);
     }
     toy_expr *existing_value = lookup_identifier(interp, name);
@@ -447,6 +531,9 @@ static void add_variable(toy_interp *interp, const toy_str name, const toy_expr 
 
 static void add_function(toy_interp *interp, const toy_str name, const toy_func_def *def)
 {
+    if (is_predefined(name)) {
+        readonly_identifier(name);
+    }
     toy_expr *existing_value = lookup_identifier(interp, name);
     if (existing_value) {
         duplicate_identifier(name);
@@ -458,6 +545,9 @@ static void add_function(toy_interp *interp, const toy_str name, const toy_func_
 
 static void op_assign(toy_interp *interp, toy_expr *result, toy_str name, toy_expr *new_value)
 {
+    if (is_predefined(name)) {
+        readonly_identifier(name);
+    }
     toy_expr *old_value = lookup_identifier(interp, name);
     if (old_value) {
         map_set(interp->symbols, name, new_value);
@@ -481,6 +571,7 @@ static toy_expr *lookup_list(toy_list *list, toy_num index)
         }
     }
     invalid_list_index(list, index);
+    return NULL;
 }
 
 static void collection_lookup(toy_interp *interp, toy_expr *result, toy_str identifier, toy_expr *index)

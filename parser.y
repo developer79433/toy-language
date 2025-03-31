@@ -8,7 +8,6 @@
 
 extern int yylex (void);
 void yyerror(const char *s);
-#define ELEMENTSOF(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 static toy_stmt *program_start;
 

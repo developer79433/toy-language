@@ -256,6 +256,7 @@ void invalid_expr_type(enum toy_expr_type expr_type);
 void invalid_stmt_type(enum toy_stmt_type stmt_type);
 void invalid_cast(enum toy_expr_type expr_type, const toy_expr *expr);
 void invalid_list_index(toy_list *list, toy_num index);
+void too_many_arguments(toy_num expected, toy_list *args);
 void dump_str(FILE *f, const toy_str str);
 void dump_identifier(FILE *f, const toy_str str);
 void dump_identifier_list(FILE *f, const toy_str_list *list);
