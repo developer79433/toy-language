@@ -2,6 +2,7 @@ CC=gcc
 CFLAGS=-Wall -g3 -DYYDEBUG=1
 # -Werror
 LD=$(CC)
+LIBS=m
 LDFLAGS=$(CFLAGS)
 # BISONFLAGS=--header
 BISONFLAGS=--header -Wcounterexamples --debug
@@ -18,7 +19,7 @@ HEADERS=$(sort $(wildcard *.h) $(GENERATED_HEADERS))
 all: test
 
 $(BINARY): $(OBJECTS)
-	$(LD) -o "$@" $^
+	$(LD) -o "$@" $^ $(addprefix -l,$(LIBS))
 
 %.o: %.c $(HEADERS)
 	$(CC) -c $(CFLAGS) -o "$@" $<

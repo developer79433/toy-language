@@ -111,6 +111,7 @@ enum toy_expr_type {
     EXPR_COMMA,
     EXPR_DIV,
     EXPR_EQUAL,
+    EXPR_EXPONENT,
     EXPR_FUNC_CALL,
     EXPR_FUNC_DECL,
     EXPR_GT,
@@ -209,16 +210,16 @@ typedef struct toy_block_stmt_struct {
 /* TODO: switch statement */
 enum toy_stmt_type {
     STMT_BLOCK = 0,
+    STMT_BREAK,
+    STMT_CONTINUE,
     STMT_EXPR,
     STMT_FOR,
     STMT_FUNC_DECL,
-    STMT_NULL,
     STMT_IF,
-    STMT_VAR_DECL,
-    STMT_WHILE,
+    STMT_NULL,
     STMT_RETURN,
-    STMT_BREAK,
-    STMT_CONTINUE
+    STMT_VAR_DECL,
+    STMT_WHILE
 };
 
 struct toy_stmt_struct {

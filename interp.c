@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 #include "interp.h"
 #include "map.h"
@@ -366,7 +367,7 @@ static void op_modulus(toy_expr *result, const toy_expr *arg1, const toy_expr *a
         return;
     }
     eval_expr(&arg_result2, arg2);
-    if (arg_result2.type == EXPR_NUM) {
+    if (arg_result2.type != EXPR_NUM) {
         invalid_operand(EXPR_MODULUS, &arg_result2);
         return;
     }
@@ -385,6 +386,24 @@ static void op_uneg(toy_expr *result, const toy_expr *arg)
     }
     result->type = EXPR_NUM;
     result->num = -arg_result.num;
+}
+
+static void op_exponent(toy_expr *result, const toy_expr *base, const toy_expr *power)
+{
+    toy_expr base_result, power_result;
+
+    eval_expr(&base_result, base);
+    if (base_result.type != EXPR_NUM) {
+        invalid_operand(EXPR_EXPONENT, &base_result);
+        return;
+    }
+    eval_expr(&power_result, power);
+    if (power_result.type != EXPR_NUM) {
+        invalid_operand(EXPR_EXPONENT, &power_result);
+        return;
+    }
+    result->type = EXPR_NUM;
+    result->num = pow(base_result.num, power_result.num);
 }
 
 static void call_func(toy_expr *result, toy_str func_name, toy_list *args)
@@ -412,6 +431,9 @@ void eval_expr(toy_expr *result, const toy_expr *expr)
         break;
     case EXPR_EQUAL:
         op_equal(result, expr->binary_op.arg1, expr->binary_op.arg2);
+        break;
+    case EXPR_EXPONENT:
+        op_exponent(result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_FUNC_CALL:
         call_func(result, expr->func_call.func_name, expr->func_call.args);
@@ -501,6 +523,12 @@ void single_step(const toy_stmt *stmt)
     case STMT_BLOCK:
         toy_run(stmt->block_stmt.block.stmts);
         break;
+    case STMT_BREAK:
+        /* TODO */
+        break;
+    case STMT_CONTINUE:
+        /* TODO */
+        break;
     case STMT_EXPR:
         toy_expr result;
         eval_expr(&result, stmt->expr_stmt.expr);
@@ -553,6 +581,9 @@ void single_step(const toy_stmt *stmt)
         break;
     case STMT_NULL:
         break;
+    case STMT_RETURN:
+        /* TODO */
+        break;
     case STMT_VAR_DECL:
         /* TODO */
         break;
@@ -569,15 +600,6 @@ void single_step(const toy_stmt *stmt)
             }
             toy_run(stmt->while_stmt.body.stmts);
         }
-        break;
-    case STMT_RETURN:
-        /* TODO */
-        break;
-    case STMT_BREAK:
-        /* TODO */
-        break;
-    case STMT_CONTINUE:
-        /* TODO */
         break;
     default:
         invalid_stmt_type(stmt->type);

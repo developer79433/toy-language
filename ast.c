@@ -197,6 +197,7 @@ static const char *toy_expr_type_names[] = {
     "comma",
     "division",
     "equal to",
+    "exponentiation",
     "function call",
     "function declaration",
     "greater than",
@@ -230,16 +231,16 @@ const char *toy_expr_type_name(enum toy_expr_type expr_type)
 
 static const char *toy_stmt_type_names[] = {
     "block statement",
+    "break statement",
+    "continue statement",
     "expression statement",
     "for loop",
     "function declaration",
-    "null statement",
     "if statement",
-    "variable declaration",
-    "while loop",
+    "null statement",
     "return statement",
-    "break statement",
-    "continue statement"
+    "variable declaration",
+    "while loop"
 };
 
 const char *toy_stmt_type_name(enum toy_stmt_type stmt_type)
@@ -351,6 +352,9 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             break;
         case EXPR_EQUAL:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " == ");
+            break;
+        case EXPR_EXPONENT:
+            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " ** ");
             break;
         case EXPR_FUNC_CALL:
             fprintf(f, "%s(", expr->func_call.func_name);
@@ -468,6 +472,18 @@ void dump_stmt(FILE *f, const toy_stmt *stmt, int append_semicolon)
         dump_stmts(f, stmt->block_stmt.block.stmts);
         fputs("}\n", f);
         break;
+    case STMT_BREAK:
+        fputs("break", f);
+        if (append_semicolon) {
+            fputc(';', f);
+        }
+        break;
+    case STMT_CONTINUE:
+        fputs("continue", f);
+        if (append_semicolon) {
+            fputc(';', f);
+        }
+        break;
     case STMT_EXPR:
         dump_expr(f, stmt->expr_stmt.expr);
         if (append_semicolon) {
@@ -529,6 +545,13 @@ void dump_stmt(FILE *f, const toy_stmt *stmt, int append_semicolon)
             fputc(';', f);
         }
         break;
+    case STMT_RETURN:
+        fputs("return ", f);
+        dump_expr(f, stmt->return_stmt.expr);
+        if (append_semicolon) {
+            fputc(';', f);
+        }
+        break;
     case STMT_VAR_DECL:
         fputs("var ", f);
         int output_something = 0;
@@ -553,25 +576,6 @@ void dump_stmt(FILE *f, const toy_stmt *stmt, int append_semicolon)
         fputs(") {\n", f);
         dump_stmts(f, stmt->while_stmt.body.stmts);
         fputs("}", f);
-        break;
-    case STMT_RETURN:
-        fputs("return ", f);
-        dump_expr(f, stmt->return_stmt.expr);
-        if (append_semicolon) {
-            fputc(';', f);
-        }
-        break;
-    case STMT_BREAK:
-        fputs("break", f);
-        if (append_semicolon) {
-            fputc(';', f);
-        }
-        break;
-    case STMT_CONTINUE:
-        fputs("continue", f);
-        if (append_semicolon) {
-            fputc(';', f);
-        }
         break;
     default:
         invalid_stmt_type(stmt->type);

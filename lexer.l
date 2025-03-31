@@ -58,6 +58,7 @@ null { return T_NULL; }
 
 {IDENTIFIER}        { yylval.str = strdup(yytext); return T_IDENTIFIER; }
 
+"**" { return T_ASTERISK_ASTERISK; }
 "++" { return T_PLUS_PLUS; }
 "--" { return T_MINUS_MINUS; }
 "!=" { return T_NEQUAL; }

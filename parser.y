@@ -15,7 +15,7 @@ static toy_stmt *program_start;
 
 %}
 
-%token T_BOOLEAN T_FLOAT T_STRING T_IDENTIFIER T_EQUAL T_COMMA T_COLON T_ASTERISK T_FSLASH T_DOT T_LPAREN T_RPAREN T_LBRACKET T_RBRACKET T_LBRACE T_RBRACE T_SEMICOLON T_PLUS T_MINUS T_IF T_ELSE T_ELSEIF T_FOR T_WHILE T_VAR T_FUN T_AND T_OR T_NOT T_IN T_RETURN T_BREAK T_CONTINUE T_NULL T_PLUS_PLUS T_MINUS_MINUS T_QUESTION
+%token T_BOOLEAN T_FLOAT T_STRING T_IDENTIFIER T_EQUAL T_COMMA T_COLON T_ASTERISK T_FSLASH T_DOT T_LPAREN T_RPAREN T_LBRACKET T_RBRACKET T_LBRACE T_RBRACE T_SEMICOLON T_PLUS T_MINUS T_IF T_ELSE T_ELSEIF T_FOR T_WHILE T_VAR T_FUN T_AND T_OR T_NOT T_IN T_RETURN T_BREAK T_CONTINUE T_NULL T_PLUS_PLUS T_MINUS_MINUS T_QUESTION T_ASTERISK_ASTERISK
 
 %union {
     toy_bool bool;
@@ -38,7 +38,7 @@ static toy_stmt *program_start;
 %type <num> T_FLOAT
 %type <str> T_STRING T_IDENTIFIER
 %type <var_decl> vardecl
-%type <expr> expr expr_no_comma optional_expr literal prefix_increment prefix_decrement postfix_increment postfix_decrement ternary assignment_expr bracketed_subexpr function_call_expr function_decl_expr map_expr listexpr unary_neg_expr modulus_expr equal_expr nequal_expr lt_expr lte_expr gt_expr gte_expr in_expr and_expr or_expr not_expr add_expr divide_expr multiply_expr subtract_expr comma_expr_with_side_effect comma_expr_without_side_effect expr_with_side_effect_no_comma expr_without_side_effect_no_comma expr_with_side_effect_allow_comma expr_without_side_effect_allow_comma
+%type <expr> expr expr_no_comma optional_expr literal prefix_increment prefix_decrement postfix_increment postfix_decrement ternary assignment_expr bracketed_subexpr function_call_expr function_decl_expr map_expr listexpr unary_neg_expr modulus_expr equal_expr nequal_expr lt_expr lte_expr gt_expr gte_expr in_expr and_expr or_expr not_expr add_expr divide_expr multiply_expr subtract_expr comma_expr_with_side_effect comma_expr_without_side_effect expr_with_side_effect_no_comma expr_without_side_effect_no_comma expr_with_side_effect_allow_comma expr_without_side_effect_allow_comma exponent_expr
 %type <str_list> formalparams formalparamlist
 %type <stmt> stmts stmt if_stmt while_stmt for_stmt null_stmt expr_stmt func_decl_stmt var_decl_stmt return_stmt break_stmt continue_stmt stmt_requiring_semicolon stmt_in_for_atstart stmt_in_for_atend block_stmt
 %type <if_arm> elseifs
@@ -57,6 +57,7 @@ static toy_stmt *program_start;
 %left T_IN
 %left T_ASTERISK T_FSLASH
 %left T_PERCENT
+%left T_ASTERISK_ASTERISK
 %left T_NOT T_UNEG
 
 %%
@@ -79,7 +80,6 @@ stmts :
             $$ = $2;
         }
     }
-    /* TODO: Allow a block instead of a statement */
 ;
 
 stmt :
@@ -135,8 +135,6 @@ for_stmt:
         $$->for_stmt.condition = $5;
         $$->for_stmt.at_end = $7;
         $$->for_stmt.body = $9;
-        /* TODO: crashes */
-        /* dump_stmt(stderr, $$->for_stmt.at_end, 1); */
     }
 ;
 
@@ -389,6 +387,18 @@ literal:
     }
 ;
 
+/* TODO: Compound assignments: +=, -=, /=, *= */
+
+/* TODO: bit-shift expressions << and >> */
+/* TODO: Bitwise operators |, ~, ^ and & */
+/* TODO: Exponentiation operator ** */
+
+exponent_expr: expr_no_comma T_ASTERISK_ASTERISK expr_no_comma {
+        $$ = alloc_binary_op_expr(EXPR_EXPONENT);
+        $$->binary_op.arg1 = $1;
+        $$->binary_op.arg2 = $3;
+};
+
 /* FIXME: Should allow comma expressions */
 assignment_expr: T_IDENTIFIER T_ASSIGN expr_no_comma {
         $$ = alloc_expr(EXPR_ASSIGN);
@@ -640,6 +650,7 @@ expr_without_side_effect_no_comma :
     | function_decl_expr
     | bracketed_subexpr
     | ternary
+    | exponent_expr
 ;
 
 expr_without_side_effect_allow_comma :
