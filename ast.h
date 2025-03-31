@@ -8,7 +8,8 @@
 /* TODO: enum toy_bool? */
 typedef unsigned int toy_bool;
 typedef double toy_num;
-typedef char *toy_str;
+typedef char toy_char;
+typedef toy_char *toy_str;
 
 struct toy_expr_struct;
 struct toy_stmt_struct;

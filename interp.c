@@ -441,8 +441,12 @@ typedef void (*predefined_func_addr)(toy_interp *interp, toy_expr *result, toy_l
 
 typedef struct predefined_function_struct {
     toy_str name;
+    int num_params;
     predefined_func_addr func;
+    const toy_char **param_names;
 } predefined_function;
+
+#define INFINITE_PARAMS -1
 
 static void predefined_list_len(toy_interp *interp, toy_expr *result, toy_list *args)
 {
@@ -457,6 +461,10 @@ static void predefined_list_len(toy_interp *interp, toy_expr *result, toy_list *
     result->num = list_len(arg1->list);
 }
 
+static const char *predefined_list_len_arg_names[] = {
+    "list"
+};
+
 static void predefined_print(toy_interp *interp, toy_expr *result, toy_list *args)
 {
     for (toy_list *arg = args; arg; arg = arg->next) {
@@ -466,8 +474,8 @@ static void predefined_print(toy_interp *interp, toy_expr *result, toy_list *arg
 }
 
 static predefined_function predefined_functions[] = {
-    { "len", predefined_list_len },
-    { "print", predefined_print }
+    { .name = "len",   .num_params = 1,               .func = predefined_list_len, .param_names = predefined_list_len_arg_names },
+    { .name = "print", .num_params = INFINITE_PARAMS, .func = predefined_print,    .param_names = NULL }
 };
 
 static predefined_func_addr lookup_predefined_function(toy_str name)
@@ -558,9 +566,22 @@ static void op_assign(toy_interp *interp, toy_expr *result, toy_str name, toy_ex
 
 static void call_func(toy_interp *interp, toy_expr *result, toy_str func_name, toy_list *args)
 {
-    /* TODO */
+    predefined_func_addr predef = lookup_predefined_function(func_name);
+    if (predef) {
+        (*predef)(interp, result, args);
+    } else {
+        toy_expr *expr = lookup_identifier(interp, func_name);
+        if (expr->type == EXPR_FUNC_DECL) {
+            /* TODO: function arguments */
+            run_block(interp, &expr->func_decl.def.code);
+        } else {
+            invalid_operand(EXPR_FUNC_CALL, expr);
+        }
+    }
 }
 
+/* TODO: Should be named 'list_index' */
+/* TODO: Belongs in list.c */
 static toy_expr *lookup_list(toy_list *list, toy_num index)
 {
     /* FIXME: inefficient */
