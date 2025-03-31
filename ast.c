@@ -94,6 +94,12 @@ void invalid_list_index(toy_list *list, toy_num index)
     fatal_error("Invalid list index %d", index);
 }
 
+void too_few_arguments(toy_num expected, toy_list *args)
+{
+    dump_list(stderr, args);
+    fatal_error("Too few arguments: expected %d, received %d", expected, list_len(args));
+}
+
 void too_many_arguments(toy_num expected, toy_list *args)
 {
     dump_list(stderr, args);

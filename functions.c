@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <string.h>
 
 #include "util.h"
@@ -5,6 +6,7 @@
 #include "list.h"
 #include "dump.h"
 #include "constants.h"
+#include "operations.h"
 
 typedef struct predefined_function_struct {
     toy_str name;
@@ -47,9 +49,49 @@ static void predefined_print(toy_interp *interp, toy_expr *result, toy_list *arg
     *result = null_expr;
 }
 
+static const char *predefined_assert_equal_param_names[] = {
+    "val1",
+    "val2"
+};
+
+static void toy_assert_fail(const char * msg, size_t num_exprs, ...)
+{
+    va_list argptr;
+    va_start(argptr, num_exprs);
+    fprintf(stderr, "Assertion failed: %s\n", msg);
+    while (num_exprs--) {
+        const toy_expr *expr = va_arg(argptr, const toy_expr *);
+        dump_expr(stderr, expr);
+        fputc('\n', stderr);
+    }
+    va_end(argptr);
+}
+
+static void predefined_assert_equal(toy_interp *interp, toy_expr *result, toy_list *args)
+{
+    /* TODO: Use num_params to validate, not open coding */
+    if (!args) {
+        too_few_arguments(2, args);
+    }
+    toy_expr *arg1 = args->expr;
+    if (!args->next->expr) {
+        too_few_arguments(2, args);
+    }
+    toy_expr *arg2 = args->next->expr;
+    op_equal(interp, result, arg1, arg2);
+    assert(EXPR_BOOL == result->type);
+    if (result->bool) {
+        /* Assertion succeeded */
+    } else {
+        toy_assert_fail("Not equal: ", 2, arg1, arg2);
+    }
+}
+
+/* TODO: Use num_params to validate, not open coding */
 static predefined_function predefined_functions[] = {
     { .name = "len",   .num_params = 1,               .func = predefined_list_len, .param_names = predefined_list_len_arg_names },
-    { .name = "print", .num_params = INFINITE_PARAMS, .func = predefined_print,    .param_names = NULL }
+    { .name = "print", .num_params = INFINITE_PARAMS, .func = predefined_print,    .param_names = NULL },
+    { .name = "assert_equal", .num_params = 2, .func = predefined_assert_equal, .param_names = predefined_assert_equal_param_names }
 };
 
 predefined_func_addr lookup_predefined_function(const toy_str name)

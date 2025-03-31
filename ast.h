@@ -266,6 +266,7 @@ void invalid_expr_type(enum toy_expr_type expr_type);
 void invalid_stmt_type(enum toy_stmt_type stmt_type);
 void invalid_cast(enum toy_expr_type expr_type, const toy_expr *expr);
 void invalid_list_index(toy_list *list, toy_num index);
+void too_few_arguments(toy_num expected, toy_list *args);
 void too_many_arguments(toy_num expected, toy_list *args);
 toy_stmt *alloc_stmt(enum toy_stmt_type type);
 toy_map_entry *alloc_map_entry(toy_expr *key, toy_expr *value);

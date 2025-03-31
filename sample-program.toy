@@ -45,3 +45,4 @@ var tern = (arfle == barfle) ? yes : no;
 var bvcserjcbgsrjbgcvrkjrsnbrvcs;
 var indexed_into_list = myval[1];
 var indexed_into_map = mymap["mykey"];
+assert_equal(1, 1);
