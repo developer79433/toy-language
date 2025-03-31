@@ -2,6 +2,7 @@
 
 %{
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "ast.h"
@@ -98,10 +99,11 @@ null { return T_NULL; }
 
 %%
 
-void init_lexer(void)
+void init_lexer(FILE *f)
 {
 #ifdef YYDEBUG
+    yy_flex_debug = 1;
 #define YYERROR_VERBOSE
-    /* yydebug = 1; */
 #endif
+    yyin = f;
 }

@@ -5,7 +5,6 @@
 
 #include "ast.h"
 #include "map.h"
-#include "interp.h"
 
 extern int yylex (void);
 void yyerror(const char *s);
@@ -687,30 +686,15 @@ void yyerror(const char *s)
     printf("\nError: %s\n", s);  
 }
 
-int main(int argc, char **argv)
+void init_parser(void)
 {
 #ifdef YYDEBUG
+#define YYERROR_VERBOSE
     yydebug = 1;
 #endif /* YYDEBUG */
-    extern FILE *yyin;
-    ++argv, --argc;  /* skip over program name */
-    if (argc > 0) {
-        yyin = fopen( argv[0], "r" );
-    } else {
-        /* yyin = stdin; */
-        yyin = fopen( "sample-program.toy", "r" );
-    }
+}
 
-    extern void init_lexer(void);
-    init_lexer();
-    /* yylex(); */
-    int parse_res = yyparse();
-    if (parse_res != 0) {
-        fprintf(stderr, "yyparse() returned %d\n", parse_res);
-        return EXIT_FAILURE;
-    }
-    /* test_maps(); */
-    dump_stmts(stderr, program_start);
-    toy_run(program_start);
-    return EXIT_SUCCESS;
+toy_stmt *get_program_start(void)
+{
+    return program_start;
 }
