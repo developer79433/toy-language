@@ -38,4 +38,4 @@ clean:
 # 2>&1 | less
 .PHONY: test
 test: $(BINARY)
-	./$(BINARY) sample-program.toy
+	./$(BINARY) sample-program.toy ; echo $$?

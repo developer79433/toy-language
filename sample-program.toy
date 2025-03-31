@@ -1,5 +1,6 @@
 // "hi mum!";
 var mylist = [123.5, 456, [ "surprise!" ]];
+print(mylist);
 var mymap = { "mykey": 123, "myotherkey": "myothervalue" };
 var mval = [ 345.6, {"blah": (42, 3)}, "foo"];
 fun myfunction() {

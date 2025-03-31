@@ -469,6 +469,7 @@ static void predefined_print(toy_interp *interp, toy_expr *result, toy_list *arg
 {
     for (toy_list *arg = args; arg; arg = arg->next) {
         dump_expr(stderr, arg->expr);
+        fputc('\n', stderr);
     }
     *result = null_expr;
 }
@@ -580,20 +581,6 @@ static void call_func(toy_interp *interp, toy_expr *result, toy_str func_name, t
     }
 }
 
-/* TODO: Should be named 'list_index' */
-/* TODO: Belongs in list.c */
-static toy_expr *lookup_list(toy_list *list, toy_num index)
-{
-    /* FIXME: inefficient */
-    for (size_t i = 0; list; list = list->next, i++) {
-        if (i == index) {
-            return list->expr;
-        }
-    }
-    invalid_list_index(list, index);
-    return NULL;
-}
-
 static void collection_lookup(toy_interp *interp, toy_expr *result, toy_str identifier, toy_expr *index)
 {
     toy_expr *collection;
@@ -605,7 +592,7 @@ static void collection_lookup(toy_interp *interp, toy_expr *result, toy_str iden
         toy_expr index_result;
         eval_expr(interp, &index_result, index);
         if (index_result.type == EXPR_NUM) {
-            *result = *lookup_list(collection->list, index_result.num);
+            *result = *list_index(collection->list, index_result.num);
         } else {
             invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
         }
@@ -834,7 +821,7 @@ void step_out(toy_interp *interp)
     for (const toy_stmt *s = interp->cur_block->stmts; s; s = s->next) {
         single_step(interp, s);
     }
-    dump_map(stderr, interp->symbols);
+    // dump_map(stderr, interp->symbols);
 }
 
 void run_block(toy_interp *interp, const toy_block *block)
