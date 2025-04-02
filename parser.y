@@ -368,7 +368,10 @@ mapitem :
 ;
 
 literal:
-    T_BOOLEAN {
+    T_NULL {
+        $$ = alloc_expr(EXPR_NULL);
+    }
+    | T_BOOLEAN {
         $$ = alloc_expr(EXPR_BOOL);
         $$->bool = $1;
     }

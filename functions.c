@@ -41,9 +41,13 @@ static void predefined_print(toy_interp *interp, toy_expr *result, toy_list *arg
     *result = null_expr;
 }
 
-static const char *predefined_assert_equal_param_names[] = {
+static const char *predefined_assert_binary_param_names[] = {
     "val1",
     "val2"
+};
+
+static const char *predefined_assert_unary_param_names[] = {
+    "val"
 };
 
 static void toy_assert_fail(const char * msg, size_t num_exprs, ...)
@@ -56,22 +60,13 @@ static void toy_assert_fail(const char * msg, size_t num_exprs, ...)
         fputc('\n', stderr);
     }
     va_end(argptr);
-    fatal_error("Assertion failed: %s\n", msg);
+    fatal_error("Assertion failed: %s", msg);
 }
 
 static void predefined_assert_equal(toy_interp *interp, toy_expr *result, toy_list *args)
 {
-    /* TODO: Use num_params to validate, not open coding */
-    if (!args) {
-        too_few_arguments(2, args);
-    }
+    assert(list_len(args) == 2);
     toy_expr *arg1 = args->expr;
-    if (!args->next) {
-        too_few_arguments(2, args);
-    }
-    if (args->next->next) {
-        too_many_arguments(2, args);
-    }
     toy_expr *arg2 = args->next->expr;
     op_equal(interp, result, arg1, arg2);
     assert(EXPR_BOOL == result->type);
@@ -82,19 +77,10 @@ static void predefined_assert_equal(toy_interp *interp, toy_expr *result, toy_li
     }
 }
 
-static void predefined_assert_nequal(toy_interp *interp, toy_expr *result, toy_list *args)
+static void predefined_assert_not_equal(toy_interp *interp, toy_expr *result, toy_list *args)
 {
-    /* TODO: Use num_params to validate, not open coding */
-    if (!args) {
-        too_few_arguments(2, args);
-    }
+    assert(list_len(args) == 2);
     toy_expr *arg1 = args->expr;
-    if (!args->next) {
-        too_few_arguments(2, args);
-    }
-    if (args->next->next) {
-        too_many_arguments(2, args);
-    }
     toy_expr *arg2 = args->next->expr;
     op_nequal(interp, result, arg1, arg2);
     assert(EXPR_BOOL == result->type);
@@ -107,17 +93,8 @@ static void predefined_assert_nequal(toy_interp *interp, toy_expr *result, toy_l
 
 static void predefined_assert_gt(toy_interp *interp, toy_expr *result, toy_list *args)
 {
-    /* TODO: Use num_params to validate, not open coding */
-    if (!args) {
-        too_few_arguments(2, args);
-    }
+    assert(list_len(args) == 2);
     toy_expr *arg1 = args->expr;
-    if (!args->next) {
-        too_few_arguments(2, args);
-    }
-    if (args->next->next) {
-        too_many_arguments(2, args);
-    }
     toy_expr *arg2 = args->next->expr;
     op_gt(interp, result, arg1, arg2);
     assert(EXPR_BOOL == result->type);
@@ -130,17 +107,8 @@ static void predefined_assert_gt(toy_interp *interp, toy_expr *result, toy_list 
 
 static void predefined_assert_gte(toy_interp *interp, toy_expr *result, toy_list *args)
 {
-    /* TODO: Use num_params to validate, not open coding */
-    if (!args) {
-        too_few_arguments(2, args);
-    }
+    assert(list_len(args) == 2);
     toy_expr *arg1 = args->expr;
-    if (!args->next) {
-        too_few_arguments(2, args);
-    }
-    if (args->next->next) {
-        too_many_arguments(2, args);
-    }
     toy_expr *arg2 = args->next->expr;
     op_gte(interp, result, arg1, arg2);
     assert(EXPR_BOOL == result->type);
@@ -153,17 +121,8 @@ static void predefined_assert_gte(toy_interp *interp, toy_expr *result, toy_list
 
 static void predefined_assert_lt(toy_interp *interp, toy_expr *result, toy_list *args)
 {
-    /* TODO: Use num_params to validate, not open coding */
-    if (!args) {
-        too_few_arguments(2, args);
-    }
+    assert(list_len(args) == 2);
     toy_expr *arg1 = args->expr;
-    if (!args->next) {
-        too_few_arguments(2, args);
-    }
-    if (args->next->next) {
-        too_many_arguments(2, args);
-    }
     toy_expr *arg2 = args->next->expr;
     op_lt(interp, result, arg1, arg2);
     assert(EXPR_BOOL == result->type);
@@ -176,17 +135,8 @@ static void predefined_assert_lt(toy_interp *interp, toy_expr *result, toy_list 
 
 static void predefined_assert_lte(toy_interp *interp, toy_expr *result, toy_list *args)
 {
-    /* TODO: Use num_params to validate, not open coding */
-    if (!args) {
-        too_few_arguments(2, args);
-    }
+    assert(list_len(args) == 2);
     toy_expr *arg1 = args->expr;
-    if (!args->next) {
-        too_few_arguments(2, args);
-    }
-    if (args->next->next) {
-        too_many_arguments(2, args);
-    }
     toy_expr *arg2 = args->next->expr;
     op_lte(interp, result, arg1, arg2);
     assert(EXPR_BOOL == result->type);
@@ -199,14 +149,8 @@ static void predefined_assert_lte(toy_interp *interp, toy_expr *result, toy_list
 
 static void predefined_assert_zero(toy_interp *interp, toy_expr *result, toy_list *args)
 {
-    /* TODO: Use num_params to validate, not open coding */
-    if (!args) {
-        too_few_arguments(2, args);
-    }
+    assert(list_len(args) == 1);
     toy_expr *arg1 = args->expr;
-    if (args->next) {
-        too_many_arguments(2, args);
-    }
     toy_expr zero = { .type = EXPR_NUM, .num = 0 };
     op_equal(interp, result, arg1, &zero);
     assert(EXPR_BOOL == result->type);
@@ -217,38 +161,74 @@ static void predefined_assert_zero(toy_interp *interp, toy_expr *result, toy_lis
     }
 }
 
-static void predefined_assert_nonzero(toy_interp *interp, toy_expr *result, toy_list *args)
+static void predefined_assert_non_zero(toy_interp *interp, toy_expr *result, toy_list *args)
 {
-    /* TODO: Use num_params to validate, not open coding */
-    if (!args) {
-        too_few_arguments(2, args);
-    }
+    assert(list_len(args) == 1);
     toy_expr *arg1 = args->expr;
-    if (args->next) {
-        too_many_arguments(2, args);
-    }
     toy_expr zero = { .type = EXPR_NUM, .num = 0 };
     op_nequal(interp, result, arg1, &zero);
     assert(EXPR_BOOL == result->type);
     if (result->bool) {
         /* Assertion succeeded */
     } else {
-        toy_assert_fail("Should be zero", 1, arg1);
+        toy_assert_fail("Should be non-zero", 1, arg1);
     }
 }
 
-/* TODO: Use num_params to validate, not open coding */
+static void predefined_assert_null(toy_interp *interp, toy_expr *result, toy_list *args)
+{
+    assert(list_len(args) == 1);
+    toy_expr *arg1 = args->expr;
+    op_equal(interp, result, arg1, &null_expr);
+    assert(EXPR_BOOL == result->type);
+    if (result->bool) {
+        /* Assertion succeeded */
+    } else {
+        toy_assert_fail("Should be null", 1, arg1);
+    }
+}
+
+static void predefined_assert_non_null(toy_interp *interp, toy_expr *result, toy_list *args)
+{
+    assert(list_len(args) == 1);
+    toy_expr *arg1 = args->expr;
+    op_nequal(interp, result, arg1, &null_expr);
+    assert(EXPR_BOOL == result->type);
+    if (result->bool) {
+        /* Assertion succeeded */
+    } else {
+        toy_assert_fail("Should not be null", 1, arg1);
+    }
+}
+
+static void predefined_assert(toy_interp *interp, toy_expr *result, toy_list *args)
+{
+    assert(list_len(args) == 1);
+    toy_expr *arg1 = args->expr;
+    toy_expr expr_result;
+    eval_expr(interp, &expr_result, arg1);
+    toy_bool b = convert_to_bool(&expr_result);
+    if (b) {
+        /* Assertion succeeded */
+    } else {
+        toy_assert_fail("Should be true", 1, arg1);
+    }
+}
+
 static predefined_function predefined_functions[] = {
     { .name = "len",   .num_params = 1,               .func = predefined_list_len, .param_names = predefined_list_len_arg_names },
     { .name = "print", .num_params = INFINITE_PARAMS, .func = predefined_print,    .param_names = NULL },
-    { .name = "assert_equal", .num_params = 2, .func = predefined_assert_equal, .param_names = predefined_assert_equal_param_names },
-    { .name = "assert_nequal", .num_params = 2, .func = predefined_assert_nequal, .param_names = predefined_assert_equal_param_names },
-    { .name = "assert_gt", .num_params = 2, .func = predefined_assert_gt, .param_names = predefined_assert_equal_param_names },
-    { .name = "assert_gte", .num_params = 2, .func = predefined_assert_gte, .param_names = predefined_assert_equal_param_names },
-    { .name = "assert_lt", .num_params = 2, .func = predefined_assert_lt, .param_names = predefined_assert_equal_param_names },
-    { .name = "assert_lte", .num_params = 2, .func = predefined_assert_lte, .param_names = predefined_assert_equal_param_names },
-    { .name = "assert_zero", .num_params = 1, .func = predefined_assert_zero, .param_names = predefined_assert_equal_param_names },
-    { .name = "assert_nonzero", .num_params = 1, .func = predefined_assert_nonzero, .param_names = predefined_assert_equal_param_names }
+    { .name = "assert_equal", .num_params = 2, .func = predefined_assert_equal, .param_names = predefined_assert_binary_param_names },
+    { .name = "assert_not_equal", .num_params = 2, .func = predefined_assert_not_equal, .param_names = predefined_assert_binary_param_names },
+    { .name = "assert_gt", .num_params = 2, .func = predefined_assert_gt, .param_names = predefined_assert_binary_param_names },
+    { .name = "assert_gte", .num_params = 2, .func = predefined_assert_gte, .param_names = predefined_assert_binary_param_names },
+    { .name = "assert_lt", .num_params = 2, .func = predefined_assert_lt, .param_names = predefined_assert_binary_param_names },
+    { .name = "assert_lte", .num_params = 2, .func = predefined_assert_lte, .param_names = predefined_assert_binary_param_names },
+    { .name = "assert", .num_params = 1, .func = predefined_assert, .param_names = predefined_assert_unary_param_names },
+    { .name = "assert_zero", .num_params = 1, .func = predefined_assert_zero, .param_names = predefined_assert_unary_param_names },
+    { .name = "assert_non_zero", .num_params = 1, .func = predefined_assert_non_zero, .param_names = predefined_assert_unary_param_names },
+    { .name = "assert_null", .num_params = 1, .func = predefined_assert_null, .param_names = predefined_assert_unary_param_names },
+    { .name = "assert_non_null", .num_params = 1, .func = predefined_assert_non_null, .param_names = predefined_assert_unary_param_names }
 };
 
 const predefined_function *lookup_predefined_function(const toy_str name)

@@ -122,17 +122,33 @@ static int is_predefined(toy_str name)
     return 0;
 }
 
-toy_expr *lookup_identifier(toy_interp *interp, const toy_str name)
+int lookup_identifier(toy_interp *interp, toy_expr *result, const toy_str name)
 {
     const toy_expr *predef_const = lookup_predefined_constant(name);
     if (predef_const) {
-        return (toy_expr *) predef_const;
+        *result = *((toy_expr *) predef_const);
+        return 1;
     }
+    /* TODO: Pre-wrap the builtin functions at compile time, so we don't have to do it here at runtime */
     const predefined_function *predef_func = lookup_predefined_function(name);
     if (predef_func) {
-        return NULL; // TODO: return predefined function
+        result->type = EXPR_FUNC_DECL;
+        result->func_decl.def.name = predef_func->name;
+        result->func_decl.def.code.stmts = NULL;
+        result->func_decl.def.param_names = NULL;
+        for (int i = 0; i < predef_func->num_params; i++) {
+            toy_str_list *entry = alloc_str_list(predef_func->param_names[i]);
+            entry->next = result->func_decl.def.param_names;
+            result->func_decl.def.param_names = entry;
+        }
+        return 1;
     }
-    return map_get(interp->symbols, name);
+    toy_expr *existing_value = map_get(interp->symbols, name);
+    if (existing_value) {
+        *result = *existing_value;
+        return 1;
+    }
+    return 0;
 }
 
 static void set_variable(toy_interp *interp, const toy_str name, const toy_expr *value)
@@ -140,8 +156,9 @@ static void set_variable(toy_interp *interp, const toy_str name, const toy_expr 
     if (is_predefined(name)) {
         readonly_identifier(name);
     }
-    toy_expr *old_value = lookup_identifier(interp, name);
-    if (!old_value) {
+    toy_expr old_value;
+    int already_exists = lookup_identifier(interp, &old_value, name);
+    if (!already_exists) {
         undeclared_identifier(name);
     }
     /* TODO: dangling pointer to stack */
@@ -159,8 +176,9 @@ static void add_variable(toy_interp *interp, const toy_str name, const toy_expr 
     if (is_predefined(name)) {
         readonly_identifier(name);
     }
-    toy_expr *existing_value = lookup_identifier(interp, name);
-    if (existing_value) {
+    toy_expr old_value;
+    int already_exists = lookup_identifier(interp, &old_value, name);
+    if (already_exists) {
         duplicate_identifier(name);
     }
     /* TODO: dangling pointer to stack */
@@ -178,8 +196,9 @@ static void add_function(toy_interp *interp, const toy_str name, const toy_func_
     if (is_predefined(name)) {
         readonly_identifier(name);
     }
-    toy_expr *existing_value = lookup_identifier(interp, name);
-    if (existing_value) {
+    toy_expr old_value;
+    int already_exists = lookup_identifier(interp, &old_value, name);
+    if (already_exists) {
         duplicate_identifier(name);
     }
     toy_expr *func_expr = alloc_expr(EXPR_FUNC_DECL);
@@ -192,8 +211,9 @@ static void op_assign(toy_interp *interp, toy_expr *result, toy_str name, toy_ex
     if (is_predefined(name)) {
         readonly_identifier(name);
     }
-    toy_expr *old_value = lookup_identifier(interp, name);
-    if (old_value) {
+    toy_expr old_value;
+    int already_exists = lookup_identifier(interp, &old_value, name);
+    if (already_exists) {
         map_set(interp->symbols, name, new_value);
         *result = *new_value;
     } else {
@@ -217,73 +237,79 @@ void call_func(toy_interp *interp, toy_expr *result, toy_str func_name, toy_list
     size_t args_len = list_len(args);
     const predefined_function *predef = lookup_predefined_function(func_name);
     if (predef) {
-        if (predef->num_params != INFINITE_PARAMS) {
-            if (args_len < predef->num_params) {
-                too_few_arguments(predef->num_params, args);
-            } else if (args_len > predef->num_params) {
-                too_many_arguments(predef->num_params, args);
-            } else {
-                predef->func(interp, result, args);
-            }
+        if (predef->num_params == INFINITE_PARAMS) {
+            predef->func(interp, result, args);
+        } else if (args_len < predef->num_params) {
+            too_few_arguments(predef->num_params, args);
+        } else if (args_len > predef->num_params) {
+            too_many_arguments(predef->num_params, args);
+        } else {
+            predef->func(interp, result, args);
         }
     } else {
-        toy_expr *expr = lookup_identifier(interp, func_name);
-        if (expr->type == EXPR_FUNC_DECL) {
-            size_t num_params = str_list_len(expr->func_decl.def.param_names);
-            if (args_len < num_params) {
-                too_few_arguments(num_params, args);
-            } else if (args_len > num_params) {
-                too_many_arguments(num_params, args);
+        toy_expr expr;
+        int already_exists = lookup_identifier(interp, &expr, func_name);
+        if (already_exists) {
+            if (expr.type == EXPR_FUNC_DECL) {
+                size_t num_params = str_list_len(expr.func_decl.def.param_names);
+                if (args_len < num_params) {
+                    too_few_arguments(num_params, args);
+                } else if (args_len > num_params) {
+                    too_many_arguments(num_params, args);
+                } else {
+                    run_toy_function(interp, result, &expr.func_decl.def.code, expr.func_decl.def.param_names, args);
+                }
             } else {
-                run_toy_function(interp, result, &expr->func_decl.def.code, expr->func_decl.def.param_names, args);
+                invalid_operand(EXPR_FUNC_CALL, &expr);
             }
         } else {
-            invalid_operand(EXPR_FUNC_CALL, expr);
+            undeclared_identifier(func_name);
         }
     }
 }
 
 static void collection_lookup(toy_interp *interp, toy_expr *result, toy_str identifier, toy_expr *index)
 {
-    toy_expr *collection;
-    collection = lookup_identifier(interp, identifier);
-    if (!collection) {
-        undeclared_identifier(identifier);
-    }
-    if (collection->type == EXPR_LIST) {
-        toy_expr index_result;
-        eval_expr(interp, &index_result, index);
-        if (index_result.type == EXPR_NUM) {
-            *result = *list_index(collection->list, index_result.num);
-        } else {
-            invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
-        }
-    } else if (collection->type == EXPR_MAP) {
-        toy_expr index_result;
-        eval_expr(interp, &index_result, index);
-        if (index_result.type == EXPR_STR) {
-            *result = *map_get(collection->map, index_result.str);
-        } else {
-            invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
-        }
-    } else if (collection->type == EXPR_STR) {
-        toy_expr index_result;
-        eval_expr(interp, &index_result, index);
-        if (index_result.type == EXPR_NUM) {
-            if (index_result.num >= 0 && index_result.num < strlen(collection->str)) {
-                result->type = EXPR_STR;
-                /* TODO: Hide string memory management */
-                result->str = malloc(2);
-                result->str[0] = collection->str[(int) index_result.num];
-                result->str[1] = '\0';
+    toy_expr collection;
+    int already_exists = lookup_identifier(interp, &collection, identifier);
+    if (already_exists) {
+        if (collection.type == EXPR_LIST) {
+            toy_expr index_result;
+            eval_expr(interp, &index_result, index);
+            if (index_result.type == EXPR_NUM) {
+                *result = *list_index(collection.list, index_result.num);
             } else {
-                invalid_string_index(collection->str, index_result.num);
+                invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
+            }
+        } else if (collection.type == EXPR_MAP) {
+            toy_expr index_result;
+            eval_expr(interp, &index_result, index);
+            if (index_result.type == EXPR_STR) {
+                *result = *map_get(collection.map, index_result.str);
+            } else {
+                invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
+            }
+        } else if (collection.type == EXPR_STR) {
+            toy_expr index_result;
+            eval_expr(interp, &index_result, index);
+            if (index_result.type == EXPR_NUM) {
+                if (index_result.num >= 0 && index_result.num < strlen(collection.str)) {
+                    result->type = EXPR_STR;
+                    /* TODO: Hide string memory management */
+                    result->str = malloc(2);
+                    result->str[0] = collection.str[(int) index_result.num];
+                    result->str[1] = '\0';
+                } else {
+                    invalid_string_index(collection.str, index_result.num);
+                }
+            } else {
+                invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
             }
         } else {
-            invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
+            invalid_operand(EXPR_COLLECTION_LOOKUP, &collection);
         }
     } else {
-        invalid_operand(EXPR_COLLECTION_LOOKUP, collection);
+        undeclared_identifier(identifier);
     }
 }
 
@@ -330,12 +356,7 @@ void eval_expr(toy_interp *interp, toy_expr *result, const toy_expr *expr)
         op_gte(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_IDENTIFIER:
-        toy_expr *value = lookup_identifier(interp, expr->str);
-        if (value) {
-            *result = *value;
-        } else {
-            undeclared_identifier(expr->str);
-        }
+        lookup_identifier(interp, result, expr->str);
         break;
     case EXPR_IN:
         op_in(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);

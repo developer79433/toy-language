@@ -1,6 +1,13 @@
+// FIXME: Expression statement no longer works:
 // "hi mum!";
 var mylist = [123.5, 456, [ "surprise!" ]];
-print(mylist);
+// To test assertions:
+// assert_equal(1, 2);
+assert_equal(4, 4);
+assert_not_equal(1, 2);
+assert_null(null);
+assert_non_null(1);
+// print(mylist);
 var mymap = { "mykey": 123, "myotherkey": "myothervalue" };
 var myval = [ 345.6, {"blah": (42, 3)}, "foo"];
 fun myfunction() {
@@ -12,18 +19,21 @@ var myfunc = fun(formalparam1, formalparam2) { var x = 42; return; };
 var sixty = 28 * 2 + 4, noval, bignum = 12345678.9;
 var testfunc;
 testfunc = fun() { return "test", "comma", "operator", "last"; };
-print(1 + 2 + 3 + 4);
-print((1 + 2) * (3 / 4));
-print((1 + 2) == (3 / 4));
+assert_equal(1 + 2 + 3 + 4, 10);
+assert_equal((1 + 2) * (3 / 4), 2.25);
+assert(not((1 + 2) == (3 / 4)));
 var neg = -123.45;
 var pos = -67.89 / -1.02;
 var eighty = sixty + 20;
 if (1 == 2) {
-    print("if1");
+    // print("if1");
+    assert(0);
 } else if (3 == 4) {
-    print("if2");
+    // print("if2");
+    assert(0);
 } else {
-    print("else");
+    // print("else");
+    assert(1);
 }
 ;
 break;
@@ -45,10 +55,11 @@ var tern = (arfle == barfle) ? "yes" : "no";
     i = 5 ** 3;
 }
 var bvcserjcbgsrjbgcvrkjrsnbrvcs;
-print(mylist);
+// print(mylist);
 var indexed_into_list = mylist[1];
-print(indexed_into_list);
-print(mymap);
+assert_equal(indexed_into_list, 456);
+// print(indexed_into_list);
+// print(mymap);
 var indexed_into_map = mymap["mykey"];
-print(indexed_into_map);
-assert_equal(1, 1);
+// print(indexed_into_map);
+assert_equal(indexed_into_map, 123);

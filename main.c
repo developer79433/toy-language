@@ -29,7 +29,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "yyparse() returned %d\n", parse_res);
         return EXIT_FAILURE;
     }
-    /* run_tests(); */
+    run_tests();
     toy_stmt *program_start = get_program_start();
     /* dump_stmts(stderr, program_start); */
     toy_interp interp;

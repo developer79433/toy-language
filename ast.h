@@ -53,6 +53,7 @@ typedef struct toy_str_list_struct {
 typedef struct toy_func_def_struct {
     toy_str name;
     toy_str_list *param_names;
+    /* TODO: union between toy code and native implementation */
     toy_block code;
 } toy_func_def;
 
