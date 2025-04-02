@@ -362,7 +362,7 @@ mapitemlist :
 mapitem :
     T_STRING T_COLON expr_no_comma {
         toy_expr *key = alloc_expr(EXPR_STR);
-        key->str = strdup($1);
+        key->val.str = strdup($1);
         $$ = alloc_map_entry(key, $3);
     }
 ;
@@ -373,20 +373,22 @@ literal:
     }
     | T_BOOLEAN {
         $$ = alloc_expr(EXPR_BOOL);
-        $$->bool = $1;
+        $$->val.bool = $1;
     }
     | T_FLOAT {
         $$ = alloc_expr(EXPR_NUM);
-        $$->num = $1;
+        $$->val.num = $1;
     }
     | T_STRING {
         $$ = alloc_expr(EXPR_STR);
-        $$->str = $1;
+        $$->val.str = $1;
     }
+    /* TODO: identifier is not a literal - this needs breaking up */
     | T_IDENTIFIER {
         $$ = alloc_expr(EXPR_IDENTIFIER);
-        $$->str = $1;
+        $$->val.str = $1;
     }
+    /* TODO: list and map are literals too */
 ;
 
 /* TODO: Compound assignments: +=, -=, /=, *= */
@@ -552,15 +554,15 @@ unary_neg_expr: T_MINUS expr_no_comma {
 
 listexpr: T_LBRACKET listitems T_RBRACKET {
         $$ = alloc_expr(EXPR_LIST);
-        $$->list = $2;
+        $$->val.list = $2;
     }
 ;
 
 map_expr: T_LBRACE mapitems T_RBRACE {
         $$ = alloc_expr(EXPR_MAP);
-        $$->map = alloc_map();
+        $$->val.map = alloc_map();
         for (toy_map_entry *entry = $2; entry; entry = entry->next) {
-            map_set_expr($$->map, entry->key, entry->value);
+            map_set_expr($$->val.map, entry->key, entry->value);
         }
     }
 ;

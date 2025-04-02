@@ -143,7 +143,7 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             dump_assignment(f, expr->assignment.lhs, expr->assignment.rhs);
             break;
         case EXPR_BOOL:
-            dump_bool(f, expr->bool);
+            dump_bool(f, expr->val.bool);
             break;
         case EXPR_COLLECTION_LOOKUP:
             dump_collection_lookup(f, expr->collection_lookup.lhs, expr->collection_lookup.rhs);
@@ -168,10 +168,10 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             break;
         case EXPR_FUNC_DECL:
             /* TODO: factor this out */
-            fprintf(f, "fun %s(", expr->func_decl.def.name);
-            dump_identifier_list(f, expr->func_decl.def.param_names);
+            fprintf(f, "fun %s(", expr->val.func_decl.def.name);
+            dump_identifier_list(f, expr->val.func_decl.def.param_names);
             fputs(") {\n", f);
-            dump_stmts(f, expr->func_decl.def.code.stmts);
+            dump_stmts(f, expr->val.func_decl.def.code.stmts);
             fputs("}\n", f);
             break;
         case EXPR_GT:
@@ -181,13 +181,13 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " >= ");
             break;
         case EXPR_IDENTIFIER:
-            fprintf(f, "%s", expr->str);
+            fprintf(f, "%s", expr->val.str);
             break;
         case EXPR_IN:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " in ");
             break;
         case EXPR_LIST:
-            dump_list(f, expr->list);
+            dump_list(f, expr->val.list);
             break;
         case EXPR_LT:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " < ");
@@ -196,7 +196,7 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " <= ");
             break;
         case EXPR_MAP:
-            dump_map(f, expr->map);
+            dump_map(f, expr->val.map);
             break;
         case EXPR_METHOD_CALL:
             dump_method_call(f, expr->method_call.target, expr->method_call.func_name, expr->method_call.args);
@@ -222,7 +222,7 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             fputs("null", f);
             break;
         case EXPR_NUM:
-            fprintf(f, "%f", expr->num);
+            fprintf(f, "%f", expr->val.num);
             break;
         case EXPR_OR:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " or ");
@@ -247,7 +247,7 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             dump_identifier(f, expr->prefix_increment.id);
             break;
         case EXPR_STR:
-            dump_str(f, expr->str);
+            dump_str(f, expr->val.str);
             break;
         case EXPR_TERNARY:
             dump_expr(f, expr->ternary.condition);

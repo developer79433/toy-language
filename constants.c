@@ -4,8 +4,8 @@
 #include "util.h"
 
 const toy_expr null_expr = { .type = EXPR_NULL };
-toy_expr true_expr = { .type = EXPR_BOOL, .num = 1 };
-toy_expr false_expr = { .type = EXPR_BOOL, .num = 0 };
+toy_expr true_expr = { .type = EXPR_BOOL, .val.num = 1 };
+toy_expr false_expr = { .type = EXPR_BOOL, .val.num = 0 };
 
 static predefined_constant predefined_constants[] = {
     { "null", &null_expr },

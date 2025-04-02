@@ -35,9 +35,9 @@ static toy_map_entry *alloc_map_entry_str(toy_str key_name, toy_expr *value)
     );
     map_entry->key_addr = &map_entry->key;
     map_entry->value_addr = &map_entry->value;
-    map_entry->key_addr->str = (char *) (map_entry + 1);
+    map_entry->key_addr->val.str = (char *) (map_entry + 1);
     memcpy(map_entry->value_addr, value, sizeof(*value));
-    strcpy(map_entry->key_addr->str, key_name);
+    strcpy(map_entry->key_addr->val.str, key_name);
     map_entry->key_addr->type = EXPR_STR;
     map_entry->next = NULL;
     return (toy_map_entry *) map_entry;
@@ -67,7 +67,7 @@ static toy_expr *get_bucket_key(toy_map_entry *bucket, const toy_str key)
 {
     for (toy_map_entry *entry = bucket; entry; entry = entry->next) {
         assert(EXPR_STR == entry->key->type);
-        if (0 == strcmp(entry->key->str, key)) {
+        if (0 == strcmp(entry->key->val.str, key)) {
             return entry->value;
         }
     }
@@ -95,13 +95,13 @@ int map_set(toy_map *map, const toy_str key, toy_expr *value)
         toy_map_entry *entry;
         for (entry = *bucket; entry->next; entry = entry->next) {
             assert(EXPR_STR == entry->key->type);
-            if (0 == strcmp(entry->key->str, key)) {
+            if (0 == strcmp(entry->key->val.str, key)) {
                 memcpy(entry->value, value, sizeof(*value));
                 return 0;
             }
         }
         assert(EXPR_STR == entry->key->type);
-        if (0 == strcmp(entry->key->str, key)) {
+        if (0 == strcmp(entry->key->val.str, key)) {
             memcpy(entry->value, value, sizeof(*value));
             return 0;
         }
@@ -118,7 +118,7 @@ int map_set(toy_map *map, const toy_str key, toy_expr *value)
 int map_set_expr(toy_map *map, const toy_expr *key, toy_expr *value)
 {
     if (EXPR_STR == key->type) {
-        return map_set(map, key->str, value);
+        return map_set(map, key->val.str, value);
     } else {
         invalid_operand(EXPR_LIST, key);
     }
@@ -132,7 +132,7 @@ int map_delete(toy_map *map, const toy_str key)
         toy_map_entry *entry, *prev;
         for (entry = *bucket, prev = *bucket; entry; prev = entry, entry = entry->next) {
             assert(EXPR_STR == entry->key->type);
-            if (0 == strcmp(entry->key->str, key)) {
+            if (0 == strcmp(entry->key->val.str, key)) {
                 prev->next = entry->next;
                 if (entry == *bucket) {
                     assert(entry->next == NULL);
@@ -178,7 +178,7 @@ void map_enum(const toy_map *map, map_entry_callback callback, void *cookie)
         if (*bucket) {
             for (toy_map_entry *entry = *bucket; entry; entry = entry->next) {
                 assert(EXPR_STR == entry->key->type);
-                callback(cookie, entry->key->str, entry->value);
+                callback(cookie, entry->key->val.str, entry->value);
             }
         }
     }

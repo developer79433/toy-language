@@ -21,17 +21,17 @@ toy_bool convert_to_bool(const toy_expr *expr)
     case EXPR_ASSIGN:
         break;
     case EXPR_BOOL:
-        return expr->bool;
+        return expr->val.bool;
     case EXPR_NULL:
         return 0;
     case EXPR_NUM:
-        return expr->num != 0;
+        return expr->val.num != 0;
     case EXPR_LIST:
-        return list_len(expr->list) != 0;
+        return list_len(expr->val.list) != 0;
     case EXPR_MAP:
-        return map_len(expr->map) != 0;
+        return map_len(expr->val.map) != 0;
     case EXPR_STR:
-        return strlen(expr->str) != 0;
+        return strlen(expr->val.str) != 0;
     case EXPR_IDENTIFIER:
     case EXPR_AND:
     case EXPR_DIV:
@@ -67,9 +67,9 @@ toy_bool convert_to_num(const toy_expr *expr)
         /* TODO */
         break;
     case EXPR_BOOL:
-        return expr->bool ? 1 : 0;
+        return expr->val.bool ? 1 : 0;
     case EXPR_NUM:
-        return expr->num;
+        return expr->val.num;
     case EXPR_LIST:
     case EXPR_MAP:
     case EXPR_STR:
@@ -133,13 +133,13 @@ int lookup_identifier(toy_interp *interp, toy_expr *result, const toy_str name)
     const predefined_function *predef_func = lookup_predefined_function(name);
     if (predef_func) {
         result->type = EXPR_FUNC_DECL;
-        result->func_decl.def.name = predef_func->name;
-        result->func_decl.def.code.stmts = NULL;
-        result->func_decl.def.param_names = NULL;
+        result->val.func_decl.def.name = predef_func->name;
+        result->val.func_decl.def.code.stmts = NULL;
+        result->val.func_decl.def.param_names = NULL;
         for (int i = 0; i < predef_func->num_params; i++) {
             toy_str_list *entry = alloc_str_list(predef_func->param_names[i]);
-            entry->next = result->func_decl.def.param_names;
-            result->func_decl.def.param_names = entry;
+            entry->next = result->val.func_decl.def.param_names;
+            result->val.func_decl.def.param_names = entry;
         }
         return 1;
     }
@@ -200,7 +200,7 @@ static void add_function(toy_interp *interp, const toy_str name, const toy_func_
         duplicate_identifier(name);
     }
     toy_expr *func_expr = alloc_expr(EXPR_FUNC_DECL);
-    memcpy(&func_expr->func_decl.def, def, sizeof(*def));
+    memcpy(&func_expr->val.func_decl.def, def, sizeof(*def));
     map_set(interp->symbols, name, func_expr);
 }
 
@@ -265,7 +265,7 @@ void call_func(toy_interp *interp, toy_expr *result, toy_str func_name, toy_list
         int already_exists = lookup_identifier(interp, &expr, func_name);
         if (already_exists) {
             if (expr.type == EXPR_FUNC_DECL) {
-                toy_func_def *def = &expr.func_decl.def;
+                toy_func_def *def = &expr.val.func_decl.def;
                 size_t num_params = func_def_num_params(def);
                 if (args_len < num_params) {
                     too_few_arguments(num_params, args);
@@ -292,7 +292,7 @@ static void collection_lookup(toy_interp *interp, toy_expr *result, toy_str iden
             toy_expr index_result;
             eval_expr(interp, &index_result, index);
             if (index_result.type == EXPR_NUM) {
-                *result = *list_index(collection.list, index_result.num);
+                *result = *list_index(collection.val.list, index_result.val.num);
             } else {
                 invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
             }
@@ -300,7 +300,7 @@ static void collection_lookup(toy_interp *interp, toy_expr *result, toy_str iden
             toy_expr index_result;
             eval_expr(interp, &index_result, index);
             if (index_result.type == EXPR_STR) {
-                *result = *map_get(collection.map, index_result.str);
+                *result = *map_get(collection.val.map, index_result.val.str);
             } else {
                 invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
             }
@@ -308,14 +308,14 @@ static void collection_lookup(toy_interp *interp, toy_expr *result, toy_str iden
             toy_expr index_result;
             eval_expr(interp, &index_result, index);
             if (index_result.type == EXPR_NUM) {
-                if (index_result.num >= 0 && index_result.num < strlen(collection.str)) {
+                if (index_result.val.num >= 0 && index_result.val.num < strlen(collection.val.str)) {
                     result->type = EXPR_STR;
                     /* TODO: Hide string memory management */
-                    result->str = malloc(2);
-                    result->str[0] = collection.str[(int) index_result.num];
-                    result->str[1] = '\0';
+                    result->val.str = malloc(2);
+                    result->val.str[0] = collection.val.str[(int) index_result.val.num];
+                    result->val.str[1] = '\0';
                 } else {
-                    invalid_string_index(collection.str, index_result.num);
+                    invalid_string_index(collection.val.str, index_result.val.num);
                 }
             } else {
                 invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
@@ -371,7 +371,7 @@ void eval_expr(toy_interp *interp, toy_expr *result, const toy_expr *expr)
         op_gte(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_IDENTIFIER:
-        lookup_identifier(interp, result, expr->str);
+        lookup_identifier(interp, result, expr->val.str);
         break;
     case EXPR_IN:
         op_in(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
@@ -402,7 +402,7 @@ void eval_expr(toy_interp *interp, toy_expr *result, const toy_expr *expr)
         break;
     case EXPR_NEQUAL:
         op_equal(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
-        result->bool = !result->bool;
+        result->val.bool = !result->val.bool;
         break;
     case EXPR_NOT:
         op_not(interp, result, expr->unary_op.arg);
@@ -474,7 +474,7 @@ void single_step(toy_interp *interp, const toy_stmt *stmt)
                     invalid_operand(EXPR_BOOL, &cond_result);
                 }
                 assert(EXPR_BOOL == cond_result.type);
-                if (cond_result.bool) {
+                if (cond_result.val.bool) {
                     break;
                 }
             }
@@ -497,7 +497,7 @@ void single_step(toy_interp *interp, const toy_stmt *stmt)
                     invalid_operand(EXPR_BOOL, &cond_result);
                 }
                 assert(EXPR_BOOL == cond_result.type);
-                if (cond_result.bool) {
+                if (cond_result.val.bool) {
                     run_block(interp, &arm->code);
                     found_one = 1;
                     break;
@@ -524,7 +524,7 @@ void single_step(toy_interp *interp, const toy_stmt *stmt)
                 invalid_operand(EXPR_BOOL, &cond_result);
             }
             assert(EXPR_BOOL == cond_result.type);
-            if (cond_result.bool) {
+            if (cond_result.val.bool) {
                 break;
             }
             run_block(interp, &stmt->while_stmt.body);

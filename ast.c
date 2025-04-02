@@ -125,9 +125,9 @@ toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_block *body)
     toy_expr *expr;
     expr = mymalloc(toy_expr);
     expr->type = EXPR_FUNC_DECL;
-    expr->func_decl.def.name = ""; /* TODO: generated unique name */
-    expr->func_decl.def.param_names = formalparams;
-    expr->func_decl.def.code.stmts = body->stmts;
+    expr->val.func_decl.def.name = ""; /* TODO: generated unique name */
+    expr->val.func_decl.def.param_names = formalparams;
+    expr->val.func_decl.def.code.stmts = body->stmts;
     return expr;
 }
 

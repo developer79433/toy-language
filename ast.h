@@ -61,6 +61,16 @@ typedef struct toy_func_expr_struct {
     toy_func_def def;
 } toy_func_expr;
 
+union toy_val_union {
+    toy_bool bool;
+    toy_num num;
+    toy_str str;
+    toy_list *list;
+    toy_map *map;
+    toy_func_expr func_decl;
+};
+typedef union toy_val_union toy_val;
+
 typedef struct toy_unary_op_struct {
     toy_expr *arg;
 } toy_unary_op;
@@ -157,20 +167,14 @@ enum toy_expr_type {
     EXPR_UNEG
 };
 
-/* TODO: Factor out literals into a separate sub-type */
 struct toy_expr_struct {
     enum toy_expr_type type;
     union {
-        toy_bool bool;
-        toy_num num;
-        toy_str str;
-        toy_list *list;
-        toy_map *map;
+        toy_val val;
         toy_func_call func_call;
         toy_method_call method_call;
         toy_unary_op unary_op;
         toy_binary_op binary_op;
-        toy_func_expr func_decl;
         toy_assignment assignment;
         toy_postfix_decrement postfix_decrement;
         toy_postfix_increment postfix_increment;

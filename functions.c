@@ -19,7 +19,11 @@ static void predefined_list_len(toy_interp *interp, toy_expr *result, toy_list *
         invalid_operand(EXPR_LIST, arg1);
     }
     result->type = EXPR_NUM;
-    result->num = list_len(arg1->list);
+    if (arg1->val.list) {
+        result->val.num = list_len(arg1->val.list);
+    } else {
+        result->val.num = 0;
+    }
 }
 
 static const char *predefined_list_len_arg_names[] = {
@@ -32,7 +36,7 @@ static void predefined_print(toy_interp *interp, toy_expr *result, toy_list *arg
         toy_expr arg_result;
         eval_expr(interp, &arg_result, arg->expr);
         if (arg_result.type == EXPR_STR) {
-            print_str(stderr, arg_result.str);
+            print_str(stderr, arg_result.val.str);
         } else {
             dump_expr(stderr, &arg_result);
         }
@@ -70,7 +74,7 @@ static void predefined_assert_equal(toy_interp *interp, toy_expr *result, toy_li
     toy_expr *arg2 = args->next->expr;
     op_equal(interp, result, arg1, arg2);
     assert(EXPR_BOOL == result->type);
-    if (result->bool) {
+    if (result->val.bool) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should be equal", 2, arg1, arg2);
@@ -84,7 +88,7 @@ static void predefined_assert_not_equal(toy_interp *interp, toy_expr *result, to
     toy_expr *arg2 = args->next->expr;
     op_nequal(interp, result, arg1, arg2);
     assert(EXPR_BOOL == result->type);
-    if (result->bool) {
+    if (result->val.bool) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should not be equal", 2, arg1, arg2);
@@ -98,7 +102,7 @@ static void predefined_assert_gt(toy_interp *interp, toy_expr *result, toy_list 
     toy_expr *arg2 = args->next->expr;
     op_gt(interp, result, arg1, arg2);
     assert(EXPR_BOOL == result->type);
-    if (result->bool) {
+    if (result->val.bool) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should be greater than", 2, arg1, arg2);
@@ -112,7 +116,7 @@ static void predefined_assert_gte(toy_interp *interp, toy_expr *result, toy_list
     toy_expr *arg2 = args->next->expr;
     op_gte(interp, result, arg1, arg2);
     assert(EXPR_BOOL == result->type);
-    if (result->bool) {
+    if (result->val.bool) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should be greater than or equal", 2, arg1, arg2);
@@ -126,7 +130,7 @@ static void predefined_assert_lt(toy_interp *interp, toy_expr *result, toy_list 
     toy_expr *arg2 = args->next->expr;
     op_lt(interp, result, arg1, arg2);
     assert(EXPR_BOOL == result->type);
-    if (result->bool) {
+    if (result->val.bool) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should be less than", 2, arg1, arg2);
@@ -140,7 +144,7 @@ static void predefined_assert_lte(toy_interp *interp, toy_expr *result, toy_list
     toy_expr *arg2 = args->next->expr;
     op_lte(interp, result, arg1, arg2);
     assert(EXPR_BOOL == result->type);
-    if (result->bool) {
+    if (result->val.bool) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should be less than or equal", 2, arg1, arg2);
@@ -151,10 +155,10 @@ static void predefined_assert_zero(toy_interp *interp, toy_expr *result, toy_lis
 {
     assert(list_len(args) == 1);
     toy_expr *arg1 = args->expr;
-    toy_expr zero = { .type = EXPR_NUM, .num = 0 };
+    toy_expr zero = { .type = EXPR_NUM, .val.num = 0 };
     op_equal(interp, result, arg1, &zero);
     assert(EXPR_BOOL == result->type);
-    if (result->bool) {
+    if (result->val.bool) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should be zero", 1, arg1);
@@ -165,10 +169,10 @@ static void predefined_assert_non_zero(toy_interp *interp, toy_expr *result, toy
 {
     assert(list_len(args) == 1);
     toy_expr *arg1 = args->expr;
-    toy_expr zero = { .type = EXPR_NUM, .num = 0 };
+    toy_expr zero = { .type = EXPR_NUM, .val.num = 0 };
     op_nequal(interp, result, arg1, &zero);
     assert(EXPR_BOOL == result->type);
-    if (result->bool) {
+    if (result->val.bool) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should be non-zero", 1, arg1);
@@ -181,7 +185,7 @@ static void predefined_assert_null(toy_interp *interp, toy_expr *result, toy_lis
     toy_expr *arg1 = args->expr;
     op_equal(interp, result, arg1, &null_expr);
     assert(EXPR_BOOL == result->type);
-    if (result->bool) {
+    if (result->val.bool) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should be null", 1, arg1);
@@ -194,7 +198,7 @@ static void predefined_assert_non_null(toy_interp *interp, toy_expr *result, toy
     toy_expr *arg1 = args->expr;
     op_nequal(interp, result, arg1, &null_expr);
     assert(EXPR_BOOL == result->type);
-    if (result->bool) {
+    if (result->val.bool) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should not be null", 1, arg1);
