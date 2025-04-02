@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-/* TODO: enum toy_bool? */
-typedef unsigned int toy_bool;
+enum toy_bool_enum { TOY_FALSE = 0, TOY_TRUE = 1 };
+typedef enum toy_bool_enum toy_bool;
 typedef double toy_num;
 typedef char toy_char;
 typedef toy_char *toy_str;
