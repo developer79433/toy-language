@@ -161,7 +161,6 @@ static void set_variable(toy_interp *interp, const toy_str name, const toy_expr 
     if (!already_exists) {
         undeclared_identifier(name);
     }
-    /* TODO: dangling pointer to stack */
     toy_expr value_result;
     if (value) {
         eval_expr(interp, &value_result, value);
@@ -181,7 +180,6 @@ static void add_variable(toy_interp *interp, const toy_str name, const toy_expr 
     if (already_exists) {
         duplicate_identifier(name);
     }
-    /* TODO: dangling pointer to stack */
     toy_expr value_result;
     if (value) {
         eval_expr(interp, &value_result, value);
@@ -232,9 +230,25 @@ void run_toy_function(toy_interp *interp, toy_expr *result, toy_block *block, to
     pop_context(interp);
 }
 
+static size_t func_def_num_params(const toy_func_def *def)
+{
+    if (def->param_names) {
+        return str_list_len(def->param_names);
+    }
+    return 0;
+}
+
+static size_t func_call_num_args(const toy_list *args)
+{
+    if (args) {
+        return list_len(args);
+    }
+    return 0;
+}
+
 void call_func(toy_interp *interp, toy_expr *result, toy_str func_name, toy_list *args)
 {
-    size_t args_len = (NULL == args) ? 0 : list_len(args);
+    size_t args_len = func_call_num_args(args);
     const predefined_function *predef = lookup_predefined_function(func_name);
     if (predef) {
         if (predef->num_params == INFINITE_PARAMS) {
@@ -251,13 +265,14 @@ void call_func(toy_interp *interp, toy_expr *result, toy_str func_name, toy_list
         int already_exists = lookup_identifier(interp, &expr, func_name);
         if (already_exists) {
             if (expr.type == EXPR_FUNC_DECL) {
-                size_t num_params = (NULL == expr.func_decl.def.param_names) ? 0 : str_list_len(expr.func_decl.def.param_names);
+                toy_func_def *def = &expr.func_decl.def;
+                size_t num_params = func_def_num_params(def);
                 if (args_len < num_params) {
                     too_few_arguments(num_params, args);
                 } else if (args_len > num_params) {
                     too_many_arguments(num_params, args);
                 } else {
-                    run_toy_function(interp, result, &expr.func_decl.def.code, expr.func_decl.def.param_names, args);
+                    run_toy_function(interp, result, &def->code, def->param_names, args);
                 }
             } else {
                 invalid_operand(EXPR_FUNC_CALL, &expr);
