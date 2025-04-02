@@ -22,6 +22,7 @@ testfunc = fun() { return "test", "comma", "operator", "last"; };
 assert_equal(1 + 2 + 3 + 4, 10);
 assert_equal((1 + 2) * (3 / 4), 2.25);
 assert(not((1 + 2) == (3 / 4)));
+assert(!((1 + 2) == (3 / 4)));
 var neg = -123.45;
 var pos = -67.89 / -1.02;
 var eighty = sixty + 20;

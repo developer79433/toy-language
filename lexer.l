@@ -49,8 +49,11 @@ while { return T_WHILE; }
 var { return T_VAR; }
 fun(ction)? { return T_FUN; }
 and { return T_AND; }
+"&&" { return T_AND; }
 or { return T_OR; }
+"||" { return T_OR; }
 not { return T_NOT; }
+"!" { return T_NOT; }
 in { return T_IN; }
 return { return T_RETURN; }
 break { return T_BREAK; }
