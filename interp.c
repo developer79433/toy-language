@@ -234,7 +234,7 @@ void run_toy_function(toy_interp *interp, toy_expr *result, toy_block *block, to
 
 void call_func(toy_interp *interp, toy_expr *result, toy_str func_name, toy_list *args)
 {
-    size_t args_len = list_len(args);
+    size_t args_len = (NULL == args) ? 0 : list_len(args);
     const predefined_function *predef = lookup_predefined_function(func_name);
     if (predef) {
         if (predef->num_params == INFINITE_PARAMS) {
@@ -251,7 +251,7 @@ void call_func(toy_interp *interp, toy_expr *result, toy_str func_name, toy_list
         int already_exists = lookup_identifier(interp, &expr, func_name);
         if (already_exists) {
             if (expr.type == EXPR_FUNC_DECL) {
-                size_t num_params = str_list_len(expr.func_decl.def.param_names);
+                size_t num_params = (NULL == expr.func_decl.def.param_names) ? 0 : str_list_len(expr.func_decl.def.param_names);
                 if (args_len < num_params) {
                     too_few_arguments(num_params, args);
                 } else if (args_len > num_params) {
