@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "dump.h"
+#include "errors.h"
 
 void dump_list(FILE *f, toy_list *list)
 {

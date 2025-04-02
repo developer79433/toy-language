@@ -4,6 +4,7 @@
 
 #include "operations.h"
 #include "interp.h"
+#include "errors.h"
 
 void op_and(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
 {

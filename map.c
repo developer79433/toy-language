@@ -6,6 +6,7 @@
 #include "map.h"
 #include "mymalloc.h"
 #include "dump.h"
+#include "errors.h"
 
 toy_map *alloc_map()
 {

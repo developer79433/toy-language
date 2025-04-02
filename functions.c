@@ -7,6 +7,7 @@
 #include "dump.h"
 #include "constants.h"
 #include "operations.h"
+#include "errors.h"
 
 static void predefined_list_len(toy_interp *interp, toy_expr *result, toy_list *args)
 {

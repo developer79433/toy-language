@@ -1,6 +1,7 @@
 #include <stddef.h>
 
 #include "list.h"
+#include "errors.h"
 
 size_t list_len(const toy_list *list)
 {

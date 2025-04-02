@@ -13,6 +13,7 @@
 #include "operations.h"
 #include "constants.h"
 #include "functions.h"
+#include "errors.h"
 
 toy_bool convert_to_bool(const toy_expr *expr)
 {
