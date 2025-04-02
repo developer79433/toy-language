@@ -2,7 +2,7 @@
 var mylist = [123.5, 456, [ "surprise!" ]];
 print(mylist);
 var mymap = { "mykey": 123, "myotherkey": "myothervalue" };
-var mval = [ 345.6, {"blah": (42, 3)}, "foo"];
+var myval = [ 345.6, {"blah": (42, 3)}, "foo"];
 fun myfunction() {
     var i = 0;
     return i + 1;
@@ -37,12 +37,18 @@ for (var i = 0; i < 10; i++, ++i, i--, --i, i = i + 1) {
         print("Odd");
     }
 }
-var tern = (arfle == barfle) ? yes : no;
+var arfle = "arfle";
+var barfle;
+var tern = (arfle == barfle) ? "yes" : "no";
 {
     var testblock = 1;
     i = 5 ** 3;
 }
 var bvcserjcbgsrjbgcvrkjrsnbrvcs;
-var indexed_into_list = myval[1];
+print(mylist);
+var indexed_into_list = mylist[1];
+print(indexed_into_list);
+print(mymap);
 var indexed_into_map = mymap["mykey"];
+print(indexed_into_map);
 assert_equal(1, 1);

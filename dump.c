@@ -91,9 +91,45 @@ static void dump_assignment(FILE *f, const toy_str lhs, const toy_expr *rhs)
     dump_expr(f, rhs);
 }
 
+static void dump_bool(FILE *f, toy_bool b)
+{
+    fputs(b ? "True" : "False", f);
+}
+
+static void dump_collection_lookup(FILE *f, toy_str lhs, toy_expr *rhs)
+{
+    dump_identifier(f, lhs);
+    fputc('[', f);
+    dump_expr(f, rhs);
+    fputc(']', f);
+}
+
+static void dump_function_call(FILE *f, toy_str func_name, toy_list *args)
+{
+    fprintf(f, "%s(", func_name);
+    unsigned int output_something = 0;
+    for (; args; args = args->next) {
+        if (output_something) {
+            fputs(", ", f);
+        }
+        dump_expr(f, args->expr);
+        output_something = 1;
+    }
+    fputc(')', f);
+}
+
 static void dump_method_call(FILE *f, toy_str target, toy_str func_name, toy_list *args)
 {
-    /* TODO */
+    fprintf(f, "%s.%s(", target, func_name);
+    unsigned int output_something = 0;
+    for (; args; args = args->next) {
+        if (output_something) {
+            fputs(", ", f);
+        }
+        dump_expr(f, args->expr);
+        output_something = 1;
+    }
+    fputc(')', f);
 }
 
 void dump_expr(FILE *f, const toy_expr *expr) {
@@ -106,13 +142,10 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             dump_assignment(f, expr->assignment.lhs, expr->assignment.rhs);
             break;
         case EXPR_BOOL:
-            fputs(expr->bool ? "True" : "False", f);
+            dump_bool(f, expr->bool);
             break;
         case EXPR_COLLECTION_LOOKUP:
-            dump_identifier(f, expr->collection_lookup.lhs);
-            fputc('[', f);
-            dump_expr(f, expr->collection_lookup.rhs);
-            fputc(']', f);
+            dump_collection_lookup(f, expr->collection_lookup.lhs, expr->collection_lookup.rhs);
             break;
         case EXPR_COMMA:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, ", ");
@@ -130,16 +163,7 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             /* TODO */
             break;
         case EXPR_FUNC_CALL:
-            fprintf(f, "%s(", expr->func_call.func_name);
-            unsigned int output_something = 0;
-            for (toy_list *arg = expr->func_call.args; arg; arg = arg->next) {
-                if (output_something) {
-                    fputs(", ", f);
-                }
-                dump_expr(f, arg->expr);
-                output_something = 1;
-            }
-            fputs(")", f);
+            dump_function_call(f, expr->func_call.func_name, expr->func_call.args);
             break;
         case EXPR_FUNC_DECL:
             /* TODO: factor this out */

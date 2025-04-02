@@ -18,10 +18,11 @@ toy_bool convert_to_bool(const toy_expr *expr)
 {
     switch (expr->type) {
     case EXPR_ASSIGN:
-        /* TODO */
         break;
     case EXPR_BOOL:
         return expr->bool;
+    case EXPR_NULL:
+        return 0;
     case EXPR_NUM:
         return expr->num != 0;
     case EXPR_LIST:
@@ -48,6 +49,7 @@ toy_bool convert_to_bool(const toy_expr *expr)
     case EXPR_OR:
     case EXPR_PLUS:
     case EXPR_UNEG:
+        /* Should already be a primitive type */
         invalid_cast(EXPR_BOOL, expr);
         return 0;
     default:
@@ -125,8 +127,8 @@ toy_expr *lookup_identifier(toy_interp *interp, const toy_str name)
     if (predef_const) {
         return (toy_expr *) predef_const;
     }
-    predefined_func_addr func = lookup_predefined_function(name);
-    if (func) {
+    const predefined_function *predef_func = lookup_predefined_function(name);
+    if (predef_func) {
         return NULL; // TODO: return predefined function
     }
     return map_get(interp->symbols, name);
@@ -141,13 +143,14 @@ static void set_variable(toy_interp *interp, const toy_str name, const toy_expr 
     if (!old_value) {
         undeclared_identifier(name);
     }
-    toy_expr *new_value;
+    /* TODO: dangling pointer to stack */
+    toy_expr value_result;
     if (value) {
-        new_value = (toy_expr *) value;
+        eval_expr(interp, &value_result, value);
     } else {
-        new_value = (toy_expr *) &null_expr;
+        value_result = null_expr;
     }
-    map_set(interp->symbols, name, new_value);
+    map_set(interp->symbols, name, &value_result);
 }
 
 static void add_variable(toy_interp *interp, const toy_str name, const toy_expr *value)
@@ -159,13 +162,14 @@ static void add_variable(toy_interp *interp, const toy_str name, const toy_expr 
     if (existing_value) {
         duplicate_identifier(name);
     }
-    toy_expr *new_value;
+    /* TODO: dangling pointer to stack */
+    toy_expr value_result;
     if (value) {
-        new_value = (toy_expr *) value;
+        eval_expr(interp, &value_result, value);
     } else {
-        new_value = (toy_expr *) &null_expr;
+        value_result = null_expr;
     }
-    map_set(interp->symbols, name, new_value);
+    map_set(interp->symbols, name, &value_result);
 }
 
 static void add_function(toy_interp *interp, const toy_str name, const toy_func_def *def)
@@ -196,12 +200,12 @@ static void op_assign(toy_interp *interp, toy_expr *result, toy_str name, toy_ex
     }
 }
 
-void run_toy_function(toy_interp *interp, toy_expr *result, toy_block *block, toy_str_list *arg_name, toy_list *arg)
+void run_toy_function(toy_interp *interp, toy_expr *result, toy_block *block, toy_str_list *arg_name, toy_list *args)
 {
     push_context(interp, block);
-    /* TODO: set arguments into block environment */
-    for (; arg_name && arg; arg_name = arg_name->next, arg = arg->next) {
-        // TODO: set_variable(interp, arg_name, arg);
+    for (; arg_name && args; arg_name = arg_name->next, args = args->next) {
+        /* TODO: This should add new variables, because this should be a fresh scope */
+        set_variable(interp, arg_name->str, args->expr);
     }
     run_block(interp, block);
     pop_context(interp);
@@ -209,13 +213,29 @@ void run_toy_function(toy_interp *interp, toy_expr *result, toy_block *block, to
 
 void call_func(toy_interp *interp, toy_expr *result, toy_str func_name, toy_list *args)
 {
-    predefined_func_addr predef = lookup_predefined_function(func_name);
+    size_t args_len = list_len(args);
+    const predefined_function *predef = lookup_predefined_function(func_name);
     if (predef) {
-        (*predef)(interp, result, args);
+        if (predef->num_params != INFINITE_PARAMS) {
+            if (args_len < predef->num_params) {
+                too_few_arguments(predef->num_params, args);
+            } else if (args_len > predef->num_params) {
+                too_many_arguments(predef->num_params, args);
+            } else {
+                predef->func(interp, result, args);
+            }
+        }
     } else {
         toy_expr *expr = lookup_identifier(interp, func_name);
         if (expr->type == EXPR_FUNC_DECL) {
-            run_toy_function(interp, result, &expr->func_decl.def.code, expr->func_decl.def.param_names, args);
+            size_t num_params = str_list_len(expr->func_decl.def.param_names);
+            if (args_len < num_params) {
+                too_few_arguments(num_params, args);
+            } else if (args_len > num_params) {
+                too_many_arguments(num_params, args);
+            } else {
+                run_toy_function(interp, result, &expr->func_decl.def.code, expr->func_decl.def.param_names, args);
+            }
         } else {
             invalid_operand(EXPR_FUNC_CALL, expr);
         }
@@ -242,6 +262,22 @@ static void collection_lookup(toy_interp *interp, toy_expr *result, toy_str iden
         eval_expr(interp, &index_result, index);
         if (index_result.type == EXPR_STR) {
             *result = *map_get(collection->map, index_result.str);
+        } else {
+            invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
+        }
+    } else if (collection->type == EXPR_STR) {
+        toy_expr index_result;
+        eval_expr(interp, &index_result, index);
+        if (index_result.type == EXPR_NUM) {
+            if (index_result.num >= 0 && index_result.num < strlen(collection->str)) {
+                result->type = EXPR_STR;
+                /* TODO: Hide string memory management */
+                result->str = malloc(2);
+                result->str[0] = collection->str[(int) index_result.num];
+                result->str[1] = '\0';
+            } else {
+                invalid_string_index(collection->str, index_result.num);
+            }
         } else {
             invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
         }

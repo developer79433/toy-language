@@ -59,6 +59,8 @@ void op_equal(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const 
         case EXPR_BOOL:
             result->bool = (arg_result1.bool == arg_result2.bool);
             break;
+        case EXPR_NULL:
+            result->bool = 1;
         case EXPR_NUM:
             result->bool = (arg_result1.num == arg_result2.num);
             break;
@@ -66,12 +68,19 @@ void op_equal(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const 
             result->bool = (0 == strcmp(arg_result1.str, arg_result2.str));
             break;
         default:
-            invalid_operand(EXPR_EQUAL, &arg_result1);
+            invalid_operands(EXPR_EQUAL, &arg_result1, &arg_result2);
             break;
         }
     } else {
         result->bool = 0;
     }
+}
+
+void op_nequal(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)
+{
+    op_equal(interp, result, arg1, arg2);
+    assert(EXPR_BOOL == result->type);
+    result->bool = !result->bool;
 }
 
 void op_gt(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2)

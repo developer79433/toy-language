@@ -8,6 +8,7 @@ void op_and(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const to
 void op_comma(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2);
 void op_div(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2);
 void op_equal(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2);
+void op_nequal(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2);
 void op_gt(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2);
 void op_gte(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2);
 void op_in(toy_interp *interp, toy_expr *result, const toy_expr *arg1, const toy_expr *arg2);

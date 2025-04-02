@@ -414,8 +414,9 @@ field_ref_expr:
     }
 ;
 
+/* TODO: This should permit the LHS to be an expression */
 collection_lookup_expr:
-    T_IDENTIFIER T_LBRACKET expr T_RBRACKET {
+    T_IDENTIFIER T_LBRACKET expr_no_comma T_RBRACKET {
         $$ = alloc_expr(EXPR_COLLECTION_LOOKUP);
         $$->collection_lookup.lhs = $1;
         $$->collection_lookup.rhs = $3;
@@ -573,6 +574,11 @@ function_call_expr: T_IDENTIFIER T_LPAREN actualargs T_RPAREN {
     }
 ;
 
+/**
+ * TODO: Can this be merged with field_ref?
+ * Redefine T_IDENTIFIER to permit a field ref,
+ * then method call becomes just another function call.
+ */
 method_call_expr:
     T_IDENTIFIER T_DOT T_IDENTIFIER T_LPAREN actualargs T_RPAREN {
         $$ = alloc_expr(EXPR_METHOD_CALL);
