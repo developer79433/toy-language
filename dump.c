@@ -2,6 +2,7 @@
 
 #include "dump.h"
 #include "errors.h"
+#include "constants.h"
 
 void dump_list(FILE *f, toy_list *list)
 {
@@ -133,6 +134,49 @@ static void dump_method_call(FILE *f, toy_str target, toy_str func_name, toy_lis
     fputc(')', f);
 }
 
+static void dump_function(FILE *f, const toy_str name, const toy_str_list *param_names, const toy_stmt *stmts)
+{
+    fprintf(f, "fun %s(", name);
+    dump_identifier_list(f, param_names);
+    fputs(") {\n", f);
+    dump_stmts(f, stmts);
+    fputs("}\n", f);
+}
+
+void dump_literal(FILE *f, const toy_val *val)
+{
+    if (val) {
+        switch(val->type) {
+        case VAL_BOOL:
+            dump_bool(f, val->bool);
+            break;
+        case VAL_FUNC:
+            dump_function(f, val->func.def.name, val->func.def.param_names, val->func.def.code.stmts);
+            break;
+        case VAL_LIST:
+            dump_list(f, val->list);
+            break;
+        case VAL_MAP:
+            dump_map(f, val->map);
+            break;
+        case VAL_NULL:
+            fputs("null", f);
+            break;
+        case VAL_NUM:
+            fprintf(f, "%f", val->num);
+            break;
+        case VAL_STR:
+            dump_str(f, val->str);
+            break;
+        default:
+            invalid_value_type(val->type);
+            break;
+        }
+    } else {
+        dump_literal(f, &null_expr.val);
+    }
+}
+
 void dump_expr(FILE *f, const toy_expr *expr) {
     if (expr) {
         switch (expr->type) {
@@ -141,9 +185,6 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             break;
         case EXPR_ASSIGN:
             dump_assignment(f, expr->assignment.lhs, expr->assignment.rhs);
-            break;
-        case EXPR_BOOL:
-            dump_bool(f, expr->val.bool);
             break;
         case EXPR_COLLECTION_LOOKUP:
             dump_collection_lookup(f, expr->collection_lookup.lhs, expr->collection_lookup.rhs);
@@ -166,14 +207,6 @@ void dump_expr(FILE *f, const toy_expr *expr) {
         case EXPR_FUNC_CALL:
             dump_function_call(f, expr->func_call.func_name, expr->func_call.args);
             break;
-        case EXPR_FUNC_DECL:
-            /* TODO: factor this out */
-            fprintf(f, "fun %s(", expr->val.func_decl.def.name);
-            dump_identifier_list(f, expr->val.func_decl.def.param_names);
-            fputs(") {\n", f);
-            dump_stmts(f, expr->val.func_decl.def.code.stmts);
-            fputs("}\n", f);
-            break;
         case EXPR_GT:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " > ");
             break;
@@ -186,17 +219,14 @@ void dump_expr(FILE *f, const toy_expr *expr) {
         case EXPR_IN:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " in ");
             break;
-        case EXPR_LIST:
-            dump_list(f, expr->val.list);
+        case EXPR_LITERAL:
+            dump_literal(f, &expr->val);
             break;
         case EXPR_LT:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " < ");
             break;
         case EXPR_LTE:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " <= ");
-            break;
-        case EXPR_MAP:
-            dump_map(f, expr->val.map);
             break;
         case EXPR_METHOD_CALL:
             dump_method_call(f, expr->method_call.target, expr->method_call.func_name, expr->method_call.args);
@@ -217,12 +247,6 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             fputs("not (", f);
             dump_expr(f, expr->unary_op.arg);
             fputs(")", f);
-            break;
-        case EXPR_NULL:
-            fputs("null", f);
-            break;
-        case EXPR_NUM:
-            fprintf(f, "%f", expr->val.num);
             break;
         case EXPR_OR:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " or ");
@@ -245,9 +269,6 @@ void dump_expr(FILE *f, const toy_expr *expr) {
         case EXPR_PREFIX_INCREMENT:
             fputs("++", f);
             dump_identifier(f, expr->prefix_increment.id);
-            break;
-        case EXPR_STR:
-            dump_str(f, expr->val.str);
             break;
         case EXPR_TERNARY:
             dump_expr(f, expr->ternary.condition);

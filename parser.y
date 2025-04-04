@@ -361,7 +361,8 @@ mapitemlist :
 
 mapitem :
     T_STRING T_COLON expr_no_comma {
-        toy_expr *key = alloc_expr(EXPR_STR);
+        /* TODO: Should this be an expression, or a string/identifier? */
+        toy_expr *key = alloc_literal(VAL_STR);
         key->val.str = strdup($1);
         $$ = alloc_map_entry(key, $3);
     }
@@ -369,18 +370,18 @@ mapitem :
 
 literal:
     T_NULL {
-        $$ = alloc_expr(EXPR_NULL);
+        $$ = alloc_literal(VAL_NULL);
     }
     | T_BOOLEAN {
-        $$ = alloc_expr(EXPR_BOOL);
+        $$ = alloc_literal(VAL_BOOL);
         $$->val.bool = $1;
     }
     | T_FLOAT {
-        $$ = alloc_expr(EXPR_NUM);
+        $$ = alloc_literal(VAL_NUM);
         $$->val.num = $1;
     }
     | T_STRING {
-        $$ = alloc_expr(EXPR_STR);
+        $$ = alloc_literal(VAL_STR);
         $$->val.str = $1;
     }
     /* TODO: identifier is not a literal - this needs breaking up */
@@ -553,21 +554,26 @@ unary_neg_expr: T_MINUS expr_no_comma {
 ;
 
 listexpr: T_LBRACKET listitems T_RBRACKET {
-        $$ = alloc_expr(EXPR_LIST);
+        $$ = alloc_literal(VAL_LIST);
         $$->val.list = $2;
     }
 ;
 
 map_expr: T_LBRACE mapitems T_RBRACE {
-        $$ = alloc_expr(EXPR_MAP);
+        $$ = alloc_literal(VAL_MAP);
         $$->val.map = alloc_map();
         for (toy_map_entry *entry = $2; entry; entry = entry->next) {
+            /**
+             * FIXME: This should be postponed until runtime.
+             * All we should be doing here is storing the entry in the AST.
+             */
             map_set_expr($$->val.map, entry->key, entry->value);
         }
     }
 ;
 
 function_decl_expr: T_FUN T_LPAREN formalparams T_RPAREN block {
+        /* TODO: This should be a literal, not an expression */
         $$ = alloc_expr_func_decl($3, &$5);
     }
 ;

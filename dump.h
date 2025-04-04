@@ -6,6 +6,7 @@
 #include "ast.h"
 #include "map.h"
 
+void dump_literal(FILE *f, const toy_val *val);
 void print_str(FILE *f, const toy_str str);
 void dump_str(FILE *f, const toy_str str);
 void dump_identifier(FILE *f, const toy_str str);

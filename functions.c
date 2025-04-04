@@ -15,10 +15,14 @@ static void predefined_list_len(toy_interp *interp, toy_expr *result, toy_list *
         too_many_arguments(1, args);
     }
     toy_expr *arg1 = args->expr;
-    if (arg1->type != EXPR_LIST) {
-        invalid_operand(EXPR_LIST, arg1);
+    toy_expr arg_result;
+    eval_expr(interp, &arg_result, arg1);
+    assert(arg_result.type == EXPR_LITERAL);
+    if (arg_result.val.type != VAL_BOOL) {
+        invalid_argument_type(VAL_LIST, &arg_result.val);
     }
-    result->type = EXPR_NUM;
+    result->type = EXPR_LITERAL;
+    result->val.type = VAL_NUM;
     if (arg1->val.list) {
         result->val.num = list_len(arg1->val.list);
     } else {
@@ -35,7 +39,8 @@ static void predefined_print(toy_interp *interp, toy_expr *result, toy_list *arg
     for (toy_list *arg = args; arg; arg = arg->next) {
         toy_expr arg_result;
         eval_expr(interp, &arg_result, arg->expr);
-        if (arg_result.type == EXPR_STR) {
+        assert(arg_result.type == EXPR_LITERAL);
+        if (arg_result.val.type == VAL_STR) {
             print_str(stderr, arg_result.val.str);
         } else {
             dump_expr(stderr, &arg_result);
@@ -73,7 +78,8 @@ static void predefined_assert_equal(toy_interp *interp, toy_expr *result, toy_li
     toy_expr *arg1 = args->expr;
     toy_expr *arg2 = args->next->expr;
     op_equal(interp, result, arg1, arg2);
-    assert(EXPR_BOOL == result->type);
+    assert(EXPR_LITERAL == result->type);
+    assert(VAL_BOOL == result->val.type);
     if (result->val.bool) {
         /* Assertion succeeded */
     } else {
@@ -87,7 +93,8 @@ static void predefined_assert_not_equal(toy_interp *interp, toy_expr *result, to
     toy_expr *arg1 = args->expr;
     toy_expr *arg2 = args->next->expr;
     op_nequal(interp, result, arg1, arg2);
-    assert(EXPR_BOOL == result->type);
+    assert(EXPR_LITERAL == result->type);
+    assert(VAL_BOOL == result->val.type);
     if (result->val.bool) {
         /* Assertion succeeded */
     } else {
@@ -101,7 +108,8 @@ static void predefined_assert_gt(toy_interp *interp, toy_expr *result, toy_list 
     toy_expr *arg1 = args->expr;
     toy_expr *arg2 = args->next->expr;
     op_gt(interp, result, arg1, arg2);
-    assert(EXPR_BOOL == result->type);
+    assert(EXPR_LITERAL == result->type);
+    assert(VAL_BOOL == result->val.type);
     if (result->val.bool) {
         /* Assertion succeeded */
     } else {
@@ -115,7 +123,8 @@ static void predefined_assert_gte(toy_interp *interp, toy_expr *result, toy_list
     toy_expr *arg1 = args->expr;
     toy_expr *arg2 = args->next->expr;
     op_gte(interp, result, arg1, arg2);
-    assert(EXPR_BOOL == result->type);
+    assert(EXPR_LITERAL == result->type);
+    assert(VAL_BOOL == result->val.type);
     if (result->val.bool) {
         /* Assertion succeeded */
     } else {
@@ -129,7 +138,8 @@ static void predefined_assert_lt(toy_interp *interp, toy_expr *result, toy_list 
     toy_expr *arg1 = args->expr;
     toy_expr *arg2 = args->next->expr;
     op_lt(interp, result, arg1, arg2);
-    assert(EXPR_BOOL == result->type);
+    assert(EXPR_LITERAL == result->type);
+    assert(VAL_BOOL == result->val.type);
     if (result->val.bool) {
         /* Assertion succeeded */
     } else {
@@ -143,7 +153,8 @@ static void predefined_assert_lte(toy_interp *interp, toy_expr *result, toy_list
     toy_expr *arg1 = args->expr;
     toy_expr *arg2 = args->next->expr;
     op_lte(interp, result, arg1, arg2);
-    assert(EXPR_BOOL == result->type);
+    assert(EXPR_LITERAL == result->type);
+    assert(VAL_BOOL == result->val.type);
     if (result->val.bool) {
         /* Assertion succeeded */
     } else {
@@ -155,9 +166,10 @@ static void predefined_assert_zero(toy_interp *interp, toy_expr *result, toy_lis
 {
     assert(list_len(args) == 1);
     toy_expr *arg1 = args->expr;
-    toy_expr zero = { .type = EXPR_NUM, .val.num = 0 };
+    toy_expr zero = { .type = EXPR_LITERAL, .val.type = VAL_NUM, .val.num = 0 };
     op_equal(interp, result, arg1, &zero);
-    assert(EXPR_BOOL == result->type);
+    assert(EXPR_LITERAL == result->type);
+    assert(VAL_BOOL == result->val.type);
     if (result->val.bool) {
         /* Assertion succeeded */
     } else {
@@ -169,9 +181,10 @@ static void predefined_assert_non_zero(toy_interp *interp, toy_expr *result, toy
 {
     assert(list_len(args) == 1);
     toy_expr *arg1 = args->expr;
-    toy_expr zero = { .type = EXPR_NUM, .val.num = 0 };
+    toy_expr zero = { .type = EXPR_LITERAL, .val.type = VAL_NUM, .val.num = 0 };
     op_nequal(interp, result, arg1, &zero);
-    assert(EXPR_BOOL == result->type);
+    assert(EXPR_LITERAL == result->type);
+    assert(VAL_BOOL == result->val.type);
     if (result->val.bool) {
         /* Assertion succeeded */
     } else {
@@ -184,7 +197,8 @@ static void predefined_assert_null(toy_interp *interp, toy_expr *result, toy_lis
     assert(list_len(args) == 1);
     toy_expr *arg1 = args->expr;
     op_equal(interp, result, arg1, &null_expr);
-    assert(EXPR_BOOL == result->type);
+    assert(EXPR_LITERAL == result->type);
+    assert(VAL_BOOL == result->val.type);
     if (result->val.bool) {
         /* Assertion succeeded */
     } else {
@@ -197,7 +211,8 @@ static void predefined_assert_non_null(toy_interp *interp, toy_expr *result, toy
     assert(list_len(args) == 1);
     toy_expr *arg1 = args->expr;
     op_nequal(interp, result, arg1, &null_expr);
-    assert(EXPR_BOOL == result->type);
+    assert(EXPR_LITERAL == result->type);
+    assert(VAL_BOOL == result->val.type);
     if (result->val.bool) {
         /* Assertion succeeded */
     } else {
@@ -211,7 +226,7 @@ static void predefined_assert(toy_interp *interp, toy_expr *result, toy_list *ar
     toy_expr *arg1 = args->expr;
     toy_expr expr_result;
     eval_expr(interp, &expr_result, arg1);
-    toy_bool b = convert_to_bool(&expr_result);
+    toy_bool b = convert_to_bool(&expr_result.val);
     if (b) {
         /* Assertion succeeded */
     } else {

@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <string.h>
 
 #include "mymalloc.h"
@@ -6,10 +7,24 @@
 #include "map.h"
 #include "dump.h"
 
+static const char *toy_val_type_names[] = {
+    "boolean",
+    "function",
+    "list",
+    "map",
+    "null",
+    "numeric",
+    "string"
+};
+
+const char *toy_val_type_name(enum toy_val_type val_type)
+{
+    return toy_val_type_names[val_type];
+}
+
 static const char *toy_expr_type_names[] = {
     "logical and",
     "assignment",
-    "boolean",
     "collection lookup",
     "comma",
     "division",
@@ -17,32 +32,51 @@ static const char *toy_expr_type_names[] = {
     "exponentiation",
     "field reference",
     "function call",
-    "function declaration",
     "greater than",
     "greater than or equal to",
     "identifier",
     "in list",
-    "list",
+    "literal",
     "less than",
     "less than or equal to",
-    "map",
     "method call",
     "subtraction",
     "modulus",
     "multiplication",
     "not equal to",
     "logical negation",
-    "null",
-    "numeric",
     "logical or",
     "addition",
     "postfix decrement",
     "postfix increment",
     "prefix decrement",
     "prefix increment",
-    "string",
     "unary negation"
 };
+
+const char *toy_expr_type_name(enum toy_expr_type expr_type)
+{
+    return toy_expr_type_names[expr_type];
+}
+
+static const char *toy_stmt_type_names[] = {
+    "block statement",
+    "break statement",
+    "continue statement",
+    "expression statement",
+    "for loop",
+    "function declaration",
+    "if statement",
+    "null statement",
+    "return statement",
+    "variable declaration",
+    "while loop"
+};
+
+const char *toy_stmt_type_name(enum toy_stmt_type stmt_type)
+{
+    return toy_stmt_type_names[stmt_type];
+}
 
 toy_map_entry *alloc_map_entry(toy_expr *key, toy_expr *value)
 {
@@ -112,11 +146,21 @@ toy_expr *alloc_binary_op_expr(enum toy_expr_type expr_type)
     return expr;
 }
 
-toy_expr *alloc_expr(enum toy_expr_type type)
+toy_expr *alloc_expr(enum toy_expr_type expr_type)
+{
+    toy_expr *expr;
+    assert(EXPR_LITERAL != expr_type);
+    expr = mymalloc(toy_expr);
+    expr->type = expr_type;
+    return expr;
+}
+
+toy_expr *alloc_literal(enum toy_val_type val_type)
 {
     toy_expr *expr;
     expr = mymalloc(toy_expr);
-    expr->type = type;
+    expr->type = EXPR_LITERAL;
+    expr->val.type = val_type;
     return expr;
 }
 
@@ -124,10 +168,11 @@ toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_block *body)
 {
     toy_expr *expr;
     expr = mymalloc(toy_expr);
-    expr->type = EXPR_FUNC_DECL;
-    expr->val.func_decl.def.name = ""; /* TODO: generated unique name */
-    expr->val.func_decl.def.param_names = formalparams;
-    expr->val.func_decl.def.code.stmts = body->stmts;
+    expr->type = EXPR_LITERAL;
+    expr->val.type = VAL_FUNC;
+    expr->val.func.def.name = ""; /* TODO: generated unique name */
+    expr->val.func.def.param_names = formalparams;
+    expr->val.func.def.code.stmts = body->stmts;
     return expr;
 }
 
@@ -198,28 +243,4 @@ toy_map_entry *append_map_entry(toy_map_entry *orig, toy_map_entry *new)
     }
     tmp->next = new;
     return orig;
-}
-
-const char *toy_expr_type_name(enum toy_expr_type expr_type)
-{
-    return toy_expr_type_names[expr_type];
-}
-
-static const char *toy_stmt_type_names[] = {
-    "block statement",
-    "break statement",
-    "continue statement",
-    "expression statement",
-    "for loop",
-    "function declaration",
-    "if statement",
-    "null statement",
-    "return statement",
-    "variable declaration",
-    "while loop"
-};
-
-const char *toy_stmt_type_name(enum toy_stmt_type stmt_type)
-{
-    return toy_stmt_type_names[stmt_type];
 }

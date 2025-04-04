@@ -9,8 +9,8 @@ typedef struct predefined_constant_struct {
 } predefined_constant;
 
 extern const toy_expr null_expr;
-extern toy_expr true_expr;
-extern toy_expr false_expr;
+extern const toy_expr true_expr;
+extern const toy_expr false_expr;
 
 const toy_expr *lookup_predefined_constant(toy_str name);
 

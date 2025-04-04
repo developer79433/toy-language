@@ -41,6 +41,7 @@ void invalid_stmt_type(enum toy_stmt_type stmt_type)
     fatal_error("Invalid statement type %s", toy_stmt_type_name(stmt_type));
 }
 
+/* TODO: Delete me */
 void invalid_cast(enum toy_expr_type expr_type, const toy_expr *expr)
 {
     dump_expr(stderr, expr);
@@ -89,4 +90,21 @@ void invalid_string_index(toy_str str, toy_num index)
     dump_str(stderr, str);
     fputc('\n', stderr);
     fatal_error("Invalid string index %d", index);
+}
+
+void invalid_argument_type(enum toy_val_type expected_type, const toy_val *actual_arg)
+{
+    dump_literal(stderr, actual_arg);
+    fputc('\n', stderr);
+    fatal_error("Invalid argument type: expected %s", toy_val_type_name(expected_type));
+}
+
+void invalid_value_type(enum toy_val_type value_type)
+{
+    fatal_error("Invalid value type %s", toy_val_type_name(value_type));
+}
+
+void divide_by_zero(void)
+{
+    fatal_error("Divide by zero");
 }

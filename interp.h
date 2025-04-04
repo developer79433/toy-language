@@ -16,7 +16,7 @@ void eval_expr(toy_interp *interp, toy_expr *result, const toy_expr *expr);
 void single_step(toy_interp *interp, const toy_stmt *stmt);
 void run_block(toy_interp *interp, const toy_block *block);
 void step_out(toy_interp *interp);
-toy_bool convert_to_bool(const toy_expr *expr);
+toy_bool convert_to_bool(const toy_val *val);
 int lookup_identifier(toy_interp *interp, toy_expr *result, const toy_str name);
 void call_func(toy_interp *interp, toy_expr *result, toy_str func_name, toy_list *args);
 void run_toy_function(toy_interp *interp, toy_expr *result, toy_block *block, toy_str_list *arg_name, toy_list *arg);

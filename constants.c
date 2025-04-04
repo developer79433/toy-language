@@ -3,9 +3,9 @@
 #include "constants.h"
 #include "util.h"
 
-const toy_expr null_expr = { .type = EXPR_NULL };
-toy_expr true_expr = { .type = EXPR_BOOL, .val.num = 1 };
-toy_expr false_expr = { .type = EXPR_BOOL, .val.num = 0 };
+const toy_expr null_expr = { .type = EXPR_LITERAL, .val.type = VAL_NULL };
+const toy_expr true_expr = { .type = EXPR_LITERAL, .val.type = VAL_BOOL, .val.num = 1 };
+const toy_expr false_expr = { .type = EXPR_LITERAL, .val.type = VAL_BOOL, .val.num = 0 };
 
 static predefined_constant predefined_constants[] = {
     { "null", &null_expr },
