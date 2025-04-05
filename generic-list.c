@@ -31,6 +31,7 @@ size_t generic_list_len(const generic_list *list)
     return size;
 }
 
+/* TODO: Handle orig being null, so the caller in parser.y doesn't have to repeatedly do so */
 generic_list *generic_list_append(generic_list *orig_list, generic_list *new_list)
 {
     generic_list *tmp = orig_list;

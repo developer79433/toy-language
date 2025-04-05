@@ -1,6 +1,9 @@
+#include <stddef.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "mymalloc.h"
+#include "generic-list.h"
 #include "toy-expr-list.h"
 #include "dump.h"
 
@@ -15,12 +18,8 @@ toy_expr_list *alloc_expr_list(toy_expr *first_elem)
 
 size_t expr_list_len(const toy_expr_list *list)
 {
-    /* TODO: return list_generic_len(args); */
-    size_t size;
-    for (size = 0; list; list = list->next) {
-        size++;
-    }
-    return size;
+    assert(offsetof(toy_expr_list, next) == offsetof(generic_list, next));
+    return generic_list_len((const generic_list *) list);
 }
 
 void dump_expr_list(FILE *f, toy_expr_list *list)
@@ -44,13 +43,8 @@ void dump_expr_list(FILE *f, toy_expr_list *list)
     fputc(']', f);
 }
 
-/* TODO: Handle orig being null, so the caller in parser.y doesn't have to repeatedly do so */
-toy_expr_list *append_expr_list(toy_expr_list *orig, toy_expr_list *new_item)
+toy_expr_list *append_expr_list(toy_expr_list *orig, toy_expr_list *new_list)
 {
-    toy_expr_list *tmp = orig;
-    while (tmp->next) {
-        tmp = tmp->next;
-    }
-    tmp->next = new_item;
-    return orig;
+    assert(offsetof(toy_expr_list, next) == offsetof(generic_list, next));
+    return (toy_expr_list *) generic_list_append((generic_list *) orig, (generic_list *) new_list);
 }
