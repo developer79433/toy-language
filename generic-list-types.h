@@ -3,6 +3,7 @@
 
 typedef struct generic_list_struct {
     struct generic_list_struct *next;
+    /* TODO: Keep track of length? */
     void *payload;
 } generic_list;
 

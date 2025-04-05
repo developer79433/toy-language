@@ -14,10 +14,11 @@
 /* TODO: dynamic resizing */
 #define NUM_BUCKETS 13
 
+/* TODO: Use generic list lib */
 typedef struct map_entry_struct {
+    struct map_entry_struct *next;
     toy_str key;
     toy_val value;
-    struct map_entry_struct *next;
 } map_entry;
 
 struct toy_map_struct {

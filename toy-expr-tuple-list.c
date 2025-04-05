@@ -10,8 +10,8 @@ toy_expr_tuple_list *alloc_expr_tuple_list(toy_expr *first_key, toy_expr *first_
 {
     toy_expr_tuple_list *tuple_list;
     tuple_list = mymalloc(toy_expr_tuple_list);
-    tuple_list->key = first_key;
-    tuple_list->value = first_value;
+    tuple_list->tuple.key = first_key;
+    tuple_list->tuple.value = first_value;
     tuple_list->next = NULL;
     return tuple_list;
 }
@@ -22,25 +22,33 @@ toy_expr_tuple_list *append_expr_tuple(toy_expr_tuple_list *orig, toy_expr_tuple
     return (toy_expr_tuple_list *) generic_list_append((generic_list *) orig, (generic_list *) new_list);
 }
 
+typedef struct callback_args_struct {
+    FILE *f;
+    int printed_anything;
+} callback_args;
+
+static void dump_callback(void *cookie, const void *item) {
+    callback_args *args = (callback_args *) cookie;
+    toy_expr_tuple *tuple = (toy_expr_tuple *) item;
+    if (args->printed_anything) {
+        fputs(", ", args->f);
+    } else {
+        fputc(' ', args->f);
+    }
+    dump_expr(args->f, tuple->key);
+    fputs(": ", args->f);
+    dump_expr(args->f, tuple->value);
+    args->printed_anything = 1;
+}
+
 void dump_expr_tuple_list(FILE *f, const toy_expr_tuple_list *list)
 {
-    int printed_anything = 0;
+    assert(offsetof(toy_expr_tuple_list, tuple) == offsetof(generic_list, payload));
     fputc('{', f);
-    if (list) {
-        for (const toy_expr_tuple_list *cur = list; cur; cur = cur->next) {
-            if (printed_anything) {
-                fputs(", ", f);
-            } else {
-                fputc(' ', f);
-            }
-            dump_expr(f, cur->key);
-            fputs(": ", f);
-            dump_expr(f, cur->value);
-            printed_anything = 1;
-        }
-        if (printed_anything) {
-            fputc(' ', f);
-        }
+    callback_args args = { .printed_anything = 0, .f = f };
+    generic_list_foreach_const(list, &args, dump_callback);
+    if (args.printed_anything) {
+        fputc(' ', f);
     }
     fputc('}', f);
 }
