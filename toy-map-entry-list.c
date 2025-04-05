@@ -1,6 +1,9 @@
+#include <stddef.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "mymalloc.h"
+#include "generic-list.h"
 #include "toy-map-entry-list.h"
 #include "dump.h"
 #include "toy-str.h"
@@ -15,14 +18,10 @@ toy_map_entry_list *alloc_map_entry_list(toy_str first_key, toy_expr *first_valu
     return tuple_list;
 }
 
-toy_map_entry_list *append_map_entry(toy_map_entry_list *orig, toy_map_entry_list *new_entry)
+toy_map_entry_list *append_map_entry(toy_map_entry_list *orig, toy_map_entry_list *new_list)
 {
-    toy_map_entry_list *tmp = orig;
-    while (tmp->next) {
-        tmp = tmp->next;
-    }
-    tmp->next = new_entry;
-    return orig;
+    assert(offsetof(toy_map_entry_list, next) == offsetof(generic_list, next));
+    return (toy_map_entry_list *) generic_list_append((generic_list *) orig, (generic_list *) new_list);
 }
 
 void dump_map_entry_list(FILE *f, const toy_map_entry_list *list)
