@@ -62,6 +62,7 @@ toy_val_list *alloc_val_list(toy_val *first_elem)
     return list;
 }
 
+/* TODO: Fix memory management - who owns the data? */
 toy_val_list *alloc_val_list_own(toy_val *first_elem)
 {
     toy_val_list *list;
@@ -80,4 +81,16 @@ toy_val_list *append_val_list_own(toy_val_list *orig, toy_val *new_item)
     memcpy(list->val, new_item, sizeof(toy_val));
     list->next = NULL;
     return append_val_list(orig, list);
+}
+
+void val_list_foreach(toy_val_list *list, val_list_item_callback callback, void *cookie)
+{
+    assert(offsetof(toy_val_list, val) == offsetof(generic_list, payload));
+    generic_list_foreach(list, (list_item_callback) callback, cookie);
+}
+
+void val_list_foreach_const(const toy_val_list *list, const_val_list_item_callback callback, void *cookie)
+{
+    assert(offsetof(toy_val_list, val) == offsetof(generic_list, payload));
+    generic_list_foreach_const(list, (const_list_item_callback) callback, cookie);
 }

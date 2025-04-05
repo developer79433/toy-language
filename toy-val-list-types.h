@@ -9,4 +9,7 @@ typedef struct toy_val_list_struct {
     toy_val *val;
 } toy_val_list;
 
+typedef void (*val_list_item_callback)(void *cookie, toy_val *val);
+typedef void (*const_val_list_item_callback)(void *cookie, const toy_val *val);
+
 #endif /* VAL_TOY_LIST_TYPES_H */

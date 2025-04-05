@@ -46,7 +46,7 @@ void dump_expr_tuple_list(FILE *f, const toy_expr_tuple_list *list)
     assert(offsetof(toy_expr_tuple_list, tuple) == offsetof(generic_list, payload));
     fputc('{', f);
     callback_args args = { .printed_anything = 0, .f = f };
-    generic_list_foreach_const(list, &args, dump_callback);
+    generic_list_foreach_const(list, dump_callback, &args);
     if (args.printed_anything) {
         fputc(' ', f);
     }

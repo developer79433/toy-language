@@ -358,7 +358,7 @@ void op_method_call(toy_interp *interp, toy_val *result, const toy_method_call *
         toy_val field;
         lookup_field(&field, &target, method_call->method_name);
         if (field.type == VAL_FUNC) {
-            run_toy_function(interp, result, field.func, method_call->args);
+            run_toy_function_expr_list(interp, result, field.func, method_call->args);
         } else {
             invalid_operand(EXPR_FUNC_CALL, &field);
         }

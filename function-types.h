@@ -6,7 +6,10 @@
 #include "toy-val-list-types.h"
 #include "toy-str-list-types.h"
 
-typedef void (*predefined_func_addr)(toy_val *result, toy_val_list *args);
+struct toy_interp_struct;
+typedef struct toy_interp_struct toy_interp;
+
+typedef void (*predefined_func_addr)(toy_interp *interp, toy_val *result, toy_val_list *args);
 
 struct toy_stmt_struct;
 typedef struct toy_stmt_struct toy_stmt;

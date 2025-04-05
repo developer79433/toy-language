@@ -57,7 +57,7 @@ void *generic_list_index(generic_list *list, toy_num index)
     return NULL;
 }
 
-void generic_list_foreach(void *listv, void *cookie, list_item_callback callback)
+void generic_list_foreach(void *listv, list_item_callback callback, void *cookie)
 {
     generic_list *list = (generic_list *) listv;
     for (; list; list = list->next) {
@@ -65,7 +65,7 @@ void generic_list_foreach(void *listv, void *cookie, list_item_callback callback
     }
 }
 
-void generic_list_foreach_const(const void *listv, void *cookie, const_list_item_callback callback)
+void generic_list_foreach_const(const void *listv, const_list_item_callback callback, void *cookie)
 {
     const generic_list *list = (const generic_list *) listv;
     for (; list; list = list->next) {

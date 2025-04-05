@@ -70,7 +70,7 @@ static void push_context(toy_interp *interp, const toy_block *block)
 
 static void pop_context(toy_interp *interp)
 {
-    /* TODO */
+    /* TODO: context stack */
 }
 
 static int is_predefined(toy_str name)
@@ -105,32 +105,48 @@ int lookup_identifier(toy_interp *interp, toy_val *result, const toy_str name)
     return 0;
 }
 
+enum set_variable_policy_enum {
+    POLICY_MUST_ALREADY_EXIST,
+    POLICY_MUST_NOT_ALREADY_EXIST
+};
+typedef enum set_variable_policy_enum set_variable_policy;
+
 /* TODO: Move these into symbol-table.c */
-static void set_variable_value(toy_interp *interp, const toy_str name, const toy_val *value)
+static int set_variable_value_policy(toy_interp *interp, const toy_str name, const toy_val *value, set_variable_policy policy)
 {
     if (is_predefined(name)) {
         readonly_identifier(name);
     }
     toy_val old_value;
     int already_exists = lookup_identifier(interp, &old_value, name);
-    if (!already_exists) {
-        undeclared_identifier(name);
+    switch (policy) {
+    case POLICY_MUST_ALREADY_EXIST:
+        if (!already_exists) {
+            undeclared_identifier(name);
+        }
+        break;
+    case POLICY_MUST_NOT_ALREADY_EXIST:
+        if (already_exists) {
+            duplicate_identifier(name);
+        }
+        break;
+    default:
+        assert(0);
+        break;
     }
     int added_new = map_set(interp->symbols, name, value);
+    return added_new;
+}
+
+static void set_variable_value(toy_interp *interp, const toy_str name, const toy_val *value)
+{
+    int added_new = set_variable_value_policy(interp, name, value, POLICY_MUST_ALREADY_EXIST);
     assert(!added_new);
 }
 
 static void create_variable_value(toy_interp *interp, const toy_str name, const toy_val *value)
 {
-    if (is_predefined(name)) {
-        readonly_identifier(name);
-    }
-    toy_val old_value;
-    int already_exists = lookup_identifier(interp, &old_value, name);
-    if (already_exists) {
-        duplicate_identifier(name);
-    }
-    int added_new = map_set(interp->symbols, name, value);
+    int added_new = set_variable_value_policy(interp, name, value, POLICY_MUST_NOT_ALREADY_EXIST);
     assert(added_new);
 }
 
@@ -180,15 +196,32 @@ static void eval_list(toy_interp *interp, toy_val *result, const toy_expr_list *
     }
 }
 
-static void run_predefined_func(toy_interp *interp, toy_val *result, toy_func_def *def, toy_expr_list *arg_exprs)
+void run_predefined_func_val_list(toy_interp *interp, toy_val *result, toy_func_def *def, toy_val_list *args)
+{
+    def->predef(interp, result, args);
+}
+
+static void run_predefined_func_expr_list(toy_interp *interp, toy_val *result, toy_func_def *def, toy_expr_list *arg_exprs)
 {
     toy_val args;
     eval_list(interp, &args, arg_exprs);
     assert(VAL_LIST == args.type);
-    def->predef(result, args.list);
+    run_predefined_func_val_list(interp, result, def, args.list);
 }
 
-static void run_user_func(toy_interp *interp, toy_val *result, toy_func_def *def, toy_expr_list *args)
+static void run_user_func_val_list(toy_interp *interp, toy_val *result, toy_func_def *def, toy_val_list *args)
+{
+    push_context(interp, &def->code);
+    for (toy_str_list *param_name = def->param_names; param_name && args; param_name = param_name->next, args = args->next) {
+        create_variable_value(interp, param_name->str, args->val);
+    }
+    run_block(interp, &def->code);
+    pop_context(interp);
+    /* TODO: Propagate return value from function */
+    *result = null_val;
+}
+
+static void run_user_func_expr_list(toy_interp *interp, toy_val *result, toy_func_def *def, toy_expr_list *args)
 {
     push_context(interp, &def->code);
     for (toy_str_list *param_name = def->param_names; param_name && args; param_name = param_name->next, args = args->next) {
@@ -200,14 +233,29 @@ static void run_user_func(toy_interp *interp, toy_val *result, toy_func_def *def
     *result = null_val;
 }
 
-void run_toy_function(toy_interp *interp, toy_val *result, toy_func_def *def, toy_expr_list *args)
+void run_toy_function_expr_list(toy_interp *interp, toy_val *result, toy_func_def *def, toy_expr_list *args)
 {
     switch (def->type) {
     case FUNC_PREDEFINED:
-        run_predefined_func(interp, result, def, args);
+        run_predefined_func_expr_list(interp, result, def, args);
         break;
     case FUNC_USER_DECLARED:
-        run_user_func(interp, result, def, args);
+        run_user_func_expr_list(interp, result, def, args);
+        break;
+    default:
+        invalid_function_type(def->type);
+        break;
+    }
+}
+
+void run_toy_function_val_list(toy_interp *interp, toy_val *result, toy_func_def *def, toy_val_list *args)
+{
+    switch (def->type) {
+    case FUNC_PREDEFINED:
+        run_predefined_func_val_list(interp, result, def, args);
+        break;
+    case FUNC_USER_DECLARED:
+        run_user_func_val_list(interp, result, def, args);
         break;
     default:
         invalid_function_type(def->type);
@@ -223,7 +271,7 @@ void call_func(toy_interp *interp, toy_val *result, toy_str func_name, toy_expr_
         if (expr.type == VAL_FUNC) {
             toy_func_def *def = expr.func;
             if (def->param_names == &INFINITE_PARAMS) {
-                run_toy_function(interp, result, def, args);
+                run_toy_function_expr_list(interp, result, def, args);
             } else {
                 size_t num_params = str_list_len(def->param_names);
                 size_t num_args = expr_list_len(args);
@@ -232,7 +280,7 @@ void call_func(toy_interp *interp, toy_val *result, toy_str func_name, toy_expr_
                 } else if (num_args > num_params) {
                     too_many_arguments(num_params, args);
                 } else {
-                    run_toy_function(interp, result, def, args);
+                    run_toy_function_expr_list(interp, result, def, args);
                 }
             }
         } else {

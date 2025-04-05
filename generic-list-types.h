@@ -7,4 +7,7 @@ typedef struct generic_list_struct {
     void *payload;
 } generic_list;
 
+typedef void (*list_item_callback)(void *cookie, void *item);
+typedef void (*const_list_item_callback)(void *cookie, const void *item);
+
 #endif /* GENERIC_LIST_TYPES_H */
