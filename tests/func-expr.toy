@@ -1,0 +1,1 @@
+var myfunc = fun(formalparam1, formalparam2) { var x = 42; return; };

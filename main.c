@@ -17,8 +17,7 @@ int main(int argc, char **argv)
     if (argc > 0) {
         in = fopen( argv[0], "r" );
     } else {
-        /* yyin = stdin; */
-        in = fopen( "sample-program.toy", "r" );
+        in = stdin;
     }
 
     init_lexer(in);

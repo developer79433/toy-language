@@ -1,5 +1,0 @@
-print("Hello!");
-var mylist = [ 1, "two" ];
-print(mylist);
-print(mylist[0]);
-print(mylist[1]);

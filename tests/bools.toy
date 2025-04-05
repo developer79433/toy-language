@@ -1,0 +1,7 @@
+var bools = [ true, false, True, False, tRuE, FaLsE ];
+assert( bools[0]);
+assert(!bools[1]);
+assert( bools[2]);
+assert(!bools[3]);
+assert( bools[4]);
+assert(!bools[5]);

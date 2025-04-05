@@ -1,0 +1,5 @@
+var mymap = { "mykey": 123, "myotherkey": "myothervalue" };
+print(mymap);
+var indexed_into_map = mymap["mykey"];
+print(indexed_into_map);
+assert_equal(indexed_into_map, 123);

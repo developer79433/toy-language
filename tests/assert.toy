@@ -1,0 +1,18 @@
+// To test failure:
+// assert_equal(1, 2);
+assert(true);
+assert_null(null);
+assert_not_null(1);
+assert_equal(1, 1);
+assert_not_equal(1, 2);
+assert_lt(1, 2);
+assert_lte(1, 2);
+assert_lte(1, 1);
+assert_gt(2, 1);
+assert_gte(2, 1);
+assert_gte(1, 1);
+assert_zero(0);
+assert_not_zero(1);
+assert("This is true!");
+assert(42);
+assert(3.1415926);

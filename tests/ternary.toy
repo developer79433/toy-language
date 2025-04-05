@@ -1,0 +1,4 @@
+var arfle = "arfle";
+var barfle = "barfle";
+var tern = (arfle == barfle) ? "yes" : "no";
+assert_equal(tern, "no");

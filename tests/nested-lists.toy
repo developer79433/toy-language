@@ -1,0 +1,2 @@
+var mylist = [123.5, 456, [ "surprise!" ]];
+print(mylist);

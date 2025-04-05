@@ -1,0 +1,10 @@
+if (1 == 2) {
+    // print("if1");
+    assert(0);
+} else if (3 == 4) {
+    // print("if2");
+    assert(0);
+} else {
+    // print("else");
+    assert(1);
+}

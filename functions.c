@@ -154,7 +154,7 @@ static void predefined_assert_zero(toy_val *result, toy_val_list *args)
     *result = null_val;
 }
 
-static void predefined_assert_non_zero(toy_val *result, toy_val_list *args)
+static void predefined_assert_not_zero(toy_val *result, toy_val_list *args)
 {
     assert(val_list_len(args) == 1);
     toy_val *arg1 = args->val;
@@ -178,7 +178,7 @@ static void predefined_assert_null(toy_val *result, toy_val_list *args)
     *result = null_val;
 }
 
-static void predefined_assert_non_null(toy_val *result, toy_val_list *args)
+static void predefined_assert_not_null(toy_val *result, toy_val_list *args)
 {
     assert(val_list_len(args) == 1);
     toy_val *arg1 = args->val;
@@ -212,19 +212,19 @@ static const toy_str_list assert_binary_params = { .str = "val1", .next = (toy_s
 static const toy_str_list assert_unary_params = { .str = "val", .next = NULL };
 
 static const toy_func_def predefined_functions[] = {
-    { .name = "len",   .type = FUNC_PREDEFINED, .predef = predefined_list_len, .param_names = (toy_str_list *) &list_len_params },
-    { .name = "print", .type = FUNC_PREDEFINED, .predef = predefined_print,    .param_names = (toy_str_list *) &INFINITE_PARAMS },
+    { .name = "assert", .type = FUNC_PREDEFINED, .predef = predefined_assert, .param_names = (toy_str_list *) &assert_unary_params },
     { .name = "assert_equal", .type = FUNC_PREDEFINED, .predef = predefined_assert_equal, .param_names = (toy_str_list *) &assert_binary_params },
-    { .name = "assert_not_equal", .type = FUNC_PREDEFINED, .predef = predefined_assert_not_equal, .param_names = (toy_str_list *) &assert_binary_params },
     { .name = "assert_gt", .type = FUNC_PREDEFINED, .predef = predefined_assert_gt, .param_names = (toy_str_list *) &assert_binary_params },
     { .name = "assert_gte", .type = FUNC_PREDEFINED, .predef = predefined_assert_gte, .param_names = (toy_str_list *) &assert_binary_params },
     { .name = "assert_lt", .type = FUNC_PREDEFINED, .predef = predefined_assert_lt, .param_names = (toy_str_list *) &assert_binary_params },
     { .name = "assert_lte", .type = FUNC_PREDEFINED, .predef = predefined_assert_lte, .param_names = (toy_str_list *) &assert_binary_params },
-    { .name = "assert", .type = FUNC_PREDEFINED, .predef = predefined_assert, .param_names = (toy_str_list *) &assert_unary_params },
-    { .name = "assert_zero", .type = FUNC_PREDEFINED, .predef = predefined_assert_zero, .param_names = (toy_str_list *) &assert_unary_params },
-    { .name = "assert_non_zero", .type = FUNC_PREDEFINED, .predef = predefined_assert_non_zero, .param_names = (toy_str_list *) &assert_unary_params },
+    { .name = "assert_not_equal", .type = FUNC_PREDEFINED, .predef = predefined_assert_not_equal, .param_names = (toy_str_list *) &assert_binary_params },
+    { .name = "assert_not_null", .type = FUNC_PREDEFINED, .predef = predefined_assert_not_null, .param_names = (toy_str_list *) &assert_unary_params },
+    { .name = "assert_not_zero", .type = FUNC_PREDEFINED, .predef = predefined_assert_not_zero, .param_names = (toy_str_list *) &assert_unary_params },
     { .name = "assert_null", .type = FUNC_PREDEFINED, .predef = predefined_assert_null, .param_names = (toy_str_list *) &assert_unary_params },
-    { .name = "assert_non_null", .type = FUNC_PREDEFINED, .predef = predefined_assert_non_null, .param_names = (toy_str_list *) &assert_unary_params }
+    { .name = "assert_zero", .type = FUNC_PREDEFINED, .predef = predefined_assert_zero, .param_names = (toy_str_list *) &assert_unary_params },
+    { .name = "len",   .type = FUNC_PREDEFINED, .predef = predefined_list_len, .param_names = (toy_str_list *) &list_len_params },
+    { .name = "print", .type = FUNC_PREDEFINED, .predef = predefined_print,    .param_names = (toy_str_list *) &INFINITE_PARAMS }
 };
 
 const toy_func_def *lookup_predefined_function(const toy_str name)

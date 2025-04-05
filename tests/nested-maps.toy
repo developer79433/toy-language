@@ -1,0 +1,3 @@
+// FIXME: Fails due to parser.y setting map entries too early:
+// var myval = [ 345.6, {"blah": (42, 3)}, "foo"];
+var myval = [ 345.6, {"blah": 42}, "foo"];

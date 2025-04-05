@@ -1,0 +1,3 @@
+var testfunc;
+testfunc = fun() { print("In testfunc"); return "test", "comma", "operator", "last"; };
+testfunc();
