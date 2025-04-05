@@ -3,59 +3,15 @@
 #include "dump.h"
 #include "errors.h"
 #include "constants.h"
-
-void dump_list(FILE *f, toy_list *list)
-{
-    int printed_anything = 0;
-    fputc('[', f);
-    if (list) {
-        for (toy_list *cur = list; cur; cur = cur->next) {
-            if (printed_anything) {
-                fputs(", ", f);
-            } else {
-                fputc(' ', f);
-            }
-            dump_expr(f, cur->expr);
-            printed_anything = 1;
-        }
-        if (printed_anything) {
-            fputc(' ', f);
-        }
-    }
-    fputc(']', f);
-}
-
-void print_str(FILE *f, const toy_str str)
-{
-    for (const char *p = str; *p; p++) {
-        if (*p == '\'' || *p == '"' || *p == '\\') {
-            fputc('\\', f);
-        }
-        fputc(*p, f);
-    }
-}
-
-void dump_str(FILE *f, const toy_str str)
-{
-    fputc('"', f);
-    print_str(f, str);
-    fputc('"', f);
-}
-
-void dump_str_list(FILE *f, const toy_str_list *list)
-{
-    const toy_str_list *cur;
-    if (list) {
-        int output_something = 0;
-        for (cur = list; cur; cur = cur->next) {
-            if (output_something) {
-                fputs(", ", f);
-            }
-            dump_str(f, cur->str);
-            output_something = 1;
-        }
-    }
-}
+#include "toy-str-list.h"
+#include "toy-val-list.h"
+#include "toy-expr-list.h"
+#include "toy-expr-tuple-list.h"
+#include "toy-map.h"
+#include "toy-bool.h"
+#include "toy-str.h"
+#include "toy-val.h"
+#include "functions.h"
 
 void dump_identifier(FILE *f, const toy_str str)
 {
@@ -93,11 +49,6 @@ static void dump_assignment(FILE *f, const toy_str lhs, const toy_expr *rhs)
     dump_expr(f, rhs);
 }
 
-static void dump_bool(FILE *f, toy_bool b)
-{
-    fputs(b ? "True" : "False", f);
-}
-
 static void dump_collection_lookup(FILE *f, toy_str lhs, toy_expr *rhs)
 {
     dump_identifier(f, lhs);
@@ -106,7 +57,7 @@ static void dump_collection_lookup(FILE *f, toy_str lhs, toy_expr *rhs)
     fputc(']', f);
 }
 
-static void dump_function_call(FILE *f, toy_str func_name, toy_list *args)
+static void dump_function_call(FILE *f, toy_str func_name, toy_expr_list *args)
 {
     fprintf(f, "%s(", func_name);
     unsigned int output_something = 0;
@@ -120,61 +71,18 @@ static void dump_function_call(FILE *f, toy_str func_name, toy_list *args)
     fputc(')', f);
 }
 
-static void dump_method_call(FILE *f, toy_str target, toy_str func_name, toy_list *args)
+static void dump_method_call(FILE *f, const toy_method_call *method_call)
 {
-    fprintf(f, "%s.%s(", target, func_name);
+    fprintf(f, "%s.%s(", method_call->target, method_call->method_name);
     unsigned int output_something = 0;
-    for (; args; args = args->next) {
+    for (toy_expr_list *arg = method_call->args; arg; arg = arg->next) {
         if (output_something) {
             fputs(", ", f);
         }
-        dump_expr(f, args->expr);
+        dump_expr(f, arg->expr);
         output_something = 1;
     }
     fputc(')', f);
-}
-
-static void dump_function(FILE *f, const toy_str name, const toy_str_list *param_names, const toy_stmt *stmts)
-{
-    fprintf(f, "fun %s(", name);
-    dump_identifier_list(f, param_names);
-    fputs(") {\n", f);
-    dump_stmts(f, stmts);
-    fputs("}\n", f);
-}
-
-void dump_literal(FILE *f, const toy_val *val)
-{
-    if (val) {
-        switch(val->type) {
-        case VAL_BOOL:
-            dump_bool(f, val->bool);
-            break;
-        case VAL_FUNC:
-            dump_function(f, val->func.def.name, val->func.def.param_names, val->func.def.code.stmts);
-            break;
-        case VAL_LIST:
-            dump_list(f, val->list);
-            break;
-        case VAL_MAP:
-            dump_map(f, val->map);
-            break;
-        case VAL_NULL:
-            fputs("null", f);
-            break;
-        case VAL_NUM:
-            fprintf(f, "%f", val->num);
-            break;
-        case VAL_STR:
-            dump_str(f, val->str);
-            break;
-        default:
-            invalid_value_type(val->type);
-            break;
-        }
-    } else {
-        dump_literal(f, &null_expr.val);
-    }
 }
 
 void dump_expr(FILE *f, const toy_expr *expr) {
@@ -219,8 +127,11 @@ void dump_expr(FILE *f, const toy_expr *expr) {
         case EXPR_IN:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " in ");
             break;
+        case EXPR_LIST:
+            dump_expr_list(f, expr->list);
+            break;
         case EXPR_LITERAL:
-            dump_literal(f, &expr->val);
+            dump_val(f, &expr->val);
             break;
         case EXPR_LT:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " < ");
@@ -228,8 +139,11 @@ void dump_expr(FILE *f, const toy_expr *expr) {
         case EXPR_LTE:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " <= ");
             break;
+        case EXPR_MAP:
+            dump_map_entry_list(f, expr->map);
+            break;
         case EXPR_METHOD_CALL:
-            dump_method_call(f, expr->method_call.target, expr->method_call.func_name, expr->method_call.args);
+            dump_method_call(f, &expr->method_call);
             break;
         case EXPR_MINUS:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " - ");

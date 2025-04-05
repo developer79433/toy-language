@@ -1,19 +1,15 @@
-#ifndef FUCTIONS_H
-#define FUCTIONS_H 1
+#ifndef TOY_FUCTIONS_H
+#define TOY_FUCTIONS_H 1
 
-#include "ast.h"
-#include "interp.h"
+#include <stdio.h>
 
-typedef void (*predefined_func_addr)(toy_interp *interp, toy_expr *result, toy_list *args);
-typedef struct predefined_function_struct {
-    toy_str name;
-    int num_params;
-    predefined_func_addr func;
-    const toy_char **param_names;
-} predefined_function;
+#include "toy-str-types.h"
+#include "toy-val-types.h"
+#include "function-types.h"
 
-const predefined_function *lookup_predefined_function(const toy_str name);
+extern const toy_str_list INFINITE_PARAMS;
 
-#define INFINITE_PARAMS -1
+const toy_func_def *lookup_predefined_function(const toy_str name);
+void dump_function(FILE *f, const toy_func_def *def);
 
-#endif /* FUCTIONS_H */
+#endif /* TOY_FUCTIONS_H */

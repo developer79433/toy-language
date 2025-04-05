@@ -1,17 +1,18 @@
-#ifndef CONSTANTS_H
-#define CONSTANTS_H 1
+#ifndef TOY_CONSTANTS_H
+#define TOY_CONSTANTS_H 1
 
 #include "ast.h"
 
 typedef struct predefined_constant_struct {
     toy_str name;
-    const toy_expr *value;
+    const toy_val *value;
 } predefined_constant;
 
+extern const toy_val null_val;
+extern const toy_val true_val;
+extern const toy_val false_val;
 extern const toy_expr null_expr;
-extern const toy_expr true_expr;
-extern const toy_expr false_expr;
 
-const toy_expr *lookup_predefined_constant(toy_str name);
+const toy_val *lookup_predefined_constant(toy_str name);
 
-#endif /* CONSTANTS_H */
+#endif /* TOY_CONSTANTS_H */

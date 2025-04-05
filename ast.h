@@ -5,84 +5,15 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-enum toy_bool_enum { TOY_FALSE = 0, TOY_TRUE = 1 };
-typedef enum toy_bool_enum toy_bool;
-typedef double toy_num;
-typedef char toy_char;
-typedef toy_char *toy_str;
+#include "toy-val-types.h"
+#include "toy-str-list-types.h"
+#include "function-types.h"
+#include "toy-val-list-types.h"
+#include "toy-expr-list.h"
+#include "toy-map-entry-list.h"
 
 struct toy_expr_struct;
-struct toy_stmt_struct;
 typedef struct toy_expr_struct toy_expr;
-typedef struct toy_stmt_struct toy_stmt;
-
-typedef struct toy_block_struct {
-    toy_stmt *stmts;
-} toy_block;
-
-typedef struct toy_list_struct {
-    toy_expr *expr;
-    struct toy_list_struct *next;
-} toy_list;
-
-typedef struct toy_map_entry_struct {
-    toy_expr *key;
-    toy_expr *value;
-    struct toy_map_entry_struct *next;
-} toy_map_entry;
-
-/* TODO: dynamic resizing */
-#define NUM_BUCKETS 13
-
-typedef struct toy_map_struct {
-    /**
-     * TODO: Move these out of the parser and into the interpreter.
-     * The buckets etc are a toy runtime concern - they are irrelevant to parsing.
-     * But at the moment there is no distinction betweent he AST's structures and
-     * those used by the interpreter, so nowhere to move this to.
-     */
-    size_t num_items;
-    toy_map_entry *buckets[NUM_BUCKETS];
-} toy_map;
-
-typedef struct toy_str_list_struct {
-    toy_str str;
-    struct toy_str_list_struct *next;
-} toy_str_list;
-
-typedef struct toy_func_def_struct {
-    toy_str name;
-    toy_str_list *param_names;
-    /* TODO: union between toy code and native implementation */
-    toy_block code;
-} toy_func_def;
-
-typedef struct toy_func_expr_struct {
-    toy_func_def def;
-} toy_func_expr;
-
-enum toy_val_type {
-    VAL_BOOL = 0,
-    VAL_FUNC,
-    VAL_LIST,
-    VAL_MAP,
-    VAL_NULL,
-    VAL_NUM,
-    VAL_STR
-};
-
-typedef struct toy_val_struct {
-    enum toy_val_type type;
-    union {
-        toy_bool bool;
-        toy_func_expr func;
-        toy_list *list;
-        toy_map *map;
-        // null
-        toy_num num;
-        toy_str str;
-    };
-} toy_val;
 
 typedef struct toy_unary_op_struct {
     toy_expr *arg;
@@ -93,9 +24,10 @@ typedef struct toy_binary_op_struct {
     toy_expr *arg2;
 } toy_binary_op;
 
+/* TODO: Could be merged with toy_method_call */
 typedef struct toy_func_call_struct {
     toy_str func_name;
-    toy_list *args;
+    toy_expr_list *args;
 } toy_func_call;
 
 typedef struct toy_assignment_struct {
@@ -132,8 +64,8 @@ typedef struct toy_field_ref_struct {
 
 typedef struct toy_method_call_struct {
     toy_str target;
-    toy_str func_name;
-    toy_list *args;
+    toy_str method_name;
+    toy_expr_list *args;
 } toy_method_call;
 
 typedef struct toy_collection_lookup_struct {
@@ -155,9 +87,11 @@ enum toy_expr_type {
     EXPR_GTE,
     EXPR_IDENTIFIER,
     EXPR_IN,
+    EXPR_LIST,
     EXPR_LITERAL,
     EXPR_LT,
     EXPR_LTE,
+    EXPR_MAP,
     EXPR_METHOD_CALL,
     EXPR_MINUS,
     EXPR_MODULUS,
@@ -190,6 +124,10 @@ struct toy_expr_struct {
         toy_ternary ternary;
         toy_field_ref field_ref;
         toy_collection_lookup collection_lookup;
+        /* These two hold AST expressions, as opposed to the interpreter values held in the toy_val member. */
+        /* TODO: Do I really need these? */
+        toy_map_entry_list *map;
+        toy_expr_list *list;
     };
 };
 
@@ -271,22 +209,16 @@ struct toy_stmt_struct {
 };
 
 toy_stmt *alloc_stmt(enum toy_stmt_type type);
-toy_map_entry *alloc_map_entry(toy_expr *key, toy_expr *value);
 toy_if_arm *alloc_if_arm(toy_expr *condition, toy_block *code);
-toy_str_list *alloc_str_list(const char * str);
-toy_list *alloc_list(toy_expr *first_elem);
 toy_var_decl *alloc_var_decl(toy_str name, toy_expr *value);
 toy_expr *alloc_unary_op_expr(enum toy_expr_type expr_type);
 toy_expr *alloc_binary_op_expr(enum toy_expr_type expr_type);
 toy_expr *alloc_expr(enum toy_expr_type type);
-toy_expr *alloc_literal(enum toy_val_type val_type);
+toy_expr *alloc_expr_literal(enum toy_val_type val_type);
 toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_block *body);
 toy_stmt *append_stmt(toy_stmt *orig, toy_stmt *new);
 toy_var_decl *append_var_decl(toy_var_decl *orig, toy_var_decl *new);
 toy_if_arm *append_if_arm(toy_if_arm *orig, toy_if_arm *new);
-toy_str_list *append_str_list(toy_str_list *orig, toy_str_list *new);
-toy_list *append_list(toy_list *orig, toy_list *new);
-toy_map_entry *append_map_entry(toy_map_entry *orig, toy_map_entry *new);
 const char *toy_val_type_name(enum toy_val_type val_type);
 const char *toy_expr_type_name(enum toy_expr_type expr_type);
 const char *toy_stmt_type_name(enum toy_stmt_type stmt_type);

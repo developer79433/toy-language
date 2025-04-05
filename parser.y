@@ -4,7 +4,10 @@
 #include <strings.h>
 
 #include "ast.h"
-#include "map.h"
+#include "toy-str-list.h"
+#include "toy-val-list.h"
+#include "toy-expr-list.h"
+#include "toy-map-entry-list.h"
 
 extern int yylex (void);
 void yyerror(const char *s);
@@ -19,7 +22,7 @@ static toy_stmt *program_start;
     toy_bool bool;
     toy_num num;
     toy_str str;
-    toy_list *list;
+    toy_expr_list *expr_list;
     toy_map *map;
     toy_expr *expr;
     toy_stmt *stmt;
@@ -27,7 +30,7 @@ static toy_stmt *program_start;
     toy_if_arm *if_arm;
     toy_block block;
     toy_str_list *str_list;
-    toy_map_entry *map_entry;
+    toy_map_entry_list *map_entry_list;
 }
 
 %define parse.error verbose
@@ -41,9 +44,9 @@ static toy_stmt *program_start;
 %type <stmt> stmts stmt if_stmt while_stmt for_stmt null_stmt expr_stmt func_decl_stmt var_decl_stmt return_stmt break_stmt continue_stmt stmt_requiring_semicolon stmt_in_for_atstart stmt_in_for_atend block_stmt
 %type <if_arm> elseifs
 %type <var_decl> vardecllist
-%type <list> actualargs actualarglist
-%type <list> listitems listitemlist
-%type <map_entry> mapitem mapitems mapitemlist
+%type <expr_list> actualargs actualarglist
+%type <expr_list> listitems listitemlist
+%type <map_entry_list> mapitem mapitems mapitemlist
 %type <block> block elsepart
 
 %left T_COMMA
@@ -301,12 +304,12 @@ actualargs :
 
 actualarglist :
     expr_no_comma {
-        $$ = alloc_list($1);
+        $$ = alloc_expr_list($1);
     }
     | actualarglist T_COMMA expr_no_comma {
-        toy_list *this_entry = alloc_list($3);
+        toy_expr_list *this_entry = alloc_expr_list($3);
         if ($1) {
-            append_list($1, this_entry);
+            append_expr_list($1, this_entry);
             $$ = $1;
         } else {
             $1 = this_entry;
@@ -325,12 +328,12 @@ listitems :
 
 listitemlist :
     expr_no_comma {
-        $$ = alloc_list($1);
+        $$ = alloc_expr_list($1);
     }
     | listitemlist T_COMMA expr_no_comma {
-        toy_list *this_entry = alloc_list($3);
+        toy_expr_list *this_entry = alloc_expr_list($3);
         if ($1) {
-            append_list($1, this_entry);
+            append_expr_list($1, this_entry);
             $$ = $1;
         } else {
             $1 = this_entry;
@@ -362,26 +365,25 @@ mapitemlist :
 mapitem :
     T_STRING T_COLON expr_no_comma {
         /* TODO: Should this be an expression, or a string/identifier? */
-        toy_expr *key = alloc_literal(VAL_STR);
-        key->val.str = strdup($1);
-        $$ = alloc_map_entry(key, $3);
+        $$ = alloc_map_entry_list($1, $3);
     }
 ;
 
+/* TODO: This production should yield a toy_val */
 literal:
     T_NULL {
-        $$ = alloc_literal(VAL_NULL);
+        $$ = alloc_expr_literal(VAL_NULL);
     }
     | T_BOOLEAN {
-        $$ = alloc_literal(VAL_BOOL);
-        $$->val.bool = $1;
+        $$ = alloc_expr_literal(VAL_BOOL);
+        $$->val.boolean = $1;
     }
     | T_FLOAT {
-        $$ = alloc_literal(VAL_NUM);
+        $$ = alloc_expr_literal(VAL_NUM);
         $$->val.num = $1;
     }
     | T_STRING {
-        $$ = alloc_literal(VAL_STR);
+        $$ = alloc_expr_literal(VAL_STR);
         $$->val.str = $1;
     }
     /* TODO: identifier is not a literal - this needs breaking up */
@@ -554,21 +556,18 @@ unary_neg_expr: T_MINUS expr_no_comma {
 ;
 
 listexpr: T_LBRACKET listitems T_RBRACKET {
-        $$ = alloc_literal(VAL_LIST);
-        $$->val.list = $2;
+        /**
+         * FIXME; The parser needs to reduce a toy_expr_list to a toy_expr,
+         * but the interpreter-focused toy_cal list only allows a list of toy_vals, not toy_exprs
+         */
+        $$ = alloc_expr(EXPR_LIST);
+        $$->list = $2;
     }
 ;
 
 map_expr: T_LBRACE mapitems T_RBRACE {
-        $$ = alloc_literal(VAL_MAP);
-        $$->val.map = alloc_map();
-        for (toy_map_entry *entry = $2; entry; entry = entry->next) {
-            /**
-             * FIXME: This should be postponed until runtime.
-             * All we should be doing here is storing the entry in the AST.
-             */
-            map_set_expr($$->val.map, entry->key, entry->value);
-        }
+        $$ = alloc_expr(EXPR_MAP);
+        $$->map = $2;
     }
 ;
 
@@ -594,7 +593,7 @@ method_call_expr:
     T_IDENTIFIER T_DOT T_IDENTIFIER T_LPAREN actualargs T_RPAREN {
         $$ = alloc_expr(EXPR_METHOD_CALL);
         $$->method_call.target = $1;
-        $$->method_call.func_name = $3;
+        $$->method_call.method_name = $3;
         $$->method_call.args = $5;
     }
 ;
