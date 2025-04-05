@@ -6,6 +6,7 @@
 #include "toy-str.h"
 #include "toy-val.h"
 #include "toy-val-list.h"
+#include "toy-map.h"
 #include "dump.h"
 #include "constants.h"
 #include "operations.h"
@@ -209,7 +210,7 @@ typedef struct val_list_foreach_args_struct {
     toy_func_def *func;
 } val_list_foreach_args;
 
-static void foreach_callback(void *cookie, const toy_val *item)
+static void list_foreach_callback(void *cookie, const toy_val *item)
 {
     val_list_foreach_args *args = (val_list_foreach_args *) cookie;
     toy_val_list func_args = { .val = (toy_val *) item, .next = 0 };
@@ -227,7 +228,7 @@ static void predefined_list_foreach(toy_interp *interp, toy_val *result, toy_val
         if (arg2->type == VAL_FUNC) {
             toy_func_def *func = arg2->func;
             val_list_foreach_args cbargs = { .func = func, .interp = interp };
-            val_list_foreach_const(list, foreach_callback, &cbargs);
+            val_list_foreach_const(list, list_foreach_callback, &cbargs);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
         }
@@ -237,9 +238,37 @@ static void predefined_list_foreach(toy_interp *interp, toy_val *result, toy_val
     *result = null_val;
 }
 
+typedef struct map_foreach_args_struct {
+    toy_interp *interp;
+    toy_func_def *func;
+} map_foreach_args;
+
+static void map_foreach_callback(void *cookie, const toy_str key, const toy_val *value)
+{
+    map_foreach_args *args = (map_foreach_args *) cookie;
+    const toy_val_list value_arg = { .val = (toy_val *) value, .next = NULL };
+    toy_val_list func_args = { .val = (toy_val *) key, .next = (toy_val_list *) &value_arg };
+    toy_val result;
+    run_toy_function_val_list(args->interp, &result, args->func, &func_args);
+}
+
 static void predefined_map_foreach(toy_interp *interp, toy_val *result, toy_val_list *args)
 {
-    /* TODO */
+    assert(val_list_len(args) == 2);
+    toy_val *arg1 = args->val;
+    toy_val *arg2 = args->next->val;
+    if (arg1->type == VAL_MAP) {
+        toy_map *map = arg1->map;
+        if (arg2->type == VAL_FUNC) {
+            toy_func_def *func = arg2->func;
+            map_foreach_args cbargs = { .func = func, .interp = interp };
+            map_foreach_const(map, map_foreach_callback, &cbargs);
+        } else {
+            invalid_argument_type(VAL_FUNC, arg2);
+        }
+    } else {
+        invalid_argument_type(VAL_LIST, arg1);
+    }
 }
 
 const toy_str_list INFINITE_PARAMS;

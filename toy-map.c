@@ -167,7 +167,7 @@ void dump_map(FILE *f, const toy_map *map)
     fputc('}', f);
 }
 
-void map_enum(const toy_map *map, map_entry_callback callback, void *cookie)
+void map_foreach(toy_map *map, map_entry_callback callback, void *cookie)
 {
     for (map_entry * const * bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
         if (*bucket) {
@@ -176,6 +176,11 @@ void map_enum(const toy_map *map, map_entry_callback callback, void *cookie)
             }
         }
     }
+}
+
+void map_foreach_const(const toy_map *map, const_map_entry_callback callback, void *cookie)
+{
+    map_foreach((toy_map *) map, (map_entry_callback) callback, cookie);
 }
 
 size_t map_len(const toy_map *map)
