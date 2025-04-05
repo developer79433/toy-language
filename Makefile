@@ -35,7 +35,19 @@ parser.tab.c parser.tab.h: parser.y
 clean:
 	rm -f $(BINARY) $(OBJECTS) $(GENERATED_SOURCES) $(GENERATED_HEADERS)
 
-# 2>&1 | less
+.PHONY: discrete-tests
+discrete-tests:
+	for test_file in tests/*.toy ; do \
+		./$(BINARY) $$test_file ; \
+	done
+
 .PHONY: test
-test: $(BINARY)
+test: tests
+
+.PHONY: tests
+tests: discrete-tests test-sample-program
+
+# 2>&1 | less
+.PHONY: test-sample-program
+test-sample-program: $(BINARY)
 	./$(BINARY) sample-program.toy ; echo $$?
