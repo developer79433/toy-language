@@ -46,6 +46,8 @@ tests: $(BINARY)
 			true || echo PASS: $$test_file ; \
 		else \
 			echo FAIL: $$test_file ; \
+			./$(BINARY) $$test_file ; \
+			break ; \
 		fi ; \
 	done
 	@echo $$?

@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
+#include "generic-list.h"
 #include "toy-str.h"
 #include "toy-str-list.h"
 
@@ -31,21 +33,14 @@ toy_str_list *alloc_str_list(const char *str)
     return list;
 }
 
-toy_str_list *append_str_list(toy_str_list *orig, toy_str_list *new)
+toy_str_list *append_str_list(toy_str_list *orig, toy_str_list *new_list)
 {
-    toy_str_list *tmp = orig;
-    while (tmp->next) {
-        tmp = tmp->next;
-    }
-    tmp->next = new;
-    return orig;
+    assert(offsetof(toy_str_list, next) == offsetof(generic_list, next));
+    return (toy_str_list *) generic_list_append((generic_list *) orig, (generic_list *) new_list);
 }
 
 size_t str_list_len(const toy_str_list *list)
 {
-    size_t size;
-    for (size = 0; list; list = list->next) {
-        size++;
-    }
-    return size;
+    assert(offsetof(toy_str_list, next) == offsetof(generic_list, next));
+    return generic_list_len((const generic_list *) list);
 }
