@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include <assert.h>
 
 #include "mymalloc.h"
+#include "generic-list.h"
 #include "toy-expr-tuple-list.h"
 #include "dump.h"
 
@@ -14,14 +16,10 @@ toy_expr_tuple_list *alloc_expr_tuple_list(toy_expr *first_key, toy_expr *first_
     return tuple_list;
 }
 
-toy_expr_tuple_list *append_expr_tuple(toy_expr_tuple_list *orig, toy_expr_tuple_list *new_entry)
+toy_expr_tuple_list *append_expr_tuple(toy_expr_tuple_list *orig, toy_expr_tuple_list *new_list)
 {
-    toy_expr_tuple_list *tmp = orig;
-    while (tmp->next) {
-        tmp = tmp->next;
-    }
-    tmp->next = new_entry;
-    return orig;
+    assert(offsetof(toy_expr_tuple_list, next) == offsetof(generic_list, next));
+    return (toy_expr_tuple_list *) generic_list_append((generic_list *) orig, (generic_list *) new_list);
 }
 
 void dump_expr_tuple_list(FILE *f, const toy_expr_tuple_list *list)

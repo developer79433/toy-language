@@ -1,6 +1,8 @@
 #include <stddef.h>
 #include <string.h>
+#include <assert.h>
 
+#include "generic-list.h"
 #include "mymalloc.h"
 #include "toy-val.h"
 #include "toy-val-list.h"
@@ -29,33 +31,26 @@ void dump_val_list(FILE *f, toy_val_list *list)
 
 size_t val_list_len(const toy_val_list *list)
 {
-    size_t size;
-    for (size = 0; list; list = list->next) {
-        size++;
-    }
-    return size;
+    assert(offsetof(toy_val_list, next) == offsetof(generic_list, next));
+    return generic_list_len((const generic_list *) list);
 }
 
 toy_val *val_list_index(toy_val_list *list, toy_num index)
 {
-    /* FIXME: inefficient */
-    for (size_t i = 0; list; list = list->next, i++) {
-        if (i == index) {
-            return list->val;
-        }
+    assert(offsetof(toy_val_list, val) == offsetof(generic_list, payload));
+    void *result = generic_list_index((generic_list *) list, index);
+    if (result) {
+        return result;
+    } else {
+        invalid_val_list_index(list, index);
     }
-    invalid_val_list_index(list, index);
     return NULL;
 }
 
-toy_val_list *append_val_list(toy_val_list *orig, toy_val_list *new_item)
+toy_val_list *append_val_list(toy_val_list *orig, toy_val_list *new_list)
 {
-    toy_val_list *tmp = orig;
-    while (tmp->next) {
-        tmp = tmp->next;
-    }
-    tmp->next = new_item;
-    return orig;
+    assert(offsetof(toy_expr_list, next) == offsetof(generic_list, next));
+    return (toy_val_list *) generic_list_append((generic_list *) orig, (generic_list *) new_list);
 }
 
 toy_val_list *alloc_val_list(toy_val *first_elem)

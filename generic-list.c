@@ -34,10 +34,25 @@ size_t generic_list_len(const generic_list *list)
 /* TODO: Handle orig being null, so the caller in parser.y doesn't have to repeatedly do so */
 generic_list *generic_list_append(generic_list *orig_list, generic_list *new_list)
 {
+    /* FIXME: inefficient */
     generic_list *tmp = orig_list;
     while (tmp->next) {
         tmp = tmp->next;
     }
     tmp->next = new_list;
     return orig_list;
+}
+
+void *generic_list_index(generic_list *list, toy_num index)
+{
+    if (index < 0) {
+        return NULL;
+    }
+    /* FIXME: inefficient */
+    for (size_t i = 0; list; list = list->next, i++) {
+        if (i == index) {
+            return list->payload;
+        }
+    }
+    return NULL;
 }
