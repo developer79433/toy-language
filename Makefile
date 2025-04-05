@@ -43,8 +43,9 @@ test: tests
 tests: $(BINARY)
 	@for test_file in tests/*.toy ; do \
 		if ./$(BINARY) $$test_file >/dev/null 2>&1 ; then \
-			echo PASS: $$test_file ; \
+			true || echo PASS: $$test_file ; \
 		else \
 			echo FAIL: $$test_file ; \
 		fi ; \
 	done
+	@echo $$?

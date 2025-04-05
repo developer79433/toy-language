@@ -243,50 +243,65 @@ void call_func(toy_interp *interp, toy_val *result, toy_str func_name, toy_expr_
     }
 }
 
+static void list_lookup(toy_interp *interp, toy_val *result, toy_val_list *collection, toy_expr *index)
+{
+    toy_val index_result;
+    eval_expr(interp, &index_result, index);
+    if (index_result.type == VAL_NUM) {
+        toy_val *val;
+        val = val_list_index(collection, index_result.num);
+        *result = *val;
+    } else {
+        invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
+    }
+}
+
+static void map_lookup(toy_interp *interp, toy_val *result, toy_map *collection, toy_expr *index)
+{
+    toy_val index_result;
+    eval_expr(interp, &index_result, index);
+    if (index_result.type == VAL_STR) {
+        toy_val *existing_value = map_get(collection, index_result.str);
+        if (existing_value) {
+            *result = *existing_value;
+        } else {
+            *result = null_val;
+        }
+    } else {
+        invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
+    }
+}
+
+static void str_lookup(toy_interp *interp, toy_val *result, toy_str collection, toy_expr *index)
+{
+    toy_val index_result;
+    eval_expr(interp, &index_result, index);
+    if (index_result.type == VAL_NUM) {
+        if (index_result.num >= 0 && index_result.num < strlen(collection)) {
+            result->type = VAL_STR;
+            /* TODO: Hide string memory management */
+            result->str = malloc(2);
+            result->str[0] = collection[(int) index_result.num];
+            result->str[1] = '\0';
+        } else {
+            invalid_string_index(collection, index_result.num);
+        }
+    } else {
+        invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
+    }
+}
+
 static void collection_lookup(toy_interp *interp, toy_val *result, toy_str identifier, toy_expr *index)
 {
     toy_val collection;
     int already_exists = lookup_identifier(interp, &collection, identifier);
     if (already_exists) {
         if (collection.type == VAL_LIST) {
-            toy_val index_result;
-            eval_expr(interp, &index_result, index);
-            if (index_result.type == VAL_NUM) {
-                toy_val *val;
-                val = val_list_index(collection.list, index_result.num);
-                *result = *val;
-            } else {
-                invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
-            }
+            list_lookup(interp, result, collection.list, index);
         } else if (collection.type == VAL_MAP) {
-            toy_val index_result;
-            eval_expr(interp, &index_result, index);
-            if (index_result.type == VAL_STR) {
-                toy_val *existing_value = map_get(collection.map, index_result.str);
-                if (existing_value) {
-                    *result = *existing_value;
-                } else {
-                    *result = null_val;
-                }
-            } else {
-                invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
-            }
+            map_lookup(interp, result, collection.map, index);
         } else if (collection.type == VAL_STR) {
-            toy_val index_result;
-            eval_expr(interp, &index_result, index);
-            if (index_result.type == VAL_NUM) {
-                if (index_result.num >= 0 && index_result.num < strlen(collection.str)) {
-                    result->type = VAL_STR;
-                    /* TODO: Hide string memory management */
-                    result->str = malloc(2);
-                    result->str[0] = collection.str[(int) index_result.num];
-                    result->str[1] = '\0';
-                } else {
-                    invalid_string_index(collection.str, index_result.num);
-                }
-            } else {
-                invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
-            }
+            str_lookup(interp, result, collection.str, index);
         } else {
             invalid_operand(EXPR_COLLECTION_LOOKUP, &collection);
         }
