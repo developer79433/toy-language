@@ -1,0 +1,4 @@
+fun myfunc(msg) {
+    print(msg);
+}
+myfunc("Func arg");

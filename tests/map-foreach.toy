@@ -1,0 +1,6 @@
+var mymap = { "first": 1, "second": [ 2, "two" ], "third": { "three": 3 }, "fourth": "four" };
+fun myfunc(key, val) {
+    print(key);
+    print(val);
+}
+map_foreach(mymap, myfunc);

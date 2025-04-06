@@ -16,5 +16,6 @@ toy_val_list *alloc_val_list(toy_val *first_elem);
 toy_val_list *alloc_val_list_own(toy_val *first_elem);
 void val_list_foreach(toy_val_list *list, val_list_item_callback callback, void *cookie);
 void val_list_foreach_const(const toy_val_list *list, const_val_list_item_callback callback, void *cookie);
+void val_list_assert_valid(const toy_val_list *val_list);
 
 #endif /* TOY_VAL_LIST_H */

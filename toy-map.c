@@ -198,6 +198,30 @@ void dump_map(FILE *f, const toy_map *map)
     fputc('}', f);
 }
 
+void dump_map_keys(FILE *f, const toy_map *map)
+{
+    int output_anything = 0;
+
+    fputc('[', f);
+    for (map_entry * const * bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
+        if (*bucket) {
+            for (map_entry *entry = *bucket; entry; entry = entry->next) {
+                if (output_anything) {
+                    fputs(", ", f);
+                } else {
+                    fputc(' ', f);
+                }
+                dump_str(f, entry->key);
+                output_anything = 1;
+            }
+        }
+    }
+    if (output_anything) {
+        fputc(' ', f);
+    }
+    fputc(']', f);
+}
+
 void map_foreach(toy_map *map, map_entry_callback callback, void *cookie)
 {
     for (map_entry * const * bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
@@ -217,4 +241,10 @@ void map_foreach_const(const toy_map *map, const_map_entry_callback callback, vo
 size_t map_len(const toy_map *map)
 {
     return map->num_items;
+}
+
+void map_assert_valid(const toy_map *map)
+{
+    assert(map);
+    /* TODO */
 }

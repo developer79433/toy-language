@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "toy-str.h"
 
@@ -38,4 +39,12 @@ toy_bool toy_str_equal_nocase(const toy_str s1, const toy_str s2)
 toy_bool toy_str_nequal_nocase(const toy_str s1, const toy_str s2)
 {
     return !toy_str_equal_nocase(s1, s2);
+}
+
+#define ONE_MILLION 1000 * 1000
+
+void str_assert_valid(toy_str str)
+{
+    assert(str);
+    assert(strlen(str) < ONE_MILLION);
 }

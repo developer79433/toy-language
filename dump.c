@@ -20,16 +20,13 @@ void dump_identifier(FILE *f, const toy_str str)
 
 void dump_identifier_list(FILE *f, const toy_str_list *list)
 {
-    const toy_str_list *cur;
-    if (list) {
-        int output_something = 0;
-        for (cur = list; cur; cur = cur->next) {
-            if (output_something) {
-                fputs(", ", f);
-            }
-            dump_identifier(f, cur->str);
-            output_something = 1;
+    int output_something = 0;
+    for (const toy_str_list *cur = list; cur; cur = cur->next) {
+        if (output_something) {
+            fputs(", ", f);
         }
+        dump_identifier(f, cur->str);
+        output_something = 1;
     }
 }
 

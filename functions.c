@@ -15,13 +15,17 @@
 void dump_function(FILE *f, const toy_func_def *def)
 {
     fprintf(f, "fun %s(", def->name);
-    dump_identifier_list(f, def->param_names);
+    if (def->param_names == &INFINITE_PARAMS) {
+        fputs("*", f);
+    } else {
+        dump_identifier_list(f, def->param_names);
+    }
     fputs(") {\n", f);
     dump_stmts(f, def->code.stmts);
     fputs("}\n", f);
 }
 
-static void predefined_list_len(toy_interp *interp, toy_val *result, toy_val_list *args)
+static void predefined_list_len(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(args);
     assert(args->val);
@@ -35,7 +39,7 @@ static void predefined_list_len(toy_interp *interp, toy_val *result, toy_val_lis
     result->num = val_list_len(arg->list);
 }
 
-static void predefined_map_len(toy_interp *interp, toy_val *result, toy_val_list *args)
+static void predefined_map_len(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(args);
     assert(args->val);
@@ -49,7 +53,7 @@ static void predefined_map_len(toy_interp *interp, toy_val *result, toy_val_list
     result->num = map_len(arg->map);
 }
 
-static void predefined_print(toy_interp *interp, toy_val *result, toy_val_list *args)
+static void predefined_print(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     for (; args; args = args->next) {
         if (args->val->type == VAL_STR) {
@@ -75,7 +79,7 @@ static void toy_assert_fail(const char * msg, size_t num_vals, ...)
     fatal_error("Assertion failed: %s", msg);
 }
 
-static void predefined_assert_equal(toy_interp *interp, toy_val *result, toy_val_list *args)
+static void predefined_assert_equal(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
     toy_val *arg1 = args->val;
@@ -88,7 +92,7 @@ static void predefined_assert_equal(toy_interp *interp, toy_val *result, toy_val
     *result = null_val;
 }
 
-static void predefined_assert_not_equal(toy_interp *interp, toy_val *result, toy_val_list *args)
+static void predefined_assert_not_equal(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
     toy_val *arg1 = args->val;
@@ -101,7 +105,7 @@ static void predefined_assert_not_equal(toy_interp *interp, toy_val *result, toy
     *result = null_val;
 }
 
-static void predefined_assert_gt(toy_interp *interp, toy_val *result, toy_val_list *args)
+static void predefined_assert_gt(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
     toy_val *arg1 = args->val;
@@ -114,7 +118,7 @@ static void predefined_assert_gt(toy_interp *interp, toy_val *result, toy_val_li
     *result = null_val;
 }
 
-static void predefined_assert_gte(toy_interp *interp, toy_val *result, toy_val_list *args)
+static void predefined_assert_gte(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
     toy_val *arg1 = args->val;
@@ -127,7 +131,7 @@ static void predefined_assert_gte(toy_interp *interp, toy_val *result, toy_val_l
     *result = null_val;
 }
 
-static void predefined_assert_lt(toy_interp *interp, toy_val *result, toy_val_list *args)
+static void predefined_assert_lt(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
     toy_val *arg1 = args->val;
@@ -140,7 +144,7 @@ static void predefined_assert_lt(toy_interp *interp, toy_val *result, toy_val_li
     *result = null_val;
 }
 
-static void predefined_assert_lte(toy_interp *interp, toy_val *result, toy_val_list *args)
+static void predefined_assert_lte(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
     toy_val *arg1 = args->val;
@@ -155,7 +159,7 @@ static void predefined_assert_lte(toy_interp *interp, toy_val *result, toy_val_l
 
 static const toy_val zero = { .type = VAL_NUM, .num = 0 };
 
-static void predefined_assert_zero(toy_interp *interp, toy_val *result, toy_val_list *args)
+static void predefined_assert_zero(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 1);
     toy_val *arg1 = args->val;
@@ -167,7 +171,7 @@ static void predefined_assert_zero(toy_interp *interp, toy_val *result, toy_val_
     *result = null_val;
 }
 
-static void predefined_assert_not_zero(toy_interp *interp, toy_val *result, toy_val_list *args)
+static void predefined_assert_not_zero(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 1);
     toy_val *arg1 = args->val;
@@ -179,7 +183,7 @@ static void predefined_assert_not_zero(toy_interp *interp, toy_val *result, toy_
     *result = null_val;
 }
 
-static void predefined_assert_null(toy_interp *interp, toy_val *result, toy_val_list *args)
+static void predefined_assert_null(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 1);
     toy_val *arg1 = args->val;
@@ -191,7 +195,7 @@ static void predefined_assert_null(toy_interp *interp, toy_val *result, toy_val_
     *result = null_val;
 }
 
-static void predefined_assert_not_null(toy_interp *interp, toy_val *result, toy_val_list *args)
+static void predefined_assert_not_null(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 1);
     toy_val *arg1 = args->val;
@@ -203,7 +207,7 @@ static void predefined_assert_not_null(toy_interp *interp, toy_val *result, toy_
     *result = null_val;
 }
 
-static void predefined_assert(toy_interp *interp, toy_val *result, toy_val_list *args)
+static void predefined_assert(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 1);
     assert(!args->next);
@@ -230,7 +234,7 @@ static void list_foreach_callback(void *cookie, const toy_val *item)
     run_toy_function_val_list(args->interp, &result, args->func, &func_args);
 }
 
-static void predefined_list_foreach(toy_interp *interp, toy_val *result, toy_val_list *args)
+static void predefined_list_foreach(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
     toy_val *arg1 = args->val;
@@ -258,13 +262,14 @@ typedef struct map_foreach_args_struct {
 static void map_foreach_callback(void *cookie, const toy_str key, const toy_val *value)
 {
     map_foreach_args *args = (map_foreach_args *) cookie;
+    const toy_val key_val = { .type = VAL_STR, .str = key };
     const toy_val_list value_arg = { .val = (toy_val *) value, .next = NULL };
-    toy_val_list func_args = { .val = (toy_val *) key, .next = (toy_val_list *) &value_arg };
+    const toy_val_list func_args = { .val = (toy_val *) &key_val, .next = (toy_val_list *) &value_arg };
     toy_val result;
     run_toy_function_val_list(args->interp, &result, args->func, &func_args);
 }
 
-static void predefined_map_foreach(toy_interp *interp, toy_val *result, toy_val_list *args)
+static void predefined_map_foreach(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
     toy_val *arg1 = args->val;
@@ -313,7 +318,7 @@ static const toy_func_def predefined_functions[] = {
     { .name = "print", .type = FUNC_PREDEFINED, .predef = predefined_print,    .param_names = (toy_str_list *) &INFINITE_PARAMS }
 };
 
-const toy_func_def *lookup_predefined_function(const toy_str name)
+const toy_func_def *lookup_predefined_function_name(const toy_str name)
 {
     for (
         const toy_func_def *function = &predefined_functions[0];
@@ -324,9 +329,25 @@ const toy_func_def *lookup_predefined_function(const toy_str name)
             return function;
         }
     }
-    return 0;
+    return NULL;
 }
 
+const toy_func_def *lookup_predefined_function_addr(predefined_func_addr func_addr)
+{
+    ;
+    for (
+        const toy_func_def *function = &predefined_functions[0];
+        function < &predefined_functions[ELEMENTSOF(predefined_functions)];
+        function++)
+    {
+        if (function->predef == func_addr) {
+            return function;
+        }
+    }
+    return NULL;
+}
+
+/* TODO: Belongs elsewhere */
 static const char *block_type_names[] = {
     "loop body",
     "function body",
@@ -337,4 +358,10 @@ static const char *block_type_names[] = {
 const char *block_type_name(enum block_type btype)
 {
     return block_type_names[btype];
+}
+
+void func_assert_valid(const toy_func_def *func_def)
+{
+    assert(func_def);
+    /* TODO */
 }

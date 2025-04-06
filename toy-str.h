@@ -12,5 +12,6 @@ toy_bool toy_str_equal(const toy_str s1, const toy_str s2);
 toy_bool toy_str_nequal(const toy_str s1, const toy_str s2);
 toy_bool toy_str_equal_nocase(const toy_str s1, const toy_str s2);
 toy_bool toy_str_nequal_nocase(const toy_str s1, const toy_str s2);
+void str_assert_valid(toy_str str);
 
 #endif /* TOY_STR_H */

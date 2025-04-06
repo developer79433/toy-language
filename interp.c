@@ -7,6 +7,7 @@
 
 #include "mymalloc.h"
 #include "interp.h"
+#include "toy-val.h"
 #include "toy-val-list.h"
 #include "toy-str-list.h"
 #include "toy-expr-list.h"
@@ -17,19 +18,39 @@
 #include "functions.h"
 #include "errors.h"
 
+#if 0
+#define DEBUG_STACK 1
+#endif
+
+enum frame_type {
+    FRAME_LOOP_BODY,
+    FRAME_IF_BODY,
+    FRAME_PRE_DEF_FUNC,
+    FRAME_USER_DEF_FUNC,
+    FRAME_BLOCK_STMT
+};
+
 typedef struct interp_frame_struct {
     struct interp_frame_struct *prev;
-    const toy_block *block;
+    enum frame_type type;
+    union {
+        const toy_block *loop_body;
+        const toy_block *if_body;
+        const toy_func_def *pre_def_func;
+        const toy_func_def *user_def_func;
+        const toy_block *block_stmt;
+    };
+    toy_stmt *cur_stmt;
     toy_map *symbols;
 } interp_frame;
 
 typedef struct toy_interp_struct {
-    toy_block top_block;
+    toy_func_def main_program;
     interp_frame *cur_frame;
     toy_val return_val;
 } toy_interp;
 
-static enum run_stmt_result run_block(toy_interp *interp, const toy_block *block);
+static enum run_stmt_result block_stmt(toy_interp *interp, const toy_block *block);
 
 toy_bool convert_to_bool(const toy_val *val)
 {
@@ -77,25 +98,149 @@ static toy_bool convert_to_num(const toy_val *val)
 }
 #endif
 
-static interp_frame *alloc_frame(const toy_block *block, interp_frame *prev)
+static interp_frame *alloc_frame_loop_body(const toy_block *loop_body, interp_frame *prev)
 {
     interp_frame *frame = mymalloc(interp_frame);
+    frame->type = FRAME_LOOP_BODY;
     frame->prev = prev;
-    frame->block = block;
+    frame->loop_body = loop_body;
     frame->symbols = alloc_map();
+    return frame;
+}
+
+static interp_frame *alloc_frame_if_body(const toy_block *if_body, interp_frame *prev)
+{
+    interp_frame *frame = mymalloc(interp_frame);
+    frame->type = FRAME_IF_BODY;
+    frame->prev = prev;
+    frame->if_body = if_body;
+    frame->symbols = alloc_map();
+    return frame;
+}
+
+static interp_frame *alloc_frame_block_stmt(const toy_block *block_stmt, interp_frame *prev)
+{
+    interp_frame *frame = mymalloc(interp_frame);
+    frame->type = FRAME_BLOCK_STMT;
+    frame->prev = prev;
+    frame->block_stmt = block_stmt;
+    frame->symbols = alloc_map();
+    return frame;
+}
+
+static interp_frame *alloc_frame_user_def_func(const toy_func_def *func_def, interp_frame *prev)
+{
+    interp_frame *frame = mymalloc(interp_frame);
+    frame->type = FRAME_USER_DEF_FUNC;
+    frame->prev = prev;
+    frame->user_def_func = func_def;
+    /* TODO: Lazily allocate this map */
+    frame->symbols = alloc_map();
+    return frame;
+}
+
+static interp_frame *alloc_frame_pre_def_func(const toy_func_def *func_def, interp_frame *prev)
+{
+    interp_frame *frame = mymalloc(interp_frame);
+    frame->type = FRAME_PRE_DEF_FUNC;
+    frame->prev = prev;
+    frame->pre_def_func = func_def;
+    frame->symbols = NULL;
     return frame;
 }
 
 static void free_frame(interp_frame *frame)
 {
-    free_map(frame->symbols);
+    if (frame->symbols) {
+        free_map(frame->symbols);
+    }
     free(frame);
 }
 
-static void push_context(toy_interp *interp, const toy_block *block)
+#if DEBUG_STACK
+static void dump_frame(FILE *f, const interp_frame *frame)
 {
-    interp_frame *new_frame = alloc_frame(block, interp->cur_frame);
+    switch (frame->type) {
+    case FRAME_BLOCK_STMT:
+        fprintf(f, "block_stmt %p", frame->block_stmt);
+        break;
+    case FRAME_IF_BODY:
+        fprintf(f, "if_body %p", frame->if_body);
+        break;
+    case FRAME_LOOP_BODY:
+        fprintf(f, "loop_body %p", frame->loop_body);
+        break;
+    case FRAME_PRE_DEF_FUNC:
+        fprintf(f, "Predefined function %s", frame->pre_def_func->name);
+        break;
+    case FRAME_USER_DEF_FUNC:
+        fprintf(f, "User-defined function %s", frame->user_def_func->name);
+        break;
+    default:
+        assert(0);
+        break;
+    }
+    fprintf(stderr, ", symbols=");
+    if (frame->symbols) {
+        // dump_map_keys(f, frame->symbols);
+        dump_map(f, frame->symbols);
+    } else {
+        fputs("null", f);
+    }
+}
+
+static void dump_stack(FILE *f, const char *context, const toy_interp *interp)
+{
+    fprintf(stderr, "STACK %s:\n", context);
+    size_t frame_num = 0;
+    for (const interp_frame *frame = interp->cur_frame; frame; frame = frame->prev, frame_num++) {
+        fprintf(stderr, "  Frame %02lu: ", (unsigned long) frame_num);
+        dump_frame(f, frame);
+        fprintf(stderr, "\n");
+    }
+}
+#else /* ndef DEBUG_STACK */
+#define dump_stack(f, context, interp) do { } while (0)
+#endif /* DEBUG_STACK */
+
+static void push_context_if_body(toy_interp *interp, const toy_block *block)
+{
+    interp_frame *new_frame = alloc_frame_if_body(block, interp->cur_frame);
     interp->cur_frame = new_frame;
+    interp->cur_frame->cur_stmt = block->stmts;
+    dump_stack(stderr, "after push if body", interp);
+}
+
+static void push_context_loop_body(toy_interp *interp, const toy_block *block)
+{
+    interp_frame *new_frame = alloc_frame_loop_body(block, interp->cur_frame);
+    interp->cur_frame = new_frame;
+    interp->cur_frame->cur_stmt = block->stmts;
+    dump_stack(stderr, "after push loop body", interp);
+}
+
+static void push_context_pre_def_func(toy_interp *interp, const toy_func_def *func_def)
+{
+    interp_frame *new_frame = alloc_frame_pre_def_func(func_def, interp->cur_frame);
+    interp->cur_frame = new_frame;
+    interp->cur_frame->cur_stmt = func_def->code.stmts;
+    dump_stack(stderr, "after push predef func", interp);
+}
+
+static void push_context_user_def_func(toy_interp *interp, const toy_func_def *func_def)
+{
+    interp_frame *new_frame = alloc_frame_user_def_func(func_def, interp->cur_frame);
+    interp->cur_frame = new_frame;
+    interp->cur_frame->cur_stmt = func_def->code.stmts;
+    dump_stack(stderr, "after push user func", interp);
+}
+
+static void push_context_block_stmt(toy_interp *interp, const toy_block *block)
+{
+    interp_frame *new_frame = alloc_frame_block_stmt(block, interp->cur_frame);
+    interp->cur_frame = new_frame;
+    interp->cur_frame->cur_stmt = block->stmts;
+    dump_stack(stderr, "after push block stmt", interp);
 }
 
 static void pop_context(toy_interp *interp)
@@ -103,6 +248,7 @@ static void pop_context(toy_interp *interp)
     interp_frame *prev = interp->cur_frame->prev;
     free_frame(interp->cur_frame);
     interp->cur_frame = prev;
+    dump_stack(stderr, "after pop", interp);
 }
 
 static int is_predefined(toy_str name)
@@ -110,9 +256,35 @@ static int is_predefined(toy_str name)
     if (lookup_predefined_constant(name)) {
         return 1;
     }
-    if (lookup_predefined_function(name)) {
+    if (lookup_predefined_function_name(name)) {
         return 1;
     }
+    return 0;
+}
+
+static int lookup_identifier_in_frame(interp_frame *frame, toy_val *result, toy_str name)
+{
+    if (frame->symbols) {
+        toy_val *existing_value = map_get(frame->symbols, name);
+        if (existing_value) {
+            *result = *existing_value;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int lookup_user_identifier(toy_interp *interp, toy_val *result, toy_str name)
+{
+    assert(!lookup_predefined_constant(name));
+    assert(!lookup_predefined_function_name(name));
+    for (interp_frame *frame = interp->cur_frame; frame; frame = frame->prev) {
+        int found = lookup_identifier_in_frame(frame, result, name);
+        if (found) {
+            return 1;
+        }
+    }
+    *result = null_val;
     return 0;
 }
 
@@ -123,18 +295,13 @@ int lookup_identifier(toy_interp *interp, toy_val *result, const toy_str name)
         *result = *((toy_val *) predef_const);
         return 1;
     }
-    const toy_func_def *predef_func = lookup_predefined_function(name);
+    const toy_func_def *predef_func = lookup_predefined_function_name(name);
     if (predef_func) {
         result->type = VAL_FUNC;
         result->func = (toy_func_def *) predef_func;
         return 1;
     }
-    toy_val *existing_value = map_get(interp->cur_frame->symbols, name);
-    if (existing_value) {
-        *result = *existing_value;
-        return 1;
-    }
-    return 0;
+    return lookup_user_identifier(interp, result, name);
 }
 
 enum set_variable_policy_enum {
@@ -228,11 +395,9 @@ static void eval_list(toy_interp *interp, toy_val *result, const toy_expr_list *
     }
 }
 
-static void run_predefined_func_val_list(toy_interp *interp, toy_val *result, predefined_func_addr predef, toy_val_list *args)
+static void run_predefined_func_val_list(toy_interp *interp, toy_val *result, predefined_func_addr predef, const toy_val_list *args)
 {
-    push_context(interp, NULL);
     predef(interp, result, args);
-    pop_context(interp);
 }
 
 static void run_predefined_func_expr_list(toy_interp *interp, toy_val *result, predefined_func_addr predef, toy_expr_list *arg_exprs)
@@ -243,27 +408,25 @@ static void run_predefined_func_expr_list(toy_interp *interp, toy_val *result, p
     run_predefined_func_val_list(interp, result, predef, args.list);
 }
 
-static void run_user_func_val_list(toy_interp *interp, toy_val *result, toy_block *block, toy_str_list *param_names, toy_val_list *args)
+static void run_user_func_val_list(toy_interp *interp, toy_val *result, toy_block *block, toy_str_list *param_names, const toy_val_list *args)
 {
-    push_context(interp, block);
+    val_list_assert_valid(args);
     for (toy_str_list *param_name = param_names; param_name && args; param_name = param_name->next, args = args->next) {
+        val_assert_valid(args->val);
         create_variable_value(interp, param_name->str, args->val);
     }
     run_current_block(interp);
     *result = interp->return_val;
-    pop_context(interp);
     *result = null_val;
 }
 
 static void run_user_func_expr_list(toy_interp *interp, toy_val *result, toy_block *block, toy_str_list *param_names, toy_expr_list *args)
 {
-    push_context(interp, block);
     for (toy_str_list *param_name = param_names; param_name && args; param_name = param_name->next, args = args->next) {
         create_variable_expr(interp, param_name->str, args->expr);
     }
     run_current_block(interp);
     *result = interp->return_val;
-    pop_context(interp);
     *result = null_val;
 }
 
@@ -271,10 +434,14 @@ void run_toy_function_expr_list(toy_interp *interp, toy_val *result, toy_func_de
 {
     switch (def->type) {
     case FUNC_PREDEFINED:
+        push_context_pre_def_func(interp, def);
         run_predefined_func_expr_list(interp, result, def->predef, args);
+        pop_context(interp);
         break;
     case FUNC_USER_DECLARED:
+        push_context_user_def_func(interp, def);
         run_user_func_expr_list(interp, result, &def->code, def->param_names, args);
+        pop_context(interp);
         break;
     default:
         invalid_function_type(def->type);
@@ -282,14 +449,19 @@ void run_toy_function_expr_list(toy_interp *interp, toy_val *result, toy_func_de
     }
 }
 
-void run_toy_function_val_list(toy_interp *interp, toy_val *result, toy_func_def *def, toy_val_list *args)
+void run_toy_function_val_list(toy_interp *interp, toy_val *result, toy_func_def *def, const toy_val_list *args)
 {
+    val_list_assert_valid(args);
     switch (def->type) {
     case FUNC_PREDEFINED:
+        push_context_pre_def_func(interp, def);
         run_predefined_func_val_list(interp, result, def->predef, args);
+        pop_context(interp);
         break;
     case FUNC_USER_DECLARED:
+        push_context_user_def_func(interp, def);
         run_user_func_val_list(interp, result, &def->code, def->param_names, args);
+        pop_context(interp);
         break;
     default:
         invalid_function_type(def->type);
@@ -586,7 +758,7 @@ void eval_expr(toy_interp *interp, toy_val *result, const toy_expr *expr)
 static enum run_stmt_result for_stmt(toy_interp *interp, const toy_for_stmt *for_stmt)
 {
     enum run_stmt_result result = EXECUTED_STATEMENT;
-    push_context(interp, &for_stmt->body);
+    push_context_loop_body(interp, &for_stmt->body);
     if (for_stmt->at_start) {
         assert(!for_stmt->at_start->next);
         run_stmt(interp, for_stmt->at_start);
@@ -624,14 +796,18 @@ static void if_stmt(toy_interp *interp, const toy_if_stmt *if_stmt)
         }
         assert(VAL_BOOL == cond_result.type);
         if (cond_result.boolean) {
-            run_block(interp, &arm->code);
+            push_context_if_body(interp, &arm->code);
+            run_current_block(interp);
+            pop_context(interp);
             found_one = 1;
             break;
         }
     }
     if (!found_one && if_stmt->elsepart.stmts) {
-        run_block(interp, &if_stmt->elsepart);
-    }
+        push_context_if_body(interp, &if_stmt->elsepart);
+        run_current_block(interp);
+        pop_context(interp);
+}
 }
 
 static void while_stmt(toy_interp *interp, const toy_while_stmt *while_stmt)
@@ -646,7 +822,9 @@ static void while_stmt(toy_interp *interp, const toy_while_stmt *while_stmt)
         if (cond_result.boolean) {
             break;
         }
-        run_block(interp, &while_stmt->body);
+        push_context_loop_body(interp, &while_stmt->body);
+        run_current_block(interp);
+        pop_context(interp);
     }
 }
 
@@ -659,7 +837,7 @@ enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt)
 {
     switch (stmt->type) {
     case STMT_BLOCK:
-        run_block(interp, &stmt->block_stmt.block);
+        block_stmt(interp, &stmt->block_stmt.block);
         break;
     case STMT_BREAK:
         return REACHED_BREAK;
@@ -698,9 +876,9 @@ enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt)
 
 enum run_stmt_result run_current_block(toy_interp *interp)
 {
-    for (const toy_stmt *s = interp->cur_frame->block->stmts; s; s = s->next) {
+    for (; interp->cur_frame->cur_stmt; interp->cur_frame->cur_stmt = interp->cur_frame->cur_stmt->next) {
         enum run_stmt_result stmt_result;
-        stmt_result = run_stmt(interp, s);
+        stmt_result = run_stmt(interp, interp->cur_frame->cur_stmt);
         switch (stmt_result) {
         case EXECUTED_STATEMENT:
             break;
@@ -744,9 +922,9 @@ enum run_stmt_result run_current_block(toy_interp *interp)
     return REACHED_BLOCK_END;
 }
 
-static enum run_stmt_result run_block(toy_interp *interp, const toy_block *block)
+static enum run_stmt_result block_stmt(toy_interp *interp, const toy_block *block)
 {
-    push_context(interp, block);
+    push_context_block_stmt(interp, block);
     enum run_stmt_result block_result = run_current_block(interp);
     switch (block_result) {
     case EXECUTED_STATEMENT:
@@ -769,14 +947,20 @@ toy_interp *alloc_interp(const toy_stmt *program)
 {
     toy_interp *interp;
     interp = mymalloc(toy_interp);
-    interp->top_block.stmts = (toy_stmt *) program;
-    interp->cur_frame = alloc_frame(&interp->top_block, NULL);
-    interp->cur_frame->symbols = alloc_map();
+    interp->main_program.type = FUNC_USER_DECLARED;
+    interp->main_program.code.type = BLOCK_FUNC_BODY;
+    interp->main_program.code.stmts = (toy_stmt *) program;
+    interp->main_program.name = "Top-level";
+    interp->main_program.param_names = NULL;
+    interp->cur_frame = NULL;
+    dump_stack(stderr, "at program start", interp);
+    push_context_user_def_func(interp, &interp->main_program);
     return interp;
 }
 
 void free_interp(toy_interp *interp)
 {
+    pop_context(interp);
     while (interp->cur_frame) {
         interp_frame *prev = interp->cur_frame->prev;
         free_frame(interp->cur_frame);

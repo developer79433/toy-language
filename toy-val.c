@@ -124,3 +124,31 @@ toy_bool toy_val_lte(const toy_val *val1, const toy_val *val2)
     assert(val2->type == VAL_NUM);
     return (val1->num <= val2->num);
 }
+
+void val_assert_valid(toy_val *val)
+{
+    switch(val->type) {
+    case VAL_BOOL:
+        bool_assert_valid(val->boolean);
+        break;
+    case VAL_FUNC:
+        func_assert_valid(val->func);
+        break;
+    case VAL_LIST:
+        val_list_assert_valid(val->list);
+        break;
+    case VAL_MAP:
+        map_assert_valid(val->map);
+        break;
+    case VAL_NULL:
+        break;
+    case VAL_NUM:
+        break;
+    case VAL_STR:
+        str_assert_valid(val->str);
+        break;
+    default:
+        invalid_value_type(val->type);
+        break;
+    }
+}

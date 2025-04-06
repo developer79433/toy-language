@@ -94,3 +94,11 @@ void val_list_foreach_const(const toy_val_list *list, const_val_list_item_callba
     assert(offsetof(toy_val_list, val) == offsetof(generic_list, payload));
     generic_list_foreach_const(list, (const_list_item_callback) callback, cookie);
 }
+
+void val_list_assert_valid(const toy_val_list *val_list)
+{
+    assert(val_list);
+    for (const toy_val_list *cur = val_list; cur; cur = cur->next) {
+        val_assert_valid(cur->val);
+    }
+}
