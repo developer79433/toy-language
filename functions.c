@@ -326,3 +326,15 @@ const toy_func_def *lookup_predefined_function(const toy_str name)
     }
     return 0;
 }
+
+static const char *block_type_names[] = {
+    "loop body",
+    "function body",
+    "if body",
+    "block statement"
+};
+
+const char *block_type_name(enum block_type btype)
+{
+    return block_type_names[btype];
+}

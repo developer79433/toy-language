@@ -78,6 +78,7 @@ toy_if_arm *alloc_if_arm(toy_expr *condition, toy_block *block)
     toy_if_arm *arm;
     arm = mymalloc(toy_if_arm);
     arm->condition = condition;
+    block->type = BLOCK_IF_BODY;
     arm->code.stmts = block->stmts;
     arm->next = NULL;
     return arm;
@@ -141,6 +142,7 @@ toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_block *body)
     expr->val.func->name = ""; /* TODO: generated unique name */
     expr->val.func->param_names = formalparams;
     expr->val.func->code.stmts = body->stmts;
+    body->type = BLOCK_FUNC_BODY;
     return expr;
 }
 

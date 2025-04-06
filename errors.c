@@ -6,6 +6,7 @@
 #include "toy-expr-list.h"
 #include "toy-str.h"
 #include "toy-val.h"
+#include "functions.h"
 
 void fatal_error(const char *fmt, ...)
 {
@@ -125,5 +126,10 @@ static const char *function_type_name(enum toy_func_type func_type)
 
 void invalid_function_type(enum toy_func_type func_type)
 {
-    fatal_error("Invaldi function type %s (%d)", function_type_name(func_type), (int) func_type);
+    fatal_error("Invalid function type %s (%d)", function_type_name(func_type), (int) func_type);
+}
+
+void return_outside_function(enum block_type btype)
+{
+    fatal_error("Encountered return statement outside function, in block of type %s", block_type_name(btype));
 }

@@ -5,6 +5,8 @@
 
 #include "ast.h"
 
+#include "function-types.h"
+
 void fatal_error(const char *fmt, ...);
 void undeclared_identifier(toy_str name);
 void duplicate_identifier(toy_str name);
@@ -23,5 +25,6 @@ void invalid_argument_type(enum toy_val_type expected_type, const toy_val *actua
 void invalid_value_type(enum toy_val_type value_type);
 void divide_by_zero(void);
 void invalid_function_type(enum toy_func_type func_type);
+void return_outside_function(enum block_type btype);
 
 #endif /* TOY_ERRORS_H */

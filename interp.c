@@ -20,9 +20,12 @@
 typedef struct toy_interp_struct {
     toy_block top_block;
     toy_map *symbols;
-    const toy_block *cur_block; /* TODO: Should be a stack */
+    /* TODO: Should be a stack */
+    const toy_block *cur_block;
     toy_val return_val;
 } toy_interp;
+
+static enum run_stmt_result run_block(toy_interp *interp, const toy_block *block);
 
 toy_bool convert_to_bool(const toy_val *val)
 {
@@ -204,40 +207,42 @@ static void eval_list(toy_interp *interp, toy_val *result, const toy_expr_list *
     }
 }
 
-void run_predefined_func_val_list(toy_interp *interp, toy_val *result, toy_func_def *def, toy_val_list *args)
+static void run_predefined_func_val_list(toy_interp *interp, toy_val *result, predefined_func_addr predef, toy_val_list *args)
 {
-    def->predef(interp, result, args);
+    push_context(interp, NULL);
+    predef(interp, result, args);
+    pop_context(interp);
 }
 
-static void run_predefined_func_expr_list(toy_interp *interp, toy_val *result, toy_func_def *def, toy_expr_list *arg_exprs)
+static void run_predefined_func_expr_list(toy_interp *interp, toy_val *result, predefined_func_addr predef, toy_expr_list *arg_exprs)
 {
     toy_val args;
     eval_list(interp, &args, arg_exprs);
     assert(VAL_LIST == args.type);
-    run_predefined_func_val_list(interp, result, def, args.list);
+    run_predefined_func_val_list(interp, result, predef, args.list);
 }
 
-static void run_user_func_val_list(toy_interp *interp, toy_val *result, toy_func_def *def, toy_val_list *args)
+static void run_user_func_val_list(toy_interp *interp, toy_val *result, toy_block *block, toy_str_list *param_names, toy_val_list *args)
 {
-    push_context(interp, &def->code);
-    for (toy_str_list *param_name = def->param_names; param_name && args; param_name = param_name->next, args = args->next) {
+    push_context(interp, block);
+    for (toy_str_list *param_name = param_names; param_name && args; param_name = param_name->next, args = args->next) {
         create_variable_value(interp, param_name->str, args->val);
     }
-    run_block(interp, &def->code);
+    run_current_block(interp);
+    *result = interp->return_val;
     pop_context(interp);
-    /* TODO: Propagate return value from function */
     *result = null_val;
 }
 
-static void run_user_func_expr_list(toy_interp *interp, toy_val *result, toy_func_def *def, toy_expr_list *args)
+static void run_user_func_expr_list(toy_interp *interp, toy_val *result, toy_block *block, toy_str_list *param_names, toy_expr_list *args)
 {
-    push_context(interp, &def->code);
-    for (toy_str_list *param_name = def->param_names; param_name && args; param_name = param_name->next, args = args->next) {
+    push_context(interp, block);
+    for (toy_str_list *param_name = param_names; param_name && args; param_name = param_name->next, args = args->next) {
         create_variable_expr(interp, param_name->str, args->expr);
     }
-    run_block(interp, &def->code);
+    run_current_block(interp);
+    *result = interp->return_val;
     pop_context(interp);
-    /* TODO: Propagate return value from function */
     *result = null_val;
 }
 
@@ -245,10 +250,10 @@ void run_toy_function_expr_list(toy_interp *interp, toy_val *result, toy_func_de
 {
     switch (def->type) {
     case FUNC_PREDEFINED:
-        run_predefined_func_expr_list(interp, result, def, args);
+        run_predefined_func_expr_list(interp, result, def->predef, args);
         break;
     case FUNC_USER_DECLARED:
-        run_user_func_expr_list(interp, result, def, args);
+        run_user_func_expr_list(interp, result, &def->code, def->param_names, args);
         break;
     default:
         invalid_function_type(def->type);
@@ -260,10 +265,10 @@ void run_toy_function_val_list(toy_interp *interp, toy_val *result, toy_func_def
 {
     switch (def->type) {
     case FUNC_PREDEFINED:
-        run_predefined_func_val_list(interp, result, def, args);
+        run_predefined_func_val_list(interp, result, def->predef, args);
         break;
     case FUNC_USER_DECLARED:
-        run_user_func_val_list(interp, result, def, args);
+        run_user_func_val_list(interp, result, &def->code, def->param_names, args);
         break;
     default:
         invalid_function_type(def->type);
@@ -445,7 +450,6 @@ static void eval_map(toy_interp *interp, toy_val *result, const toy_map_entry_li
     }
 }
 
-/* TODO: Second param should be a toy_val * */
 void eval_expr(toy_interp *interp, toy_val *result, const toy_expr *expr)
 {
     if (!expr) {
@@ -560,7 +564,7 @@ void eval_expr(toy_interp *interp, toy_val *result, const toy_expr *expr)
 
 static void for_stmt(toy_interp *interp, const toy_for_stmt *for_stmt) {
     if (for_stmt->at_start) {
-        /* TODO: Can be run_block, because ->next should be NULL */
+        assert(!for_stmt->at_start->next);
         run_stmt(interp, for_stmt->at_start);
     }
     for (;;) {
@@ -577,7 +581,7 @@ static void for_stmt(toy_interp *interp, const toy_for_stmt *for_stmt) {
         }
         run_block(interp, &for_stmt->body);
         if (for_stmt->at_end) {
-            /* TODO: Can be run_block, because ->next should be NULL */
+            assert(!for_stmt->at_end->next);
             run_stmt(interp, for_stmt->at_end);
         }
     }
@@ -675,7 +679,29 @@ enum run_stmt_result run_current_block(toy_interp *interp)
         case EXECUTED_STATEMENT:
             break;
         case REACHED_RETURN:
+/* TODO: This needs to look up the stack for the most recent func body, not only at the current block */
+#if 0
+            if (interp->cur_block == NULL) {
+                /* In predefined function */
+            } else if (interp->cur_block->type == BLOCK_FUNC_BODY) {
+                /* In user-defined function */
+            } else {
+                return_outside_function(interp->cur_block->type);
+            }
+#endif
+            break;
         case REACHED_BREAK:
+/* TODO: This needs to look up the stack for the most recent loop, not only at the current block */
+#if 0
+            if (interp->cur_block == NULL) {
+                /* In predefined function */
+                assert(0);
+            } else if (interp->cur_block->type == BLOCK_LOOP_BODY) {
+                return REACHED_BREAK;
+            } else {
+                break_outside_loop();
+            }
+#endif
             return stmt_result;
         case REACHED_CONTINUE:
             /* TODO */
@@ -692,7 +718,7 @@ enum run_stmt_result run_current_block(toy_interp *interp)
     return REACHED_BLOCK_END;
 }
 
-void run_block(toy_interp *interp, const toy_block *block)
+static enum run_stmt_result run_block(toy_interp *interp, const toy_block *block)
 {
     push_context(interp, block);
     enum run_stmt_result block_result = run_current_block(interp);
@@ -710,6 +736,7 @@ void run_block(toy_interp *interp, const toy_block *block)
         break;
     }
     pop_context(interp);
+    return block_result;
 }
 
 toy_interp *alloc_interp(const toy_stmt *program)

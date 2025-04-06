@@ -14,7 +14,16 @@ typedef void (*predefined_func_addr)(toy_interp *interp, toy_val *result, toy_va
 struct toy_stmt_struct;
 typedef struct toy_stmt_struct toy_stmt;
 
+enum block_type {
+    /* TODO: BLOCK_PREDEFINED_FUNC, */
+    BLOCK_LOOP_BODY,
+    BLOCK_FUNC_BODY,
+    BLOCK_IF_BODY,
+    BLOCK_BLOCK_STMT_BODY
+};
+
 typedef struct toy_block_struct {
+    enum block_type type;
     toy_stmt *stmts;
 } toy_block;
 

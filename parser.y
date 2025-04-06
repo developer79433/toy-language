@@ -157,6 +157,7 @@ block_stmt:
     block {
         $$ = alloc_stmt(STMT_BLOCK);
         $$->block_stmt.block = $1;
+        $$->block_stmt.block.type = BLOCK_BLOCK_STMT_BODY;
     }
 ;
 

@@ -17,7 +17,6 @@ toy_interp *alloc_interp(const toy_stmt *program);
 void free_interp(toy_interp *interp);
 void eval_expr(toy_interp *interp, toy_val *result, const toy_expr *expr);
 enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt);
-void run_block(toy_interp *interp, const toy_block *block);
 enum run_stmt_result run_current_block(toy_interp *interp);
 toy_bool convert_to_bool(const toy_val *val);
 int lookup_identifier(toy_interp *interp, toy_val *result, const toy_str name);
