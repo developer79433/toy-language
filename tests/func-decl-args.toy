@@ -1,0 +1,5 @@
+fun myfunc1(arg1, arg2) {
+    print(arg1);
+    print(arg2);
+}
+myfunc1("first", 2);

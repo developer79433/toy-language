@@ -1,0 +1,5 @@
+var myfunc2 = fun(arg1, arg2) {
+    print(arg1);
+    print(arg2);
+};
+myfunc2(1, "second");

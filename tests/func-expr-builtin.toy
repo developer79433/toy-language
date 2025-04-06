@@ -1,0 +1,2 @@
+var myprint = print;
+myprint("Hello, indirectly");
