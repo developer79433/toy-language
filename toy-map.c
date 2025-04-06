@@ -35,7 +35,7 @@ toy_map *alloc_map()
     return map;
 }
 
-void free_bucket_entries(map_entry *entry)
+static void free_bucket_entries(map_entry *entry)
 {
     while (entry) {
         map_entry *next = entry->next;
@@ -44,7 +44,7 @@ void free_bucket_entries(map_entry *entry)
     }
 }
 
-void free_map(toy_map *map)
+static void free_buckets(toy_map *map)
 {
     for (map_entry **bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
         if (*bucket) {
@@ -52,6 +52,17 @@ void free_map(toy_map *map)
             *bucket = 0;
         }
     }
+}
+
+void reset_map(toy_map *map)
+{
+    free_buckets(map);
+    map->num_items = 0;
+}
+
+void free_map(toy_map *map)
+{
+    free_buckets(map);
     free(map);
 }
 

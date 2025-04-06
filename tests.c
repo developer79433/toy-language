@@ -6,6 +6,8 @@
 #include "toy-map.h"
 #include "toy-val-list.h"
 
+/* TODO: move these into their respective units */
+
 static void test_strings(void)
 {
     assert(toy_str_equal("same", "same") == TOY_TRUE);
@@ -34,9 +36,11 @@ static void test_maps(void)
 {
     toy_map *map1 = alloc_map();
 
+    assert(0 == map_len(map1));
     // Test first insert
     toy_val val1 = { .type = VAL_NUM, .num = 42 };
     map_set(map1, "first key", &val1);
+    assert(1 == map_len(map1));
     toy_val *get1 = map_get(map1, "first key");
     assert(get1->type == VAL_NUM);
     assert(get1->num == 42);
@@ -44,6 +48,7 @@ static void test_maps(void)
     // Test second insert
     toy_val val2 = { .type = VAL_STR, .str = "second value" };
     map_set(map1, "second key", &val2);
+    assert(2 == map_len(map1));
     toy_val *get2 = map_get(map1, "second key");
     assert(get2->type == VAL_STR);
     assert(0 == strcmp(get2->str, "second value"));
@@ -53,6 +58,7 @@ static void test_maps(void)
 
     // Test delete
     map_delete(map1, "first key");
+    assert(1 == map_len(map1));
     toy_val *get4 = map_get(map1, "first key");
     assert(NULL == get4);
     toy_val *get5 = map_get(map1, "second key");
@@ -62,9 +68,14 @@ static void test_maps(void)
     // Test overwrite
     toy_val new_value = { .type = VAL_STR, .str = "new value" };
     map_set(map1, "second key", &new_value);
+    assert(1 == map_len(map1));
     toy_val *get6 = map_get(map1, "second key");
     assert(get6->type == VAL_STR);
     assert(0 == strcmp(get6->str, "new value"));
+
+    // Test reset
+    reset_map(map1);
+    assert(0 == map_len(map1));
 }
 
 void run_tests(void)

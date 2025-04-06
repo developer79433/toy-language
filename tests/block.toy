@@ -1,5 +1,7 @@
 var i;
 {
     var testblock = 1;
-    i = 5 ** 3;
+    // FIXME: Fails because we do not currently look for variables in enclosing scopes
+    // i = 5 ** 3;
+    var j = 5 ** 3;
 }

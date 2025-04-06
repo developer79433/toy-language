@@ -17,11 +17,15 @@
 #include "functions.h"
 #include "errors.h"
 
+typedef struct interp_frame_struct {
+    struct interp_frame_struct *prev;
+    const toy_block *block;
+    toy_map *symbols;
+} interp_frame;
+
 typedef struct toy_interp_struct {
     toy_block top_block;
-    toy_map *symbols;
-    /* TODO: Should be a stack */
-    const toy_block *cur_block;
+    interp_frame *cur_frame;
     toy_val return_val;
 } toy_interp;
 
@@ -73,15 +77,32 @@ static toy_bool convert_to_num(const toy_val *val)
 }
 #endif
 
+static interp_frame *alloc_frame(const toy_block *block, interp_frame *prev)
+{
+    interp_frame *frame = mymalloc(interp_frame);
+    frame->prev = prev;
+    frame->block = block;
+    frame->symbols = alloc_map();
+    return frame;
+}
+
+static void free_frame(interp_frame *frame)
+{
+    free_map(frame->symbols);
+    free(frame);
+}
+
 static void push_context(toy_interp *interp, const toy_block *block)
 {
-    /* TODO: This needs to be a stack */
-    interp->cur_block = block;
+    interp_frame *new_frame = alloc_frame(block, interp->cur_frame);
+    interp->cur_frame = new_frame;
 }
 
 static void pop_context(toy_interp *interp)
 {
-    /* TODO: context stack */
+    interp_frame *prev = interp->cur_frame->prev;
+    free_frame(interp->cur_frame);
+    interp->cur_frame = prev;
 }
 
 static int is_predefined(toy_str name)
@@ -108,7 +129,7 @@ int lookup_identifier(toy_interp *interp, toy_val *result, const toy_str name)
         result->func = (toy_func_def *) predef_func;
         return 1;
     }
-    toy_val *existing_value = map_get(interp->symbols, name);
+    toy_val *existing_value = map_get(interp->cur_frame->symbols, name);
     if (existing_value) {
         *result = *existing_value;
         return 1;
@@ -145,7 +166,7 @@ static int set_variable_value_policy(toy_interp *interp, const toy_str name, con
         assert(0);
         break;
     }
-    int added_new = map_set(interp->symbols, name, value);
+    int added_new = map_set(interp->cur_frame->symbols, name, value);
     return added_new;
 }
 
@@ -180,7 +201,7 @@ static void create_function(toy_interp *interp, const toy_func_def *def)
     }
     /* TODO: Remove cast below using const in .func member? Beware const poisoning... */
     toy_val func_val = { .type = VAL_FUNC, .func = (toy_func_def *) def };
-    map_set(interp->symbols, def->name, &func_val);
+    map_set(interp->cur_frame->symbols, def->name, &func_val);
 }
 
 static void op_assign(toy_interp *interp, toy_val *result, toy_str name, toy_expr *arg)
@@ -562,7 +583,10 @@ void eval_expr(toy_interp *interp, toy_val *result, const toy_expr *expr)
     }
 }
 
-static void for_stmt(toy_interp *interp, const toy_for_stmt *for_stmt) {
+static enum run_stmt_result for_stmt(toy_interp *interp, const toy_for_stmt *for_stmt)
+{
+    enum run_stmt_result result = EXECUTED_STATEMENT;
+    push_context(interp, &for_stmt->body);
     if (for_stmt->at_start) {
         assert(!for_stmt->at_start->next);
         run_stmt(interp, for_stmt->at_start);
@@ -579,12 +603,14 @@ static void for_stmt(toy_interp *interp, const toy_for_stmt *for_stmt) {
                 break;
             }
         }
-        run_block(interp, &for_stmt->body);
+        result = run_current_block(interp);
         if (for_stmt->at_end) {
             assert(!for_stmt->at_end->next);
             run_stmt(interp, for_stmt->at_end);
         }
     }
+    pop_context(interp);
+    return result;
 }
 
 static void if_stmt(toy_interp *interp, const toy_if_stmt *if_stmt)
@@ -672,7 +698,7 @@ enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt)
 
 enum run_stmt_result run_current_block(toy_interp *interp)
 {
-    for (const toy_stmt *s = interp->cur_block->stmts; s; s = s->next) {
+    for (const toy_stmt *s = interp->cur_frame->block->stmts; s; s = s->next) {
         enum run_stmt_result stmt_result;
         stmt_result = run_stmt(interp, s);
         switch (stmt_result) {
@@ -744,13 +770,17 @@ toy_interp *alloc_interp(const toy_stmt *program)
     toy_interp *interp;
     interp = mymalloc(toy_interp);
     interp->top_block.stmts = (toy_stmt *) program;
-    interp->cur_block = &interp->top_block;
-    interp->symbols = alloc_map();
+    interp->cur_frame = alloc_frame(&interp->top_block, NULL);
+    interp->cur_frame->symbols = alloc_map();
     return interp;
 }
 
 void free_interp(toy_interp *interp)
 {
-    free_map(interp->symbols);
+    while (interp->cur_frame) {
+        interp_frame *prev = interp->cur_frame->prev;
+        free_frame(interp->cur_frame);
+        interp->cur_frame = prev;
+    }
     free(interp);
 }

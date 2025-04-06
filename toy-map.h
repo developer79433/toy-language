@@ -17,5 +17,6 @@ void map_foreach(toy_map *map, map_entry_callback callback, void *cookie);
 void map_foreach_const(const toy_map *map, const_map_entry_callback callback, void *cookie);
 void dump_map(FILE *f, const toy_map *map);
 size_t map_len(const toy_map *map);
+void reset_map(toy_map *map);
 
 #endif /* TOY_MAP_H */

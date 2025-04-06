@@ -1,4 +1,5 @@
 var mylist = [ 1, "two", { "three": 3 }, 4 ];
-// FIXME: Fails with: Attempt to redeclare identifier 'elem'
-// list_foreach(mylist, fun(elem) { print("Got element"); });
-list_foreach(mylist, fun() { print("Got element"); });
+// FIXME: Fails with: Attempt to redeclare identifier 'elem',
+// because elem gets globally declared each loop iteration
+list_foreach(mylist, fun(elem) { print("Got element"); });
+// list_foreach(mylist, fun() { print("Got element"); });
