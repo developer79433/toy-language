@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <math.h>
 
+#include "mymalloc.h"
 #include "interp.h"
 #include "toy-val-list.h"
 #include "toy-str-list.h"
@@ -15,6 +16,13 @@
 #include "constants.h"
 #include "functions.h"
 #include "errors.h"
+
+typedef struct toy_interp_struct {
+    toy_block top_block;
+    toy_map *symbols;
+    const toy_block *cur_block; /* TODO: Should be a stack */
+    toy_val return_val;
+} toy_interp;
 
 toy_bool convert_to_bool(const toy_val *val)
 {
@@ -553,7 +561,7 @@ void eval_expr(toy_interp *interp, toy_val *result, const toy_expr *expr)
 static void for_stmt(toy_interp *interp, const toy_for_stmt *for_stmt) {
     if (for_stmt->at_start) {
         /* TODO: Can be run_block, because ->next should be NULL */
-        single_step(interp, for_stmt->at_start);
+        run_stmt(interp, for_stmt->at_start);
     }
     for (;;) {
         if (for_stmt->condition) {
@@ -570,7 +578,7 @@ static void for_stmt(toy_interp *interp, const toy_for_stmt *for_stmt) {
         run_block(interp, &for_stmt->body);
         if (for_stmt->at_end) {
             /* TODO: Can be run_block, because ->next should be NULL */
-            single_step(interp, for_stmt->at_end);
+            run_stmt(interp, for_stmt->at_end);
         }
     }
 }
@@ -612,22 +620,21 @@ static void while_stmt(toy_interp *interp, const toy_while_stmt *while_stmt)
     }
 }
 
-/**
- * TODO: Should return an enum representing the decision to continue executing or not,
- * eg when debugging, or executing return statements
- */
-void single_step(toy_interp *interp, const toy_stmt *stmt)
+static void return_stmt(toy_interp *interp, const toy_return_stmt *return_stmt)
+{
+    eval_expr(interp, &interp->return_val, return_stmt->expr);
+}
+
+enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt)
 {
     switch (stmt->type) {
     case STMT_BLOCK:
         run_block(interp, &stmt->block_stmt.block);
         break;
     case STMT_BREAK:
-        /* TODO */
-        break;
+        return REACHED_BREAK;
     case STMT_CONTINUE:
-        /* TODO */
-        break;
+        return REACHED_CONTINUE;
     case STMT_EXPR:
         toy_val result;
         eval_expr(interp, &result, stmt->expr_stmt.expr);
@@ -644,8 +651,8 @@ void single_step(toy_interp *interp, const toy_stmt *stmt)
     case STMT_NULL:
         break;
     case STMT_RETURN:
-        /* TODO */
-        break;
+        return_stmt(interp, &stmt->return_stmt);
+        return REACHED_RETURN;
     case STMT_VAR_DECL:
         create_variable_expr(interp, stmt->var_decl_stmt->name, stmt->var_decl_stmt->value);
         break;
@@ -656,26 +663,67 @@ void single_step(toy_interp *interp, const toy_stmt *stmt)
         invalid_stmt_type(stmt->type);
         break;
     }
+    return EXECUTED_STATEMENT;
 }
 
-void step_out(toy_interp *interp)
+enum run_stmt_result run_current_block(toy_interp *interp)
 {
     for (const toy_stmt *s = interp->cur_block->stmts; s; s = s->next) {
-        single_step(interp, s);
+        enum run_stmt_result stmt_result;
+        stmt_result = run_stmt(interp, s);
+        switch (stmt_result) {
+        case EXECUTED_STATEMENT:
+            break;
+        case REACHED_RETURN:
+        case REACHED_BREAK:
+            return stmt_result;
+        case REACHED_CONTINUE:
+            /* TODO */
+            break;
+        case REACHED_BLOCK_END:
+            assert(0);
+            break;
+        default:
+            assert(0);
+            break;
+        }
     }
-    // dump_map(stderr, interp->symbols);
+    interp->return_val = null_val;
+    return REACHED_BLOCK_END;
 }
 
 void run_block(toy_interp *interp, const toy_block *block)
 {
     push_context(interp, block);
-    step_out(interp);
+    enum run_stmt_result block_result = run_current_block(interp);
+    switch (block_result) {
+    case EXECUTED_STATEMENT:
+    case REACHED_CONTINUE:
+        assert(0);
+        break;
+    case REACHED_RETURN:
+    case REACHED_BREAK:
+    case REACHED_BLOCK_END:
+        break;
+    default:
+        assert(0);
+        break;
+    }
     pop_context(interp);
 }
 
-void init_interp(toy_interp *interp, const toy_stmt *program)
+toy_interp *alloc_interp(const toy_stmt *program)
 {
+    toy_interp *interp;
+    interp = mymalloc(toy_interp);
     interp->top_block.stmts = (toy_stmt *) program;
     interp->cur_block = &interp->top_block;
     interp->symbols = alloc_map();
+    return interp;
+}
+
+void free_interp(toy_interp *interp)
+{
+    free_map(interp->symbols);
+    free(interp);
 }

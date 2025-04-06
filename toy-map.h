@@ -9,6 +9,7 @@
 #include "toy-val-types.h"
 
 toy_map *alloc_map();
+void free_map(toy_map *map);
 toy_val *map_get(toy_map *map, const toy_str key);
 int map_set(toy_map *map, const toy_str key, const toy_val *value);
 int map_delete(toy_map *map, const toy_str key);

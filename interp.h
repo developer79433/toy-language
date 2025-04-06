@@ -1,21 +1,24 @@
 #ifndef TOY_INTERP_H
 #define TOY_INTERP_H 1
 
-#include <stdio.h>
+#include "toy-str-types.h"
+#include "toy-val-types.h"
+#include "toy-val-list-types.h"
+#include "toy-expr-list-types.h"
+#include "function-types.h"
+#include "interp-types.h"
 
-#include "ast.h"
+struct toy_stmt_struct;
+typedef struct toy_stmt_struct toy_stmt;
+struct toy_block_struct;
+typedef struct toy_block_struct toy_block;
 
-typedef struct toy_interp_struct {
-    toy_block top_block;
-    toy_map *symbols;
-    const toy_block *cur_block; /* TODO: Should be a stack */
-} toy_interp;
-
-void init_interp(toy_interp *interp, const toy_stmt *program);
+toy_interp *alloc_interp(const toy_stmt *program);
+void free_interp(toy_interp *interp);
 void eval_expr(toy_interp *interp, toy_val *result, const toy_expr *expr);
-void single_step(toy_interp *interp, const toy_stmt *stmt);
+enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt);
 void run_block(toy_interp *interp, const toy_block *block);
-void step_out(toy_interp *interp);
+enum run_stmt_result run_current_block(toy_interp *interp);
 toy_bool convert_to_bool(const toy_val *val);
 int lookup_identifier(toy_interp *interp, toy_val *result, const toy_str name);
 void call_func(toy_interp *interp, toy_val *result, toy_str func_name, toy_expr_list *args);

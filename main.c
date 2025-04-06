@@ -31,8 +31,8 @@ int main(int argc, char **argv)
     run_tests();
     toy_stmt *program_start = get_program_start();
     /* dump_stmts(stderr, program_start); */
-    toy_interp interp;
-    init_interp(&interp, program_start);
-    step_out(&interp);
+    toy_interp *interp = alloc_interp(program_start);
+    run_current_block(interp);
+    free_interp(interp);
     return EXIT_SUCCESS;
 }

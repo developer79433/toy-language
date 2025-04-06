@@ -35,6 +35,26 @@ toy_map *alloc_map()
     return map;
 }
 
+void free_bucket_entries(map_entry *entry)
+{
+    while (entry) {
+        map_entry *next = entry->next;
+        free(entry);
+        entry = next;
+    }
+}
+
+void free_map(toy_map *map)
+{
+    for (map_entry **bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
+        if (*bucket) {
+            free_bucket_entries(*bucket);
+            *bucket = 0;
+        }
+    }
+    free(map);
+}
+
 static map_entry *alloc_map_entry(toy_str key_name, toy_val *value)
 {
     map_entry *entry;
