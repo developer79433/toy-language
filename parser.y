@@ -171,6 +171,7 @@ expr_stmt:
 func_decl_stmt:
     T_FUN T_IDENTIFIER T_LPAREN formalparams T_RPAREN block {
         $$ = alloc_stmt(STMT_FUNC_DECL);
+        $$->func_decl_stmt.def.type = FUNC_USER_DECLARED;
         $$->func_decl_stmt.def.name = $2;
         $$->func_decl_stmt.def.param_names = $4;
         $$->func_decl_stmt.def.code = $6;
