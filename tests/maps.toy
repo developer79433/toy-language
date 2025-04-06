@@ -3,3 +3,4 @@ print(mymap);
 var indexed_into_map = mymap["mykey"];
 print(indexed_into_map);
 assert_equal(indexed_into_map, 123);
+assert_equal(map_len(mymap), 2);

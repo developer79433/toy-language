@@ -6,3 +6,4 @@ assert(mylist[1] == "two");
 var indexed_into_list = mylist[1];
 print("indexed_into_list=", indexed_into_list);
 assert_equal(indexed_into_list, "two");
+assert_equal(list_len(mylist), 2);

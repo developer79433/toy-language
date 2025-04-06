@@ -35,7 +35,19 @@ static void predefined_list_len(toy_interp *interp, toy_val *result, toy_val_lis
     result->num = val_list_len(arg->list);
 }
 
-/* TODO: predefined_map_len */
+static void predefined_map_len(toy_interp *interp, toy_val *result, toy_val_list *args)
+{
+    assert(args);
+    assert(args->val);
+    toy_val *arg = args->val;
+    assert(!args->next);
+    if (arg->type != VAL_MAP) {
+        invalid_argument_type(VAL_MAP, arg);
+    }
+    result->type = VAL_NUM;
+    assert(arg->type == VAL_MAP);
+    result->num = map_len(arg->map);
+}
 
 static void predefined_print(toy_interp *interp, toy_val *result, toy_val_list *args)
 {
@@ -272,14 +284,15 @@ static void predefined_map_foreach(toy_interp *interp, toy_val *result, toy_val_
 }
 
 const toy_str_list INFINITE_PARAMS;
-static const toy_str_list list_len_params = { .str = "list", .next = NULL };
 static const toy_str_list assert_binary_param_2 = { .str = "val2", .next = NULL };
 static const toy_str_list assert_binary_params = { .str = "val1", .next = (toy_str_list *) &assert_binary_param_2 };
 static const toy_str_list assert_unary_params = { .str = "val", .next = NULL };
 static const toy_str_list list_foreach_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list list_foreach_params = { .str = "list", .next = (toy_str_list *) &list_foreach_param_2 };
+static const toy_str_list list_len_params = { .str = "list", .next = NULL };
 static const toy_str_list map_foreach_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list map_foreach_params = { .str = "map", .next = (toy_str_list *) &map_foreach_param_2 };
+static const toy_str_list map_len_params = { .str = "map", .next = NULL };
 
 static const toy_func_def predefined_functions[] = {
     { .name = "assert", .type = FUNC_PREDEFINED, .predef = predefined_assert, .param_names = (toy_str_list *) &assert_unary_params },
@@ -293,9 +306,10 @@ static const toy_func_def predefined_functions[] = {
     { .name = "assert_not_zero", .type = FUNC_PREDEFINED, .predef = predefined_assert_not_zero, .param_names = (toy_str_list *) &assert_unary_params },
     { .name = "assert_null", .type = FUNC_PREDEFINED, .predef = predefined_assert_null, .param_names = (toy_str_list *) &assert_unary_params },
     { .name = "assert_zero", .type = FUNC_PREDEFINED, .predef = predefined_assert_zero, .param_names = (toy_str_list *) &assert_unary_params },
-    { .name = "len",   .type = FUNC_PREDEFINED, .predef = predefined_list_len, .param_names = (toy_str_list *) &list_len_params },
+    { .name = "list_len",   .type = FUNC_PREDEFINED, .predef = predefined_list_len, .param_names = (toy_str_list *) &list_len_params },
     { .name = "list_foreach", .type = FUNC_PREDEFINED, .predef = predefined_list_foreach, .param_names = (toy_str_list *) &list_foreach_params },
     { .name = "map_foreach", .type = FUNC_PREDEFINED, .predef = predefined_map_foreach, .param_names = (toy_str_list *) &map_foreach_params },
+    { .name = "map_len",   .type = FUNC_PREDEFINED, .predef = predefined_map_len, .param_names = (toy_str_list *) &map_len_params },
     { .name = "print", .type = FUNC_PREDEFINED, .predef = predefined_print,    .param_names = (toy_str_list *) &INFINITE_PARAMS }
 };
 
