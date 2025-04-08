@@ -22,6 +22,10 @@
 #define DEBUG_STACK 1
 #endif
 
+#if 1
+#define DEBUG_VARIABLES 1
+#endif
+
 enum frame_type {
     FRAME_LOOP_BODY,
     FRAME_IF_BODY,
@@ -313,6 +317,11 @@ typedef enum set_variable_policy_enum set_variable_policy;
 /* TODO: Move these into symbol-table.c */
 static int set_variable_value_policy(toy_interp *interp, const toy_str name, const toy_val *value, set_variable_policy policy)
 {
+#if DEBUG_VARIABLES
+    fprintf(stderr, "Set %s variable '%s' to ", ((POLICY_MUST_ALREADY_EXIST == policy) ? "existing" : "new"), name);
+    dump_val(stderr, value);
+    fputc('\n', stderr);
+#endif /* DEBUG_VARIABLES */
     if (is_predefined(name)) {
         readonly_identifier(name);
     }
@@ -376,6 +385,7 @@ static void op_assign(toy_interp *interp, toy_val *result, toy_str name, toy_exp
     toy_val value_result;
     eval_expr(interp, &value_result, arg);
     set_variable_value(interp, name, &value_result);
+    /* FIXME: This return value should contain the identifier assigned to, not the value assigned */
     *result = value_result;
 }
 
@@ -755,6 +765,19 @@ void eval_expr(toy_interp *interp, toy_val *result, const toy_expr *expr)
     }
 }
 
+static void run_for_stmt_atend(toy_interp *interp, const toy_for_stmt *for_stmt)
+{
+    if (for_stmt->at_end) {
+        assert(!for_stmt->at_end->next);
+        run_stmt(interp, for_stmt->at_end);
+    }
+}
+
+static void toy_goto(toy_interp *interp, toy_stmt *target)
+{
+    interp->cur_frame->cur_stmt = target;
+}
+
 static enum run_stmt_result for_stmt(toy_interp *interp, const toy_for_stmt *for_stmt)
 {
     enum run_stmt_result result = EXECUTED_STATEMENT;
@@ -776,16 +799,33 @@ static enum run_stmt_result for_stmt(toy_interp *interp, const toy_for_stmt *for
             }
         }
         result = run_current_block(interp);
-        if (for_stmt->at_end) {
-            assert(!for_stmt->at_end->next);
-            run_stmt(interp, for_stmt->at_end);
+        switch (result) {
+        case REACHED_RETURN:
+        case REACHED_BREAK:
+            break;
+        case REACHED_CONTINUE:
+            run_for_stmt_atend(interp, for_stmt);
+            toy_goto(interp, for_stmt->body.stmts);
+            continue;
+        default:
+            break;
         }
+        run_for_stmt_atend(interp, for_stmt);
     }
     pop_context(interp);
     return result;
 }
 
-static void if_stmt(toy_interp *interp, const toy_if_stmt *if_stmt)
+static void run_block(toy_interp *interp, const toy_block *elsepart)
+{
+    if (elsepart) {
+        push_context_if_body(interp, elsepart);
+        run_current_block(interp);
+        pop_context(interp);
+    }
+}
+
+static enum run_stmt_result if_stmt(toy_interp *interp, const toy_if_stmt *if_stmt)
 {
     unsigned int found_one = 0;
     for (toy_if_arm *arm = if_stmt->arms; arm; arm = arm->next) {
@@ -803,11 +843,10 @@ static void if_stmt(toy_interp *interp, const toy_if_stmt *if_stmt)
             break;
         }
     }
-    if (!found_one && if_stmt->elsepart.stmts) {
-        push_context_if_body(interp, &if_stmt->elsepart);
-        run_current_block(interp);
-        pop_context(interp);
-}
+    if (!found_one) {
+        run_block(interp, &if_stmt->elsepart);
+    }
+    return EXECUTED_STATEMENT;
 }
 
 static void while_stmt(toy_interp *interp, const toy_while_stmt *while_stmt)

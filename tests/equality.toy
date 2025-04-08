@@ -1,0 +1,11 @@
+assert_equal(1, 1);
+assert(1 == 1);
+assert_equal("foo", "foo");
+var foo = "foo";
+assert_equal(foo, "foo");
+assert_equal("foo", foo);
+assert_equal(foo, foo);
+assert(foo == foo);
+assert(foo == "foo");
+assert("foo" == foo);
+assert("foo" == "foo");

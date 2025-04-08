@@ -15,7 +15,7 @@ void fatal_error(const char *fmt, ...)
     vfprintf(stderr, fmt, argptr);
     va_end(argptr);
     fputc('\n', stderr);
-    exit(1);
+    abort();
 }
 
 /* TODO: Maybe "invalid argument" makes more sense? */

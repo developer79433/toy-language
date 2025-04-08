@@ -1,0 +1,5 @@
+fun myfunc() {
+    return 42;
+}
+var val = myfunc();
+assert_equal(val, 42);

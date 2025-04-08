@@ -1,0 +1,7 @@
+fun myfuncval() {
+}
+fun myfunc() {
+    return myfuncval;
+}
+var val = myfunc();
+assert_equal(val, myfuncval);
