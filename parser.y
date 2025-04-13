@@ -558,10 +558,6 @@ unary_neg_expr: T_MINUS expr_no_comma {
 ;
 
 listexpr: T_LBRACKET listitems T_RBRACKET {
-        /**
-         * FIXME; The parser needs to reduce a toy_expr_list to a toy_expr,
-         * but the interpreter-focused toy_cal list only allows a list of toy_vals, not toy_exprs
-         */
         $$ = alloc_expr(EXPR_LIST);
         $$->list = $2;
     }
@@ -579,6 +575,11 @@ function_decl_expr: T_FUN T_LPAREN formalparams T_RPAREN block {
     }
 ;
 
+/**
+ * FIXME: The LHS of the function call should be an expr, not an identifier,
+ * so we can do (eg) foo()();
+ * But this probably requires duplicating all of the relevant grammar rules.
+ */
 function_call_expr: T_IDENTIFIER T_LPAREN actualargs T_RPAREN {
         $$ = alloc_expr(EXPR_FUNC_CALL);
         $$->func_call.func_name = $1;
