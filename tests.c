@@ -17,13 +17,13 @@ static void test_strings(void)
 static void test_val_lists(void)
 {
     toy_val first_elem = { .type = VAL_BOOL, .boolean = TOY_TRUE };
-    toy_val_list *val_list = alloc_val_list(&first_elem);
+    toy_val_list *val_list = val_list_alloc_ref(&first_elem);
     assert(val_list);
     assert(val_list->val->type == VAL_BOOL);
     assert(val_list->val->boolean == TOY_TRUE);
     assert(val_list->next == NULL);
     toy_val new_elem = { .type = VAL_BOOL, .boolean = TOY_FALSE };
-    toy_val_list *retval = append_val_list_own(val_list, &new_elem);
+    toy_val_list *retval = val_list_append_own(val_list, &new_elem);
     assert(retval == val_list);
     assert(val_list->next);
     assert(!val_list->next->next);
@@ -34,7 +34,7 @@ static void test_val_lists(void)
 
 static void test_maps(void)
 {
-    toy_map *map1 = alloc_map();
+    toy_map *map1 = map_alloc();
 
     assert(0 == map_len(map1));
     // Test first insert
@@ -74,7 +74,7 @@ static void test_maps(void)
     assert(0 == strcmp(get6->str, "new value"));
 
     // Test reset
-    reset_map(map1);
+    map_reset(map1);
     assert(0 == map_len(map1));
 }
 

@@ -6,7 +6,7 @@
 #include "toy-expr-tuple-list.h"
 #include "dump.h"
 
-toy_expr_tuple_list *alloc_expr_tuple_list(toy_expr *first_key, toy_expr *first_value)
+toy_expr_tuple_list *expr_tuple_list_alloc_ref(toy_expr *first_key, toy_expr *first_value)
 {
     toy_expr_tuple_list *tuple_list;
     tuple_list = mymalloc(toy_expr_tuple_list);
@@ -16,10 +16,10 @@ toy_expr_tuple_list *alloc_expr_tuple_list(toy_expr *first_key, toy_expr *first_
     return tuple_list;
 }
 
-toy_expr_tuple_list *append_expr_tuple(toy_expr_tuple_list *orig, toy_expr_tuple_list *new_list)
+toy_expr_tuple_list *expr_tuple_list_concat(toy_expr_tuple_list *orig, toy_expr_tuple_list *new_list)
 {
     assert(offsetof(toy_expr_tuple_list, next) == offsetof(generic_list, next));
-    return (toy_expr_tuple_list *) generic_list_append((generic_list *) orig, (generic_list *) new_list);
+    return (toy_expr_tuple_list *) generic_list_concat((generic_list *) orig, (generic_list *) new_list);
 }
 
 typedef struct callback_args_struct {
@@ -41,7 +41,7 @@ static void dump_callback(void *cookie, const void *item) {
     args->printed_anything = 1;
 }
 
-void dump_expr_tuple_list(FILE *f, const toy_expr_tuple_list *list)
+void expr_tuple_list_dump(FILE *f, const toy_expr_tuple_list *list)
 {
     assert(offsetof(toy_expr_tuple_list, tuple) == offsetof(generic_list, payload));
     fputc('{', f);

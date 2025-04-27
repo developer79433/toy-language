@@ -26,10 +26,9 @@ struct toy_map_struct {
     map_entry *buckets[NUM_BUCKETS];
 };
 
-toy_map *alloc_map()
+toy_map *map_alloc(void)
 {
-    toy_map *map;
-    map = (toy_map *) malloc(sizeof(toy_map));
+    toy_map *map = mymalloc(toy_map);
     memset(map->buckets, 0, sizeof(map->buckets));
     map->num_items = 0;
     return map;
@@ -54,13 +53,13 @@ static void free_buckets(toy_map *map)
     }
 }
 
-void reset_map(toy_map *map)
+void map_reset(toy_map *map)
 {
     free_buckets(map);
     map->num_items = 0;
 }
 
-void free_map(toy_map *map)
+void map_free(toy_map *map)
 {
     free_buckets(map);
     free(map);
@@ -124,20 +123,18 @@ int map_set(toy_map *map, const toy_str key, const toy_val *value)
     map_entry *new_entry;
     map_entry **bucket = get_bucket(map, key);
     if (*bucket) {
-        map_entry *entry;
-        for (entry = *bucket; entry->next; entry = entry->next) {
+        for (map_entry *entry = *bucket; entry; entry = entry->next) {
             if (toy_str_equal(entry->key, key)) {
+                /* Overwrite existing entry */
                 memcpy(&entry->value, value, sizeof(*value));
                 return 0;
             }
         }
-        if (toy_str_equal(entry->key, key)) {
-            memcpy(&entry->value, value, sizeof(*value));
-            return 0;
-        }
+        /* Prepend new entry to existing bucket */
         new_entry = alloc_map_entry(key, (toy_val *) value);
         new_entry->next = *bucket;
     } else {
+        /* New entry in new bucket */
         new_entry = alloc_map_entry(key, (toy_val *) value);
     }
     *bucket = new_entry;
@@ -152,6 +149,7 @@ int map_delete(toy_map *map, const toy_str key)
         map_entry *entry, *prev;
         for (entry = *bucket, prev = *bucket; entry; prev = entry, entry = entry->next) {
             if (toy_str_equal(entry->key, key)) {
+                /* Found existing entry */
                 prev->next = entry->next;
                 if (entry == *bucket) {
                     assert(entry->next == NULL);
@@ -174,7 +172,7 @@ static void dump_map_entry(FILE *f, const map_entry *entry)
     dump_val(f, &entry->value);
 }
 
-void dump_map(FILE *f, const toy_map *map)
+void map_dump(FILE *f, const toy_map *map)
 {
     int output_anything = 0;
 
@@ -198,7 +196,7 @@ void dump_map(FILE *f, const toy_map *map)
     fputc('}', f);
 }
 
-void dump_map_keys(FILE *f, const toy_map *map)
+void map_dump_keys(FILE *f, const toy_map *map)
 {
     int output_anything = 0;
 

@@ -37,10 +37,10 @@ void dump_val(FILE *f, const toy_val *val)
             dump_function(f, val->func);
             break;
         case VAL_LIST:
-            dump_val_list(f, val->list);
+            val_list_dump(f, val->list);
             break;
         case VAL_MAP:
-            dump_map(f, val->map);
+            map_dump(f, val->map);
             break;
         case VAL_NULL:
             fputs("null", f);

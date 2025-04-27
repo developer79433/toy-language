@@ -8,7 +8,7 @@
 #include "toy-val-list.h"
 #include "errors.h"
 
-void dump_val_list(FILE *f, toy_val_list *list)
+void val_list_dump(FILE *f, toy_val_list *list)
 {
     int printed_anything = 0;
     fputc('[', f);
@@ -38,49 +38,45 @@ size_t val_list_len(const toy_val_list *list)
 toy_val *val_list_index(toy_val_list *list, toy_num index)
 {
     assert(offsetof(toy_val_list, val) == offsetof(generic_list, payload));
-    void *result = generic_list_index((generic_list *) list, index);
+    toy_val *result = (toy_val *) generic_list_index((generic_list *) list, index);
     if (result) {
         return result;
     } else {
         invalid_val_list_index(list, index);
     }
-    return NULL;
+    return result;
 }
 
-toy_val_list *append_val_list(toy_val_list *orig, toy_val_list *new_list)
+toy_val_list *val_list_concat(toy_val_list *orig, toy_val_list *new_list)
 {
     assert(offsetof(toy_expr_list, next) == offsetof(generic_list, next));
-    return (toy_val_list *) generic_list_append((generic_list *) orig, (generic_list *) new_list);
+    return (toy_val_list *) generic_list_concat((generic_list *) orig, (generic_list *) new_list);
 }
 
-toy_val_list *alloc_val_list(toy_val *first_elem)
+toy_val_list *val_list_alloc_ref(toy_val *first_elem)
 {
-    toy_val_list *list;
-    list = mymalloc(toy_val_list);
-    list->val = first_elem;
-    list->next = NULL;
-    return list;
+    assert(offsetof(toy_val_list, val) == offsetof(generic_list, payload));
+    return (toy_val_list *) generic_list_alloc_ref(first_elem);
 }
 
-/* TODO: Fix memory management - who owns the data? */
-toy_val_list *alloc_val_list_own(toy_val *first_elem)
+toy_val_list *val_list_alloc_own(toy_val *first_elem)
 {
-    toy_val_list *list;
-    list = (toy_val_list *) malloc(sizeof(toy_val_list) + sizeof(toy_val));
-    list->val = (toy_val *) (list + 1);
-    memcpy(list->val, first_elem, sizeof(toy_val));
-    list->next = NULL;
-    return list;
+    assert(offsetof(toy_val_list, val) == offsetof(generic_list, payload));
+    return (toy_val_list *) generic_list_alloc_own(first_elem, sizeof(*first_elem));
 }
 
-toy_val_list *append_val_list_own(toy_val_list *orig, toy_val *new_item)
+toy_val_list *val_list_append_ref(toy_val_list *orig, toy_val *new_item)
 {
-    toy_val_list *list;
-    list = (toy_val_list *) malloc(sizeof(toy_val_list) + sizeof(toy_val));
-    list->val = (toy_val *) (list + 1);
-    memcpy(list->val, new_item, sizeof(toy_val));
-    list->next = NULL;
-    return append_val_list(orig, list);
+    assert(offsetof(toy_val_list, val) == offsetof(generic_list, payload));
+    assert(offsetof(toy_expr_list, next) == offsetof(generic_list, next));
+    return (toy_val_list *) generic_list_append_ref((generic_list *) orig, new_item);
+}
+
+toy_val_list *val_list_append_own(toy_val_list *orig, toy_val *new_item)
+{
+    assert(offsetof(toy_val_list, val) == offsetof(generic_list, payload));
+    assert(offsetof(toy_expr_list, next) == offsetof(generic_list, next));
+    return (toy_val_list *) generic_list_append_own((generic_list *) orig, new_item, sizeof(*new_item));
 }
 
 void val_list_foreach(toy_val_list *list, val_list_item_callback callback, void *cookie)

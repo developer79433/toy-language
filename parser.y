@@ -282,12 +282,12 @@ formalparams :
 
 formalparamlist :
     T_IDENTIFIER {
-        $$ = alloc_str_list($1);
+        $$ = str_list_alloc_own($1);
     }
     | formalparamlist T_COMMA T_IDENTIFIER {
-        toy_str_list *this_entry = alloc_str_list($3);
+        toy_str_list *this_entry = str_list_alloc_own($3);
         if ($1) {
-            append_str_list($1, this_entry);
+            str_list_concat($1, this_entry);
             $$ = $1;
         } else {
             $1 = this_entry;
@@ -306,12 +306,12 @@ actualargs :
 
 actualarglist :
     expr_no_comma {
-        $$ = alloc_expr_list($1);
+        $$ = expr_list_alloc_ref($1);
     }
     | actualarglist T_COMMA expr_no_comma {
-        toy_expr_list *this_entry = alloc_expr_list($3);
+        toy_expr_list *this_entry = expr_list_alloc_ref($3);
         if ($1) {
-            append_expr_list($1, this_entry);
+            expr_list_concat($1, this_entry);
             $$ = $1;
         } else {
             $1 = this_entry;
@@ -330,12 +330,13 @@ listitems :
 
 listitemlist :
     expr_no_comma {
-        $$ = alloc_expr_list($1);
+        $$ = expr_list_alloc_ref($1);
     }
     | listitemlist T_COMMA expr_no_comma {
-        toy_expr_list *this_entry = alloc_expr_list($3);
+        /* TODO: Use expr_list_append_ref */
+        toy_expr_list *this_entry = expr_list_alloc_ref($3);
         if ($1) {
-            append_expr_list($1, this_entry);
+            expr_list_concat($1, this_entry);
             $$ = $1;
         } else {
             $1 = this_entry;
@@ -356,7 +357,7 @@ mapitemlist :
     mapitem
     | mapitemlist T_COMMA mapitem {
         if ($1) {
-            append_map_entry($1, $3);
+            map_entry_list_concat($1, $3);
             $$ = $1;
         } else {
             $1 = $3;
@@ -367,7 +368,7 @@ mapitemlist :
 mapitem :
     T_STRING T_COLON expr_no_comma {
         /* TODO: Should this be an expression, or a string/identifier? */
-        $$ = alloc_map_entry_list($1, $3);
+        $$ = map_entry_list_alloc_ref($1, $3);
     }
 ;
 

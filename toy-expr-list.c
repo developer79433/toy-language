@@ -7,13 +7,16 @@
 #include "toy-expr-list.h"
 #include "dump.h"
 
-toy_expr_list *alloc_expr_list(toy_expr *first_elem)
+toy_expr_list *expr_list_alloc_ref(toy_expr *first_elem)
 {
-    toy_expr_list *list;
-    list = mymalloc(toy_expr_list);
-    list->expr = first_elem;
-    list->next = NULL;
-    return list;
+    assert(offsetof(toy_expr_list, expr) == offsetof(generic_list, payload));
+    return (toy_expr_list *) generic_list_alloc_ref(first_elem);
+}
+
+toy_expr_list *expr_list_alloc_own(toy_expr *first_elem)
+{
+    assert(offsetof(toy_expr_list, expr) == offsetof(generic_list, payload));
+    return (toy_expr_list *) generic_list_alloc_own(first_elem, sizeof(*first_elem));
 }
 
 size_t expr_list_len(const toy_expr_list *list)
@@ -22,7 +25,7 @@ size_t expr_list_len(const toy_expr_list *list)
     return generic_list_len((const generic_list *) list);
 }
 
-void dump_expr_list(FILE *f, toy_expr_list *list)
+void expr_list_dump(FILE *f, toy_expr_list *list)
 {
     int printed_anything = 0;
     fputc('[', f);
@@ -43,8 +46,8 @@ void dump_expr_list(FILE *f, toy_expr_list *list)
     fputc(']', f);
 }
 
-toy_expr_list *append_expr_list(toy_expr_list *orig, toy_expr_list *new_list)
+toy_expr_list *expr_list_concat(toy_expr_list *orig, toy_expr_list *new_list)
 {
     assert(offsetof(toy_expr_list, next) == offsetof(generic_list, next));
-    return (toy_expr_list *) generic_list_append((generic_list *) orig, (generic_list *) new_list);
+    return (toy_expr_list *) generic_list_concat((generic_list *) orig, (generic_list *) new_list);
 }

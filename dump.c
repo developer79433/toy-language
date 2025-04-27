@@ -125,7 +125,7 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " in ");
             break;
         case EXPR_LIST:
-            dump_expr_list(f, expr->list);
+            expr_list_dump(f, expr->list);
             break;
         case EXPR_LITERAL:
             dump_val(f, &expr->val);
@@ -137,7 +137,7 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " <= ");
             break;
         case EXPR_MAP:
-            dump_map_entry_list(f, expr->map);
+            map_entry_list_dump(f, expr->map);
             break;
         case EXPR_METHOD_CALL:
             dump_method_call(f, &expr->method_call);

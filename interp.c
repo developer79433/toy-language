@@ -108,7 +108,7 @@ static interp_frame *alloc_frame_loop_body(const toy_block *loop_body, interp_fr
     frame->type = FRAME_LOOP_BODY;
     frame->prev = prev;
     frame->loop_body = loop_body;
-    frame->symbols = alloc_map();
+    frame->symbols = map_alloc();
     return frame;
 }
 
@@ -118,7 +118,7 @@ static interp_frame *alloc_frame_if_body(const toy_block *if_body, interp_frame 
     frame->type = FRAME_IF_BODY;
     frame->prev = prev;
     frame->if_body = if_body;
-    frame->symbols = alloc_map();
+    frame->symbols = map_alloc();
     return frame;
 }
 
@@ -128,7 +128,7 @@ static interp_frame *alloc_frame_block_stmt(const toy_block *block_stmt, interp_
     frame->type = FRAME_BLOCK_STMT;
     frame->prev = prev;
     frame->block_stmt = block_stmt;
-    frame->symbols = alloc_map();
+    frame->symbols = map_alloc();
     return frame;
 }
 
@@ -139,7 +139,7 @@ static interp_frame *alloc_frame_user_def_func(const toy_func_def *func_def, int
     frame->prev = prev;
     frame->user_def_func = func_def;
     /* TODO: Lazily allocate this map */
-    frame->symbols = alloc_map();
+    frame->symbols = map_alloc();
     return frame;
 }
 
@@ -156,7 +156,7 @@ static interp_frame *alloc_frame_pre_def_func(const toy_func_def *func_def, inte
 static void free_frame(interp_frame *frame)
 {
     if (frame->symbols) {
-        free_map(frame->symbols);
+        map_free(frame->symbols);
     }
     free(frame);
 }
@@ -395,10 +395,10 @@ static void eval_list(toy_interp *interp, toy_val *result, const toy_expr_list *
     if (expr_list) {
         toy_val element;
         eval_expr(interp, &element, expr_list->expr);
-        result->list = alloc_val_list_own(&element);
+        result->list = val_list_alloc_own(&element);
         for (expr_list = expr_list->next; expr_list; expr_list = expr_list->next) {
             eval_expr(interp, &element, expr_list->expr);
-            append_val_list_own(result->list, &element);
+            val_list_append_own(result->list, &element);
         }
     } else {
         result->list = NULL;
@@ -645,7 +645,7 @@ static void op_prefix_increment(toy_interp *interp, toy_val *result, toy_str id)
 static void eval_map(toy_interp *interp, toy_val *result, const toy_map_entry_list *entry_list)
 {
     result->type = VAL_MAP;
-    result->map = alloc_map();
+    result->map = map_alloc();
     for (; entry_list; entry_list = entry_list->next) {
         toy_val value;
         eval_expr(interp, &value, entry_list->value);

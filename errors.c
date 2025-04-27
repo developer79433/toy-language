@@ -70,21 +70,21 @@ void readonly_identifier(toy_str name)
 
 void invalid_val_list_index(toy_val_list *list, toy_num index)
 {
-    dump_val_list(stderr, list);
+    val_list_dump(stderr, list);
     fputc('\n', stderr);
     fatal_error("Invalid val list index %d", index);
 }
 
 void too_few_arguments(toy_num expected, toy_expr_list *args)
 {
-    dump_expr_list(stderr, args);
+    expr_list_dump(stderr, args);
     fputc('\n', stderr);
     fatal_error("Too few arguments: expected %d, received %d", expected, expr_list_len(args));
 }
 
 void too_many_arguments(toy_num expected, toy_expr_list *args)
 {
-    dump_expr_list(stderr, args);
+    expr_list_dump(stderr, args);
     fputc('\n', stderr);
     fatal_error("Too many arguments: expected %d, received %d", expected, expr_list_len(args));
 }

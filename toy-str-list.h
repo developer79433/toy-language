@@ -7,8 +7,11 @@
 #include "toy-str-list-types.h"
 
 size_t str_list_len(const toy_str_list *list);
-void dump_str_list(FILE *f, const toy_str_list *list);
-toy_str_list *alloc_str_list(const char * str);
-toy_str_list *append_str_list(toy_str_list *orig, toy_str_list *new);
+void str_list_dump(FILE *f, const toy_str_list *list);
+toy_str_list *str_list_alloc_ref(const char * str);
+toy_str_list *str_list_alloc_own(const char * str);
+toy_str_list *str_list_concat(toy_str_list *orig, toy_str_list *new);
+toy_str_list *str_list_append_ref(toy_str_list *list, toy_str new_item);
+toy_str_list *str_list_append_own(toy_str_list *list, toy_str new_item);
 
 #endif /* TOY_STR_LIST_H */
