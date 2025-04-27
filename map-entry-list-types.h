@@ -9,6 +9,7 @@ typedef struct toy_expr_struct toy_expr;
 typedef struct toy_map_entry_list_struct {
     struct toy_map_entry_list_struct *next;
     toy_str key;
+    /* TODO: This type should be configurable, at least to be a toy_val. */
     toy_expr *value;
 } toy_map_entry_list;
 

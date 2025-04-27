@@ -8,14 +8,17 @@
 #include "dump.h"
 #include "str.h"
 
+typedef struct toy_map_entry_struct {
+    toy_str key;
+    toy_expr *value;
+} toy_map_entry;
+
 toy_map_entry_list *map_entry_list_alloc_ref(toy_str first_key, toy_expr *first_value)
 {
-    toy_map_entry_list *tuple_list;
-    tuple_list = mymalloc(toy_map_entry_list);
-    tuple_list->key = first_key;
-    tuple_list->value = first_value;
-    tuple_list->next = NULL;
-    return tuple_list;
+    toy_map_entry entry = { .key = first_key, .value = first_value };
+    assert(offsetof(toy_map_entry_list, next) == offsetof(generic_list, next));
+    assert(offsetof(toy_map_entry, key) == offsetof(generic_list, payload));
+    return (toy_map_entry_list *) generic_list_alloc_own(&entry, sizeof(entry));
 }
 
 toy_map_entry_list *map_entry_list_concat(toy_map_entry_list *orig, toy_map_entry_list *new_list)
