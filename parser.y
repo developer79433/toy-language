@@ -78,7 +78,7 @@ stmts :
     }
     | stmts stmt {
         if ($1) {
-            append_stmt($1, $2);
+            stmt_append($1, $2);
             $$ = $1;
         } else {
             $$ = $2;
@@ -117,8 +117,8 @@ stmt_in_for_atend:
 
 if_stmt:
     T_IF T_LPAREN expr T_RPAREN block elseifs elsepart {
-        $$ = alloc_stmt(STMT_IF);
-        $$->if_stmt.arms = alloc_if_arm($3, &$5);
+        $$ = stmt_alloc(STMT_IF);
+        $$->if_stmt.arms = if_arm_alloc($3, &$5);
         $$->if_stmt.arms->next = $6;
         $$->if_stmt.elsepart = $7;
     }
@@ -126,7 +126,7 @@ if_stmt:
 
 while_stmt:
     T_WHILE T_LPAREN expr T_RPAREN block {
-        $$ = alloc_stmt(STMT_WHILE);
+        $$ = stmt_alloc(STMT_WHILE);
         $$->while_stmt.condition = $3;
         $$->while_stmt.body = $5;
     }
@@ -134,7 +134,7 @@ while_stmt:
 
 for_stmt:
     T_FOR T_LPAREN stmt_in_for_atstart T_SEMICOLON optional_expr T_SEMICOLON stmt_in_for_atend T_RPAREN block {
-        $$ = alloc_stmt(STMT_FOR);
+        $$ = stmt_alloc(STMT_FOR);
         $$->for_stmt.at_start = $3;
         $$->for_stmt.condition = $5;
         $$->for_stmt.at_end = $7;
@@ -151,27 +151,27 @@ for_stmt:
 
 null_stmt:
     /* EMPTY */ {
-        $$ = alloc_stmt(STMT_NULL);
+        $$ = stmt_alloc(STMT_NULL);
     }
 ;
 
 block_stmt:
     block {
-        $$ = alloc_stmt(STMT_BLOCK);
+        $$ = stmt_alloc(STMT_BLOCK);
         $$->block_stmt.block = $1;
     }
 ;
 
 expr_stmt:
     expr_with_side_effect_allow_comma {
-        $$ = alloc_stmt(STMT_EXPR);
+        $$ = stmt_alloc(STMT_EXPR);
         $$->expr_stmt.expr = $1;
     }
 ;
 
 func_decl_stmt:
     T_FUN T_IDENTIFIER T_LPAREN formalparams T_RPAREN block {
-        $$ = alloc_stmt(STMT_FUNC_DECL);
+        $$ = stmt_alloc(STMT_FUNC_DECL);
         $$->func_decl_stmt.def.type = FUNC_USER_DECLARED;
         $$->func_decl_stmt.def.name = $2;
         $$->func_decl_stmt.def.param_names = $4;
@@ -181,31 +181,31 @@ func_decl_stmt:
 
 var_decl_stmt:
     T_VAR vardecllist {
-        $$ = alloc_stmt(STMT_VAR_DECL);
+        $$ = stmt_alloc(STMT_VAR_DECL);
         $$->var_decl_stmt = $2;
     }
 ;
 
 return_stmt:
     T_RETURN {
-        $$ = alloc_stmt(STMT_RETURN);
+        $$ = stmt_alloc(STMT_RETURN);
         $$->return_stmt.expr = NULL;
     }
     | T_RETURN expr {
-        $$ = alloc_stmt(STMT_RETURN);
+        $$ = stmt_alloc(STMT_RETURN);
         $$->return_stmt.expr = $2;
     }
 ;
 
 break_stmt:
     T_BREAK {
-        $$ = alloc_stmt(STMT_BREAK);
+        $$ = stmt_alloc(STMT_BREAK);
     }
 ;
 
 continue_stmt:
     T_CONTINUE {
-        $$ = alloc_stmt(STMT_CONTINUE);
+        $$ = stmt_alloc(STMT_CONTINUE);
     }
 ;
 
@@ -224,7 +224,7 @@ vardecllist :
     }
     | vardecllist T_COMMA vardecl {
         if ($1) {
-            append_var_decl($1, $3);
+            var_decl_append($1, $3);
             $$ = $1;
         } else {
             $$ = $3;
@@ -234,30 +234,30 @@ vardecllist :
 
 vardecl :
     T_IDENTIFIER {
-        $$ = alloc_var_decl($1, NULL);
+        $$ = var_decl_alloc($1, NULL);
     }
     | T_IDENTIFIER T_ASSIGN expr_no_comma {
-        $$ = alloc_var_decl($1, $3);
+        $$ = var_decl_alloc($1, $3);
     }
 ;
 
 elseifs :
     { $$ = NULL; }
     | elseifs T_ELSEIF T_LPAREN expr T_RPAREN block {
-        toy_if_arm *this_arm = alloc_if_arm($4, &$6);
+        toy_if_arm *this_arm = if_arm_alloc($4, &$6);
         
         if ($1) {
-            append_if_arm($1, this_arm);
+            if_arm_append($1, this_arm);
             $$ = $1;
         } else {
             $$ = this_arm;
         }
     }
     | elseifs T_ELSE T_IF T_LPAREN expr T_RPAREN block {
-        toy_if_arm *this_arm = alloc_if_arm($5, &$7);
+        toy_if_arm *this_arm = if_arm_alloc($5, &$7);
         
         if ($1) {
-            append_if_arm($1, this_arm);
+            if_arm_append($1, this_arm);
             $$ = $1;
         } else {
             $$ = this_arm;

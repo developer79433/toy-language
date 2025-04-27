@@ -23,6 +23,6 @@ int lookup_identifier(toy_interp *interp, toy_val *result, const toy_str name);
 void call_func(toy_interp *interp, toy_val *result, toy_str func_name, toy_expr_list *args);
 void run_toy_function_expr_list(toy_interp *interp, toy_val *result, toy_func_def *def, toy_expr_list *args);
 void run_toy_function_val_list(toy_interp *interp, toy_val *result, toy_func_def *def, const toy_val_list *args);
-const toy_str frame_type_name(frame_type type);
+const char *frame_type_name(frame_type type);
 
 #endif /* TOY_INTERP_H */

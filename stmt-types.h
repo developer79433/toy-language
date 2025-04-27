@@ -9,9 +9,9 @@
 #include "map-entry-list.h"
 
 typedef struct toy_var_decl_struct {
+    struct toy_var_decl_struct *next;
     toy_str name;
     toy_expr *value;
-    struct toy_var_decl_struct *next;
 } toy_var_decl;
 
 typedef struct toy_func_decl_stmt_struct {
@@ -28,6 +28,7 @@ typedef struct toy_return_stmt_struct {
 
 struct toy_if_arm_struct;
 typedef struct toy_if_arm_struct {
+    /* TODO: Move 'next' first, so it's layout-compatible with generic_list. */
     toy_expr *condition;
     toy_block code;
     struct toy_if_arm_struct *next;

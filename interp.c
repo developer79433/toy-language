@@ -40,7 +40,7 @@ typedef struct interp_frame_struct {
     toy_map *symbols;
 } interp_frame;
 
-static const toy_str frame_type_names[] = {
+static const char *frame_type_names[] = {
     "Loop body",
     "If body",
     "Pre-defined function",
@@ -48,7 +48,7 @@ static const toy_str frame_type_names[] = {
     "Block statement"
 };
 
-const toy_str frame_type_name(frame_type type)
+const char *frame_type_name(frame_type type)
 {
     return frame_type_names[type];
 }
