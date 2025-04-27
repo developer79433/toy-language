@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "util.h"
-#include "functions.h"
+#include "function.h"
 #include "str.h"
 #include "val.h"
 #include "val-list.h"

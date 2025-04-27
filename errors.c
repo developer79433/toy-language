@@ -9,7 +9,7 @@
 #include "val.h"
 #include "expr.h"
 #include "stmt.h"
-#include "functions.h"
+#include "function.h"
 #include "interp.h"
 
 void fatal_error(const char *fmt, ...)

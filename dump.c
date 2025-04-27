@@ -10,7 +10,7 @@
 #include "bool.h"
 #include "str.h"
 #include "val.h"
-#include "functions.h"
+#include "function.h"
 
 void dump_identifier(FILE *f, const toy_str str)
 {

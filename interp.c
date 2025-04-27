@@ -15,7 +15,7 @@
 #include "util.h"
 #include "operations.h"
 #include "constants.h"
-#include "functions.h"
+#include "function.h"
 #include "errors.h"
 
 #if 0

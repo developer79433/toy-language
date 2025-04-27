@@ -5,7 +5,7 @@
 #include "bool.h"
 #include "str.h"
 #include "val.h"
-#include "functions.h"
+#include "function.h"
 #include "val-list.h"
 #include "map.h"
 #include "errors.h"
