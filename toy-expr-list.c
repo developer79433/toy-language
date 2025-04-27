@@ -25,6 +25,20 @@ size_t expr_list_len(const toy_expr_list *list)
     return generic_list_len((const generic_list *) list);
 }
 
+toy_expr_list *expr_list_append_ref(toy_expr_list *list, toy_expr *new_expr)
+{
+    assert(offsetof(toy_expr_list, expr) == offsetof(generic_list, payload));
+    assert(offsetof(toy_expr_list, next) == offsetof(generic_list, next));
+    return (toy_expr_list *) generic_list_append_ref((generic_list *) list, new_expr);
+}
+
+toy_expr_list *expr_list_append_own(toy_expr_list *list, toy_expr *new_expr)
+{
+    assert(offsetof(toy_expr_list, expr) == offsetof(generic_list, payload));
+    assert(offsetof(toy_expr_list, next) == offsetof(generic_list, next));
+    return (toy_expr_list *) generic_list_append_own((generic_list *) list, new_expr, sizeof(*new_expr));
+}
+
 void expr_list_dump(FILE *f, toy_expr_list *list)
 {
     int printed_anything = 0;

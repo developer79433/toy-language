@@ -285,12 +285,11 @@ formalparamlist :
         $$ = str_list_alloc_own($1);
     }
     | formalparamlist T_COMMA T_IDENTIFIER {
-        toy_str_list *this_entry = str_list_alloc_own($3);
         if ($1) {
-            str_list_concat($1, this_entry);
+            str_list_append_own($1, $3);
             $$ = $1;
         } else {
-            $1 = this_entry;
+            $1 = str_list_alloc_own($3);
         }
     }
 ;
@@ -309,12 +308,11 @@ actualarglist :
         $$ = expr_list_alloc_ref($1);
     }
     | actualarglist T_COMMA expr_no_comma {
-        toy_expr_list *this_entry = expr_list_alloc_ref($3);
         if ($1) {
-            expr_list_concat($1, this_entry);
+            expr_list_append_ref($1, $3);
             $$ = $1;
         } else {
-            $1 = this_entry;
+            $1 = expr_list_alloc_ref($3);
         }
     }
 ;
@@ -333,13 +331,11 @@ listitemlist :
         $$ = expr_list_alloc_ref($1);
     }
     | listitemlist T_COMMA expr_no_comma {
-        /* TODO: Use expr_list_append_ref */
-        toy_expr_list *this_entry = expr_list_alloc_ref($3);
         if ($1) {
-            expr_list_concat($1, this_entry);
+            expr_list_append_ref($1, $3);
             $$ = $1;
         } else {
-            $1 = this_entry;
+            $1 = expr_list_alloc_ref($3);
         }
     }
 ;
