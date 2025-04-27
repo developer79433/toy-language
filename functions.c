@@ -12,7 +12,7 @@
 #include "operations.h"
 #include "errors.h"
 
-void dump_function(FILE *f, const toy_func_def *def)
+void func_dump(FILE *f, const toy_func_def *def)
 {
     fprintf(f, "fun %s(", def->name);
     if (def->param_names == &INFINITE_PARAMS) {
@@ -318,7 +318,7 @@ static const toy_func_def predefined_functions[] = {
     { .name = "print", .type = FUNC_PREDEFINED, .predef = predefined_print,    .param_names = (toy_str_list *) &INFINITE_PARAMS }
 };
 
-const toy_func_def *lookup_predefined_function_name(const toy_str name)
+const toy_func_def *func_lookup_predef_name(const toy_str name)
 {
     for (
         const toy_func_def *function = &predefined_functions[0];
@@ -332,7 +332,7 @@ const toy_func_def *lookup_predefined_function_name(const toy_str name)
     return NULL;
 }
 
-const toy_func_def *lookup_predefined_function_addr(predefined_func_addr func_addr)
+const toy_func_def *func_lookup_predef_addr(predefined_func_addr func_addr)
 {
     ;
     for (

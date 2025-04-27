@@ -265,7 +265,7 @@ static int is_predefined(toy_str name)
     if (lookup_predefined_constant(name)) {
         return 1;
     }
-    if (lookup_predefined_function_name(name)) {
+    if (func_lookup_predef_name(name)) {
         return 1;
     }
     return 0;
@@ -286,7 +286,7 @@ static int lookup_identifier_in_frame(interp_frame *frame, toy_val *result, toy_
 static int lookup_user_identifier(toy_interp *interp, toy_val *result, toy_str name)
 {
     assert(!lookup_predefined_constant(name));
-    assert(!lookup_predefined_function_name(name));
+    assert(!func_lookup_predef_name(name));
     for (interp_frame *frame = interp->cur_frame; frame; frame = frame->prev) {
         int found = lookup_identifier_in_frame(frame, result, name);
         if (found) {
@@ -304,7 +304,7 @@ int lookup_identifier(toy_interp *interp, toy_val *result, const toy_str name)
         *result = *((toy_val *) predef_const);
         return 1;
     }
-    const toy_func_def *predef_func = lookup_predefined_function_name(name);
+    const toy_func_def *predef_func = func_lookup_predef_name(name);
     if (predef_func) {
         result->type = VAL_FUNC;
         result->func = (toy_func_def *) predef_func;

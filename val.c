@@ -34,7 +34,7 @@ void dump_val(FILE *f, const toy_val *val)
             dump_bool(f, val->boolean);
             break;
         case VAL_FUNC:
-            dump_function(f, val->func);
+            func_dump(f, val->func);
             break;
         case VAL_LIST:
             val_list_dump(f, val->list);
