@@ -28,7 +28,7 @@ static toy_stmt *program_start;
     toy_map *map;
     toy_expr *expr;
     toy_stmt *stmt;
-    toy_var_decl *var_decl;
+    toy_var_decl_list *var_decl;
     toy_if_arm *if_arm;
     toy_block block;
     toy_str_list *str_list;
@@ -224,7 +224,7 @@ vardecllist :
     }
     | vardecllist T_COMMA vardecl {
         if ($1) {
-            var_decl_append($1, $3);
+            var_decl_list_concat($1, $3);
             $$ = $1;
         } else {
             $$ = $3;
@@ -234,10 +234,10 @@ vardecllist :
 
 vardecl :
     T_IDENTIFIER {
-        $$ = var_decl_alloc($1, NULL);
+        $$ = var_decl_list_alloc_ref($1, NULL);
     }
     | T_IDENTIFIER T_ASSIGN expr_no_comma {
-        $$ = var_decl_alloc($1, $3);
+        $$ = var_decl_list_alloc_ref($1, $3);
     }
 ;
 

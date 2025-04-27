@@ -39,10 +39,11 @@ toy_if_arm *if_arm_alloc(toy_expr *condition, toy_block *block)
     return arm;
 }
 
-toy_var_decl *var_decl_alloc(toy_str name, toy_expr *value)
+toy_var_decl_list *var_decl_list_alloc_ref(toy_str name, toy_expr *value)
 {
-    toy_var_decl *var_decl;
-    var_decl = mymalloc(toy_var_decl);
+    /* TODO: USe generic_list_alloc */
+    toy_var_decl_list *var_decl;
+    var_decl = mymalloc(toy_var_decl_list);
     var_decl->name = name;
     var_decl->value = value;
     var_decl->next = NULL;
@@ -59,9 +60,9 @@ toy_stmt *stmt_append(toy_stmt *orig, toy_stmt *new_stmt)
     return orig;
 }
 
-toy_var_decl *var_decl_append(toy_var_decl *orig, toy_var_decl *new_var_decl)
+toy_var_decl_list *var_decl_list_concat(toy_var_decl_list *orig, toy_var_decl_list *new_var_decl)
 {
-    toy_var_decl *tmp = orig;
+    toy_var_decl_list *tmp = orig;
     while (tmp->next) {
         tmp = tmp->next;
     }

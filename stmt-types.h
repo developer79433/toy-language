@@ -8,11 +8,11 @@
 #include "val-list-types.h"
 #include "map-entry-list.h"
 
-typedef struct toy_var_decl_struct {
-    struct toy_var_decl_struct *next;
+typedef struct toy_var_decl_list_struct {
+    struct toy_var_decl_list_struct *next;
     toy_str name;
     toy_expr *value;
-} toy_var_decl;
+} toy_var_decl_list;
 
 typedef struct toy_func_decl_stmt_struct {
     toy_func_def def;
@@ -26,12 +26,12 @@ typedef struct toy_return_stmt_struct {
     toy_expr *expr;
 } toy_return_stmt;
 
+/* TODO: Should be named 'toy_if_arm_list' */
 struct toy_if_arm_struct;
 typedef struct toy_if_arm_struct {
-    /* TODO: Move 'next' first, so it's layout-compatible with generic_list. */
+    struct toy_if_arm_struct *next;
     toy_expr *condition;
     toy_block code;
-    struct toy_if_arm_struct *next;
 } toy_if_arm;
 
 typedef struct toy_if_stmt_struct {
@@ -79,7 +79,7 @@ struct toy_stmt_struct {
         toy_if_stmt if_stmt;
         toy_for_stmt for_stmt;
         toy_while_stmt while_stmt;
-        toy_var_decl *var_decl_stmt;
+        toy_var_decl_list *var_decl_stmt;
         toy_func_decl_stmt func_decl_stmt;
         toy_return_stmt return_stmt;
         toy_block_stmt block_stmt;

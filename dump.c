@@ -292,7 +292,7 @@ void dump_stmt(FILE *f, const toy_stmt *stmt, int append_semicolon)
     case STMT_VAR_DECL:
         fputs("var ", f);
         int output_something = 0;
-        for (toy_var_decl *decl = stmt->var_decl_stmt; decl; decl = decl->next) {
+        for (toy_var_decl_list *decl = stmt->var_decl_stmt; decl; decl = decl->next) {
             if (output_something) {
                 fputs(", ", f);
             }
