@@ -4,6 +4,7 @@
 #include <strings.h>
 
 #include "ast.h"
+#include "expr.h"
 #include "toy-str-list.h"
 #include "toy-val-list.h"
 #include "toy-expr-list.h"
