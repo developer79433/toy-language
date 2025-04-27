@@ -33,7 +33,6 @@ toy_if_arm *alloc_if_arm(toy_expr *condition, toy_block *block)
     toy_if_arm *arm;
     arm = mymalloc(toy_if_arm);
     arm->condition = condition;
-    block->type = BLOCK_IF_BODY;
     arm->code.stmts = block->stmts;
     arm->next = NULL;
     return arm;

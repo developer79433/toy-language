@@ -26,17 +26,9 @@
 #define DEBUG_VARIABLES 1
 #endif
 
-enum frame_type {
-    FRAME_LOOP_BODY,
-    FRAME_IF_BODY,
-    FRAME_PRE_DEF_FUNC,
-    FRAME_USER_DEF_FUNC,
-    FRAME_BLOCK_STMT
-};
-
 typedef struct interp_frame_struct {
     struct interp_frame_struct *prev;
-    enum frame_type type;
+    frame_type type;
     union {
         const toy_block *loop_body;
         const toy_block *if_body;
@@ -47,6 +39,19 @@ typedef struct interp_frame_struct {
     toy_stmt *cur_stmt;
     toy_map *symbols;
 } interp_frame;
+
+static const toy_str frame_type_names[] = {
+    "Loop body",
+    "If body",
+    "Pre-defined function",
+    "User-defined function",
+    "Block statement"
+};
+
+const toy_str frame_type_name(frame_type type)
+{
+    return frame_type_names[type];
+}
 
 typedef struct toy_interp_struct {
     toy_func_def main_program;
@@ -990,7 +995,6 @@ toy_interp *alloc_interp(const toy_stmt *program)
     toy_interp *interp;
     interp = mymalloc(toy_interp);
     interp->main_program.type = FUNC_USER_DECLARED;
-    interp->main_program.code.type = BLOCK_FUNC_BODY;
     interp->main_program.code.stmts = (toy_stmt *) program;
     interp->main_program.name = "Top-level";
     interp->main_program.param_names = NULL;

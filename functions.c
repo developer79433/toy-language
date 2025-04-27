@@ -347,19 +347,6 @@ const toy_func_def *lookup_predefined_function_addr(predefined_func_addr func_ad
     return NULL;
 }
 
-/* TODO: Belongs elsewhere */
-static const char *block_type_names[] = {
-    "loop body",
-    "function body",
-    "if body",
-    "block statement"
-};
-
-const char *block_type_name(enum block_type btype)
-{
-    return block_type_names[btype];
-}
-
 void func_assert_valid(const toy_func_def *func_def)
 {
     assert(func_def);
