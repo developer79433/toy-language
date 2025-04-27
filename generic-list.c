@@ -5,6 +5,8 @@
 #include "mymalloc.h"
 #include "generic-list.h"
 
+void *INDEX_OUT_OF_BOUNDS = (void *) 1;
+
 typedef struct big_list_struct {
     struct big_list_struct *next;
     char c;
@@ -102,18 +104,15 @@ generic_list *generic_list_prepend_own(generic_list *list, void *new_payload, si
     return new_list;
 }
 
-void *generic_list_index(generic_list *list, toy_num index)
+void *generic_list_index(generic_list *list, size_t index)
 {
-    if (index < 0) {
-        return NULL;
-    }
     /* FIXME: inefficient */
     for (size_t i = 0; list; list = list->next, i++) {
         if (i == index) {
             return list->payload;
         }
     }
-    return NULL;
+    return INDEX_OUT_OF_BOUNDS;
 }
 
 void generic_list_foreach(void *listv, list_item_callback callback, void *cookie)

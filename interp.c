@@ -514,7 +514,11 @@ static void list_lookup(toy_interp *interp, toy_val *result, toy_val_list *colle
     if (index_result.type == VAL_NUM) {
         toy_val *val;
         val = val_list_index(collection, index_result.num);
-        *result = *val;
+        if (INDEX_OUT_OF_BOUNDS == val) {
+            invalid_val_list_index(collection, index_result.num);
+        } else {
+            *result = *val;
+        }
     } else {
         invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
     }

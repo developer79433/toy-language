@@ -7,6 +7,7 @@
 #include "str-list-types.h"
 
 size_t str_list_len(const toy_str_list *list);
+toy_str str_list_index(toy_str_list *list, size_t index);
 void str_list_dump(FILE *f, const toy_str_list *list);
 toy_str_list *str_list_alloc_ref(const char * str);
 toy_str_list *str_list_alloc_own(const char * str);

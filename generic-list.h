@@ -14,7 +14,7 @@ generic_list *generic_list_prepend_ref(generic_list *list, void *new_payload);
 generic_list *generic_list_prepend_own(generic_list *list, void *new_payload, size_t payload_size);
 generic_list *generic_list_append_ref(generic_list *list, void *new_payload);
 generic_list *generic_list_append_own(generic_list *list, void *new_payload, size_t payload_size);
-void *generic_list_index(generic_list *list, toy_num index);
+void *generic_list_index(generic_list *list, size_t index);
 void generic_list_foreach(void *list, list_item_callback callback, void *cookie);
 void generic_list_foreach_const(const void *list, const_list_item_callback callback, void *cookie);
 

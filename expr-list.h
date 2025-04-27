@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
+#include "generic-list-types.h"
 #include "expr-list-types.h"
 
 void expr_list_dump(FILE *f, toy_expr_list *list);

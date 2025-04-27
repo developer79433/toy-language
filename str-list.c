@@ -22,6 +22,12 @@ void str_list_dump(FILE *f, const toy_str_list *list)
     }
 }
 
+toy_str str_list_index(toy_str_list *list, size_t index)
+{
+    assert(offsetof(toy_str_list, str) == offsetof(generic_list, payload));
+    return (toy_str) generic_list_index((generic_list *) list, index);
+}
+
 toy_str_list *str_list_alloc_ref(const char *str)
 {
     assert(offsetof(toy_str_list, str) == offsetof(generic_list, payload));

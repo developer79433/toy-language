@@ -35,16 +35,10 @@ size_t val_list_len(const toy_val_list *list)
     return generic_list_len((const generic_list *) list);
 }
 
-toy_val *val_list_index(toy_val_list *list, toy_num index)
+toy_val *val_list_index(toy_val_list *list, size_t index)
 {
     assert(offsetof(toy_val_list, val) == offsetof(generic_list, payload));
-    toy_val *result = (toy_val *) generic_list_index((generic_list *) list, index);
-    if (result) {
-        return result;
-    } else {
-        invalid_val_list_index(list, index);
-    }
-    return result;
+    return (toy_val *) generic_list_index((generic_list *) list, index);
 }
 
 toy_val_list *val_list_concat(toy_val_list *orig, toy_val_list *new_list)
