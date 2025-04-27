@@ -380,16 +380,15 @@ static void create_function(toy_interp *interp, const toy_func_def *def)
     map_set(interp->cur_frame->symbols, def->name, &func_val);
 }
 
-static void op_assign(toy_interp *interp, toy_val *result, toy_str name, toy_expr *arg)
+static void op_assign(toy_interp *interp, toy_val *result, toy_str name, toy_expr *value)
 {
     toy_val value_result;
-    eval_expr(interp, &value_result, arg);
+    eval_expr(interp, &value_result, value);
     set_variable_value(interp, name, &value_result);
-    /* FIXME: This return value should contain the identifier assigned to, not the value assigned */
     *result = value_result;
 }
 
-static void eval_list(toy_interp *interp, toy_val *result, const toy_expr_list *expr_list)
+static void eval_expr_list(toy_interp *interp, toy_val *result, const toy_expr_list *expr_list)
 {
     result->type = VAL_LIST;
     if (expr_list) {
@@ -413,7 +412,7 @@ static void run_predefined_func_val_list(toy_interp *interp, toy_val *result, pr
 static void run_predefined_func_expr_list(toy_interp *interp, toy_val *result, predefined_func_addr predef, toy_expr_list *arg_exprs)
 {
     toy_val args;
-    eval_list(interp, &args, arg_exprs);
+    eval_expr_list(interp, &args, arg_exprs);
     assert(VAL_LIST == args.type);
     run_predefined_func_val_list(interp, result, predef, args.list);
 }
@@ -707,7 +706,7 @@ void eval_expr(toy_interp *interp, toy_val *result, const toy_expr *expr)
         op_in(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_LIST:
-        eval_list(interp, result, expr->list);
+        eval_expr_list(interp, result, expr->list);
         break;
     case EXPR_LITERAL:
         *result = expr->val;
