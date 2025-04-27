@@ -4,8 +4,8 @@
 
 #include "generic-list.h"
 #include "mymalloc.h"
-#include "toy-val.h"
-#include "toy-val-list.h"
+#include "val.h"
+#include "val-list.h"
 #include "errors.h"
 
 void val_list_dump(FILE *f, toy_val_list *list)

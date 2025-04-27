@@ -3,8 +3,8 @@
 
 #include <stdio.h>
 
-#include "toy-str-types.h"
-#include "toy-val-types.h"
+#include "str-types.h"
+#include "val-types.h"
 #include "function-types.h"
 
 extern const toy_str_list INFINITE_PARAMS;

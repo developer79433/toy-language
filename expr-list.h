@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include "toy-expr-list-types.h"
+#include "expr-list-types.h"
 
 void expr_list_dump(FILE *f, toy_expr_list *list);
 toy_expr_list *expr_list_alloc_ref(toy_expr *first_elem);

@@ -3,7 +3,7 @@
 
 #include "expr-types.h"
 #include "stmt-types.h"
-#include "toy-str-list-types.h"
+#include "str-list-types.h"
 
 toy_expr *alloc_unary_op_expr(enum toy_expr_type expr_type);
 toy_expr *alloc_binary_op_expr(enum toy_expr_type expr_type);

@@ -1,8 +1,8 @@
 #ifndef TOY_MAP_TYPES_H
 #define TOY_MAP_TYPES_H 1
 
-#include "toy-str-types.h"
-#include "toy-val-types.h"
+#include "str-types.h"
+#include "val-types.h"
 
 struct toy_map_struct;
 typedef struct toy_map_struct toy_map;

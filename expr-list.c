@@ -4,7 +4,7 @@
 
 #include "mymalloc.h"
 #include "generic-list.h"
-#include "toy-expr-list.h"
+#include "expr-list.h"
 #include "dump.h"
 
 toy_expr_list *expr_list_alloc_ref(toy_expr *first_elem)

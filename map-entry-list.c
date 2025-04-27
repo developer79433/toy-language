@@ -4,9 +4,9 @@
 
 #include "mymalloc.h"
 #include "generic-list.h"
-#include "toy-map-entry-list.h"
+#include "map-entry-list.h"
 #include "dump.h"
-#include "toy-str.h"
+#include "str.h"
 
 toy_map_entry_list *map_entry_list_alloc_ref(toy_str first_key, toy_expr *first_value)
 {

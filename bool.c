@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "toy-bool.h"
+#include "bool.h"
 
 void dump_bool(FILE *f, toy_bool b)
 {

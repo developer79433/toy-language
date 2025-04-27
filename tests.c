@@ -2,9 +2,9 @@
 #include <string.h>
 
 #include "tests.h"
-#include "toy-str.h"
-#include "toy-map.h"
-#include "toy-val-list.h"
+#include "str.h"
+#include "map.h"
+#include "val-list.h"
 
 /* TODO: move these into their respective units */
 

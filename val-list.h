@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <stddef.h>
 
-#include "toy-val-list-types.h"
-#include "toy-num-types.h"
+#include "val-list-types.h"
+#include "num-types.h"
 
 size_t val_list_len(const toy_val_list *list);
 toy_val *val_list_index(toy_val_list *list, toy_num index);

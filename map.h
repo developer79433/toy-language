@@ -4,9 +4,9 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include "toy-map-types.h"
-#include "toy-str-types.h"
-#include "toy-val-types.h"
+#include "map-types.h"
+#include "str-types.h"
+#include "val-types.h"
 
 toy_map *map_alloc(void);
 void map_free(toy_map *map);

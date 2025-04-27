@@ -2,12 +2,12 @@
 #include <assert.h>
 
 #include "mymalloc.h"
-#include "toy-bool.h"
-#include "toy-str.h"
-#include "toy-val.h"
+#include "bool.h"
+#include "str.h"
+#include "val.h"
 #include "functions.h"
-#include "toy-val-list.h"
-#include "toy-map.h"
+#include "val-list.h"
+#include "map.h"
 #include "errors.h"
 #include "constants.h"
 

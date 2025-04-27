@@ -1,10 +1,10 @@
 #ifndef TOY_INTERP_H
 #define TOY_INTERP_H 1
 
-#include "toy-str-types.h"
-#include "toy-val-types.h"
-#include "toy-val-list-types.h"
-#include "toy-expr-list-types.h"
+#include "str-types.h"
+#include "val-types.h"
+#include "val-list-types.h"
+#include "expr-list-types.h"
 #include "function-types.h"
 #include "interp-types.h"
 

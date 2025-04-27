@@ -4,8 +4,8 @@
 #include <assert.h>
 
 #include "generic-list.h"
-#include "toy-str.h"
-#include "toy-str-list.h"
+#include "str.h"
+#include "str-list.h"
 
 void str_list_dump(FILE *f, const toy_str_list *list)
 {

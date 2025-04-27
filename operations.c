@@ -3,8 +3,8 @@
 #include <string.h>
 #include <math.h>
 
-#include "toy-val.h"
-#include "toy-str.h"
+#include "val.h"
+#include "str.h"
 #include "operations.h"
 #include "interp.h"
 #include "errors.h"

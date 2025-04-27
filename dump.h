@@ -3,10 +3,10 @@
 
 #include <stdio.h>
 
-#include "toy-str-types.h"
+#include "str-types.h"
 #include "expr-types.h"
 #include "stmt-types.h"
-#include "toy-str-list-types.h"
+#include "str-list-types.h"
 
 void dump_identifier(FILE *f, const toy_str str);
 void dump_identifier_list(FILE *f, const toy_str_list *list);

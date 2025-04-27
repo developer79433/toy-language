@@ -1,10 +1,10 @@
 #ifndef TOY_FUNCTION_TYPES_H
 #define TOY_FUNCTION_TYPES_H 1
 
-#include "toy-str-types.h"
-#include "toy-val-types.h"
-#include "toy-val-list-types.h"
-#include "toy-str-list-types.h"
+#include "str-types.h"
+#include "val-types.h"
+#include "val-list-types.h"
+#include "str-list-types.h"
 
 struct toy_interp_struct;
 typedef struct toy_interp_struct toy_interp;

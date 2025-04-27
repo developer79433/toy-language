@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stddef.h>
 
-#include "toy-str-list-types.h"
+#include "str-list-types.h"
 
 size_t str_list_len(const toy_str_list *list);
 void str_list_dump(FILE *f, const toy_str_list *list);

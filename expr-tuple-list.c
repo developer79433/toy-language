@@ -3,7 +3,7 @@
 
 #include "mymalloc.h"
 #include "generic-list.h"
-#include "toy-expr-tuple-list.h"
+#include "expr-tuple-list.h"
 #include "dump.h"
 
 toy_expr_tuple_list *expr_tuple_list_alloc_ref(toy_expr *first_key, toy_expr *first_value)

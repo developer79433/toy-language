@@ -2,11 +2,11 @@
 #define TOY_STMT_TYPES_H 1
 
 #include "expr-types.h"
-#include "toy-val-types.h"
-#include "toy-str-list-types.h"
+#include "val-types.h"
+#include "str-list-types.h"
 #include "function-types.h"
-#include "toy-val-list-types.h"
-#include "toy-map-entry-list.h"
+#include "val-list-types.h"
+#include "map-entry-list.h"
 
 typedef struct toy_var_decl_struct {
     toy_str name;

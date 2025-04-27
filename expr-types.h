@@ -1,10 +1,10 @@
 #ifndef TOY_EXPR_TYPES_H
 #define TOY_EXPR_TYPES_H 1
 
-#include "toy-str-types.h"
-#include "toy-val-types.h"
-#include "toy-map-entry-list-types.h"
-#include "toy-expr-list-types.h"
+#include "str-types.h"
+#include "val-types.h"
+#include "map-entry-list-types.h"
+#include "expr-list-types.h"
 
 struct toy_expr_struct;
 typedef struct toy_expr_struct toy_expr;

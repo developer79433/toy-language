@@ -5,9 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "toy-num-types.h"
-#include "toy-str-types.h"
-#include "toy-bool-types.h"
+#include "num-types.h"
+#include "str-types.h"
+#include "bool-types.h"
 /* TODO: Can these be moved to parser.y? */
 #include "expr-types.h"
 #include "stmt-types.h"

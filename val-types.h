@@ -1,9 +1,9 @@
 #ifndef TOY_VAL_TYPES_H
 #define TOY_VAL_TYPES_H 1
 
-#include "toy-bool-types.h"
-#include "toy-str-types.h"
-#include "toy-num-types.h"
+#include "bool-types.h"
+#include "str-types.h"
+#include "num-types.h"
 
 enum toy_val_type {
     VAL_BOOL = 0,

@@ -3,13 +3,13 @@
 #include <string.h>
 #include <strings.h>
 
-#include "toy-bool-types.h"
+#include "bool-types.h"
 #include "expr.h"
 #include "stmt.h"
-#include "toy-str-list.h"
-#include "toy-val-list.h"
-#include "toy-expr-list.h"
-#include "toy-map-entry-list.h"
+#include "str-list.h"
+#include "val-list.h"
+#include "expr-list.h"
+#include "map-entry-list.h"
 
 extern int yylex (void);
 void yyerror(const char *s);

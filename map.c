@@ -4,9 +4,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "toy-str.h"
-#include "toy-map.h"
-#include "toy-val.h"
+#include "str.h"
+#include "map.h"
+#include "val.h"
 #include "mymalloc.h"
 #include "dump.h"
 #include "errors.h"

@@ -2,7 +2,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "toy-str.h"
+#include "str.h"
 
 void print_str(FILE *f, const toy_str str)
 {

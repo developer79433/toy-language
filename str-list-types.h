@@ -1,7 +1,7 @@
 #ifndef TOY_STR_LIST_TYPES_H
 #define TOY_STR_LIST_TYPES_H 1
 
-#include "toy-str-types.h"
+#include "str-types.h"
 
 typedef struct toy_str_list_struct {
     struct toy_str_list_struct *next;

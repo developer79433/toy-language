@@ -1,7 +1,7 @@
 #ifndef TOY_STMT_H
 #define TOY_STMT_H 1
 
-#include "toy-str-types.h"
+#include "str-types.h"
 #include "expr-types.h"
 #include "stmt-types.h"
 

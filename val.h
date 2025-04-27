@@ -3,8 +3,8 @@
 
 #include <stdio.h>
 
-#include "toy-bool-types.h"
-#include "toy-val-types.h"
+#include "bool-types.h"
+#include "val-types.h"
 
 void dump_val(FILE *f, const toy_val *val);
 toy_bool toy_vals_equal(const toy_val *val1, const toy_val *val2);

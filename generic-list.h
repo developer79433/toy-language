@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#include "toy-num-types.h"
+#include "num-types.h"
 #include "generic-list-types.h"
 
 generic_list *generic_list_alloc_ref(void *first_elem);

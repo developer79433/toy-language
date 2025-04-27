@@ -3,8 +3,8 @@
 
 #include <stdio.h>
 
-#include "toy-bool-types.h"
-#include "toy-str-types.h"
+#include "bool-types.h"
+#include "str-types.h"
 
 void print_str(FILE *f, const toy_str str);
 void dump_str(FILE *f, const toy_str str);
