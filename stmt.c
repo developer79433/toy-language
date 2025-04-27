@@ -1,50 +1,5 @@
-#include <assert.h>
-#include <string.h>
-
 #include "mymalloc.h"
-#include "ast.h"
-#include "toy-val-list.h"
-#include "toy-map.h"
-#include "dump.h"
-
-static const char *toy_expr_type_names[] = {
-    "logical and",
-    "assignment",
-    "collection lookup",
-    "comma",
-    "division",
-    "equal to",
-    "exponentiation",
-    "field reference",
-    "function call",
-    "greater than",
-    "greater than or equal to",
-    "identifier",
-    "in list",
-    "list",
-    "literal",
-    "less than",
-    "less than or equal to",
-    "map",
-    "method call",
-    "subtraction",
-    "modulus",
-    "multiplication",
-    "not equal to",
-    "logical negation",
-    "logical or",
-    "addition",
-    "postfix decrement",
-    "postfix increment",
-    "prefix decrement",
-    "prefix increment",
-    "unary negation"
-};
-
-const char *toy_expr_type_name(enum toy_expr_type expr_type)
-{
-    return toy_expr_type_names[expr_type];
-}
+#include "stmt.h"
 
 static const char *toy_stmt_type_names[] = {
     "block statement",
@@ -94,32 +49,32 @@ toy_var_decl *alloc_var_decl(toy_str name, toy_expr *value)
     return var_decl;
 }
 
-toy_stmt *append_stmt(toy_stmt *orig, toy_stmt *new)
+toy_stmt *append_stmt(toy_stmt *orig, toy_stmt *new_stmt)
 {
     toy_stmt *tmp = orig;
     while (tmp->next) {
         tmp = tmp->next;
     }
-    tmp->next = new;
+    tmp->next = new_stmt;
     return orig;
 }
 
-toy_var_decl *append_var_decl(toy_var_decl *orig, toy_var_decl *new)
+toy_var_decl *append_var_decl(toy_var_decl *orig, toy_var_decl *new_var_decl)
 {
     toy_var_decl *tmp = orig;
     while (tmp->next) {
         tmp = tmp->next;
     }
-    tmp->next = new;
+    tmp->next = new_var_decl;
     return orig;
 }
 
-toy_if_arm *append_if_arm(toy_if_arm *orig, toy_if_arm *new)
+toy_if_arm *append_if_arm(toy_if_arm *orig, toy_if_arm *new_arm)
 {
     toy_if_arm *tmp = orig;
     while (tmp->next) {
         tmp = tmp->next;
     }
-    tmp->next = new;
+    tmp->next = new_arm;
     return orig;
 }

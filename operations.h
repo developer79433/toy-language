@@ -1,7 +1,7 @@
 #ifndef TOY_OPERATIONS_H
 #define TOY_OPERATIONS_H 1
 
-#include "ast.h"
+#include "expr-types.h"
 #include "interp.h"
 
 void op_and(toy_interp *interp, toy_val *result, const toy_expr *arg1, const toy_expr *arg2);

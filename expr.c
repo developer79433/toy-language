@@ -1,7 +1,46 @@
 #include <assert.h>
 
+#include "expr.h"
 #include "mymalloc.h"
-#include "ast.h"
+
+static const char *toy_expr_type_names[] = {
+    "logical and",
+    "assignment",
+    "collection lookup",
+    "comma",
+    "division",
+    "equal to",
+    "exponentiation",
+    "field reference",
+    "function call",
+    "greater than",
+    "greater than or equal to",
+    "identifier",
+    "in list",
+    "list",
+    "literal",
+    "less than",
+    "less than or equal to",
+    "map",
+    "method call",
+    "subtraction",
+    "modulus",
+    "multiplication",
+    "not equal to",
+    "logical negation",
+    "logical or",
+    "addition",
+    "postfix decrement",
+    "postfix increment",
+    "prefix decrement",
+    "prefix increment",
+    "unary negation"
+};
+
+const char *toy_expr_type_name(enum toy_expr_type expr_type)
+{
+    return toy_expr_type_names[expr_type];
+}
 
 toy_expr *alloc_unary_op_expr(enum toy_expr_type expr_type)
 {

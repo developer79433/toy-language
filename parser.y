@@ -3,8 +3,9 @@
 #include <string.h>
 #include <strings.h>
 
-#include "ast.h"
+#include "toy-bool-types.h"
 #include "expr.h"
+#include "stmt.h"
 #include "toy-str-list.h"
 #include "toy-val-list.h"
 #include "toy-expr-list.h"

@@ -5,7 +5,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ast.h"
+#include "toy-num-types.h"
+#include "toy-str-types.h"
+#include "toy-bool-types.h"
+/* TODO: Can these be moved to parser.y? */
+#include "expr-types.h"
+#include "stmt-types.h"
 #include "parser.tab.h"
 
 %}
@@ -39,8 +44,8 @@ FALSE (?i:false)
     return T_STRING;
 }
 
-{TRUE} { yylval.bool = 1; return T_BOOLEAN; }
-{FALSE} { yylval.bool = 0; return T_BOOLEAN; }
+{TRUE} { yylval.bool = TOY_TRUE; return T_BOOLEAN; }
+{FALSE} { yylval.bool = TOY_FALSE; return T_BOOLEAN; }
 if { return T_IF; }
 else { return T_ELSE; }
 elseif { return T_ELSEIF; }

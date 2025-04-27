@@ -1,7 +1,9 @@
 #ifndef TOY_CONSTANTS_H
 #define TOY_CONSTANTS_H 1
 
-#include "ast.h"
+#include "toy-str-types.h"
+#include "toy-val-types.h"
+#include "expr-types.h"
 
 typedef struct predefined_constant_struct {
     toy_str name;

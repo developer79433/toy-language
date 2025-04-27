@@ -1,9 +1,5 @@
-#ifndef TOY_AST_H
-#define TOY_AST_H 1
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
+#ifndef TOY_STMT_TYPES_H
+#define TOY_STMT_TYPES_H 1
 
 #include "expr-types.h"
 #include "toy-val-types.h"
@@ -89,14 +85,4 @@ struct toy_stmt_struct {
     };
 };
 
-toy_stmt *alloc_stmt(enum toy_stmt_type type);
-toy_if_arm *alloc_if_arm(toy_expr *condition, toy_block *code);
-toy_var_decl *alloc_var_decl(toy_str name, toy_expr *value);
-toy_stmt *append_stmt(toy_stmt *orig, toy_stmt *new);
-toy_var_decl *append_var_decl(toy_var_decl *orig, toy_var_decl *new);
-toy_if_arm *append_if_arm(toy_if_arm *orig, toy_if_arm *new);
-const char *toy_val_type_name(enum toy_val_type val_type);
-const char *toy_expr_type_name(enum toy_expr_type expr_type);
-const char *toy_stmt_type_name(enum toy_stmt_type stmt_type);
-
-#endif /* TOY_AST_H */
+#endif /* TOY_STMT_TYPES_H */

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "errors.h"
 #include "dump.h"
@@ -6,6 +7,8 @@
 #include "toy-expr-list.h"
 #include "toy-str.h"
 #include "toy-val.h"
+#include "expr.h"
+#include "stmt.h"
 #include "functions.h"
 
 void fatal_error(const char *fmt, ...)

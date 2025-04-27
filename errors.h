@@ -3,8 +3,8 @@
 
 #include <stdarg.h>
 
-#include "ast.h"
-
+#include "expr-types.h"
+#include "stmt-types.h"
 #include "function-types.h"
 
 void fatal_error(const char *fmt, ...);

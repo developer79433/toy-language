@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ast.h"
-#include "parser.tab.h"
+#include "expr.h"
+#include "stmt.h"
 #include "interp.h"
 #include "tests.h"
+#include "parser.tab.h"
 
 extern toy_stmt *get_program_start(void);
 extern void init_lexer(FILE *f);
