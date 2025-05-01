@@ -3,7 +3,7 @@ CC=gcc
 CFLAGS=-Wall -g3
 # -Werror
 LD=$(CC)
-LIBS=m
+LIBS=m efence
 LDFLAGS=$(CFLAGS)
 BISONFLAGS=--header
 # BISONFLAGS=--header -Wcounterexamples --debug
