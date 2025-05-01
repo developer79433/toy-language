@@ -136,7 +136,7 @@ void op_in(toy_interp *interp, toy_val *result, const toy_expr *needle_expr, con
         list_item;
         list_item = list_item->next
     ) {
-        if (toy_vals_equal(list_item->val, &needle)) {
+        if (toy_vals_equal(&list_item->val, &needle)) {
             result->boolean = TOY_TRUE;
             return;
         }

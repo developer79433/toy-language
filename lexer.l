@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 #include "num-types.h"
-#include "str-types.h"
+#include "str.h"
 #include "bool-types.h"
 /* TODO: Can these be moved to parser.y? */
 #include "expr-types.h"
@@ -33,14 +33,12 @@ FALSE (?i:false)
 
 \"([^"\n]*)\" {
     yylval.str = (char *) malloc(strlen(yytext) - 1);
-    strncpy(yylval.str, &yytext[1], strlen(yytext) - 2);
-    yylval.str[strlen(yytext) - 1] = '\0';
+    str_backslash_decode(yylval.str, yytext + 1, yytext + strlen(yytext) - 2);
     return T_STRING;
 }
 \'([^'\n]*)\' {
     yylval.str = (char *) malloc(strlen(yytext) - 1);
-    strncpy(yylval.str, &yytext[1], strlen(yytext) - 2);
-    yylval.str[strlen(yytext) - 1] = '\0';
+    str_backslash_decode(yylval.str, yytext + 1, yytext + strlen(yytext) - 2);
     return T_STRING;
 }
 

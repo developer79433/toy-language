@@ -6,11 +6,13 @@
 #include "str-list.h"
 #include "val-list.h"
 #include "expr-list.h"
+#include "var-decl-list.h"
 #include "map.h"
 #include "bool.h"
 #include "str.h"
 #include "val.h"
 #include "function.h"
+#include "stmt.h"
 
 void dump_identifier(FILE *f, const toy_str str)
 {
@@ -257,7 +259,7 @@ void dump_stmt(FILE *f, const toy_stmt *stmt, int append_semicolon)
         break;
     case STMT_IF:
         {
-            toy_if_arm *arm = stmt->if_stmt.arms;
+            toy_if_arm_list *arm = stmt->if_stmt.arms;
             fputs("if (", f);
             dump_expr(f, arm->condition);
             fputs(") {\n", f);
@@ -291,18 +293,7 @@ void dump_stmt(FILE *f, const toy_stmt *stmt, int append_semicolon)
         break;
     case STMT_VAR_DECL:
         fputs("var ", f);
-        int output_something = 0;
-        for (toy_var_decl_list *decl = stmt->var_decl_stmt; decl; decl = decl->next) {
-            if (output_something) {
-                fputs(", ", f);
-            }
-            fputs(decl->name, f);
-            if (decl->value) {
-                fputs(" = ", f);
-                dump_expr(f, decl->value);
-            }
-            output_something = 1;
-        }
+        var_decl_list_dump(f, stmt->var_decl_stmt);
         if (append_semicolon) {
             fputc(';', f);
         }

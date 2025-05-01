@@ -13,5 +13,6 @@ const toy_func_def *func_lookup_predef_name(const toy_str name);
 const toy_func_def *func_lookup_predef_addr(predefined_func_addr func_addr);
 void func_dump(FILE *f, const toy_func_def *def);
 void func_assert_valid(const toy_func_def *func_def);
+void func_free(toy_func_def *def);
 
 #endif /* TOY_FUCTIONS_H */

@@ -7,12 +7,8 @@
 #include "function-types.h"
 #include "val-list-types.h"
 #include "map-entry-list.h"
-
-typedef struct toy_var_decl_list_struct {
-    struct toy_var_decl_list_struct *next;
-    toy_str name;
-    toy_expr *value;
-} toy_var_decl_list;
+#include "var-decl-types.h"
+#include "var-decl-list-types.h"
 
 typedef struct toy_func_decl_stmt_struct {
     toy_func_def def;
@@ -27,15 +23,15 @@ typedef struct toy_return_stmt_struct {
 } toy_return_stmt;
 
 /* TODO: Should be named 'toy_if_arm_list' */
-struct toy_if_arm_struct;
-typedef struct toy_if_arm_struct {
-    struct toy_if_arm_struct *next;
+struct toy_if_arm_list_struct;
+typedef struct toy_if_arm_list_struct {
+    struct toy_if_arm_list_struct *next;
     toy_expr *condition;
     toy_block code;
-} toy_if_arm;
+} toy_if_arm_list;
 
 typedef struct toy_if_stmt_struct {
-    toy_if_arm *arms;
+    toy_if_arm_list *arms;
     toy_block elsepart;
 } toy_if_stmt;
 

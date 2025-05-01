@@ -13,5 +13,7 @@ toy_bool toy_str_nequal(const toy_str s1, const toy_str s2);
 toy_bool toy_str_equal_nocase(const toy_str s1, const toy_str s2);
 toy_bool toy_str_nequal_nocase(const toy_str s1, const toy_str s2);
 void str_assert_valid(toy_str str);
+void str_backslash_decode(toy_str dst, const toy_str src, const toy_str src_end);
+void str_free(toy_str str);
 
 #endif /* TOY_STR_H */

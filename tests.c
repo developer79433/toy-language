@@ -4,7 +4,11 @@
 #include "tests.h"
 #include "str.h"
 #include "map.h"
+#include "str-list.h"
+#include "str-list-inline.h"
 #include "val-list.h"
+#include "var-decl-list.h"
+#include "stmt.h"
 
 /* TODO: move these into their respective units */
 
@@ -12,24 +16,68 @@ static void test_strings(void)
 {
     assert(toy_str_equal("same", "same") == TOY_TRUE);
     assert(toy_str_equal("not", "same") == TOY_FALSE);
+    assert(toy_str_nequal("same", "same") == TOY_FALSE);
+    assert(toy_str_nequal("not", "same") == TOY_TRUE);
+}
+
+static void test_str_list(void)
+{
+    toy_str first_str = "first string";
+    toy_str_list *str_list = str_list_alloc(first_str);
+    assert(toy_str_equal(str_list->str, first_str));
+    assert(NULL == str_list->next);
+    assert(1 == str_list_len(str_list));
+    toy_str second_str = "second string";
+    toy_str_list *retval = str_list_append(str_list, second_str);
+    assert(toy_str_equal(retval->str, first_str));
+    assert(NULL != retval->next);
+    assert(toy_str_equal(retval->next->str, second_str));
+    assert(NULL == retval->next->next);
+    assert(2 == str_list_len(retval));
+    str_list_free(retval);
+}
+
+static void test_str_list_inline(void)
+{
+    toy_str first_str = "first string";
+    toy_str_list_inline *str_list = str_list_inline_alloc(first_str);
+    assert(toy_str_equal(&str_list->c, first_str));
+    assert(NULL == str_list->next);
+    assert(1 == str_list_inline_len(str_list));
+    toy_str second_str = "second string";
+    toy_str_list_inline *retval = str_list_inline_append(str_list, second_str);
+    assert(toy_str_equal(&retval->c, first_str));
+    assert(NULL != retval->next);
+    assert(toy_str_equal(&retval->next->c, second_str));
+    assert(NULL == retval->next->next);
+    assert(2 == str_list_inline_len(retval));
+    str_list_inline_free(retval);
+}
+
+static void test_str_lists(void)
+{
+    test_str_list();
+    test_str_list_inline();
 }
 
 static void test_val_lists(void)
 {
     toy_val first_elem = { .type = VAL_BOOL, .boolean = TOY_TRUE };
-    toy_val_list *val_list = val_list_alloc_ref(&first_elem);
+    toy_val_list *val_list = val_list_alloc(&first_elem);
     assert(val_list);
-    assert(val_list->val->type == VAL_BOOL);
-    assert(val_list->val->boolean == TOY_TRUE);
+    assert(val_list->val.type == VAL_BOOL);
+    assert(val_list->val.boolean == TOY_TRUE);
     assert(val_list->next == NULL);
+    assert(1 == val_list_len(val_list));
     toy_val new_elem = { .type = VAL_BOOL, .boolean = TOY_FALSE };
-    toy_val_list *retval = val_list_append_own(val_list, &new_elem);
+    toy_val_list *retval = val_list_append(val_list, &new_elem);
     assert(retval == val_list);
-    assert(val_list->next);
-    assert(!val_list->next->next);
-    assert(val_list->next->val);
-    assert(val_list->next->val->type == VAL_BOOL);
-    assert(val_list->next->val->boolean == TOY_FALSE);
+    assert(retval->next);
+    assert(!retval->next->next);
+    assert(retval->next->val.type == VAL_BOOL);
+    assert(retval->next->val.boolean == TOY_FALSE);
+    assert(2 == val_list_len(retval));
+    val_list_free(retval);
 }
 
 static void test_maps(void)
@@ -76,11 +124,44 @@ static void test_maps(void)
     // Test reset
     map_reset(map1);
     assert(0 == map_len(map1));
+
+    // Test free
+    map_free(map1);
+}
+
+static void test_var_decl_lists(void)
+{
+    toy_expr expr1 = { .type = EXPR_LITERAL, .val.type = VAL_BOOL, .val.boolean = TOY_TRUE };
+    char *name1 = "name1";
+    toy_var_decl decl1 = { .name = name1, .value = &expr1 };
+    toy_var_decl_list *decl_list = var_decl_list_alloc(&decl1);
+    assert(decl_list->decl.name == name1);
+    assert(decl_list->decl.value == &expr1);
+    assert(decl_list->next == NULL);
+    toy_expr expr2 = { .type = EXPR_LITERAL, .val.type = VAL_STR, .val.str = "value2" };
+    char *name2 = "name2";
+    toy_var_decl decl2 = { .name = name2, .value = &expr2 };
+    decl_list = var_decl_list_append(decl_list, &decl2);
+    assert(decl_list->decl.name == name1);
+    assert(decl_list->decl.value == &expr1);
+    assert(decl_list->next != NULL);
+    assert(decl_list->next->decl.name == name2);
+    assert(decl_list->next->decl.value == &expr2);
+    assert(decl_list->next->next == NULL);
+    var_decl_list_free(decl_list);
+}
+
+static void test_expr_lists()
+{
+    /* TODO */
 }
 
 void run_tests(void)
 {
     test_strings();
-    test_maps();
+    test_str_lists();
     test_val_lists();
+    test_maps();
+    test_var_decl_lists();
+    test_expr_lists();
 }

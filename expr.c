@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <string.h>
 
 #include "expr.h"
 #include "mymalloc.h"
@@ -91,4 +92,9 @@ toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_block *body)
     expr->val.func->param_names = formalparams;
     expr->val.func->code.stmts = body->stmts;
     return expr;
+}
+
+toy_bool toy_expr_equal(const toy_expr *expr1, const toy_expr *expr2)
+{
+    return 0 == memcmp(expr1, expr2, sizeof(*expr1));
 }

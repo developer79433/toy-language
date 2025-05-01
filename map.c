@@ -38,6 +38,11 @@ static void free_bucket_entries(map_entry *entry)
 {
     while (entry) {
         map_entry *next = entry->next;
+        /* We don't own this storage */
+#if 0
+        toy_str_free(entry->key);
+        toy_val_free(&entry->value);
+#endif
         free(entry);
         entry = next;
     }

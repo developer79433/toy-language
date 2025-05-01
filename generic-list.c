@@ -35,21 +35,15 @@ size_t generic_list_len(const generic_list *list)
     return size;
 }
 
-generic_list *generic_list_alloc_ref(void *first_elem)
+generic_list *generic_list_alloc_size(size_t payload_size)
 {
     generic_list *list;
-    list = mymalloc(generic_list);
-    list->payload = first_elem;
-    list->next = NULL;
-    return list;
-}
-
-generic_list *generic_list_alloc_own(void *first_elem, size_t value_size)
-{
-    generic_list *list;
-    list = (generic_list *) malloc(sizeof(generic_list) + value_size);
-    list->payload = (void *) (list + 1);
-    memcpy(list->payload, first_elem, value_size);
+    list = (generic_list *) malloc(
+        /* size of the list structure itself */
+        sizeof(generic_list)
+        /* add size of actual payload */
+        + payload_size
+    );
     list->next = NULL;
     return list;
 }
@@ -57,7 +51,6 @@ generic_list *generic_list_alloc_own(void *first_elem, size_t value_size)
 /* TODO: Handle orig being null, so the caller in parser.y doesn't have to repeatedly do so */
 generic_list *generic_list_concat(generic_list *orig_list, generic_list *new_list)
 {
-    /* FIXME: inefficient */
     generic_list *tmp = orig_list;
     while (tmp->next) {
         tmp = tmp->next;
@@ -66,76 +59,60 @@ generic_list *generic_list_concat(generic_list *orig_list, generic_list *new_lis
     return orig_list;
 }
 
-generic_list *generic_list_append_ref(generic_list *list, void *new_payload)
+list_iter_result generic_list_foreach(generic_list *list, generic_list_item_callback callback, void *cookie)
 {
-    generic_list *new_list;
-    new_list = mymalloc(generic_list);
-    new_list->payload = new_payload;
-    new_list->next = NULL;
-    return generic_list_concat(list, new_list);
-}
-
-generic_list *generic_list_append_own(generic_list *list, void *new_payload, size_t payload_size)
-{
-    generic_list *new_list;
-    new_list = (generic_list *) malloc(sizeof(generic_list) + payload_size);
-    new_list->payload = (void *) (new_list + 1);
-    memcpy(new_list->payload, new_payload, payload_size);
-    new_list->next = NULL;
-    return generic_list_concat(list, new_list);
-}
-
-generic_list *generic_list_prepend_ref(generic_list *list, void *new_payload)
-{
-    generic_list *new_list;
-    new_list = mymalloc(generic_list);
-    new_list->payload = new_payload;
-    new_list->next = list;
-    return new_list;
-}
-
-generic_list *generic_list_prepend_own(generic_list *list, void *new_payload, size_t payload_size)
-{
-    generic_list *new_list;
-    new_list = (generic_list *) malloc(sizeof(generic_list) + payload_size);
-    new_list->payload = (void *) (new_list + 1);
-    memcpy(new_list->payload, new_payload, payload_size);
-    new_list->next = list;
-    return new_list;
-}
-
-void *generic_list_index(generic_list *list, size_t index)
-{
-    /* FIXME: inefficient */
-    for (size_t i = 0; list; list = list->next, i++) {
-        if (i == index) {
-            return list->payload;
+    for (size_t i = 0; list; i++) {
+        generic_list *next = list->next;
+        int ret = callback(cookie, i, list);
+        if (STOP_ITERATING == ret) {
+            return CALLBACK_STOPPED;
         }
+        list = next;
     }
-    return INDEX_OUT_OF_BOUNDS;
+    return REACHED_END;
 }
 
-void generic_list_foreach(void *listv, list_item_callback callback, void *cookie)
+list_iter_result generic_list_foreach_const(const generic_list *list, const_generic_list_item_callback callback, void *cookie)
 {
-    generic_list *list = (generic_list *) listv;
-    for (; list; list = list->next) {
-        callback(cookie, list->payload);
+    for (size_t i = 0; list; i++) {
+        const generic_list *next = list->next;
+        int ret = callback(cookie, i, list);
+        if (STOP_ITERATING == ret) {
+            return CALLBACK_STOPPED;
+        }
+        list = next;
     }
-}
-
-void generic_list_foreach_const(const void *listv, const_list_item_callback callback, void *cookie)
-{
-    const generic_list *list = (const generic_list *) listv;
-    for (; list; list = list->next) {
-        callback(cookie, list->payload);
-    }
+    return REACHED_END;
 }
 
 void generic_list_free(generic_list *list)
 {
-    for (generic_list *cur = list; cur; ) {
-        generic_list *next = cur->next;
-        free(cur);
-        cur = next;
+    while (list) {
+        generic_list *next = list->next;
+        free(list);
+        list = next;
     }
+}
+
+typedef struct compare_indices_args_struct {
+    generic_list_item_callback user_callback;
+    void *user_cookie;
+    size_t desired_index;
+} compare_indices_args;
+
+static listitem_callback_result compare_indices(void *cookie, size_t index, generic_list *item)
+{
+    compare_indices_args *args = (compare_indices_args *) cookie;
+    if (index == args->desired_index) {
+        args->user_callback(args->user_cookie, index, item);
+        return STOP_ITERATING;
+    }
+    return KEEP_ITERATING;
+}
+
+list_iter_result generic_list_index(generic_list *list, size_t index, generic_list_item_callback callback, void *cookie)
+{
+    compare_indices_args args = { .user_callback = callback, .user_cookie = cookie, .desired_index = index };
+    list_iter_result res = generic_list_foreach(list, compare_indices, &args);
+    return res;
 }

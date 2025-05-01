@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "dump.h"
 #include "expr.h"
 #include "stmt.h"
 #include "interp.h"
@@ -13,6 +14,8 @@ extern void init_parser(void);
 
 int main(int argc, char **argv)
 {
+    run_tests();
+
     FILE *in;
     ++argv, --argc;  /* skip over program name */
     if (argc > 0) {
@@ -29,9 +32,8 @@ int main(int argc, char **argv)
         fprintf(stderr, "yyparse() returned %d\n", parse_res);
         return EXIT_FAILURE;
     }
-    run_tests();
     toy_stmt *program_start = get_program_start();
-    /* dump_stmts(stderr, program_start); */
+    dump_stmts(stderr, program_start);
     toy_interp *interp = alloc_interp(program_start);
     run_current_block(interp);
     free_interp(interp);

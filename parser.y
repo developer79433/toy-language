@@ -5,11 +5,14 @@
 
 #include "bool-types.h"
 #include "expr.h"
+#include "constants.h"
 #include "stmt.h"
 #include "str-list.h"
 #include "val-list.h"
+#include "var-decl.h"
 #include "expr-list.h"
 #include "map-entry-list.h"
+#include "var-decl-list.h"
 
 extern int yylex (void);
 void yyerror(const char *s);
@@ -28,8 +31,9 @@ static toy_stmt *program_start;
     toy_map *map;
     toy_expr *expr;
     toy_stmt *stmt;
-    toy_var_decl_list *var_decl;
-    toy_if_arm *if_arm;
+    toy_var_decl *var_decl;
+    toy_var_decl_list *var_decl_list;
+    toy_if_arm_list *if_arm;
     toy_block block;
     toy_str_list *str_list;
     toy_map_entry_list *map_entry_list;
@@ -45,7 +49,7 @@ static toy_stmt *program_start;
 %type <str_list> formalparams formalparamlist
 %type <stmt> stmts stmt if_stmt while_stmt for_stmt null_stmt expr_stmt func_decl_stmt var_decl_stmt return_stmt break_stmt continue_stmt stmt_requiring_semicolon stmt_in_for_atstart stmt_in_for_atend block_stmt
 %type <if_arm> elseifs
-%type <var_decl> vardecllist
+%type <var_decl_list> vardecllist
 %type <expr_list> actualargs actualarglist
 %type <expr_list> listitems listitemlist
 %type <map_entry_list> mapitem mapitems mapitemlist
@@ -118,7 +122,7 @@ stmt_in_for_atend:
 if_stmt:
     T_IF T_LPAREN expr T_RPAREN block elseifs elsepart {
         $$ = stmt_alloc(STMT_IF);
-        $$->if_stmt.arms = if_arm_alloc($3, &$5);
+        $$->if_stmt.arms = if_arm_list_alloc($3, &$5);
         $$->if_stmt.arms->next = $6;
         $$->if_stmt.elsepart = $7;
     }
@@ -220,44 +224,44 @@ optional_expr :
 
 vardecllist :
     vardecl {
-        $$ = $1;
+        $$ = var_decl_list_alloc($1);
     }
     | vardecllist T_COMMA vardecl {
         if ($1) {
-            var_decl_list_concat($1, $3);
-            $$ = $1;
+            $$ = var_decl_list_append($1, $3);
         } else {
-            $$ = $3;
+            $$ = var_decl_list_alloc($3);
         }
+        var_decl_list_dump(stderr, $$);
     }
 ;
 
 vardecl :
     T_IDENTIFIER {
-        $$ = var_decl_list_alloc_ref($1, NULL);
+        $$ = var_decl_alloc($1, (toy_expr *) &null_expr);
     }
     | T_IDENTIFIER T_ASSIGN expr_no_comma {
-        $$ = var_decl_list_alloc_ref($1, $3);
+        $$ = var_decl_alloc($1, $3);
     }
 ;
 
 elseifs :
     { $$ = NULL; }
     | elseifs T_ELSEIF T_LPAREN expr T_RPAREN block {
-        toy_if_arm *this_arm = if_arm_alloc($4, &$6);
+        toy_if_arm_list *this_arm = if_arm_list_alloc($4, &$6);
         
         if ($1) {
-            if_arm_append($1, this_arm);
+            if_arm_list_append($1, this_arm);
             $$ = $1;
         } else {
             $$ = this_arm;
         }
     }
     | elseifs T_ELSE T_IF T_LPAREN expr T_RPAREN block {
-        toy_if_arm *this_arm = if_arm_alloc($5, &$7);
+        toy_if_arm_list *this_arm = if_arm_list_alloc($5, &$7);
         
         if ($1) {
-            if_arm_append($1, this_arm);
+            if_arm_list_append($1, this_arm);
             $$ = $1;
         } else {
             $$ = this_arm;
@@ -283,14 +287,14 @@ formalparams :
 
 formalparamlist :
     T_IDENTIFIER {
-        $$ = str_list_alloc_own($1);
+        $$ = str_list_alloc($1);
     }
     | formalparamlist T_COMMA T_IDENTIFIER {
         if ($1) {
-            str_list_append_own($1, $3);
+            str_list_append($1, $3);
             $$ = $1;
         } else {
-            $1 = str_list_alloc_own($3);
+            $1 = str_list_alloc($3);
         }
     }
 ;
@@ -306,14 +310,14 @@ actualargs :
 
 actualarglist :
     expr_no_comma {
-        $$ = expr_list_alloc_ref($1);
+        $$ = expr_list_alloc($1);
     }
     | actualarglist T_COMMA expr_no_comma {
         if ($1) {
-            expr_list_append_ref($1, $3);
+            expr_list_append($1, $3);
             $$ = $1;
         } else {
-            $1 = expr_list_alloc_ref($3);
+            $1 = expr_list_alloc($3);
         }
     }
 ;
@@ -329,14 +333,14 @@ listitems :
 
 listitemlist :
     expr_no_comma {
-        $$ = expr_list_alloc_ref($1);
+        $$ = expr_list_alloc($1);
     }
     | listitemlist T_COMMA expr_no_comma {
         if ($1) {
-            expr_list_append_ref($1, $3);
+            expr_list_append($1, $3);
             $$ = $1;
         } else {
-            $1 = expr_list_alloc_ref($3);
+            $1 = expr_list_alloc($3);
         }
     }
 ;

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <assert.h>
 
 #include "str.h"
@@ -47,4 +48,68 @@ void str_assert_valid(toy_str str)
 {
     assert(str);
     assert(strlen(str) < ONE_MILLION);
+}
+
+void str_free(toy_str str)
+{
+    str_assert_valid(str);
+    free(str);
+}
+
+static int process_backslash(int in_backslash, const char **src, char **dst)
+{
+    if (in_backslash) {
+        /* in a backslash escape */
+        switch (**src) {
+        case 'n':
+            **dst = '\n';
+            (*src)++;
+            (*dst)++;
+            return 0;
+        case 'r':
+            **dst = '\r';
+            (*src)++;
+            (*dst)++;
+            return 0;
+        case 't':
+            **dst = '\t';
+            (*src)++;
+            (*dst)++;
+            return 0;
+        case '\0':
+            **dst = **src;
+            return 0;
+        case '\\':
+        default:
+            **dst = **src;
+            (*src)++;
+            (*dst)++;
+            return 0;
+        }
+    } else {
+        /* not in a backslash escape */
+        switch(**src) {
+        case '\\':
+            (*src)++;
+            return 1;
+        case '\0':
+            **dst = **src;
+            return 0;
+        default:
+            **dst = **src;
+            (*src)++;
+            (*dst)++;
+            return 0;
+        }
+    }
+}
+
+void str_backslash_decode(toy_str dst, const toy_str src, const toy_str src_end)
+{
+    int in_backslash = 0;
+    const char *s;
+    char *d;
+    for (s = src, d = dst; s <= src_end && *s; ) {
+        in_backslash = process_backslash(in_backslash, &s, &d);
+    }
 }

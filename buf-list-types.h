@@ -1,0 +1,18 @@
+#ifndef TOY_BUF_LIST_TYPES_H
+#define TOY_BUF_LIST_TYPES_H 1
+
+#include <stddef.h>
+#include <inttypes.h>
+
+#include "generic-list.h"
+
+typedef struct toy_buf_list_struct {
+    struct toy_buf_list_struct *next;
+    /* TODO: size_t buf_size */
+    uint8_t c; /* Really variable-length */
+} toy_buf_list;
+
+typedef listitem_callback_result (*buf_list_item_callback)(void *cookie, size_t index, toy_buf_list *item);
+typedef listitem_callback_result (*const_buf_list_item_callback)(void *cookie, size_t index, const toy_buf_list *item);
+
+#endif /* TOY_BUF_LIST_TYPES_H */

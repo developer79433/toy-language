@@ -6,16 +6,12 @@
 #include "num-types.h"
 #include "generic-list-types.h"
 
-generic_list *generic_list_alloc_ref(void *first_elem);
-generic_list *generic_list_alloc_own(void *first_elem, size_t value_size);
-size_t generic_list_len(const generic_list *list);
+generic_list *generic_list_alloc_size(size_t value_size);
 generic_list *generic_list_concat(generic_list *orig_list, generic_list *new_list);
-generic_list *generic_list_prepend_ref(generic_list *list, void *new_payload);
-generic_list *generic_list_prepend_own(generic_list *list, void *new_payload, size_t payload_size);
-generic_list *generic_list_append_ref(generic_list *list, void *new_payload);
-generic_list *generic_list_append_own(generic_list *list, void *new_payload, size_t payload_size);
-void *generic_list_index(generic_list *list, size_t index);
-void generic_list_foreach(void *list, list_item_callback callback, void *cookie);
-void generic_list_foreach_const(const void *list, const_list_item_callback callback, void *cookie);
+list_iter_result generic_list_foreach(generic_list *list, generic_list_item_callback callback, void *cookie);
+list_iter_result generic_list_foreach_const(const generic_list *list, const_generic_list_item_callback callback, void *cookie);
+void generic_list_free(generic_list *list);
+list_iter_result generic_list_index(generic_list *list, size_t index, generic_list_item_callback callback, void *cookie);
+size_t generic_list_len(const generic_list *list);
 
 #endif /* GENERIC_LIST_H */

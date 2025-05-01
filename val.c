@@ -125,7 +125,7 @@ toy_bool toy_val_lte(const toy_val *val1, const toy_val *val2)
     return (val1->num <= val2->num);
 }
 
-void val_assert_valid(toy_val *val)
+void val_assert_valid(const toy_val *val)
 {
     switch(val->type) {
     case VAL_BOOL:
@@ -151,4 +151,33 @@ void val_assert_valid(toy_val *val)
         invalid_value_type(val->type);
         break;
     }
+}
+
+void toy_val_free(toy_val *val)
+{
+    val_assert_valid(val);
+    switch(val->type) {
+    case VAL_BOOL:
+        break;
+    case VAL_FUNC:
+        func_free(val->func);
+        break;
+    case VAL_LIST:
+        val_list_free(val->list);
+        break;
+    case VAL_MAP:
+        map_free(val->map);
+        break;
+    case VAL_NULL:
+        break;
+    case VAL_NUM:
+        break;
+    case VAL_STR:
+        str_free(val->str);
+        break;
+    default:
+        invalid_value_type(val->type);
+        break;
+    }
+    free(val);
 }

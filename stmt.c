@@ -1,6 +1,14 @@
+#include <assert.h>
+#include <string.h>
+
 #include "mymalloc.h"
+#include "dump.h"
+#include "expr.h"
 #include "stmt.h"
+#include "str.h"
 #include "generic-list.h"
+#include "buf-list.h"
+#include "var-decl.h"
 
 static const char *toy_stmt_type_names[] = {
     "block statement",
@@ -26,28 +34,8 @@ toy_stmt *stmt_alloc(enum toy_stmt_type type)
     toy_stmt *stmt;
     stmt = mymalloc(toy_stmt);
     stmt->type = type;
+    stmt->next = NULL;
     return stmt;
-}
-
-toy_if_arm *if_arm_alloc(toy_expr *condition, toy_block *block)
-{
-    toy_if_arm *arm;
-    arm = mymalloc(toy_if_arm);
-    arm->condition = condition;
-    arm->code.stmts = block->stmts;
-    arm->next = NULL;
-    return arm;
-}
-
-toy_var_decl_list *var_decl_list_alloc_ref(toy_str name, toy_expr *value)
-{
-    /* TODO: USe generic_list_alloc */
-    toy_var_decl_list *var_decl;
-    var_decl = mymalloc(toy_var_decl_list);
-    var_decl->name = name;
-    var_decl->value = value;
-    var_decl->next = NULL;
-    return var_decl;
 }
 
 toy_stmt *stmt_append(toy_stmt *orig, toy_stmt *new_stmt)
@@ -60,19 +48,20 @@ toy_stmt *stmt_append(toy_stmt *orig, toy_stmt *new_stmt)
     return orig;
 }
 
-toy_var_decl_list *var_decl_list_concat(toy_var_decl_list *orig, toy_var_decl_list *new_var_decl)
+toy_if_arm_list *if_arm_list_alloc(toy_expr *condition, toy_block *block)
 {
-    toy_var_decl_list *tmp = orig;
-    while (tmp->next) {
-        tmp = tmp->next;
-    }
-    tmp->next = new_var_decl;
-    return orig;
+    toy_if_arm_list *arm;
+    arm = mymalloc(toy_if_arm_list);
+    arm->condition = condition;
+    arm->code.stmts = block->stmts;
+    arm->next = NULL;
+    return arm;
 }
 
-toy_if_arm *if_arm_append(toy_if_arm *orig, toy_if_arm *new_arm)
+toy_if_arm_list *if_arm_list_append(toy_if_arm_list *orig, toy_if_arm_list *new_arm)
 {
-    toy_if_arm *tmp = orig;
+    /* TODO: Use generic_list_append */
+    toy_if_arm_list *tmp = orig;
     while (tmp->next) {
         tmp = tmp->next;
     }

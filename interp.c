@@ -399,10 +399,10 @@ static void eval_expr_list(toy_interp *interp, toy_val *result, const toy_expr_l
     if (expr_list) {
         toy_val element;
         eval_expr(interp, &element, expr_list->expr);
-        result->list = val_list_alloc_own(&element);
+        result->list = val_list_alloc(&element);
         for (expr_list = expr_list->next; expr_list; expr_list = expr_list->next) {
             eval_expr(interp, &element, expr_list->expr);
-            val_list_append_own(result->list, &element);
+            val_list_append(result->list, &element);
         }
     } else {
         result->list = NULL;
@@ -426,8 +426,8 @@ static void run_user_func_val_list(toy_interp *interp, toy_val *result, toy_bloc
 {
     val_list_assert_valid(args);
     for (toy_str_list *param_name = param_names; param_name && args; param_name = param_name->next, args = args->next) {
-        val_assert_valid(args->val);
-        create_variable_value(interp, param_name->str, args->val);
+        val_assert_valid(&args->val);
+        create_variable_value(interp, param_name->str, &args->val);
     }
     run_current_block(interp);
     *result = interp->return_val;
@@ -511,15 +511,27 @@ void call_func(toy_interp *interp, toy_val *result, toy_str func_name, toy_expr_
     }
 }
 
-static void list_lookup(toy_interp *interp, toy_val *result, toy_val_list *collection, toy_expr *index)
+typedef struct callback_args_struct {
+    toy_val **val_to_set;
+} callback_args;
+
+static listitem_callback_result found_value_callback(void *cookie, size_t index, toy_val_list *item)
+{
+    callback_args *args = (callback_args *) cookie;
+    *(args->val_to_set) = &item->val;
+    return STOP_ITERATING;
+}
+
+static void list_lookup(toy_interp *interp, toy_val *result, toy_val_list *val_list, toy_expr *index)
 {
     toy_val index_result;
     eval_expr(interp, &index_result, index);
     if (index_result.type == VAL_NUM) {
         toy_val *val;
-        val = val_list_index(collection, index_result.num);
+        callback_args args = { .val_to_set = &val };
+        val_list_index(val_list, index_result.num, found_value_callback, &args);
         if (INDEX_OUT_OF_BOUNDS == val) {
-            invalid_val_list_index(collection, index_result.num);
+            invalid_val_list_index(val_list, index_result.num);
         } else {
             *result = *val;
         }
@@ -836,7 +848,7 @@ static void run_block(toy_interp *interp, const toy_block *elsepart)
 static enum run_stmt_result if_stmt(toy_interp *interp, const toy_if_stmt *if_stmt)
 {
     unsigned int found_one = 0;
-    for (toy_if_arm *arm = if_stmt->arms; arm; arm = arm->next) {
+    for (toy_if_arm_list *arm = if_stmt->arms; arm; arm = arm->next) {
         toy_val cond_result;
         eval_expr(interp, &cond_result, arm->condition);
         if (VAL_BOOL != cond_result.type) {
@@ -880,6 +892,13 @@ static void return_stmt(toy_interp *interp, const toy_return_stmt *return_stmt)
     eval_expr(interp, &interp->return_val, return_stmt->expr);
 }
 
+static void var_decl_stmt(toy_interp *interp, toy_var_decl_list *var_decl_list)
+{
+    for (toy_var_decl_list *decl = var_decl_list; decl; decl = decl->next) {
+        create_variable_expr(interp, decl->decl.name, decl->decl.value);
+    }
+}
+
 enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt)
 {
     switch (stmt->type) {
@@ -909,7 +928,7 @@ enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt)
         return_stmt(interp, &stmt->return_stmt);
         return REACHED_RETURN;
     case STMT_VAR_DECL:
-        create_variable_expr(interp, stmt->var_decl_stmt->name, stmt->var_decl_stmt->value);
+        var_decl_stmt(interp, stmt->var_decl_stmt);
         break;
     case STMT_WHILE:
         while_stmt(interp, &stmt->while_stmt);

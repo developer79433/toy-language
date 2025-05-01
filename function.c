@@ -28,8 +28,7 @@ void func_dump(FILE *f, const toy_func_def *def)
 static void predefined_list_len(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(args);
-    assert(args->val);
-    toy_val *arg = args->val;
+    const toy_val *arg = &args->val;
     assert(!args->next);
     if (arg->type != VAL_LIST) {
         invalid_argument_type(VAL_LIST, arg);
@@ -42,8 +41,7 @@ static void predefined_list_len(toy_interp *interp, toy_val *result, const toy_v
 static void predefined_map_len(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(args);
-    assert(args->val);
-    toy_val *arg = args->val;
+    const toy_val *arg = &args->val;
     assert(!args->next);
     if (arg->type != VAL_MAP) {
         invalid_argument_type(VAL_MAP, arg);
@@ -56,10 +54,10 @@ static void predefined_map_len(toy_interp *interp, toy_val *result, const toy_va
 static void predefined_print(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     for (; args; args = args->next) {
-        if (args->val->type == VAL_STR) {
-            print_str(stderr, args->val->str);
+        if (args->val.type == VAL_STR) {
+            print_str(stderr, args->val.str);
         } else {
-            dump_val(stderr, args->val);
+            dump_val(stderr, &args->val);
         }
         fputc('\n', stderr);
     }
@@ -82,8 +80,8 @@ static void toy_assert_fail(const char * msg, size_t num_vals, ...)
 static void predefined_assert_equal(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
-    toy_val *arg1 = args->val;
-    toy_val *arg2 = args->next->val;
+    const toy_val *arg1 = &args->val;
+    const toy_val *arg2 = &args->next->val;
     if (toy_vals_equal(arg1, arg2)) {
         /* Assertion succeeded */
     } else {
@@ -95,8 +93,8 @@ static void predefined_assert_equal(toy_interp *interp, toy_val *result, const t
 static void predefined_assert_not_equal(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
-    toy_val *arg1 = args->val;
-    toy_val *arg2 = args->next->val;
+    const toy_val *arg1 = &args->val;
+    const toy_val *arg2 = &args->next->val;
     if (toy_vals_nequal(arg1, arg2)) {
         /* Assertion succeeded */
     } else {
@@ -108,8 +106,8 @@ static void predefined_assert_not_equal(toy_interp *interp, toy_val *result, con
 static void predefined_assert_gt(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
-    toy_val *arg1 = args->val;
-    toy_val *arg2 = args->next->val;
+    const toy_val *arg1 = &args->val;
+    const toy_val *arg2 = &args->next->val;
     if (toy_val_gt(arg1, arg2)) {
         /* Assertion succeeded */
     } else {
@@ -121,8 +119,8 @@ static void predefined_assert_gt(toy_interp *interp, toy_val *result, const toy_
 static void predefined_assert_gte(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
-    toy_val *arg1 = args->val;
-    toy_val *arg2 = args->next->val;
+    const toy_val *arg1 = &args->val;
+    const toy_val *arg2 = &args->next->val;
     if (toy_val_gte(arg1, arg2)) {
         /* Assertion succeeded */
     } else {
@@ -134,8 +132,8 @@ static void predefined_assert_gte(toy_interp *interp, toy_val *result, const toy
 static void predefined_assert_lt(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
-    toy_val *arg1 = args->val;
-    toy_val *arg2 = args->next->val;
+    const toy_val *arg1 = &args->val;
+    const toy_val *arg2 = &args->next->val;
     if (toy_val_lt(arg1, arg2)) {
         /* Assertion succeeded */
     } else {
@@ -147,8 +145,8 @@ static void predefined_assert_lt(toy_interp *interp, toy_val *result, const toy_
 static void predefined_assert_lte(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
-    toy_val *arg1 = args->val;
-    toy_val *arg2 = args->next->val;
+    const toy_val *arg1 = &args->val;
+    const toy_val *arg2 = &args->next->val;
     if (toy_val_lte(arg1, arg2)) {
         /* Assertion succeeded */
     } else {
@@ -162,7 +160,7 @@ static const toy_val zero = { .type = VAL_NUM, .num = 0 };
 static void predefined_assert_zero(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 1);
-    toy_val *arg1 = args->val;
+    const toy_val *arg1 = &args->val;
     if (toy_vals_equal(arg1, &zero)) {
         /* Assertion succeeded */
     } else {
@@ -174,7 +172,7 @@ static void predefined_assert_zero(toy_interp *interp, toy_val *result, const to
 static void predefined_assert_not_zero(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 1);
-    toy_val *arg1 = args->val;
+    const toy_val *arg1 = &args->val;
     if (toy_vals_nequal(arg1, &zero)) {
         /* Assertion succeeded */
     } else {
@@ -186,7 +184,7 @@ static void predefined_assert_not_zero(toy_interp *interp, toy_val *result, cons
 static void predefined_assert_null(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 1);
-    toy_val *arg1 = args->val;
+    const toy_val *arg1 = &args->val;
     if (toy_vals_equal(arg1, &null_val)) {
         /* Assertion succeeded */
     } else {
@@ -198,7 +196,7 @@ static void predefined_assert_null(toy_interp *interp, toy_val *result, const to
 static void predefined_assert_not_null(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 1);
-    toy_val *arg1 = args->val;
+    const toy_val *arg1 = &args->val;
     if (toy_vals_nequal(arg1, &null_val)) {
         /* Assertion succeeded */
     } else {
@@ -211,7 +209,7 @@ static void predefined_assert(toy_interp *interp, toy_val *result, const toy_val
 {
     assert(val_list_len(args) == 1);
     assert(!args->next);
-    toy_val *arg = args->val;
+    const toy_val *arg = &args->val;
     toy_bool b = convert_to_bool(arg);
     if (b) {
         /* Assertion succeeded */
@@ -226,19 +224,20 @@ typedef struct val_list_foreach_args_struct {
     toy_func_def *func;
 } val_list_foreach_args;
 
-static void list_foreach_callback(void *cookie, const toy_val *item)
+static listitem_callback_result list_foreach_callback(void *cookie, size_t index, const toy_val_list *item)
 {
     val_list_foreach_args *args = (val_list_foreach_args *) cookie;
-    toy_val_list func_args = { .val = (toy_val *) item, .next = 0 };
+    toy_val_list func_args = { .val = item->val, .next = NULL };
     toy_val result;
     run_toy_function_val_list(args->interp, &result, args->func, &func_args);
+    return KEEP_ITERATING; /* TODO: early bailout? */
 }
 
 static void predefined_list_foreach(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
-    toy_val *arg1 = args->val;
-    toy_val *arg2 = args->next->val;
+    const toy_val *arg1 = &args->val;
+    const toy_val *arg2 = &args->next->val;
     if (arg1->type == VAL_LIST) {
         toy_val_list *list = arg1->list;
         if (arg2->type == VAL_FUNC) {
@@ -263,8 +262,8 @@ static void map_foreach_callback(void *cookie, const toy_str key, const toy_val 
 {
     map_foreach_args *args = (map_foreach_args *) cookie;
     const toy_val key_val = { .type = VAL_STR, .str = key };
-    const toy_val_list value_arg = { .val = (toy_val *) value, .next = NULL };
-    const toy_val_list func_args = { .val = (toy_val *) &key_val, .next = (toy_val_list *) &value_arg };
+    const toy_val_list value_arg = { .val = *value, .next = NULL };
+    const toy_val_list func_args = { .val = key_val, .next = (toy_val_list *) &value_arg };
     toy_val result;
     run_toy_function_val_list(args->interp, &result, args->func, &func_args);
 }
@@ -272,8 +271,8 @@ static void map_foreach_callback(void *cookie, const toy_str key, const toy_val 
 static void predefined_map_foreach(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
-    toy_val *arg1 = args->val;
-    toy_val *arg2 = args->next->val;
+    const toy_val *arg1 = &args->val;
+    const toy_val *arg2 = &args->next->val;
     if (arg1->type == VAL_MAP) {
         toy_map *map = arg1->map;
         if (arg2->type == VAL_FUNC) {
@@ -350,5 +349,10 @@ const toy_func_def *func_lookup_predef_addr(predefined_func_addr func_addr)
 void func_assert_valid(const toy_func_def *func_def)
 {
     assert(func_def);
+    /* TODO */
+}
+
+void func_free(toy_func_def *def)
+{
     /* TODO */
 }
