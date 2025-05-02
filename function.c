@@ -63,7 +63,7 @@ static void predefined_print(toy_interp *interp, toy_val *result, const toy_val_
         if (args->val.type == VAL_STR) {
             print_str(stderr, args->val.str);
         } else {
-            dump_val(stderr, &args->val);
+            val_dump(stderr, &args->val);
         }
         fputc('\n', stderr);
     }
@@ -76,7 +76,7 @@ static void toy_assert_fail(const char * msg, size_t num_vals, ...)
     va_start(argptr, num_vals);
     while (num_vals--) {
         const toy_val *val = va_arg(argptr, const toy_val *);
-        dump_val(stderr, val);
+        val_dump(stderr, val);
         fputc('\n', stderr);
     }
     va_end(argptr);
@@ -88,7 +88,7 @@ static void predefined_assert_equal(toy_interp *interp, toy_val *result, const t
     assert(val_list_len(args) == 2);
     const toy_val *arg1 = &args->val;
     const toy_val *arg2 = &args->next->val;
-    if (toy_vals_equal(arg1, arg2)) {
+    if (vals_equal(arg1, arg2)) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should be equal", 2, arg1, arg2);
@@ -101,7 +101,7 @@ static void predefined_assert_not_equal(toy_interp *interp, toy_val *result, con
     assert(val_list_len(args) == 2);
     const toy_val *arg1 = &args->val;
     const toy_val *arg2 = &args->next->val;
-    if (toy_vals_nequal(arg1, arg2)) {
+    if (vals_nequal(arg1, arg2)) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should not be equal", 2, arg1, arg2);
@@ -114,7 +114,7 @@ static void predefined_assert_gt(toy_interp *interp, toy_val *result, const toy_
     assert(val_list_len(args) == 2);
     const toy_val *arg1 = &args->val;
     const toy_val *arg2 = &args->next->val;
-    if (toy_val_gt(arg1, arg2)) {
+    if (val_gt(arg1, arg2)) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should be greater than", 2, arg1, arg2);
@@ -127,7 +127,7 @@ static void predefined_assert_gte(toy_interp *interp, toy_val *result, const toy
     assert(val_list_len(args) == 2);
     const toy_val *arg1 = &args->val;
     const toy_val *arg2 = &args->next->val;
-    if (toy_val_gte(arg1, arg2)) {
+    if (val_gte(arg1, arg2)) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should be greater than or equal", 2, arg1, arg2);
@@ -140,7 +140,7 @@ static void predefined_assert_lt(toy_interp *interp, toy_val *result, const toy_
     assert(val_list_len(args) == 2);
     const toy_val *arg1 = &args->val;
     const toy_val *arg2 = &args->next->val;
-    if (toy_val_lt(arg1, arg2)) {
+    if (val_lt(arg1, arg2)) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should be less than", 2, arg1, arg2);
@@ -153,7 +153,7 @@ static void predefined_assert_lte(toy_interp *interp, toy_val *result, const toy
     assert(val_list_len(args) == 2);
     const toy_val *arg1 = &args->val;
     const toy_val *arg2 = &args->next->val;
-    if (toy_val_lte(arg1, arg2)) {
+    if (val_lte(arg1, arg2)) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should be less than or equal", 2, arg1, arg2);
@@ -167,7 +167,7 @@ static void predefined_assert_zero(toy_interp *interp, toy_val *result, const to
 {
     assert(val_list_len(args) == 1);
     const toy_val *arg1 = &args->val;
-    if (toy_vals_equal(arg1, &zero)) {
+    if (vals_equal(arg1, &zero)) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should be zero", 1, arg1);
@@ -179,7 +179,7 @@ static void predefined_assert_not_zero(toy_interp *interp, toy_val *result, cons
 {
     assert(val_list_len(args) == 1);
     const toy_val *arg1 = &args->val;
-    if (toy_vals_nequal(arg1, &zero)) {
+    if (vals_nequal(arg1, &zero)) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should be non-zero", 1, arg1);
@@ -191,7 +191,7 @@ static void predefined_assert_null(toy_interp *interp, toy_val *result, const to
 {
     assert(val_list_len(args) == 1);
     const toy_val *arg1 = &args->val;
-    if (toy_vals_equal(arg1, &null_val)) {
+    if (vals_equal(arg1, &null_val)) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should be null", 1, arg1);
@@ -203,7 +203,7 @@ static void predefined_assert_not_null(toy_interp *interp, toy_val *result, cons
 {
     assert(val_list_len(args) == 1);
     const toy_val *arg1 = &args->val;
-    if (toy_vals_nequal(arg1, &null_val)) {
+    if (vals_nequal(arg1, &null_val)) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should not be null", 1, arg1);
@@ -236,7 +236,7 @@ static item_callback_result list_foreach_callback(void *cookie, size_t index, co
     toy_val_list func_args = { .val = item->val, .next = NULL };
     toy_val result;
     run_toy_function_val_list(args->interp, &result, args->func, &func_args);
-    return CONTINUE_ITERATING; /* TODO: early bailout? */
+    return CONTINUE_ENUMERATION; /* TODO: early bailout? */
 }
 
 static void predefined_list_foreach(toy_interp *interp, toy_val *result, const toy_val_list *args)
@@ -272,7 +272,7 @@ static item_callback_result map_foreach_callback(void *cookie, const toy_str key
     const toy_val_list func_args = { .val = key_val, .next = (toy_val_list *) &value_arg };
     toy_val result;
     run_toy_function_val_list(args->interp, &result, args->func, &func_args);
-    return CONTINUE_ITERATING;
+    return CONTINUE_ENUMERATION;
 }
 
 static void predefined_map_foreach(toy_interp *interp, toy_val *result, const toy_val_list *args)

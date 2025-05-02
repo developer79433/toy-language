@@ -41,7 +41,7 @@ static void free_bucket_entries(map_entry *entry)
         /* We don't own this storage */
 #if 0
         toy_str_free(entry->key);
-        toy_val_free(&entry->value);
+        val_free(&entry->value);
 #endif
         free(entry);
         entry = next;
@@ -174,7 +174,7 @@ static void dump_map_entry(FILE *f, const map_entry *entry)
 {
     dump_str(f, entry->key);
     fputs(": ", f);
-    dump_val(f, &entry->value);
+    val_dump(f, &entry->value);
 }
 
 void map_dump(FILE *f, const toy_map *map)
@@ -225,13 +225,13 @@ void map_dump_keys(FILE *f, const toy_map *map)
     fputc(']', f);
 }
 
-iter_result map_foreach(toy_map *map, map_entry_callback callback, void *cookie)
+enumeration_result map_foreach(toy_map *map, map_entry_callback callback, void *cookie)
 {
     for (map_entry * const * bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
         if (*bucket) {
             for (map_entry *entry = *bucket; entry; entry = entry->next) {
                 item_callback_result res = callback(cookie, entry->key, &entry->value);
-                if (res == STOP_ITERATING) {
+                if (res == STOP_ENUMERATION) {
                     return EUMERATION_INTERRUPTED;
                 }
             }
@@ -240,7 +240,7 @@ iter_result map_foreach(toy_map *map, map_entry_callback callback, void *cookie)
     return ENUMERATION_COMPLETE;
 }
 
-iter_result map_foreach_const(const toy_map *map, const_map_entry_callback callback, void *cookie)
+enumeration_result map_foreach_const(const toy_map *map, const_map_entry_callback callback, void *cookie)
 {
     return map_foreach((toy_map *) map, (map_entry_callback) callback, cookie);
 }

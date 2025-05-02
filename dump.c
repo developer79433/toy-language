@@ -129,7 +129,7 @@ void dump_expr(FILE *f, const toy_expr *expr) {
             expr_list_dump(f, expr->list);
             break;
         case EXPR_LITERAL:
-            dump_val(f, &expr->val);
+            val_dump(f, &expr->val);
             break;
         case EXPR_LT:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " < ");

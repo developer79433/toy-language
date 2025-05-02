@@ -61,7 +61,7 @@ void op_equal(toy_interp *interp, toy_val *result, const toy_expr *expr1, const 
     eval_expr(interp, &val1, expr1);
     eval_expr(interp, &val2, expr2);
     result->type = VAL_BOOL;
-    result->boolean = toy_vals_equal(&val1, &val2);
+    result->boolean = vals_equal(&val1, &val2);
 }
 
 void op_nequal(toy_interp *interp, toy_val *result, const toy_expr *expr1, const toy_expr *expr2)
@@ -71,7 +71,7 @@ void op_nequal(toy_interp *interp, toy_val *result, const toy_expr *expr1, const
     eval_expr(interp, &val1, expr1);
     eval_expr(interp, &val2, expr2);
     result->type = VAL_BOOL;
-    result->boolean = toy_vals_nequal(&val1, &val2);
+    result->boolean = vals_nequal(&val1, &val2);
 }
 
 typedef void (*binary_op_func)(toy_val *result, const toy_val *val1, const toy_val *val2);
@@ -92,13 +92,13 @@ static void do_numeric_binary_op(binary_op_func binop_func, toy_val *result, con
 static void do_op_gt(toy_val *result, const toy_val *val1, const toy_val *val2)
 {
     result->type = VAL_BOOL;
-    result->boolean = toy_val_gt(val1, val2);
+    result->boolean = val_gt(val1, val2);
 }
 
 static void do_op_gte(toy_val *result, const toy_val *val1, const toy_val *val2)
 {
     result->type = VAL_BOOL;
-    result->boolean = toy_val_gte(val1, val2);
+    result->boolean = val_gte(val1, val2);
 }
 
 void op_gt(toy_interp *interp, toy_val *result, const toy_expr *expr1, const toy_expr *expr2)
@@ -136,7 +136,7 @@ void op_in(toy_interp *interp, toy_val *result, const toy_expr *needle_expr, con
         list_item;
         list_item = list_item->next
     ) {
-        if (toy_vals_equal(&list_item->val, &needle)) {
+        if (vals_equal(&list_item->val, &needle)) {
             result->boolean = TOY_TRUE;
             return;
         }

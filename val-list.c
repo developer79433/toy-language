@@ -19,7 +19,7 @@ void val_list_dump(FILE *f, toy_val_list *list)
             } else {
                 fputc(' ', f);
             }
-            dump_val(f, &cur->val);
+            val_dump(f, &cur->val);
             printed_anything = 1;
         }
         if (printed_anything) {
@@ -63,13 +63,13 @@ toy_val_list *val_list_append(toy_val_list *list, toy_val *new_item)
     return (toy_val_list *) buf_list_append((toy_buf_list *) list, new_item, sizeof(*new_item));
 }
 
-iter_result val_list_foreach(toy_val_list *list, val_list_item_callback callback, void *cookie)
+enumeration_result val_list_foreach(toy_val_list *list, val_list_item_callback callback, void *cookie)
 {
     assert(offsetof(toy_val_list, val) == offsetof(toy_buf_list, c));
     return buf_list_foreach((toy_buf_list *) list, (buf_list_item_callback) callback, cookie);
 }
 
-iter_result val_list_foreach_const(const toy_val_list *list, const_val_list_item_callback callback, void *cookie)
+enumeration_result val_list_foreach_const(const toy_val_list *list, const_val_list_item_callback callback, void *cookie)
 {
     assert(offsetof(toy_val_list, val) == offsetof(toy_buf_list, c));
     return buf_list_foreach_const((const toy_buf_list *) list, (const_buf_list_item_callback) callback, cookie);

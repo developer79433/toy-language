@@ -326,7 +326,7 @@ static int set_variable_value_policy(toy_interp *interp, const toy_str name, con
 {
 #if DEBUG_VARIABLES
     fprintf(stderr, "Set %s variable '%s' to ", ((POLICY_MUST_ALREADY_EXIST == policy) ? "existing" : "new"), name);
-    dump_val(stderr, value);
+    val_dump(stderr, value);
     fputc('\n', stderr);
 #endif /* DEBUG_VARIABLES */
     if (is_predefined(name)) {

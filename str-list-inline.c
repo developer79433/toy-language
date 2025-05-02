@@ -44,12 +44,12 @@ void str_list_inline_free(toy_str_list_inline *list)
     buf_list_free((toy_buf_list *) list);
 }
 
-iter_result str_list_inline_foreach(toy_str_list_inline *list, toy_str_list_inline_item_callback callback, void *cookie)
+enumeration_result str_list_inline_foreach(toy_str_list_inline *list, toy_str_list_inline_item_callback callback, void *cookie)
 {
     return buf_list_foreach((toy_buf_list *) list, (buf_list_item_callback) callback, cookie);    
 }
 
-iter_result str_list_inline_foreach_const(const toy_str_list_inline *list, const_toy_str_list_inline_item_callback callback, void *cookie)
+enumeration_result str_list_inline_foreach_const(const toy_str_list_inline *list, const_toy_str_list_inline_item_callback callback, void *cookie)
 {
     return buf_list_foreach_const((toy_buf_list *) list, (const_buf_list_item_callback) callback, cookie);    
 }

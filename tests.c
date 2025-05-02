@@ -30,7 +30,7 @@ static item_callback_result str_list_item_callback(void *cookie, size_t index, c
     assert((*count != 0) || (toy_str_equal(list->str, "first string")));
     assert((*count != 1) || (toy_str_equal(list->str, "second string")));
     (*count)++;
-    return CONTINUE_ITERATING;
+    return CONTINUE_ENUMERATION;
 }
 
 static void test_str_list(void)
@@ -60,7 +60,7 @@ static item_callback_result str_list_inline_item_callback(void *cookie, size_t i
     assert((*count != 0) || (toy_str_equal(str_list_inline_payload_const(list), "first string")));
     assert((*count != 1) || (toy_str_equal(str_list_inline_payload_const(list), "second string")));
     (*count)++;
-    return CONTINUE_ITERATING;
+    return CONTINUE_ENUMERATION;
 }
 
 static void test_str_list_inline(void)
@@ -117,14 +117,16 @@ static toy_bool test_map_entry(void *cookie, toy_str key, toy_val *value)
 {
     predicate_args *args = (predicate_args *) cookie;
     assert(toy_str_equal(key, args->intended_key));
-    assert(toy_vals_equal(value, args->intended_value));
+    assert(vals_equal(value, args->intended_value));
     return 1;
 }
 
 static item_callback_result map_item_callback(void *cookie, toy_str key, toy_val *value)
 {
-    test_map_entry(cookie, key, value);
-    return CONTINUE_ITERATING;
+    if (!test_map_entry(cookie, key, value)) {
+        return STOP_ENUMERATION;
+    }
+    return CONTINUE_ENUMERATION;
 }
 
 static void test_maps(void)

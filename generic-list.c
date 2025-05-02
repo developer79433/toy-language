@@ -36,12 +36,12 @@ generic_list *generic_list_alloc_size(size_t payload_size)
     return list;
 }
 
-iter_result generic_list_foreach(generic_list *list, generic_list_item_callback callback, void *cookie)
+enumeration_result generic_list_foreach(generic_list *list, generic_list_item_callback callback, void *cookie)
 {
     for (size_t i = 0; list; i++) {
         generic_list *next = list->next;
         item_callback_result ret = callback(cookie, i, list);
-        if (STOP_ITERATING == ret) {
+        if (STOP_ENUMERATION == ret) {
             return EUMERATION_INTERRUPTED;
         }
         list = next;
@@ -49,12 +49,12 @@ iter_result generic_list_foreach(generic_list *list, generic_list_item_callback 
     return ENUMERATION_COMPLETE;
 }
 
-iter_result generic_list_foreach_const(const generic_list *list, const_generic_list_item_callback callback, void *cookie)
+enumeration_result generic_list_foreach_const(const generic_list *list, const_generic_list_item_callback callback, void *cookie)
 {
     for (size_t i = 0; list; i++) {
         const generic_list *next = list->next;
         item_callback_result ret = callback(cookie, i, list);
-        if (STOP_ITERATING == ret) {
+        if (STOP_ENUMERATION == ret) {
             return EUMERATION_INTERRUPTED;
         }
         list = next;
@@ -65,12 +65,12 @@ iter_result generic_list_foreach_const(const generic_list *list, const_generic_l
 static item_callback_result free_item_cb(void *cookie, size_t index, generic_list *list)
 {
     free(list);
-    return CONTINUE_ITERATING;
+    return CONTINUE_ENUMERATION;
 }
 
 void generic_list_free(generic_list *list)
 {
-    iter_result res = generic_list_foreach(list, free_item_cb, NULL);
+    enumeration_result res = generic_list_foreach(list, free_item_cb, NULL);
     assert(res == ENUMERATION_COMPLETE);
 }
 
@@ -80,13 +80,13 @@ static item_callback_result find_all_callback(void *cookie, size_t index, generi
     if (args->filter(cookie, index, item)) {
         return args->user_callback(args->user_cookie, index, item);
     }
-    return CONTINUE_ITERATING;
+    return CONTINUE_ENUMERATION;
 }
 
-iter_result generic_list_find_all(generic_list *list, generic_list_filter_func filter, generic_list_item_callback callback, void *cookie)
+enumeration_result generic_list_find_all(generic_list *list, generic_list_filter_func filter, generic_list_item_callback callback, void *cookie)
 {
     filter_args args = { .filter = filter, .user_callback = callback, .user_cookie = cookie };
-    iter_result res = generic_list_foreach(list, find_all_callback, &args);
+    enumeration_result res = generic_list_foreach(list, find_all_callback, &args);
     return res;
 }
 
@@ -101,15 +101,15 @@ static item_callback_result find_one_callback(void *cookie, size_t index, generi
     if (args->filtargs.filter(args->filtargs.user_cookie, index, item)) {
         /* Ignore user callback return value */
         args->found_item = item;
-        return STOP_ITERATING;
+        return STOP_ENUMERATION;
     }
-    return CONTINUE_ITERATING;
+    return CONTINUE_ENUMERATION;
 }
 
 generic_list *generic_list_find_first(generic_list *list, generic_list_filter_func filter, void *cookie)
 {
     find_one_args args = { .found_item = NULL, .filtargs.filter = filter, .filtargs.user_callback = NULL, .filtargs.user_cookie = cookie };
-    iter_result res = generic_list_foreach(list, find_one_callback, &args);
+    enumeration_result res = generic_list_foreach(list, find_one_callback, &args);
     assert(
         (
             (res == EUMERATION_INTERRUPTED) && (args.found_item != NULL)
@@ -135,7 +135,7 @@ static item_callback_result increment_count_callback(void *cookie, size_t index,
 {
     size_t *counter = (size_t *) cookie;
     (*counter)++;
-    return CONTINUE_ITERATING;
+    return CONTINUE_ENUMERATION;
 }
 
 size_t generic_list_len(const generic_list *list)
@@ -145,7 +145,7 @@ size_t generic_list_len(const generic_list *list)
     assert(offsetof(big_list, next) == offsetof(small_list, next));
     assert(offsetof(generic_list, next) == offsetof(small_list, next));
     size_t size = 0;
-    iter_result res = generic_list_foreach_const(list, increment_count_callback, &size);
+    enumeration_result res = generic_list_foreach_const(list, increment_count_callback, &size);
     assert(ENUMERATION_COMPLETE == res);
     return size;
 }
