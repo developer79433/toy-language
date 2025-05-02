@@ -892,8 +892,10 @@ static void var_decl_stmt(toy_interp *interp, toy_var_decl_list *var_decl_list)
     }
 }
 
-enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt_list *stmt)
+/* TODO: Should take a toy_stmt, not a list */
+enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt_list *stmt_list)
 {
+    const toy_stmt *stmt = &stmt_list->stmt;
     switch (stmt->type) {
     case STMT_BLOCK:
         block_stmt(interp, &stmt->block_stmt.block);

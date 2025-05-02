@@ -203,12 +203,14 @@ void dump_expr(FILE *f, const toy_expr *expr) {
     }
 }
 
-void dump_stmt(FILE *f, const toy_stmt_list *stmt, int append_semicolon)
+/* TODO: Should take a toy_stmt * */
+void dump_stmt(FILE *f, const toy_stmt_list *stmt_list, int append_semicolon)
 {
+    const toy_stmt *stmt = &stmt_list->stmt;
     switch (stmt->type) {
     case STMT_BLOCK:
         fputs("{\n", f);
-        dump_stmts(f, stmt->block_stmt.block.stmts);
+        dump_stmt_list(f, stmt->block_stmt.block.stmts);
         fputs("}\n", f);
         break;
     case STMT_BREAK:
@@ -246,7 +248,7 @@ void dump_stmt(FILE *f, const toy_stmt_list *stmt, int append_semicolon)
         }
         fputs(") {\n", f);
         if (stmt->for_stmt.body.stmts) {
-            dump_stmts(f, stmt->for_stmt.body.stmts);
+            dump_stmt_list(f, stmt->for_stmt.body.stmts);
         }
         fputs("}", f);
         break;
@@ -254,7 +256,7 @@ void dump_stmt(FILE *f, const toy_stmt_list *stmt, int append_semicolon)
         fprintf(f, "fun %s(", stmt->func_decl_stmt.def.name);
         dump_identifier_list(f, stmt->func_decl_stmt.def.param_names);
         fputs(") {\n", f);
-        dump_stmts(f, stmt->func_decl_stmt.def.code.stmts);
+        dump_stmt_list(f, stmt->func_decl_stmt.def.code.stmts);
         fputs("}", f);
         break;
     case STMT_IF:
@@ -263,18 +265,18 @@ void dump_stmt(FILE *f, const toy_stmt_list *stmt, int append_semicolon)
             fputs("if (", f);
             dump_expr(f, arm->condition);
             fputs(") {\n", f);
-            dump_stmts(f, arm->code.stmts);
+            dump_stmt_list(f, arm->code.stmts);
             fputs("}", f);
             for (arm = arm->next; arm; arm = arm->next) {
                 fputs(" elseif (", f);
                 dump_expr(f, arm->condition);
                 fputs(") {\n", f);
-                dump_stmts(f, arm->code.stmts);
+                dump_stmt_list(f, arm->code.stmts);
                 fputs("}", f);
             }
             if (stmt->if_stmt.elsepart.stmts) {
                 fputs(" else {\n", f);
-                dump_stmts(f, stmt->if_stmt.elsepart.stmts);
+                dump_stmt_list(f, stmt->if_stmt.elsepart.stmts);
                 fputs("}", f);
             }
         }
@@ -302,7 +304,7 @@ void dump_stmt(FILE *f, const toy_stmt_list *stmt, int append_semicolon)
         fputs("while (\n", f);
         dump_expr(f, stmt->while_stmt.condition);
         fputs(") {\n", f);
-        dump_stmts(f, stmt->while_stmt.body.stmts);
+        dump_stmt_list(f, stmt->while_stmt.body.stmts);
         fputs("}", f);
         break;
     default:
@@ -311,7 +313,7 @@ void dump_stmt(FILE *f, const toy_stmt_list *stmt, int append_semicolon)
     }
 }
 
-void dump_stmts(FILE *f, const toy_stmt_list *stmts)
+void dump_stmt_list(FILE *f, const toy_stmt_list *stmts)
 {
     for (const toy_stmt_list *s = stmts; s; s = s->next) {
         dump_stmt(f, s, 1);

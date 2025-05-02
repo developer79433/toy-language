@@ -33,7 +33,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
     toy_stmt_list *program_start = get_program_start();
-    dump_stmts(stderr, program_start);
+    dump_stmt_list(stderr, program_start);
     toy_interp *interp = alloc_interp(program_start);
     run_current_block(interp);
     free_interp(interp);

@@ -24,7 +24,7 @@ void func_dump(FILE *f, const toy_func_def *def)
     if (def->type == FUNC_PREDEFINED) {
         fprintf(f, "/* Pre-defined function code at %p */\n", def->predef);
     } else if (def->type == FUNC_USER_DECLARED) {
-        dump_stmts(f, def->code.stmts);
+        dump_stmt_list(f, def->code.stmts);
     } else {
         invalid_function_type(def->type);
     }

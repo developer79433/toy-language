@@ -67,8 +67,7 @@ enum toy_stmt_type {
     STMT_WHILE
 };
 
-struct toy_stmt_list_struct {
-    struct toy_stmt_list_struct *next;
+typedef struct toy_stmt_struct {
     enum toy_stmt_type type;
     union {
         toy_expr_stmt expr_stmt;
@@ -80,6 +79,11 @@ struct toy_stmt_list_struct {
         toy_return_stmt return_stmt;
         toy_block_stmt block_stmt;
     };
+} toy_stmt;
+
+struct toy_stmt_list_struct {
+    struct toy_stmt_list_struct *next;
+    toy_stmt stmt;
 };
 
 #endif /* TOY_STMT_TYPES_H */

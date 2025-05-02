@@ -34,7 +34,7 @@ toy_stmt_list *stmt_list_alloc(enum toy_stmt_type type)
 {
     toy_stmt_list *stmt;
     stmt = mymalloc(toy_stmt_list);
-    stmt->type = type;
+    stmt->stmt.type = type;
     stmt->next = NULL;
     return stmt;
 }
