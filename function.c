@@ -21,7 +21,13 @@ void func_dump(FILE *f, const toy_func_def *def)
         dump_identifier_list(f, def->param_names);
     }
     fputs(") {\n", f);
-    dump_stmts(f, def->code.stmts);
+    if (def->type == FUNC_PREDEFINED) {
+        fprintf(f, "/* Pre-defined function code at %p */\n", def->predef);
+    } else if (def->type == FUNC_USER_DECLARED) {
+        dump_stmts(f, def->code.stmts);
+    } else {
+        invalid_function_type(def->type);
+    }
     fputs("}\n", f);
 }
 
