@@ -661,8 +661,8 @@ static void eval_map(toy_interp *interp, toy_val *result, const toy_map_entry_li
     result->map = map_alloc();
     for (; entry_list; entry_list = entry_list->next) {
         toy_val value;
-        eval_expr(interp, &value, entry_list->value);
-        map_set(result->map, entry_list->key, &value);
+        eval_expr(interp, &value, entry_list->entry.value);
+        map_set(result->map, entry_list->entry.key, &value);
     }
 }
 

@@ -8,6 +8,7 @@
 #include "str.h"
 #include "generic-list.h"
 #include "buf-list.h"
+#include "ptr-list.h"
 #include "var-decl.h"
 
 static const char *toy_stmt_type_names[] = {
@@ -38,14 +39,9 @@ toy_stmt *stmt_alloc(enum toy_stmt_type type)
     return stmt;
 }
 
-toy_stmt *stmt_append(toy_stmt *orig, toy_stmt *new_stmt)
+toy_stmt *stmt_append(toy_stmt *list, toy_stmt *new_list)
 {
-    toy_stmt *tmp = orig;
-    while (tmp->next) {
-        tmp = tmp->next;
-    }
-    tmp->next = new_stmt;
-    return orig;
+    return (toy_stmt *) ptr_list_concat((toy_ptr_list *) list, (toy_ptr_list *) new_list);
 }
 
 toy_if_arm_list *if_arm_list_alloc(toy_expr *condition, toy_block *block)
@@ -58,13 +54,7 @@ toy_if_arm_list *if_arm_list_alloc(toy_expr *condition, toy_block *block)
     return arm;
 }
 
-toy_if_arm_list *if_arm_list_append(toy_if_arm_list *orig, toy_if_arm_list *new_arm)
+toy_if_arm_list *if_arm_list_concat(toy_if_arm_list *list, toy_if_arm_list *new_list)
 {
-    /* TODO: Use generic_list_append */
-    toy_if_arm_list *tmp = orig;
-    while (tmp->next) {
-        tmp = tmp->next;
-    }
-    tmp->next = new_arm;
-    return orig;
+    return (toy_if_arm_list *) ptr_list_concat((toy_ptr_list *) list, (toy_ptr_list *) new_list);
 }

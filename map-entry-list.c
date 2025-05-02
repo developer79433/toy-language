@@ -8,16 +8,11 @@
 #include "dump.h"
 #include "str.h"
 
-typedef struct toy_map_entry_struct {
-    toy_str key;
-    toy_expr *value;
-} toy_map_entry;
-
 toy_map_entry_list *map_entry_list_alloc_ref(toy_str first_key, toy_expr *first_value)
 {
     toy_map_entry entry = { .key = first_key, .value = first_value };
     assert(offsetof(toy_map_entry_list, next) == offsetof(toy_buf_list, next));
-    assert(offsetof(toy_map_entry, key) == offsetof(toy_buf_list, c));
+    assert(offsetof(toy_map_entry_list, entry) == offsetof(toy_buf_list, c));
     return (toy_map_entry_list *) buf_list_alloc(&entry, sizeof(entry));
 }
 
@@ -38,9 +33,9 @@ void map_entry_list_dump(FILE *f, const toy_map_entry_list *list)
             } else {
                 fputc(' ', f);
             }
-            dump_str(f, cur->key);
+            dump_str(f, cur->entry.key);
             fputs(": ", f);
-            dump_expr(f, cur->value);
+            dump_expr(f, cur->entry.value);
             printed_anything = 1;
         }
         if (printed_anything) {

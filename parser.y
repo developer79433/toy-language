@@ -251,7 +251,7 @@ elseifs :
         toy_if_arm_list *this_arm = if_arm_list_alloc($4, &$6);
         
         if ($1) {
-            if_arm_list_append($1, this_arm);
+            if_arm_list_concat($1, this_arm);
             $$ = $1;
         } else {
             $$ = this_arm;
@@ -261,7 +261,7 @@ elseifs :
         toy_if_arm_list *this_arm = if_arm_list_alloc($5, &$7);
         
         if ($1) {
-            if_arm_list_append($1, this_arm);
+            if_arm_list_concat($1, this_arm);
             $$ = $1;
         } else {
             $$ = this_arm;

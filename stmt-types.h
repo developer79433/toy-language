@@ -68,8 +68,8 @@ enum toy_stmt_type {
 };
 
 struct toy_stmt_struct {
-    enum toy_stmt_type type;
     struct toy_stmt_struct *next;
+    enum toy_stmt_type type;
     union {
         toy_expr_stmt expr_stmt;
         toy_if_stmt if_stmt;
