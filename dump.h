@@ -12,6 +12,6 @@ void dump_identifier(FILE *f, const toy_str str);
 void dump_identifier_list(FILE *f, const toy_str_list *list);
 void dump_expr(FILE *f, const toy_expr *expr);
 void dump_stmt_list(FILE *f, const toy_stmt_list *stmts);
-void dump_stmt(FILE *f, const toy_stmt_list *stmt, int append_semicolon);
+void dump_stmt(FILE *f, const toy_stmt *stmt, int append_semicolon);
 
 #endif /* TOY_DUMP_H */

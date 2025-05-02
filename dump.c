@@ -204,9 +204,8 @@ void dump_expr(FILE *f, const toy_expr *expr) {
 }
 
 /* TODO: Should take a toy_stmt * */
-void dump_stmt(FILE *f, const toy_stmt_list *stmt_list, int append_semicolon)
+void dump_stmt(FILE *f, const toy_stmt *stmt, int append_semicolon)
 {
-    const toy_stmt *stmt = &stmt_list->stmt;
     switch (stmt->type) {
     case STMT_BLOCK:
         fputs("{\n", f);
@@ -234,7 +233,7 @@ void dump_stmt(FILE *f, const toy_stmt_list *stmt_list, int append_semicolon)
     case STMT_FOR:
         fputs("for (", f);
         if (stmt->for_stmt.at_start) {
-            dump_stmt(f, stmt->for_stmt.at_start, 1);
+            dump_stmt(f, &stmt->for_stmt.at_start->stmt, 1);
         }
         fputc(' ', f);
         if (stmt->for_stmt.condition) {
@@ -244,7 +243,7 @@ void dump_stmt(FILE *f, const toy_stmt_list *stmt_list, int append_semicolon)
         }
         fputs("; ", f);
         if (stmt->for_stmt.at_end) {
-            dump_stmt(f, stmt->for_stmt.at_end, 0);
+            dump_stmt(f, &stmt->for_stmt.at_end->stmt, 0);
         }
         fputs(") {\n", f);
         if (stmt->for_stmt.body.stmts) {
@@ -316,7 +315,7 @@ void dump_stmt(FILE *f, const toy_stmt_list *stmt_list, int append_semicolon)
 void dump_stmt_list(FILE *f, const toy_stmt_list *stmts)
 {
     for (const toy_stmt_list *s = stmts; s; s = s->next) {
-        dump_stmt(f, s, 1);
+        dump_stmt(f, &s->stmt, 1);
         fputc('\n', f);
     }
 }
