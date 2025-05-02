@@ -13,7 +13,7 @@ typedef struct toy_val_list_struct {
     toy_val val;
 } toy_val_list;
 
-typedef listitem_callback_result (*val_list_item_callback)(void *cookie, size_t index, toy_val_list *val);
-typedef listitem_callback_result (*const_val_list_item_callback)(void *cookie, size_t index, const toy_val_list *val);
+typedef item_callback_result (*val_list_item_callback)(void *cookie, size_t index, toy_val_list *val);
+typedef item_callback_result (*const_val_list_item_callback)(void *cookie, size_t index, const toy_val_list *val);
 
 #endif /* VAL_TOY_LIST_TYPES_H */

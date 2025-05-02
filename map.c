@@ -225,20 +225,24 @@ void map_dump_keys(FILE *f, const toy_map *map)
     fputc(']', f);
 }
 
-void map_foreach(toy_map *map, map_entry_callback callback, void *cookie)
+iter_result map_foreach(toy_map *map, map_entry_callback callback, void *cookie)
 {
     for (map_entry * const * bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
         if (*bucket) {
             for (map_entry *entry = *bucket; entry; entry = entry->next) {
-                callback(cookie, entry->key, &entry->value);
+                item_callback_result res = callback(cookie, entry->key, &entry->value);
+                if (res == STOP_ITERATING) {
+                    return EUMERATION_INTERRUPTED;
+                }
             }
         }
     }
+    return ENUMERATION_COMPLETE;
 }
 
-void map_foreach_const(const toy_map *map, const_map_entry_callback callback, void *cookie)
+iter_result map_foreach_const(const toy_map *map, const_map_entry_callback callback, void *cookie)
 {
-    map_foreach((toy_map *) map, (map_entry_callback) callback, cookie);
+    return map_foreach((toy_map *) map, (map_entry_callback) callback, cookie);
 }
 
 size_t map_len(const toy_map *map)

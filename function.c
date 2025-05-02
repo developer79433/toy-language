@@ -230,7 +230,7 @@ typedef struct val_list_foreach_args_struct {
     toy_func_def *func;
 } val_list_foreach_args;
 
-static listitem_callback_result list_foreach_callback(void *cookie, size_t index, const toy_val_list *item)
+static item_callback_result list_foreach_callback(void *cookie, size_t index, const toy_val_list *item)
 {
     val_list_foreach_args *args = (val_list_foreach_args *) cookie;
     toy_val_list func_args = { .val = item->val, .next = NULL };
@@ -264,7 +264,7 @@ typedef struct map_foreach_args_struct {
     toy_func_def *func;
 } map_foreach_args;
 
-static void map_foreach_callback(void *cookie, const toy_str key, const toy_val *value)
+static item_callback_result map_foreach_callback(void *cookie, const toy_str key, const toy_val *value)
 {
     map_foreach_args *args = (map_foreach_args *) cookie;
     const toy_val key_val = { .type = VAL_STR, .str = key };
@@ -272,6 +272,7 @@ static void map_foreach_callback(void *cookie, const toy_str key, const toy_val 
     const toy_val_list func_args = { .val = key_val, .next = (toy_val_list *) &value_arg };
     toy_val result;
     run_toy_function_val_list(args->interp, &result, args->func, &func_args);
+    return CONTINUE_ITERATING;
 }
 
 static void predefined_map_foreach(toy_interp *interp, toy_val *result, const toy_val_list *args)

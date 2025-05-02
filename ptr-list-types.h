@@ -8,7 +8,7 @@ typedef struct toy_ptr_list_struct {
     void *ptr;
 } toy_ptr_list;
 
-typedef listitem_callback_result (*ptr_list_item_callback)(void *cookie, size_t index, toy_ptr_list *item);
-typedef listitem_callback_result (*const_ptr_list_item_callback)(void *cookie, size_t index, const toy_ptr_list *item);
+typedef item_callback_result (*ptr_list_item_callback)(void *cookie, size_t index, toy_ptr_list *item);
+typedef item_callback_result (*const_ptr_list_item_callback)(void *cookie, size_t index, const toy_ptr_list *item);
 
 #endif /* TOY_PTR_LIST_TYPES_H */

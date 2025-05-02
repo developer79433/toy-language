@@ -52,12 +52,12 @@ void *buf_list_index(toy_buf_list *list, size_t index)
     return NULL;
 }
 
-list_iter_result buf_list_foreach(toy_buf_list *list, buf_list_item_callback callback, void *cookie)
+iter_result buf_list_foreach(toy_buf_list *list, buf_list_item_callback callback, void *cookie)
 {
     return generic_list_foreach((generic_list *) list, (generic_list_item_callback) callback, cookie);
 }
 
-list_iter_result buf_list_foreach_const(const toy_buf_list *list, const_buf_list_item_callback callback, void *cookie)
+iter_result buf_list_foreach_const(const toy_buf_list *list, const_buf_list_item_callback callback, void *cookie)
 {
     return generic_list_foreach_const((generic_list *) list, (const_generic_list_item_callback) callback, cookie);
 }

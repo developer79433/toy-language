@@ -68,12 +68,12 @@ void str_list_free(toy_str_list *str_list)
     ptr_list_free((toy_ptr_list *) str_list);
 }
 
-list_iter_result str_list_foreach(toy_str_list *list, toy_str_list_item_callback callback, void *cookie)
+iter_result str_list_foreach(toy_str_list *list, toy_str_list_item_callback callback, void *cookie)
 {
     return ptr_list_foreach((toy_ptr_list *) list, (ptr_list_item_callback) callback, cookie);
 }
 
-list_iter_result str_list_foreach_const(const toy_str_list *list, const_toy_str_list_item_callback callback, void *cookie)
+iter_result str_list_foreach_const(const toy_str_list *list, const_toy_str_list_item_callback callback, void *cookie)
 {
     return ptr_list_foreach_const((const toy_ptr_list *) list, (const_ptr_list_item_callback) callback, cookie);
 }

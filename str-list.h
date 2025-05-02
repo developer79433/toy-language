@@ -15,7 +15,7 @@ toy_str str_list_index(toy_str_list *list, size_t index);
 size_t str_list_len(const toy_str_list *list);
 toy_str str_list_payload(toy_str_list *list);
 const toy_str str_list_payload_const(const toy_str_list *list);
-list_iter_result str_list_foreach(toy_str_list *list, toy_str_list_item_callback callback, void *cookie);
-list_iter_result str_list_foreach_const(const toy_str_list *list, const_toy_str_list_item_callback callback, void *cookie);
+iter_result str_list_foreach(toy_str_list *list, toy_str_list_item_callback callback, void *cookie);
+iter_result str_list_foreach_const(const toy_str_list *list, const_toy_str_list_item_callback callback, void *cookie);
 
 #endif /* TOY_STR_LIST_H */

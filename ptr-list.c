@@ -51,12 +51,12 @@ size_t ptr_list_len(const toy_ptr_list *list)
     return generic_list_len((generic_list *) list);
 }
 
-list_iter_result ptr_list_foreach(toy_ptr_list *list, ptr_list_item_callback callback, void *cookie)
+iter_result ptr_list_foreach(toy_ptr_list *list, ptr_list_item_callback callback, void *cookie)
 {
     return generic_list_foreach((generic_list *) list, (generic_list_item_callback) callback, cookie);
 }
 
-list_iter_result ptr_list_foreach_const(const toy_ptr_list *list, const_ptr_list_item_callback callback, void *cookie)
+iter_result ptr_list_foreach_const(const toy_ptr_list *list, const_ptr_list_item_callback callback, void *cookie)
 {
     return generic_list_foreach_const((generic_list *) list, (const_generic_list_item_callback) callback, cookie);
 }

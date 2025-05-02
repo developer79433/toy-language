@@ -6,6 +6,7 @@
 #include "map.h"
 #include "str-list.h"
 #include "str-list-inline.h"
+#include "val.h"
 #include "val-list.h"
 #include "var-decl-list.h"
 #include "stmt.h"
@@ -21,7 +22,7 @@ static void test_strings(void)
     assert(toy_str_nequal("not", "same") == TOY_TRUE);
 }
 
-static listitem_callback_result str_list_item_callback(void *cookie, size_t index, const toy_str_list *list)
+static item_callback_result str_list_item_callback(void *cookie, size_t index, const toy_str_list *list)
 {
     size_t *count = (size_t *) cookie;
     // log_printf("Got string '%s'\n", list->str);
@@ -51,7 +52,7 @@ static void test_str_list(void)
     str_list_free(retval);
 }
 
-static listitem_callback_result str_list_inline_item_callback(void *cookie, size_t index, const toy_str_list_inline *list)
+static item_callback_result str_list_inline_item_callback(void *cookie, size_t index, const toy_str_list_inline *list)
 {
     size_t *count = (size_t *) cookie;
     // log_printf("Got string '%s'\n", list->str);
@@ -107,6 +108,25 @@ static void test_val_lists(void)
     val_list_free(retval);
 }
 
+typedef struct predicate_args_struct {
+    toy_str intended_key;
+    toy_val *intended_value;
+} predicate_args;
+
+static toy_bool test_map_entry(void *cookie, toy_str key, toy_val *value)
+{
+    predicate_args *args = (predicate_args *) cookie;
+    assert(toy_str_equal(key, args->intended_key));
+    assert(toy_vals_equal(value, args->intended_value));
+    return 1;
+}
+
+static item_callback_result map_item_callback(void *cookie, toy_str key, toy_val *value)
+{
+    test_map_entry(cookie, key, value);
+    return CONTINUE_ITERATING;
+}
+
 static void test_maps(void)
 {
     toy_map *map1 = map_alloc();
@@ -147,6 +167,10 @@ static void test_maps(void)
     toy_val *get6 = map_get(map1, "second key");
     assert(get6->type == VAL_STR);
     assert(0 == strcmp(get6->str, "new value"));
+
+    // Test enumerate
+    predicate_args args = { .intended_key = "second key", .intended_value = &new_value};
+    map_foreach(map1, map_item_callback, &args);
 
     // Test reset
     map_reset(map1);
