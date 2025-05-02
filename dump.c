@@ -295,7 +295,7 @@ void dump_stmt(FILE *f, const toy_stmt_list *stmt_list, int append_semicolon)
         break;
     case STMT_VAR_DECL:
         fputs("var ", f);
-        var_decl_list_dump(f, stmt->var_decl_stmt);
+        var_decl_list_dump(f, &stmt->var_decl_stmt);
         if (append_semicolon) {
             fputc(';', f);
         }

@@ -885,9 +885,9 @@ static void return_stmt(toy_interp *interp, const toy_return_stmt *return_stmt)
     eval_expr(interp, &interp->return_val, return_stmt->expr);
 }
 
-static void var_decl_stmt(toy_interp *interp, toy_var_decl_list *var_decl_list)
+static void var_decl_stmt(toy_interp *interp, const toy_var_decl_list *var_decl_list)
 {
-    for (toy_var_decl_list *decl = var_decl_list; decl; decl = decl->next) {
+    for (const toy_var_decl_list *decl = var_decl_list; decl; decl = decl->next) {
         create_variable_expr(interp, decl->decl.name, decl->decl.value);
     }
 }
@@ -923,7 +923,7 @@ enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt_list *stmt_list
         return_stmt(interp, &stmt->return_stmt);
         return REACHED_RETURN;
     case STMT_VAR_DECL:
-        var_decl_stmt(interp, stmt->var_decl_stmt);
+        var_decl_stmt(interp, &stmt->var_decl_stmt);
         break;
     case STMT_WHILE:
         while_stmt(interp, &stmt->while_stmt);

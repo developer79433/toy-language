@@ -82,7 +82,7 @@ stmts :
     }
     | stmts stmt {
         if ($1) {
-            stmt_append($1, $2);
+            stmt_list_concat($1, $2);
             $$ = $1;
         } else {
             $$ = $2;
@@ -186,7 +186,7 @@ func_decl_stmt:
 var_decl_stmt:
     T_VAR vardecllist {
         $$ = stmt_list_alloc(STMT_VAR_DECL);
-        $$->stmt.var_decl_stmt = $2;
+        $$->stmt.var_decl_stmt = *$2;
     }
 ;
 

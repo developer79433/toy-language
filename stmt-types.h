@@ -74,7 +74,7 @@ typedef struct toy_stmt_struct {
         toy_if_stmt if_stmt;
         toy_for_stmt for_stmt;
         toy_while_stmt while_stmt;
-        toy_var_decl_list *var_decl_stmt;
+        toy_var_decl_list var_decl_stmt;
         toy_func_decl_stmt func_decl_stmt;
         toy_return_stmt return_stmt;
         toy_block_stmt block_stmt;

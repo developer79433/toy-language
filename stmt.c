@@ -32,14 +32,14 @@ const char *toy_stmt_type_name(enum toy_stmt_type stmt_type)
 
 toy_stmt_list *stmt_list_alloc(enum toy_stmt_type type)
 {
-    toy_stmt_list *stmt;
-    stmt = mymalloc(toy_stmt_list);
-    stmt->stmt.type = type;
-    stmt->next = NULL;
-    return stmt;
+    toy_stmt_list *list;
+    list = mymalloc(toy_stmt_list);
+    list->stmt.type = type;
+    list->next = NULL;
+    return list;
 }
 
-toy_stmt_list *stmt_append(toy_stmt_list *list, toy_stmt_list *new_list)
+toy_stmt_list *stmt_list_concat(toy_stmt_list *list, toy_stmt_list *new_list)
 {
     return (toy_stmt_list *) ptr_list_concat((toy_ptr_list *) list, (toy_ptr_list *) new_list);
 }

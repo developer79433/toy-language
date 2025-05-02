@@ -14,7 +14,7 @@ toy_var_decl *var_decl_alloc(toy_str name, toy_expr *value)
     return decl;
 }
 
-void var_decl_dump(FILE *f, toy_var_decl *decl)
+void var_decl_dump(FILE *f, const toy_var_decl *decl)
 {
     fputs(decl->name, f);
     if (decl->value) {

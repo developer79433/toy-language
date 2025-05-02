@@ -18,10 +18,10 @@ toy_var_decl_list *var_decl_list_alloc(toy_var_decl *decl)
     return decl_list;
 }
 
-void var_decl_list_dump(FILE *f, toy_var_decl_list *list)
+void var_decl_list_dump(FILE *f, const toy_var_decl_list *list)
 {
     int output_something = 0;
-    for (toy_var_decl_list *decl = list; decl; decl = decl->next) {
+    for (const toy_var_decl_list *decl = list; decl; decl = decl->next) {
         if (output_something) {
             fputs(", ", f);
         }
