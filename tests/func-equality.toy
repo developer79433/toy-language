@@ -1,7 +1,15 @@
-fun myfuncval() {
+fun myfunc(blah) {
+  return blah;
 }
-fun myfunc() {
-    return myfuncval;
-}
-var val = myfunc();
-assert_equal(val, myfuncval);
+var myfuncexpr = fun(blah) { return blah; };
+assert_equal(myfunc, myfunc);
+assert_equal(myfuncexpr, myfuncexpr);
+assert_not_equal(myfunc, myfuncexpr);
+
+var myval = myfunc;
+assert_equal(myval, myfunc);
+assert_not_equal(myval, myfuncexpr);
+
+myval = myfuncexpr;
+assert_not_equal(myval, myfunc);
+assert_equal(myval, myfuncexpr);
