@@ -9,6 +9,7 @@
 #include "val-list.h"
 #include "var-decl-list.h"
 #include "stmt.h"
+#include "log.h"
 
 /* TODO: move these into their respective units */
 
@@ -18,6 +19,17 @@ static void test_strings(void)
     assert(toy_str_equal("not", "same") == TOY_FALSE);
     assert(toy_str_nequal("same", "same") == TOY_FALSE);
     assert(toy_str_nequal("not", "same") == TOY_TRUE);
+}
+
+static listitem_callback_result str_list_item_callback(void *cookie, size_t index, const toy_str_list *list)
+{
+    size_t *count = (size_t *) cookie;
+    // log_printf("Got string '%s'\n", list->str);
+    assert(*count == 0 || *count == 1);
+    assert((*count != 0) || (toy_str_equal(list->str, "first string")));
+    assert((*count != 1) || (toy_str_equal(list->str, "second string")));
+    (*count)++;
+    return CONTINUE_ITERATING;
 }
 
 static void test_str_list(void)
@@ -34,7 +46,20 @@ static void test_str_list(void)
     assert(toy_str_equal(retval->next->str, second_str));
     assert(NULL == retval->next->next);
     assert(2 == str_list_len(retval));
+    size_t count = 0;
+    str_list_foreach_const(str_list, str_list_item_callback, &count);
     str_list_free(retval);
+}
+
+static listitem_callback_result str_list_inline_item_callback(void *cookie, size_t index, const toy_str_list_inline *list)
+{
+    size_t *count = (size_t *) cookie;
+    // log_printf("Got string '%s'\n", list->str);
+    assert(*count == 0 || *count == 1);
+    assert((*count != 0) || (toy_str_equal(str_list_inline_payload_const(list), "first string")));
+    assert((*count != 1) || (toy_str_equal(str_list_inline_payload_const(list), "second string")));
+    (*count)++;
+    return CONTINUE_ITERATING;
 }
 
 static void test_str_list_inline(void)
@@ -51,6 +76,8 @@ static void test_str_list_inline(void)
     assert(toy_str_equal(&retval->next->c, second_str));
     assert(NULL == retval->next->next);
     assert(2 == str_list_inline_len(retval));
+    size_t count = 0;
+    str_list_inline_foreach_const(str_list, str_list_inline_item_callback, &count);
     str_list_inline_free(retval);
 }
 

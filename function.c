@@ -236,7 +236,7 @@ static listitem_callback_result list_foreach_callback(void *cookie, size_t index
     toy_val_list func_args = { .val = item->val, .next = NULL };
     toy_val result;
     run_toy_function_val_list(args->interp, &result, args->func, &func_args);
-    return KEEP_ITERATING; /* TODO: early bailout? */
+    return CONTINUE_ITERATING; /* TODO: early bailout? */
 }
 
 static void predefined_list_foreach(toy_interp *interp, toy_val *result, const toy_val_list *args)

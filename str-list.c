@@ -7,6 +7,16 @@
 #include "str.h"
 #include "str-list.h"
 
+toy_str str_list_payload(toy_str_list *list)
+{
+    return list->str;
+}
+
+const toy_str str_list_payload_const(const toy_str_list *list)
+{
+    return list->str;
+}
+
 void str_list_dump(FILE *f, const toy_str_list *list)
 {
     const toy_str_list *cur;
@@ -22,10 +32,10 @@ void str_list_dump(FILE *f, const toy_str_list *list)
     }
 }
 
-list_iter_result str_list_index(toy_str_list *list, size_t index, toy_str_list_item_callback callback, void *cookie)
+toy_str str_list_index(toy_str_list *list, size_t index)
 {
     assert(offsetof(toy_str_list, str) == offsetof(toy_ptr_list, ptr));
-    return ptr_list_index((toy_ptr_list *) list, index, (ptr_list_item_callback) callback, cookie);
+    return ptr_list_index((toy_ptr_list *) list, index);
 }
 
 toy_str_list *str_list_alloc(const char *str)

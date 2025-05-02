@@ -3,16 +3,26 @@
 #include "generic-list.h"
 #include "buf-list.h"
 
-void *buf_list_payload_get_raw(toy_buf_list *list)
+void *buf_list_payload(toy_buf_list *list)
 {
     return &list->c;
+}
+
+const void *buf_list_payload_const(const toy_buf_list *list)
+{
+    return &list->c;
+}
+
+void buf_list_payload_set(toy_buf_list *list, void *buf, size_t buf_size)
+{
+    memcpy(buf_list_payload(list), buf, buf_size);
 }
 
 toy_buf_list *buf_list_alloc(void *buf, size_t buf_size)
 {
     toy_buf_list *new_list = (toy_buf_list *) generic_list_alloc_size(buf_size);
     if (buf) {
-        memcpy(&new_list->c, buf, buf_size);
+        buf_list_payload_set(new_list, buf, buf_size);
     }
     return new_list;
 }
@@ -33,19 +43,23 @@ size_t buf_list_len(const toy_buf_list *list)
     return generic_list_len((generic_list *) list);
 }
 
-list_iter_result buf_list_index(toy_buf_list *list, size_t index, buf_list_item_callback callback, void *cookie)
+void *buf_list_index(toy_buf_list *list, size_t index)
 {
-    return generic_list_index((generic_list *) list, index, (generic_list_item_callback) callback, cookie);
+    toy_buf_list *found = (toy_buf_list *) generic_list_index((generic_list *) list, index);
+    if (found) {
+        return buf_list_payload(found);
+    }
+    return NULL;
 }
 
-void buf_list_foreach(toy_buf_list *list, buf_list_item_callback callback, void *cookie)
+list_iter_result buf_list_foreach(toy_buf_list *list, buf_list_item_callback callback, void *cookie)
 {
-    generic_list_foreach((generic_list *) list, (generic_list_item_callback) callback, cookie);
+    return generic_list_foreach((generic_list *) list, (generic_list_item_callback) callback, cookie);
 }
 
-void buf_list_foreach_const(const toy_buf_list *list, const_buf_list_item_callback callback, void *cookie)
+list_iter_result buf_list_foreach_const(const toy_buf_list *list, const_buf_list_item_callback callback, void *cookie)
 {
-    generic_list_foreach_const((generic_list *) list, (const_generic_list_item_callback) callback, cookie);
+    return generic_list_foreach_const((generic_list *) list, (const_generic_list_item_callback) callback, cookie);
 }
 
 void buf_list_free(toy_buf_list *list)

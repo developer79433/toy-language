@@ -4,16 +4,35 @@
 #include "generic-list.h"
 #include "ptr-list.h"
 
+void *ptr_list_payload(toy_ptr_list *list)
+{
+    return list->ptr;
+}
+
+const void *ptr_list_payload_const(const toy_ptr_list *list)
+{
+    return list->ptr;
+}
+
+void ptr_list_set_payload(toy_ptr_list *list, void *new_payload)
+{
+    list->ptr = new_payload;
+}
+
 toy_ptr_list *ptr_list_alloc(void *ptr)
 {
     toy_ptr_list *list = (toy_ptr_list *) generic_list_alloc_size(sizeof(list->ptr));
-    list->ptr = ptr;
+    ptr_list_set_payload(list, ptr);
     return list;
 }
 
-list_iter_result ptr_list_index(toy_ptr_list *list, size_t index, ptr_list_item_callback callback, void *cookie)
+void *ptr_list_index(toy_ptr_list *list, size_t index)
 {
-    return generic_list_index((generic_list *) list, index, (generic_list_item_callback) callback, cookie);
+    toy_ptr_list *found = (toy_ptr_list *) generic_list_index((generic_list *) list, index);
+    if (found) {
+        return ptr_list_payload(found);
+    }
+    return NULL;
 }
 
 toy_ptr_list *ptr_list_append(toy_ptr_list *list, void *new_ptr)
@@ -39,7 +58,7 @@ list_iter_result ptr_list_foreach(toy_ptr_list *list, ptr_list_item_callback cal
 
 list_iter_result ptr_list_foreach_const(const toy_ptr_list *list, const_ptr_list_item_callback callback, void *cookie)
 {
-    return generic_list_foreach_const((const generic_list *) list, (const_generic_list_item_callback) callback, cookie);
+    return generic_list_foreach_const((generic_list *) list, (const_generic_list_item_callback) callback, cookie);
 }
 
 void ptr_list_free(toy_ptr_list *list)

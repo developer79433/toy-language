@@ -6,6 +6,8 @@
 #include <math.h>
 
 #include "mymalloc.h"
+#include "log.h"
+#include "dump.h"
 #include "interp.h"
 #include "val.h"
 #include "val-list.h"
@@ -511,29 +513,20 @@ void call_func(toy_interp *interp, toy_val *result, toy_str func_name, toy_expr_
     }
 }
 
-typedef struct callback_args_struct {
-    toy_val **val_to_set;
-} callback_args;
-
-static listitem_callback_result found_value_callback(void *cookie, size_t index, toy_val_list *item)
-{
-    callback_args *args = (callback_args *) cookie;
-    *(args->val_to_set) = &item->val;
-    return STOP_ITERATING;
-}
-
 static void list_lookup(toy_interp *interp, toy_val *result, toy_val_list *val_list, toy_expr *index)
 {
     toy_val index_result;
     eval_expr(interp, &index_result, index);
     if (index_result.type == VAL_NUM) {
-        toy_val *val;
-        callback_args args = { .val_to_set = &val };
-        val_list_index(val_list, index_result.num, found_value_callback, &args);
-        if (INDEX_OUT_OF_BOUNDS == val) {
+        if (index_result.num < 0) {
             invalid_val_list_index(val_list, index_result.num);
         } else {
-            *result = *val;
+            toy_val *lookup_result = val_list_index(val_list, index_result.num);
+            if (lookup_result) {
+                *result = *lookup_result;
+            } else {
+                invalid_val_list_index(val_list, index_result.num);
+            }
         }
     } else {
         invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);

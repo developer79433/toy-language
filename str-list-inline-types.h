@@ -8,4 +8,7 @@ typedef struct toy_str_list_inline_struct {
     toy_char c; /* really variable-length, null-terminated string */
 } toy_str_list_inline;
 
+typedef listitem_callback_result (*toy_str_list_inline_item_callback)(void *cookie, size_t index, toy_str_list_inline *item);
+typedef listitem_callback_result (*const_toy_str_list_inline_item_callback)(void *cookie, size_t index, const toy_str_list_inline *item);
+
 #endif /* TOY_STR_LIST_INLINE_TYPES_H */
