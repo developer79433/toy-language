@@ -7,7 +7,6 @@
 #include "val-types.h"
 
 void val_dump(FILE *f, const toy_val *val);
-/* TODO: Remove 'toy_' prefix */
 toy_bool vals_equal(const toy_val *val1, const toy_val *val2);
 toy_bool vals_nequal(const toy_val *val1, const toy_val *val2);
 toy_bool val_gt(const toy_val *val1, const toy_val *val2);

@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include "var-decl-list-types.h"
+#include "expr.h"
 
 toy_var_decl_list *var_decl_list_alloc(toy_var_decl *decl);
 void var_decl_list_dump(FILE *f, toy_var_decl_list *list);

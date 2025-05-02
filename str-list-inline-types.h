@@ -2,6 +2,7 @@
 #define TOY_STR_LIST_INLINE_TYPES_H 1
 
 #include "str-types.h"
+#include "iter-types.h"
 
 typedef struct toy_str_list_inline_struct {
     struct toy_str_list_inline_struct *next;
