@@ -38,7 +38,7 @@ typedef struct interp_frame_struct {
         const toy_func_def *user_def_func;
         const toy_block *block_stmt;
     };
-    toy_stmt *cur_stmt;
+    toy_stmt_list *cur_stmt;
     toy_map *symbols;
 } interp_frame;
 
@@ -786,7 +786,7 @@ static void run_for_stmt_atend(toy_interp *interp, const toy_for_stmt *for_stmt)
     }
 }
 
-static void toy_goto(toy_interp *interp, toy_stmt *target)
+static void toy_goto(toy_interp *interp, toy_stmt_list *target)
 {
     interp->cur_frame->cur_stmt = target;
 }
@@ -892,7 +892,7 @@ static void var_decl_stmt(toy_interp *interp, toy_var_decl_list *var_decl_list)
     }
 }
 
-enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt)
+enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt_list *stmt)
 {
     switch (stmt->type) {
     case STMT_BLOCK:
@@ -1002,12 +1002,12 @@ static enum run_stmt_result block_stmt(toy_interp *interp, const toy_block *bloc
     return block_result;
 }
 
-toy_interp *alloc_interp(const toy_stmt *program)
+toy_interp *alloc_interp(const toy_stmt_list *program)
 {
     toy_interp *interp;
     interp = mymalloc(toy_interp);
     interp->main_program.type = FUNC_USER_DECLARED;
-    interp->main_program.code.stmts = (toy_stmt *) program;
+    interp->main_program.code.stmts = (toy_stmt_list *) program;
     interp->main_program.name = "Top-level";
     interp->main_program.param_names = NULL;
     interp->cur_frame = NULL;

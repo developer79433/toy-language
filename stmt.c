@@ -30,18 +30,18 @@ const char *toy_stmt_type_name(enum toy_stmt_type stmt_type)
     return toy_stmt_type_names[stmt_type];
 }
 
-toy_stmt *stmt_alloc(enum toy_stmt_type type)
+toy_stmt_list *stmt_list_alloc(enum toy_stmt_type type)
 {
-    toy_stmt *stmt;
-    stmt = mymalloc(toy_stmt);
+    toy_stmt_list *stmt;
+    stmt = mymalloc(toy_stmt_list);
     stmt->type = type;
     stmt->next = NULL;
     return stmt;
 }
 
-toy_stmt *stmt_append(toy_stmt *list, toy_stmt *new_list)
+toy_stmt_list *stmt_append(toy_stmt_list *list, toy_stmt_list *new_list)
 {
-    return (toy_stmt *) ptr_list_concat((toy_ptr_list *) list, (toy_ptr_list *) new_list);
+    return (toy_stmt_list *) ptr_list_concat((toy_ptr_list *) list, (toy_ptr_list *) new_list);
 }
 
 toy_if_arm_list *if_arm_list_alloc(toy_expr *condition, toy_block *block)

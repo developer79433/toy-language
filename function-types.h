@@ -11,11 +11,11 @@ typedef struct toy_interp_struct toy_interp;
 
 typedef void (*predefined_func_addr)(toy_interp *interp, toy_val *result, const toy_val_list *args);
 
-struct toy_stmt_struct;
-typedef struct toy_stmt_struct toy_stmt;
+struct toy_stmt_list_struct;
+typedef struct toy_stmt_list_struct toy_stmt_list;
 
 typedef struct toy_block_struct {
-    toy_stmt *stmts;
+    toy_stmt_list *stmts;
 } toy_block;
 
 enum toy_func_type {

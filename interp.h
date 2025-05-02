@@ -8,15 +8,15 @@
 #include "function-types.h"
 #include "interp-types.h"
 
-struct toy_stmt_struct;
-typedef struct toy_stmt_struct toy_stmt;
+struct toy_stmt_list_struct;
+typedef struct toy_stmt_list_struct toy_stmt_list;
 struct toy_block_struct;
 typedef struct toy_block_struct toy_block;
 
-toy_interp *alloc_interp(const toy_stmt *program);
+toy_interp *alloc_interp(const toy_stmt_list *program);
 void free_interp(toy_interp *interp);
 void eval_expr(toy_interp *interp, toy_val *result, const toy_expr *expr);
-enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt);
+enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt_list *stmt);
 enum run_stmt_result run_current_block(toy_interp *interp);
 toy_bool convert_to_bool(const toy_val *val);
 int lookup_identifier(toy_interp *interp, toy_val *result, const toy_str name);

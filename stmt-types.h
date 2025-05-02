@@ -37,8 +37,8 @@ typedef struct toy_if_stmt_struct {
 
 typedef struct toy_for_stmt_struct {
     toy_expr *condition;
-    toy_stmt *at_start;
-    toy_stmt *at_end;
+    toy_stmt_list *at_start;
+    toy_stmt_list *at_end;
     toy_block body;
 } toy_for_stmt;
 
@@ -67,8 +67,8 @@ enum toy_stmt_type {
     STMT_WHILE
 };
 
-struct toy_stmt_struct {
-    struct toy_stmt_struct *next;
+struct toy_stmt_list_struct {
+    struct toy_stmt_list_struct *next;
     enum toy_stmt_type type;
     union {
         toy_expr_stmt expr_stmt;
