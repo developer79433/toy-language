@@ -1,6 +1,8 @@
 #ifndef TOY_GENERIC_MAP_TYPES_H
 #define TOY_GENERIC_MAP_TYPES_H 1
 
+#include <stddef.h>
+
 #include "str-types.h"
 #include "val-types.h"
 #include "iter-types.h"

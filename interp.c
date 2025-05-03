@@ -20,6 +20,7 @@
 #include "function.h"
 #include "errors.h"
 #include "stmt-list.h"
+#include "map-val.h"
 
 #if 0
 #define DEBUG_STACK 1
@@ -76,7 +77,7 @@ toy_bool convert_to_bool(const toy_val *val)
     case VAL_LIST:
         return val_list_len(val->list) != 0;
     case VAL_MAP:
-        return map_len(val->map) != 0;
+        return generic_map_size(val->map) != 0;
     case VAL_STR:
         return strlen(val->str) != 0;
     default:

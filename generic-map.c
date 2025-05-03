@@ -55,7 +55,7 @@ void generic_map_free(generic_map *map)
     free(map);
 }
 
-static generic_map_entry_list *generic_map_entry_list_alloc(toy_str key_name, toy_val *value)
+generic_map_entry_list *generic_map_entry_list_alloc(toy_str key_name, toy_val *value)
 {
     generic_map_entry_list *entry_list;
     entry_list = mymalloc(generic_map_entry_list);
@@ -79,7 +79,7 @@ static uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length) {
     return hash;
 }
 
-static generic_map_entry_list **get_bucket(generic_map *map, toy_str key)
+generic_map_entry_list **get_bucket(generic_map *map, toy_str key)
 {
     uint32_t hashval = jenkins_one_at_a_time_hash((uint8_t *) key, strlen(key));
     return &map->buckets[hashval % NUM_BUCKETS];
@@ -106,30 +106,6 @@ toy_val *map_val_get(generic_map *map, const toy_str key)
         return NULL;
     }
     return NULL;
-}
-
-int map_val_set(generic_map *map, const toy_str key, const toy_val *value)
-{
-    generic_map_entry_list *new_entry;
-    generic_map_entry_list **bucket = get_bucket(map, key);
-    if (*bucket) {
-        for (generic_map_entry_list *entry = *bucket; entry; entry = entry->next) {
-            if (toy_str_equal(entry->entry.key, key)) {
-                /* Overwrite existing entry */
-                memcpy(&entry->entry.value, value, sizeof(*value));
-                return 0;
-            }
-        }
-        /* Prepend new entry to existing bucket */
-        new_entry = generic_map_entry_list_alloc(key, (toy_val *) value);
-        new_entry->next = *bucket;
-    } else {
-        /* New entry in new bucket */
-        new_entry = generic_map_entry_list_alloc(key, (toy_val *) value);
-    }
-    *bucket = new_entry;
-    map->num_items++;
-    return 1;
 }
 
 int generic_map_delete(generic_map *map, const toy_str key)
@@ -230,7 +206,7 @@ enumeration_result generic_map_foreach_const(const generic_map *map, const_map_e
     return generic_map_foreach((generic_map *) map, (map_entry_callback) callback, cookie);
 }
 
-size_t map_len(const generic_map *map)
+size_t generic_map_size(const generic_map *map)
 {
     return map->num_items;
 }

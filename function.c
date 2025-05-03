@@ -54,7 +54,7 @@ static void predefined_map_len(toy_interp *interp, toy_val *result, const toy_va
     }
     result->type = VAL_NUM;
     assert(arg->type == VAL_MAP);
-    result->num = map_len(arg->map);
+    result->num = generic_map_size(arg->map);
 }
 
 static void predefined_print(toy_interp *interp, toy_val *result, const toy_val_list *args)
