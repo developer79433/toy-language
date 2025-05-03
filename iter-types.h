@@ -8,7 +8,7 @@ typedef enum item_callback_result_enum {
 
 typedef enum enumeration_result_enum {
     ENUMERATION_COMPLETE = 0,
-    EUMERATION_INTERRUPTED = 1
+    ENUMERATION_INTERRUPTED = 1
 } enumeration_result;
 
 #endif /* TOY_ITER_TYPES_H */

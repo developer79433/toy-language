@@ -42,7 +42,7 @@ enumeration_result generic_list_foreach(generic_list *list, generic_list_item_ca
         generic_list *next = list->next;
         item_callback_result ret = callback(cookie, i, list);
         if (STOP_ENUMERATION == ret) {
-            return EUMERATION_INTERRUPTED;
+            return ENUMERATION_INTERRUPTED;
         }
         list = next;
     }
@@ -55,7 +55,7 @@ enumeration_result generic_list_foreach_const(const generic_list *list, const_ge
         const generic_list *next = list->next;
         item_callback_result ret = callback(cookie, i, list);
         if (STOP_ENUMERATION == ret) {
-            return EUMERATION_INTERRUPTED;
+            return ENUMERATION_INTERRUPTED;
         }
         list = next;
     }
@@ -112,7 +112,7 @@ generic_list *generic_list_find_first(generic_list *list, generic_list_filter_fu
     enumeration_result res = generic_list_foreach(list, find_one_callback, &args);
     assert(
         (
-            (res == EUMERATION_INTERRUPTED) && (args.found_item != NULL)
+            (res == ENUMERATION_INTERRUPTED) && (args.found_item != NULL)
         ) || (
             (res == ENUMERATION_COMPLETE) && (args.found_item == NULL)
         )
