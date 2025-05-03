@@ -8,12 +8,12 @@
 #include "iter-types.h"
 
 typedef struct generic_map_entry_struct {
-    toy_str key;
     toy_val value;
 } generic_map_entry;
 
 typedef struct generic_map_entry_list_struct {
     struct generic_map_entry_list_struct *next;
+    toy_str key;
     generic_map_entry entry;
 } generic_map_entry_list;
 

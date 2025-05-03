@@ -11,7 +11,7 @@ map_val *map_val_alloc(void);
 map_val_entry_list *map_val_entry_list_alloc(toy_str key_name, toy_val *value);
 toy_val *map_val_get(map_val *map, const toy_str key);
 toy_val *map_val_get_bucket_key(map_val_entry_list *bucket, const toy_str key);
-int map_val_set(map_val *map, const toy_str key, const toy_val *value);
+int map_val_set(map_val *map, const toy_str key, toy_val *value);
 int map_val_delete(map_val *map, const toy_str key);
 enumeration_result map_val_foreach_const(const map_val *map, const_map_val_entry_callback callback, void *cookie);
 enumeration_result map_val_foreach(map_val *map, map_val_entry_callback callback, void *cookie);

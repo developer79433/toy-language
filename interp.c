@@ -327,7 +327,7 @@ static int set_symbol(toy_interp *interp, const toy_str name, const toy_val *val
     if (interp->cur_frame->symbols == NULL) {
         interp->cur_frame->symbols = map_val_alloc();
     }
-    int added_new = map_val_set(interp->cur_frame->symbols, name, value);
+    int added_new = map_val_set(interp->cur_frame->symbols, name, (toy_val *) value);
     return added_new;
 }
 

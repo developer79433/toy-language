@@ -81,7 +81,7 @@ int generic_map_delete(generic_map *map, const toy_str key)
     if (*bucket) {
         generic_map_entry_list *entry, *prev;
         for (entry = *bucket, prev = *bucket; entry; prev = entry, entry = entry->next) {
-            if (toy_str_equal(entry->entry.key, key)) {
+            if (toy_str_equal(entry->key, key)) {
                 /* Found existing entry */
                 prev->next = entry->next;
                 if (entry == *bucket) {
@@ -100,7 +100,7 @@ int generic_map_delete(generic_map *map, const toy_str key)
 
 static void dump_map_entry(FILE *f, const generic_map_entry_list *entry)
 {
-    dump_str(f, entry->entry.key);
+    dump_str(f, entry->key);
     fprintf(f, ": %p", &entry->entry.value);
 }
 
@@ -141,7 +141,7 @@ void generic_map_dump_keys(FILE *f, const generic_map *map)
                 } else {
                     fputc(' ', f);
                 }
-                dump_str(f, entry->entry.key);
+                dump_str(f, entry->key);
                 output_anything = 1;
             }
         }
@@ -177,7 +177,7 @@ static item_callback_result generic_map_foreach_bucket_cb(void *cookie, generic_
     foreach_bucket_cb_args *args = (foreach_bucket_cb_args *) cookie;
     for (generic_map_entry_list *entry = list; entry; ) {
         generic_map_entry_list *next = entry->next;
-        item_callback_result res = args->entry_cb(args->entry_cb_cookie, entry->entry.key, &entry->entry.value);
+        item_callback_result res = args->entry_cb(args->entry_cb_cookie, entry->key, &entry->entry.value);
         if (res == STOP_ENUMERATION) {
             return res;
         }
@@ -220,7 +220,7 @@ static item_callback_result generic_map_get_bucket_cb(void *cookie, generic_map_
     foreach_bucket_cb_args *args = (foreach_bucket_cb_args *) cookie;
     for (generic_map_entry_list *entry = list; entry; ) {
         generic_map_entry_list *next = entry->next;
-        item_callback_result res = args->entry_cb(args->entry_cb_cookie, entry->entry.key, &entry->entry.value);
+        item_callback_result res = args->entry_cb(args->entry_cb_cookie, entry->key, &entry->entry.value);
         if (res == STOP_ENUMERATION) {
             return res;
         }
