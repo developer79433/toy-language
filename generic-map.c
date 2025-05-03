@@ -56,16 +56,6 @@ void generic_map_free(generic_map *map)
     free(map);
 }
 
-generic_map_entry_list *map_val_entry_list_alloc(toy_str key_name, toy_val *value)
-{
-    generic_map_entry_list *entry_list;
-    entry_list = mymalloc(generic_map_entry_list);
-    entry_list->entry.key = key_name;
-    entry_list->entry.value = *value;
-    entry_list->next = NULL;
-    return entry_list;
-}
-
 static uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length) {
     size_t i = 0;
     uint32_t hash = 0;
@@ -80,7 +70,7 @@ static uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length) {
     return hash;
 }
 
-generic_map_entry_list **get_bucket(generic_map *map, toy_str key)
+generic_map_entry_list **generic_map_get_bucket(generic_map *map, toy_str key)
 {
     uint32_t hashval = jenkins_one_at_a_time_hash((uint8_t *) key, strlen(key));
     return &map->buckets[hashval % NUM_BUCKETS];
@@ -88,7 +78,7 @@ generic_map_entry_list **get_bucket(generic_map *map, toy_str key)
 
 int generic_map_delete(generic_map *map, const toy_str key)
 {
-    generic_map_entry_list **bucket = get_bucket(map, key);
+    generic_map_entry_list **bucket = generic_map_get_bucket(map, key);
     if (*bucket) {
         generic_map_entry_list *entry, *prev;
         for (entry = *bucket, prev = *bucket; entry; prev = entry, entry = entry->next) {
@@ -251,7 +241,7 @@ static item_callback_result generic_map_get_entry_cb(void *cookie, toy_str key, 
     return CONTINUE_ENUMERATION;
 }
 
-toy_val *map_val_get_bucket_key(generic_map_entry_list *bucket, const toy_str key)
+void *generic_map_get_bucket_key(generic_map_entry_list *bucket, const toy_str key)
 {
     get_entry_cb_args entry_cb_args = { .desired_name = key, .val_to_set = NULL };
     foreach_bucket_cb_args args = { .entry_cb = generic_map_get_entry_cb, .entry_cb_cookie = &entry_cb_args };

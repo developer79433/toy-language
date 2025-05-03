@@ -9,9 +9,8 @@
 #include "val-types.h"
 
 generic_map *generic_map_alloc(void);
-generic_map_entry_list **get_bucket(generic_map *map, toy_str key);
-toy_val *map_val_get_bucket_key(generic_map_entry_list *bucket, const toy_str key);
-generic_map_entry_list *map_val_entry_list_alloc(toy_str key_name, toy_val *value);
+generic_map_entry_list **generic_map_get_bucket(generic_map *map, toy_str key);
+void *generic_map_get_bucket_key(generic_map_entry_list *bucket, const toy_str key);
 void generic_map_free(generic_map *map);
 int generic_map_delete(generic_map *map, const toy_str key);
 enumeration_result generic_map_foreach(generic_map *map, generic_map_entry_callback callback, void *cookie);
