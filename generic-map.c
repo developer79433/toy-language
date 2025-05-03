@@ -92,14 +92,14 @@ void generic_map_free(toy_map *map)
     free(map);
 }
 
-static generic_map_entry_list *alloc_map_entry(toy_str key_name, toy_val *value)
+static generic_map_entry_list *generic_map_entry_list_alloc(toy_str key_name, toy_val *value)
 {
-    generic_map_entry_list *entry;
-    entry = mymalloc(generic_map_entry_list);
-    entry->entry.key = key_name;
-    entry->entry.value = *value;
-    entry->next = NULL;
-    return entry;
+    generic_map_entry_list *entry_list;
+    entry_list = mymalloc(generic_map_entry_list);
+    entry_list->entry.key = key_name;
+    entry_list->entry.value = *value;
+    entry_list->next = NULL;
+    return entry_list;
 }
 
 static uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length) {
@@ -158,11 +158,11 @@ int map_val_set(toy_map *map, const toy_str key, const toy_val *value)
             }
         }
         /* Prepend new entry to existing bucket */
-        new_entry = alloc_map_entry(key, (toy_val *) value);
+        new_entry = generic_map_entry_list_alloc(key, (toy_val *) value);
         new_entry->next = *bucket;
     } else {
         /* New entry in new bucket */
-        new_entry = alloc_map_entry(key, (toy_val *) value);
+        new_entry = generic_map_entry_list_alloc(key, (toy_val *) value);
     }
     *bucket = new_entry;
     map->num_items++;
