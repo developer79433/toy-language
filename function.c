@@ -275,6 +275,7 @@ static item_callback_result map_foreach_callback(void *cookie, const toy_str key
     return CONTINUE_ENUMERATION;
 }
 
+/* TODO: Early exit if user-defined callback returns true */
 static void predefined_map_foreach(toy_interp *interp, toy_val *result, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
@@ -285,7 +286,8 @@ static void predefined_map_foreach(toy_interp *interp, toy_val *result, const to
         if (arg2->type == VAL_FUNC) {
             toy_func_def *func = arg2->func;
             map_foreach_args cbargs = { .func = func, .interp = interp };
-            map_foreach_const(map, map_foreach_callback, &cbargs);
+            enumeration_result res = generic_map_foreach_const(map, map_foreach_callback, &cbargs);
+            assert(res == ENUMERATION_COMPLETE);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
         }

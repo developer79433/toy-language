@@ -40,7 +40,7 @@ void val_dump(FILE *f, const toy_val *val)
             val_list_dump(f, val->list);
             break;
         case VAL_MAP:
-            map_dump(f, val->map);
+            generic_map_dump(f, val->map);
             break;
         case VAL_NULL:
             fputs("null", f);
@@ -138,7 +138,7 @@ void val_assert_valid(const toy_val *val)
         val_list_assert_valid(val->list);
         break;
     case VAL_MAP:
-        map_assert_valid(val->map);
+        generic_map_assert_valid(val->map);
         break;
     case VAL_NULL:
         break;
@@ -166,7 +166,7 @@ void val_free(toy_val *val)
         val_list_free(val->list);
         break;
     case VAL_MAP:
-        map_free(val->map);
+        generic_map_free(val->map);
         break;
     case VAL_NULL:
         break;

@@ -116,7 +116,7 @@ static interp_frame *alloc_frame_loop_body(const toy_block *loop_body, interp_fr
     frame->type = FRAME_LOOP_BODY;
     frame->prev = prev;
     frame->loop_body = loop_body;
-    frame->symbols = map_alloc();
+    frame->symbols = generic_map_alloc();
     return frame;
 }
 
@@ -163,7 +163,7 @@ static interp_frame *alloc_frame_pre_def_func(const toy_func_def *func_def, inte
 static void free_frame(interp_frame *frame)
 {
     if (frame->symbols) {
-        map_free(frame->symbols);
+        generic_map_free(frame->symbols);
     }
     free(frame);
 }
@@ -276,7 +276,7 @@ static int is_predefined(toy_str name)
 static int lookup_identifier_in_frame(interp_frame *frame, toy_val *result, toy_str name)
 {
     if (frame->symbols) {
-        toy_val *existing_value = map_get(frame->symbols, name);
+        toy_val *existing_value = map_val_get(frame->symbols, name);
         if (existing_value) {
             *result = *existing_value;
             return 1;
@@ -324,9 +324,9 @@ typedef enum set_variable_policy_enum set_variable_policy;
 static int set_symbol(toy_interp *interp, const toy_str name, const toy_val *value)
 {
     if (interp->cur_frame->symbols == NULL) {
-        interp->cur_frame->symbols = map_alloc();
+        interp->cur_frame->symbols = generic_map_alloc();
     }
-    int added_new = map_set(interp->cur_frame->symbols, name, value);
+    int added_new = map_val_set(interp->cur_frame->symbols, name, value);
     return added_new;
 }
 
@@ -548,7 +548,7 @@ static void map_lookup(toy_interp *interp, toy_val *result, toy_map *collection,
     toy_val index_result;
     eval_expr(interp, &index_result, index);
     if (index_result.type == VAL_STR) {
-        toy_val *existing_value = map_get(collection, index_result.str);
+        toy_val *existing_value = map_val_get(collection, index_result.str);
         if (existing_value) {
             *result = *existing_value;
         } else {
@@ -668,11 +668,11 @@ static void op_prefix_increment(toy_interp *interp, toy_val *result, toy_str id)
 static void eval_map(toy_interp *interp, toy_val *result, const toy_map_entry_list *entry_list)
 {
     result->type = VAL_MAP;
-    result->map = map_alloc();
+    result->map = generic_map_alloc();
     for (; entry_list; entry_list = entry_list->next) {
         toy_val value;
         eval_expr(interp, &value, entry_list->entry.value);
-        map_set(result->map, entry_list->entry.key, &value);
+        map_val_set(result->map, entry_list->entry.key, &value);
     }
 }
 

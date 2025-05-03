@@ -48,7 +48,7 @@ struct toy_map_struct {
     generic_map_entry_list *buckets[NUM_BUCKETS];
 };
 
-toy_map *map_alloc(void)
+toy_map *generic_map_alloc(void)
 {
     toy_map *map = mymalloc(toy_map);
     memset(map->buckets, 0, sizeof(map->buckets));
@@ -80,13 +80,13 @@ static void free_buckets(toy_map *map)
     }
 }
 
-void map_reset(toy_map *map)
+void generic_map_reset(toy_map *map)
 {
     free_buckets(map);
     map->num_items = 0;
 }
 
-void map_free(toy_map *map)
+void generic_map_free(toy_map *map)
 {
     free_buckets(map);
     free(map);
@@ -132,7 +132,7 @@ static toy_val *get_bucket_key(generic_map_entry_list *bucket, const toy_str key
     return NULL;
 }
 
-toy_val *map_get(toy_map *map, const toy_str key)
+toy_val *map_val_get(toy_map *map, const toy_str key)
 {
     generic_map_entry_list **bucket = get_bucket(map, key);
     if (*bucket) {
@@ -145,7 +145,7 @@ toy_val *map_get(toy_map *map, const toy_str key)
     return NULL;
 }
 
-int map_set(toy_map *map, const toy_str key, const toy_val *value)
+int map_val_set(toy_map *map, const toy_str key, const toy_val *value)
 {
     generic_map_entry_list *new_entry;
     generic_map_entry_list **bucket = get_bucket(map, key);
@@ -169,7 +169,7 @@ int map_set(toy_map *map, const toy_str key, const toy_val *value)
     return 1;
 }
 
-int map_delete(toy_map *map, const toy_str key)
+int generic_map_delete(toy_map *map, const toy_str key)
 {
     generic_map_entry_list **bucket = get_bucket(map, key);
     if (*bucket) {
@@ -199,7 +199,7 @@ static void dump_map_entry(FILE *f, const generic_map_entry_list *entry)
     val_dump(f, &entry->entry.value);
 }
 
-void map_dump(FILE *f, const toy_map *map)
+void generic_map_dump(FILE *f, const toy_map *map)
 {
     int output_anything = 0;
 
@@ -223,7 +223,7 @@ void map_dump(FILE *f, const toy_map *map)
     fputc('}', f);
 }
 
-void map_dump_keys(FILE *f, const toy_map *map)
+void generic_map_dump_keys(FILE *f, const toy_map *map)
 {
     int output_anything = 0;
 
@@ -247,7 +247,7 @@ void map_dump_keys(FILE *f, const toy_map *map)
     fputc(']', f);
 }
 
-enumeration_result map_foreach(toy_map *map, map_entry_callback callback, void *cookie)
+enumeration_result generic_map_foreach(toy_map *map, map_entry_callback callback, void *cookie)
 {
     for (generic_map_entry_list * const * bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
         if (*bucket) {
@@ -262,9 +262,9 @@ enumeration_result map_foreach(toy_map *map, map_entry_callback callback, void *
     return ENUMERATION_COMPLETE;
 }
 
-enumeration_result map_foreach_const(const toy_map *map, const_map_entry_callback callback, void *cookie)
+enumeration_result generic_map_foreach_const(const toy_map *map, const_map_entry_callback callback, void *cookie)
 {
-    return map_foreach((toy_map *) map, (map_entry_callback) callback, cookie);
+    return generic_map_foreach((toy_map *) map, (map_entry_callback) callback, cookie);
 }
 
 size_t map_len(const toy_map *map)
@@ -272,7 +272,7 @@ size_t map_len(const toy_map *map)
     return map->num_items;
 }
 
-void map_assert_valid(const toy_map *map)
+void generic_map_assert_valid(const toy_map *map)
 {
     assert(map);
     /* TODO */
