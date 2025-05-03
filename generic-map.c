@@ -186,7 +186,7 @@ void generic_map_dump_keys(FILE *f, const generic_map *map)
     fputc(']', f);
 }
 
-enumeration_result generic_map_foreach(generic_map *map, map_entry_callback callback, void *cookie)
+enumeration_result generic_map_foreach(generic_map *map, generic_map_entry_callback callback, void *cookie)
 {
     for (generic_map_entry_list * const * bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
         if (*bucket) {
@@ -201,9 +201,9 @@ enumeration_result generic_map_foreach(generic_map *map, map_entry_callback call
     return ENUMERATION_COMPLETE;
 }
 
-enumeration_result generic_map_foreach_const(const generic_map *map, const_map_entry_callback callback, void *cookie)
+enumeration_result generic_map_foreach_const(const generic_map *map, const_generic_map_entry_callback callback, void *cookie)
 {
-    return generic_map_foreach((generic_map *) map, (map_entry_callback) callback, cookie);
+    return generic_map_foreach((generic_map *) map, (generic_map_entry_callback) callback, cookie);
 }
 
 size_t generic_map_size(const generic_map *map)
