@@ -71,7 +71,8 @@ void test_maps(void)
 
     // Test enumerate
     predicate_args args = { .intended_key = "second key", .intended_value = &new_value};
-    generic_map_foreach(map1, map_item_callback, &args);
+    enumeration_result res = generic_map_foreach(map1, map_item_callback, &args);
+    assert(res == ENUMERATION_COMPLETE);
 
     // Test reset
     generic_map_reset(map1);

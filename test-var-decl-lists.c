@@ -22,5 +22,6 @@ void test_var_decl_lists(void)
     assert(decl_list->next->decl.name == name2);
     assert(decl_list->next->decl.value == &expr2);
     assert(decl_list->next->next == NULL);
+    /* TODO: Test enumeration */
     var_decl_list_free(decl_list);
 }

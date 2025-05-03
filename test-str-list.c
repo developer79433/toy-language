@@ -30,6 +30,7 @@ void test_str_lists(void)
     assert(NULL == retval->next->next);
     assert(2 == str_list_len(retval));
     size_t count = 0;
-    str_list_foreach_const(str_list, str_list_item_callback, &count);
+    enumeration_result res = str_list_foreach_const(str_list, str_list_item_callback, &count);
+    assert(res == ENUMERATION_COMPLETE);
     str_list_free(retval);
 }

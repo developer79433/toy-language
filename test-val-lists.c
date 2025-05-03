@@ -21,5 +21,6 @@ void test_val_lists(void)
     assert(retval->next->val.type == VAL_BOOL);
     assert(retval->next->val.boolean == TOY_FALSE);
     assert(2 == val_list_len(retval));
+    /* TODO: Test enumeration */
     val_list_free(retval);
 }
