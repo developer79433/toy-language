@@ -46,7 +46,7 @@ void invalid_expr_type(enum toy_expr_type expr_type) {
 
 void invalid_stmt_type(enum toy_stmt_type stmt_type)
 {
-    fatal_error("Invalid statement type %s", toy_stmt_type_name(stmt_type));
+    fatal_error("Invalid statement type %s", stmt_type_name(stmt_type));
 }
 
 /* TODO: Delete me */

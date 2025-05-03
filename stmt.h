@@ -8,9 +8,6 @@
 #include "stmt-types.h"
 
 toy_stmt *stmt_alloc(enum toy_stmt_type type);
-const char *toy_stmt_type_name(enum toy_stmt_type stmt_type);
-
-toy_if_arm_list *if_arm_list_alloc(toy_expr *condition, toy_block *code);
-toy_if_arm_list *if_arm_list_concat(toy_if_arm_list *orig, toy_if_arm_list *new_arm);
+const char *stmt_type_name(enum toy_stmt_type stmt_type);
 
 #endif /* TOY_STMT_H */

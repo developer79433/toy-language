@@ -9,6 +9,7 @@
 #include "map-entry-list.h"
 #include "var-decl-types.h"
 #include "var-decl-list-types.h"
+#include "if-arm-list-types.h"
 
 struct toy_stmt_struct;
 typedef struct toy_stmt_struct toy_stmt;
@@ -25,16 +26,8 @@ typedef struct toy_return_stmt_struct {
     toy_expr *expr;
 } toy_return_stmt;
 
-typedef struct toy_if_arm_struct {
-    toy_expr *condition;
-    toy_block code;
-} toy_if_arm;
-
 struct toy_if_arm_list_struct;
-typedef struct toy_if_arm_list_struct {
-    struct toy_if_arm_list_struct *next;
-    toy_if_arm arm;
-} toy_if_arm_list;
+typedef struct toy_if_arm_list_struct toy_if_arm_list;
 
 typedef struct toy_if_stmt_struct {
     toy_if_arm_list *arms;
