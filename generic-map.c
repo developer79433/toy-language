@@ -10,6 +10,7 @@
 #include "mymalloc.h"
 #include "dump.h"
 #include "errors.h"
+#include "buf-list.h"
 
 generic_map *generic_map_alloc(void)
 {
@@ -55,7 +56,7 @@ void generic_map_free(generic_map *map)
     free(map);
 }
 
-generic_map_entry_list *generic_map_entry_list_alloc(toy_str key_name, toy_val *value)
+generic_map_entry_list *map_val_entry_list_alloc(toy_str key_name, toy_val *value)
 {
     generic_map_entry_list *entry_list;
     entry_list = mymalloc(generic_map_entry_list);
@@ -83,16 +84,6 @@ generic_map_entry_list **get_bucket(generic_map *map, toy_str key)
 {
     uint32_t hashval = jenkins_one_at_a_time_hash((uint8_t *) key, strlen(key));
     return &map->buckets[hashval % NUM_BUCKETS];
-}
-
-toy_val *get_bucket_key(generic_map_entry_list *bucket, const toy_str key)
-{
-    for (generic_map_entry_list *entry = bucket; entry; entry = entry->next) {
-        if (toy_str_equal(entry->entry.key, key)) {
-            return &entry->entry.value;
-        }
-    }
-    return NULL;
 }
 
 int generic_map_delete(generic_map *map, const toy_str key)
@@ -173,24 +164,58 @@ void generic_map_dump_keys(FILE *f, const generic_map *map)
     fputc(']', f);
 }
 
-enumeration_result generic_map_foreach(generic_map *map, generic_map_entry_callback callback, void *cookie)
+typedef item_callback_result (*generic_map_bucket_callback)(void *cookie, generic_map_entry_list *list);
+
+static enumeration_result generic_map_enum_buckets(generic_map *map, generic_map_bucket_callback callback, void *cookie)
 {
     for (generic_map_entry_list * const * bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
         if (*bucket) {
-            for (generic_map_entry_list *entry = *bucket; entry; entry = entry->next) {
-                item_callback_result res = callback(cookie, entry->entry.key, &entry->entry.value);
-                if (res == STOP_ENUMERATION) {
-                    return EUMERATION_INTERRUPTED;
-                }
+            item_callback_result res = callback(cookie, *bucket);
+            if (res == STOP_ENUMERATION) {
+                return EUMERATION_INTERRUPTED;
             }
         }
     }
     return ENUMERATION_COMPLETE;
 }
 
+typedef struct bucket_cb_args_struct {
+    generic_map_entry_callback entry_cb;
+    void *entry_cb_cookie;
+} bucket_cb_args;
+
+static item_callback_result generic_map_bucket_cb(void *cookie, generic_map_entry_list *list)
+{
+    bucket_cb_args *args = (bucket_cb_args *) cookie;
+    for (generic_map_entry_list *entry = list; entry; ) {
+        generic_map_entry_list *next = entry->next;
+        item_callback_result res = args->entry_cb(args->entry_cb_cookie, entry->entry.key, &entry->entry.value);
+        if (res == STOP_ENUMERATION) {
+            return res;
+        }
+        entry = next;
+    }
+    return CONTINUE_ENUMERATION;
+}
+
+enumeration_result generic_map_foreach(generic_map *map, generic_map_entry_callback callback, void *cookie) {
+    bucket_cb_args args = { .entry_cb = callback, .entry_cb_cookie = cookie };
+    return generic_map_enum_buckets(map, generic_map_bucket_cb, &args);
+}
+
 enumeration_result generic_map_foreach_const(const generic_map *map, const_generic_map_entry_callback callback, void *cookie)
 {
     return generic_map_foreach((generic_map *) map, (generic_map_entry_callback) callback, cookie);
+}
+
+toy_val *map_val_get_bucket_key(generic_map_entry_list *bucket, const toy_str key)
+{
+    for (generic_map_entry_list *entry = bucket; entry; entry = entry->next) {
+        if (toy_str_equal(entry->entry.key, key)) {
+            return &entry->entry.value;
+        }
+    }
+    return NULL;
 }
 
 size_t generic_map_size(const generic_map *map)

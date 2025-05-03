@@ -17,11 +17,11 @@ int map_val_set(generic_map *map, const toy_str key, const toy_val *value)
             }
         }
         /* Prepend new entry to existing bucket */
-        new_entry = generic_map_entry_list_alloc(key, (toy_val *) value);
+        new_entry = map_val_entry_list_alloc(key, (toy_val *) value);
         new_entry->next = *bucket;
     } else {
         /* New entry in new bucket */
-        new_entry = generic_map_entry_list_alloc(key, (toy_val *) value);
+        new_entry = map_val_entry_list_alloc(key, (toy_val *) value);
     }
     *bucket = new_entry;
     map->num_items++;
@@ -32,7 +32,7 @@ toy_val *map_val_get(generic_map *map, const toy_str key)
 {
     generic_map_entry_list **bucket = get_bucket(map, key);
     if (*bucket) {
-        toy_val *existing_value = get_bucket_key(*bucket, key);
+        toy_val *existing_value = map_val_get_bucket_key(*bucket, key);
         if (existing_value) {
             return existing_value;
         }
