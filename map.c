@@ -15,10 +15,14 @@
 #define NUM_BUCKETS 13
 
 /* TODO: Use generic list lib */
-typedef struct map_entry_list_struct {
-    struct map_entry_list_struct *next;
+typedef struct map_entry_struct {
     toy_str key;
     toy_val value;
+} map_entry;
+
+typedef struct map_entry_list_struct {
+    struct map_entry_list_struct *next;
+    map_entry entry;
 } map_entry_list;
 
 struct toy_map_struct {
@@ -74,8 +78,8 @@ static map_entry_list *alloc_map_entry(toy_str key_name, toy_val *value)
 {
     map_entry_list *entry;
     entry = mymalloc(map_entry_list);
-    entry->key = key_name;
-    entry->value = *value;
+    entry->entry.key = key_name;
+    entry->entry.value = *value;
     entry->next = NULL;
     return entry;
 }
@@ -103,8 +107,8 @@ static map_entry_list **get_bucket(toy_map *map, toy_str key)
 static toy_val *get_bucket_key(map_entry_list *bucket, const toy_str key)
 {
     for (map_entry_list *entry = bucket; entry; entry = entry->next) {
-        if (toy_str_equal(entry->key, key)) {
-            return &entry->value;
+        if (toy_str_equal(entry->entry.key, key)) {
+            return &entry->entry.value;
         }
     }
     return NULL;
@@ -129,9 +133,9 @@ int map_set(toy_map *map, const toy_str key, const toy_val *value)
     map_entry_list **bucket = get_bucket(map, key);
     if (*bucket) {
         for (map_entry_list *entry = *bucket; entry; entry = entry->next) {
-            if (toy_str_equal(entry->key, key)) {
+            if (toy_str_equal(entry->entry.key, key)) {
                 /* Overwrite existing entry */
-                memcpy(&entry->value, value, sizeof(*value));
+                memcpy(&entry->entry.value, value, sizeof(*value));
                 return 0;
             }
         }
@@ -153,7 +157,7 @@ int map_delete(toy_map *map, const toy_str key)
     if (*bucket) {
         map_entry_list *entry, *prev;
         for (entry = *bucket, prev = *bucket; entry; prev = entry, entry = entry->next) {
-            if (toy_str_equal(entry->key, key)) {
+            if (toy_str_equal(entry->entry.key, key)) {
                 /* Found existing entry */
                 prev->next = entry->next;
                 if (entry == *bucket) {
@@ -172,9 +176,9 @@ int map_delete(toy_map *map, const toy_str key)
 
 static void dump_map_entry(FILE *f, const map_entry_list *entry)
 {
-    dump_str(f, entry->key);
+    dump_str(f, entry->entry.key);
     fputs(": ", f);
-    val_dump(f, &entry->value);
+    val_dump(f, &entry->entry.value);
 }
 
 void map_dump(FILE *f, const toy_map *map)
@@ -214,7 +218,7 @@ void map_dump_keys(FILE *f, const toy_map *map)
                 } else {
                     fputc(' ', f);
                 }
-                dump_str(f, entry->key);
+                dump_str(f, entry->entry.key);
                 output_anything = 1;
             }
         }
@@ -230,7 +234,7 @@ enumeration_result map_foreach(toy_map *map, map_entry_callback callback, void *
     for (map_entry_list * const * bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
         if (*bucket) {
             for (map_entry_list *entry = *bucket; entry; entry = entry->next) {
-                item_callback_result res = callback(cookie, entry->key, &entry->value);
+                item_callback_result res = callback(cookie, entry->entry.key, &entry->entry.value);
                 if (res == STOP_ENUMERATION) {
                     return EUMERATION_INTERRUPTED;
                 }
