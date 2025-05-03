@@ -85,25 +85,12 @@ generic_map_entry_list **get_bucket(generic_map *map, toy_str key)
     return &map->buckets[hashval % NUM_BUCKETS];
 }
 
-static toy_val *get_bucket_key(generic_map_entry_list *bucket, const toy_str key)
+toy_val *get_bucket_key(generic_map_entry_list *bucket, const toy_str key)
 {
     for (generic_map_entry_list *entry = bucket; entry; entry = entry->next) {
         if (toy_str_equal(entry->entry.key, key)) {
             return &entry->entry.value;
         }
-    }
-    return NULL;
-}
-
-toy_val *map_val_get(generic_map *map, const toy_str key)
-{
-    generic_map_entry_list **bucket = get_bucket(map, key);
-    if (*bucket) {
-        toy_val *existing_value = get_bucket_key(*bucket, key);
-        if (existing_value) {
-            return existing_value;
-        }
-        return NULL;
     }
     return NULL;
 }

@@ -10,6 +10,7 @@
 
 generic_map *generic_map_alloc(void);
 generic_map_entry_list **get_bucket(generic_map *map, toy_str key);
+toy_val *get_bucket_key(generic_map_entry_list *bucket, const toy_str key);
 generic_map_entry_list *generic_map_entry_list_alloc(toy_str key_name, toy_val *value);
 void generic_map_free(generic_map *map);
 int generic_map_delete(generic_map *map, const toy_str key);
