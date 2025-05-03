@@ -13,6 +13,7 @@
 #include "val.h"
 #include "function.h"
 #include "stmt.h"
+#include "stmt-list.h"
 
 void identifier_dump(FILE *f, const toy_str str)
 {

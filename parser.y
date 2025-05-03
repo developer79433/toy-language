@@ -13,6 +13,7 @@
 #include "expr-list.h"
 #include "map-entry-list.h"
 #include "var-decl-list.h"
+#include "stmt-list.h"
 
 extern int yylex (void);
 void yyerror(const char *s);

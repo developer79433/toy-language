@@ -87,10 +87,4 @@ struct toy_stmt_struct {
     };
 };
 
-/* TODO: List type should go in separate header */
-struct toy_stmt_list_struct {
-    struct toy_stmt_list_struct *next;
-    toy_stmt stmt;
-};
-
 #endif /* TOY_STMT_TYPES_H */

@@ -37,21 +37,6 @@ toy_stmt *stmt_alloc(enum toy_stmt_type type)
     return stmt;
 }
 
-toy_stmt_list *stmt_list_alloc(toy_stmt *stmt)
-{
-    return (toy_stmt_list *) buf_list_alloc(stmt, sizeof(*stmt));
-}
-
-toy_stmt_list *stmt_list_concat(toy_stmt_list *list, toy_stmt_list *new_list)
-{
-    return (toy_stmt_list *) buf_list_concat((toy_buf_list *) list, (toy_buf_list *) new_list);
-}
-
-toy_stmt_list *stmt_list_append(toy_stmt_list *list, toy_stmt *stmt)
-{
-    return (toy_stmt_list *) buf_list_append((toy_buf_list *) list, stmt, sizeof(*stmt));
-}
-
 toy_if_arm_list *if_arm_list_alloc(toy_expr *condition, toy_block *block)
 {
     toy_if_arm_list *arm_list;

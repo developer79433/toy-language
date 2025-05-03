@@ -2,6 +2,7 @@
 
 #include "test-stmt-lists.h"
 #include "stmt.h"
+#include "stmt-list.h"
 
 void test_stmt_lists(void)
 {

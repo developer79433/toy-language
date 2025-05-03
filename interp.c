@@ -19,6 +19,7 @@
 #include "constants.h"
 #include "function.h"
 #include "errors.h"
+#include "stmt-list.h"
 
 #if 0
 #define DEBUG_STACK 1
