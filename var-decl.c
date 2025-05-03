@@ -19,7 +19,7 @@ void var_decl_dump(FILE *f, const toy_var_decl *decl)
     fputs(decl->name, f);
     if (decl->value) {
         fputs(" = ", f);
-        dump_expr(f, decl->value);
+        expr_dump(f, decl->value);
     }
 }
 

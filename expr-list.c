@@ -37,7 +37,7 @@ void expr_list_dump(FILE *f, toy_expr_list *list)
             } else {
                 fputc(' ', f);
             }
-            dump_expr(f, cur->expr);
+            expr_dump(f, cur->expr);
             printed_anything = 1;
         }
         if (printed_anything) {

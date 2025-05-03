@@ -35,7 +35,7 @@ void map_entry_list_dump(FILE *f, const toy_map_entry_list *list)
             }
             dump_str(f, cur->entry.key);
             fputs(": ", f);
-            dump_expr(f, cur->entry.value);
+            expr_dump(f, cur->entry.value);
             printed_anything = 1;
         }
         if (printed_anything) {
