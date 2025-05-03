@@ -1,15 +1,7 @@
 #ifndef TOY_MAP_ENTRY_LIST_TYPES_H
 #define TOY_MAP_ENTRY_LIST_TYPES_H 1
 
-#include "str-types.h"
-
-struct toy_expr_struct;
-typedef struct toy_expr_struct toy_expr;
-
-typedef struct toy_map_entry_struct {
-    toy_str key;
-    toy_expr *value;
-} toy_map_entry;
+#include "map-entry-types.h"
 
 typedef struct toy_map_entry_list_struct {
     struct toy_map_entry_list_struct *next;
