@@ -6,7 +6,6 @@
 
 #include "str.h"
 #include "generic-map.h"
-#include "val.h"
 #include "mymalloc.h"
 #include "dump.h"
 #include "errors.h"
@@ -102,8 +101,7 @@ int generic_map_delete(generic_map *map, const toy_str key)
 static void dump_map_entry(FILE *f, const generic_map_entry_list *entry)
 {
     dump_str(f, entry->entry.key);
-    fputs(": ", f);
-    val_dump(f, &entry->entry.value);
+    fprintf(f, ": %p", &entry->entry.value);
 }
 
 void generic_map_dump(FILE *f, const generic_map *map)
@@ -214,7 +212,7 @@ enumeration_result generic_map_bucket_enum_entries(generic_map_entry_list *bucke
 
 typedef struct get_entry_cb_args_struct {
     toy_str desired_name;
-    toy_val *val_to_set;
+    void *val_to_set;
 } get_entry_cb_args;
 
 static item_callback_result generic_map_get_bucket_cb(void *cookie, generic_map_entry_list *list)
@@ -231,7 +229,7 @@ static item_callback_result generic_map_get_bucket_cb(void *cookie, generic_map_
     return CONTINUE_ENUMERATION;
 }
 
-static item_callback_result generic_map_get_entry_cb(void *cookie, toy_str key, toy_val *value)
+static item_callback_result generic_map_get_entry_cb(void *cookie, toy_str key, void *value)
 {
     get_entry_cb_args *args = (get_entry_cb_args *) cookie;
     if (toy_str_equal(key, args->desired_name)) {
