@@ -7,7 +7,9 @@
 #include "expr-types.h"
 #include "stmt-types.h"
 
-toy_stmt_list *stmt_list_alloc(enum toy_stmt_type type);
+toy_stmt *stmt_alloc(enum toy_stmt_type type);
+toy_stmt_list *stmt_list_alloc(toy_stmt *stmt);
+toy_stmt_list *stmt_list_append(toy_stmt_list *list, toy_stmt *stmt);
 toy_stmt_list *stmt_list_concat(toy_stmt_list *list, toy_stmt_list *new_list);
 const char *toy_stmt_type_name(enum toy_stmt_type stmt_type);
 

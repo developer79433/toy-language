@@ -203,7 +203,6 @@ void dump_expr(FILE *f, const toy_expr *expr) {
     }
 }
 
-/* TODO: Should take a toy_stmt * */
 void dump_stmt(FILE *f, const toy_stmt *stmt, int append_semicolon)
 {
     switch (stmt->type) {
@@ -233,7 +232,7 @@ void dump_stmt(FILE *f, const toy_stmt *stmt, int append_semicolon)
     case STMT_FOR:
         fputs("for (", f);
         if (stmt->for_stmt.at_start) {
-            dump_stmt(f, &stmt->for_stmt.at_start->stmt, 1);
+            dump_stmt(f, stmt->for_stmt.at_start, 1);
         }
         fputc(' ', f);
         if (stmt->for_stmt.condition) {
@@ -243,7 +242,7 @@ void dump_stmt(FILE *f, const toy_stmt *stmt, int append_semicolon)
         }
         fputs("; ", f);
         if (stmt->for_stmt.at_end) {
-            dump_stmt(f, &stmt->for_stmt.at_end->stmt, 0);
+            dump_stmt(f, stmt->for_stmt.at_end, 0);
         }
         fputs(") {\n", f);
         if (stmt->for_stmt.body.stmts) {
@@ -260,17 +259,17 @@ void dump_stmt(FILE *f, const toy_stmt *stmt, int append_semicolon)
         break;
     case STMT_IF:
         {
-            toy_if_arm_list *arm = stmt->if_stmt.arms;
+            toy_if_arm_list *arm_list = stmt->if_stmt.arms;
             fputs("if (", f);
-            dump_expr(f, arm->condition);
+            dump_expr(f, arm_list->arm.condition);
             fputs(") {\n", f);
-            dump_stmt_list(f, arm->code.stmts);
+            dump_stmt_list(f, arm_list->arm.code.stmts);
             fputs("}", f);
-            for (arm = arm->next; arm; arm = arm->next) {
+            for (arm_list = arm_list->next; arm_list; arm_list = arm_list->next) {
                 fputs(" elseif (", f);
-                dump_expr(f, arm->condition);
+                dump_expr(f, arm_list->arm.condition);
                 fputs(") {\n", f);
-                dump_stmt_list(f, arm->code.stmts);
+                dump_stmt_list(f, arm_list->arm.code.stmts);
                 fputs("}", f);
             }
             if (stmt->if_stmt.elsepart.stmts) {
@@ -314,6 +313,7 @@ void dump_stmt(FILE *f, const toy_stmt *stmt, int append_semicolon)
 
 void dump_stmt_list(FILE *f, const toy_stmt_list *stmts)
 {
+    /* TODO: Use stmt_list_foreach */
     for (const toy_stmt_list *s = stmts; s; s = s->next) {
         dump_stmt(f, &s->stmt, 1);
         fputc('\n', f);

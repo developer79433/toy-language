@@ -8,6 +8,7 @@
 #include "test-str-list-inline.h"
 #include "test-val-lists.h"
 #include "test-var-decl-lists.h"
+#include "test-stmt-lists.h"
 
 static void test_expr_lists()
 {
@@ -23,4 +24,5 @@ void run_tests(void)
     test_maps();
     test_var_decl_lists();
     test_expr_lists();
+    test_stmt_lists();
 }

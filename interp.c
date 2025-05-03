@@ -778,11 +778,16 @@ void eval_expr(toy_interp *interp, toy_val *result, const toy_expr *expr)
     }
 }
 
+/* TODO: Delete me */
+static enum run_stmt_result run_one_stmt(toy_interp *interp, toy_stmt *stmt)
+{
+    return run_stmt(interp, stmt);
+}
+
 static void run_for_stmt_atend(toy_interp *interp, const toy_for_stmt *for_stmt)
 {
     if (for_stmt->at_end) {
-        assert(!for_stmt->at_end->next);
-        run_stmt(interp, for_stmt->at_end);
+        run_one_stmt(interp, for_stmt->at_end);
     }
 }
 
@@ -796,8 +801,7 @@ static enum run_stmt_result for_stmt(toy_interp *interp, const toy_for_stmt *for
     enum run_stmt_result result = EXECUTED_STATEMENT;
     push_context_loop_body(interp, &for_stmt->body);
     if (for_stmt->at_start) {
-        assert(!for_stmt->at_start->next);
-        run_stmt(interp, for_stmt->at_start);
+        run_one_stmt(interp, for_stmt->at_start);
     }
     for (;;) {
         if (for_stmt->condition) {
@@ -841,15 +845,16 @@ static void run_block(toy_interp *interp, const toy_block *elsepart)
 static enum run_stmt_result if_stmt(toy_interp *interp, const toy_if_stmt *if_stmt)
 {
     unsigned int found_one = 0;
-    for (toy_if_arm_list *arm = if_stmt->arms; arm; arm = arm->next) {
+    for (toy_if_arm_list *arm_list = if_stmt->arms; arm_list; arm_list = arm_list->next) {
         toy_val cond_result;
-        eval_expr(interp, &cond_result, arm->condition);
+        eval_expr(interp, &cond_result, arm_list->arm.condition);
         if (VAL_BOOL != cond_result.type) {
+            /* TODO: Allow types that are convertible to boolean */
             invalid_argument_type(VAL_BOOL, &cond_result);
         }
         assert(VAL_BOOL == cond_result.type);
         if (cond_result.boolean) {
-            push_context_if_body(interp, &arm->code);
+            push_context_if_body(interp, &arm_list->arm.code);
             run_current_block(interp);
             pop_context(interp);
             found_one = 1;
@@ -892,10 +897,8 @@ static void var_decl_stmt(toy_interp *interp, const toy_var_decl_list *var_decl_
     }
 }
 
-/* TODO: Should take a toy_stmt, not a list */
-enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt_list *stmt_list)
+enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt)
 {
-    const toy_stmt *stmt = &stmt_list->stmt;
     switch (stmt->type) {
     case STMT_BLOCK:
         block_stmt(interp, &stmt->block_stmt.block);
@@ -907,6 +910,7 @@ enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt_list *stmt_list
     case STMT_EXPR:
         toy_val result;
         eval_expr(interp, &result, stmt->expr_stmt.expr);
+        /* throw result away */
         break;
     case STMT_FOR:
         for_stmt(interp, &stmt->for_stmt);
@@ -937,9 +941,10 @@ enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt_list *stmt_list
 
 enum run_stmt_result run_current_block(toy_interp *interp)
 {
+    /* TODO: Should use ptr_list_foreach */
     for (; interp->cur_frame->cur_stmt; interp->cur_frame->cur_stmt = interp->cur_frame->cur_stmt->next) {
         enum run_stmt_result stmt_result;
-        stmt_result = run_stmt(interp, interp->cur_frame->cur_stmt);
+        stmt_result = run_stmt(interp, &interp->cur_frame->cur_stmt->stmt);
         switch (stmt_result) {
         case EXECUTED_STATEMENT:
             break;

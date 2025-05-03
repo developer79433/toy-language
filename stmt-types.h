@@ -10,6 +10,9 @@
 #include "var-decl-types.h"
 #include "var-decl-list-types.h"
 
+struct toy_stmt_struct;
+typedef struct toy_stmt_struct toy_stmt;
+
 typedef struct toy_func_decl_stmt_struct {
     toy_func_def def;
 } toy_func_decl_stmt;
@@ -22,12 +25,15 @@ typedef struct toy_return_stmt_struct {
     toy_expr *expr;
 } toy_return_stmt;
 
-/* TODO: Should be named 'toy_if_arm_list' */
+typedef struct toy_if_arm_struct {
+    toy_expr *condition;
+    toy_block code;
+} toy_if_arm;
+
 struct toy_if_arm_list_struct;
 typedef struct toy_if_arm_list_struct {
     struct toy_if_arm_list_struct *next;
-    toy_expr *condition;
-    toy_block code;
+    toy_if_arm arm;
 } toy_if_arm_list;
 
 typedef struct toy_if_stmt_struct {
@@ -37,8 +43,8 @@ typedef struct toy_if_stmt_struct {
 
 typedef struct toy_for_stmt_struct {
     toy_expr *condition;
-    toy_stmt_list *at_start;
-    toy_stmt_list *at_end;
+    toy_stmt *at_start;
+    toy_stmt *at_end;
     toy_block body;
 } toy_for_stmt;
 
@@ -67,7 +73,7 @@ enum toy_stmt_type {
     STMT_WHILE
 };
 
-typedef struct toy_stmt_struct {
+struct toy_stmt_struct {
     enum toy_stmt_type type;
     union {
         toy_expr_stmt expr_stmt;
@@ -79,8 +85,9 @@ typedef struct toy_stmt_struct {
         toy_return_stmt return_stmt;
         toy_block_stmt block_stmt;
     };
-} toy_stmt;
+};
 
+/* TODO: List type should go in separate header */
 struct toy_stmt_list_struct {
     struct toy_stmt_list_struct *next;
     toy_stmt stmt;

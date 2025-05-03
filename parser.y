@@ -30,7 +30,7 @@ static toy_stmt_list *program_start;
     toy_expr_list *expr_list;
     toy_map *map;
     toy_expr *expr;
-    /* TODO: Should contain toy_stmt */
+    toy_stmt *stmt;
     toy_stmt_list *stmt_list;
     toy_var_decl *var_decl;
     toy_var_decl_list *var_decl_list;
@@ -48,8 +48,8 @@ static toy_stmt_list *program_start;
 %type <var_decl> vardecl
 %type <expr> expr expr_no_comma optional_expr literal prefix_increment prefix_decrement postfix_increment postfix_decrement ternary assignment_expr bracketed_subexpr function_call_expr function_decl_expr map_expr listexpr unary_neg_expr modulus_expr equal_expr nequal_expr lt_expr lte_expr gt_expr gte_expr in_expr and_expr or_expr not_expr add_expr divide_expr multiply_expr subtract_expr comma_expr_with_side_effect comma_expr_without_side_effect expr_with_side_effect_no_comma expr_without_side_effect_no_comma expr_with_side_effect_allow_comma expr_without_side_effect_allow_comma exponent_expr field_ref_expr collection_lookup_expr method_call_expr
 %type <str_list> formalparams formalparamlist
-/* TODO: stmt should eb a separate case from stmt_list, and stmt_in_for_atstart should be a stmt not a stmt_list */
-%type <stmt_list> stmts stmt if_stmt while_stmt for_stmt null_stmt expr_stmt func_decl_stmt var_decl_stmt return_stmt break_stmt continue_stmt stmt_requiring_semicolon stmt_in_for_atstart stmt_in_for_atend block_stmt
+%type <stmt> stmt if_stmt while_stmt for_stmt null_stmt expr_stmt func_decl_stmt var_decl_stmt return_stmt break_stmt continue_stmt stmt_requiring_semicolon stmt_in_for_atend block_stmt stmt_in_for_atstart
+%type <stmt_list> stmts
 %type <if_arm> elseifs
 %type <var_decl_list> vardecllist
 %type <expr_list> actualargs actualarglist
@@ -83,11 +83,11 @@ stmts :
         $$ = NULL;
     }
     | stmts stmt {
+        /* TODO: These two cases can be merged */
         if ($1) {
-            stmt_list_concat($1, $2);
-            $$ = $1;
+            $$ = stmt_list_append($1, $2);
         } else {
-            $$ = $2;
+            $$ = stmt_list_alloc($2);
         }
     }
 ;
@@ -123,28 +123,28 @@ stmt_in_for_atend:
 
 if_stmt:
     T_IF T_LPAREN expr T_RPAREN block elseifs elsepart {
-        $$ = stmt_list_alloc(STMT_IF);
-        $$->stmt.if_stmt.arms = if_arm_list_alloc($3, &$5);
-        $$->stmt.if_stmt.arms->next = $6;
-        $$->stmt.if_stmt.elsepart = $7;
+        $$ = stmt_alloc(STMT_IF);
+        $$->if_stmt.arms = if_arm_list_alloc($3, &$5);
+        $$->if_stmt.arms->next = $6;
+        $$->if_stmt.elsepart = $7;
     }
 ;
 
 while_stmt:
     T_WHILE T_LPAREN expr T_RPAREN block {
-        $$ = stmt_list_alloc(STMT_WHILE);
-        $$->stmt.while_stmt.condition = $3;
-        $$->stmt.while_stmt.body = $5;
+        $$ = stmt_alloc(STMT_WHILE);
+        $$->while_stmt.condition = $3;
+        $$->while_stmt.body = $5;
     }
 ;
 
 for_stmt:
     T_FOR T_LPAREN stmt_in_for_atstart T_SEMICOLON optional_expr T_SEMICOLON stmt_in_for_atend T_RPAREN block {
-        $$ = stmt_list_alloc(STMT_FOR);
-        $$->stmt.for_stmt.at_start = $3;
-        $$->stmt.for_stmt.condition = $5;
-        $$->stmt.for_stmt.at_end = $7;
-        $$->stmt.for_stmt.body = $9;
+        $$ = stmt_alloc(STMT_FOR);
+        $$->for_stmt.at_start = $3;
+        $$->for_stmt.condition = $5;
+        $$->for_stmt.at_end = $7;
+        $$->for_stmt.body = $9;
     }
 ;
 
@@ -157,61 +157,61 @@ for_stmt:
 
 null_stmt:
     /* EMPTY */ {
-        $$ = stmt_list_alloc(STMT_NULL);
+        $$ = stmt_alloc(STMT_NULL);
     }
 ;
 
 block_stmt:
     block {
-        $$ = stmt_list_alloc(STMT_BLOCK);
-        $$->stmt.block_stmt.block = $1;
+        $$ = stmt_alloc(STMT_BLOCK);
+        $$->block_stmt.block = $1;
     }
 ;
 
 expr_stmt:
     expr_with_side_effect_allow_comma {
-        $$ = stmt_list_alloc(STMT_EXPR);
-        $$->stmt.expr_stmt.expr = $1;
+        $$ = stmt_alloc(STMT_EXPR);
+        $$->expr_stmt.expr = $1;
     }
 ;
 
 func_decl_stmt:
     T_FUN T_IDENTIFIER T_LPAREN formalparams T_RPAREN block {
-        $$ = stmt_list_alloc(STMT_FUNC_DECL);
-        $$->stmt.func_decl_stmt.def.type = FUNC_USER_DECLARED;
-        $$->stmt.func_decl_stmt.def.name = $2;
-        $$->stmt.func_decl_stmt.def.param_names = $4;
-        $$->stmt.func_decl_stmt.def.code = $6;
+        $$ = stmt_alloc(STMT_FUNC_DECL);
+        $$->func_decl_stmt.def.type = FUNC_USER_DECLARED;
+        $$->func_decl_stmt.def.name = $2;
+        $$->func_decl_stmt.def.param_names = $4;
+        $$->func_decl_stmt.def.code = $6;
     }
 ;
 
 var_decl_stmt:
     T_VAR vardecllist {
-        $$ = stmt_list_alloc(STMT_VAR_DECL);
-        $$->stmt.var_decl_stmt = *$2;
+        $$ = stmt_alloc(STMT_VAR_DECL);
+        $$->var_decl_stmt = *$2;
     }
 ;
 
 return_stmt:
     T_RETURN {
-        $$ = stmt_list_alloc(STMT_RETURN);
-        $$->stmt.return_stmt.expr = NULL;
+        $$ = stmt_alloc(STMT_RETURN);
+        $$->return_stmt.expr = NULL;
     }
     | T_RETURN expr {
-        $$ = stmt_list_alloc(STMT_RETURN);
-        $$->stmt.return_stmt.expr = $2;
+        $$ = stmt_alloc(STMT_RETURN);
+        $$->return_stmt.expr = $2;
     }
 ;
 
 break_stmt:
     T_BREAK {
-        $$ = stmt_list_alloc(STMT_BREAK);
+        $$ = stmt_alloc(STMT_BREAK);
     }
 ;
 
 continue_stmt:
     T_CONTINUE {
-        $$ = stmt_list_alloc(STMT_CONTINUE);
+        $$ = stmt_alloc(STMT_CONTINUE);
     }
 ;
 
