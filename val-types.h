@@ -5,6 +5,9 @@
 #include "str-types.h"
 #include "num-types.h"
 
+struct map_val_struct;
+typedef struct map_val_struct map_val;
+
 enum toy_val_type {
     VAL_BOOL = 0,
     VAL_FUNC,
@@ -30,7 +33,7 @@ typedef struct toy_val_struct {
         toy_bool boolean;
         toy_func_def *func;
         toy_val_list *list;
-        generic_map *map;
+        map_val *map;
         // null
         toy_num num;
         toy_str str;

@@ -7,6 +7,7 @@
 #include "val.h"
 #include "val-list.h"
 #include "generic-map.h"
+#include "map-val.h"
 #include "dump.h"
 #include "constants.h"
 #include "operations.h"
@@ -54,7 +55,7 @@ static void predefined_map_len(toy_interp *interp, toy_val *result, const toy_va
     }
     result->type = VAL_NUM;
     assert(arg->type == VAL_MAP);
-    result->num = generic_map_size(arg->map);
+    result->num = map_val_size(arg->map);
 }
 
 static void predefined_print(toy_interp *interp, toy_val *result, const toy_val_list *args)
@@ -282,11 +283,11 @@ static void predefined_map_foreach(toy_interp *interp, toy_val *result, const to
     const toy_val *arg1 = &args->val;
     const toy_val *arg2 = &args->next->val;
     if (arg1->type == VAL_MAP) {
-        generic_map *map = arg1->map;
+        map_val *map = arg1->map;
         if (arg2->type == VAL_FUNC) {
             toy_func_def *func = arg2->func;
             map_foreach_args cbargs = { .func = func, .interp = interp };
-            enumeration_result res = generic_map_foreach_const(map, map_foreach_callback, &cbargs);
+            enumeration_result res = map_val_foreach_const(map, map_foreach_callback, &cbargs);
             assert(res == ENUMERATION_COMPLETE);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);

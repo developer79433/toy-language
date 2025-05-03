@@ -198,7 +198,8 @@ static item_callback_result generic_map_foreach_bucket_cb(void *cookie, generic_
     return CONTINUE_ENUMERATION;
 }
 
-enumeration_result generic_map_foreach(generic_map *map, generic_map_entry_callback callback, void *cookie) {
+enumeration_result generic_map_foreach(generic_map *map, generic_map_entry_callback callback, void *cookie)
+{
     foreach_bucket_cb_args args = { .entry_cb = callback, .entry_cb_cookie = cookie };
     return generic_map_enum_buckets(map, generic_map_foreach_bucket_cb, &args);
 }
