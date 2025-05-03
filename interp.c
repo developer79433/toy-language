@@ -126,7 +126,7 @@ static interp_frame *alloc_frame_if_body(const toy_block *if_body, interp_frame 
     frame->type = FRAME_IF_BODY;
     frame->prev = prev;
     frame->if_body = if_body;
-    frame->symbols = map_alloc();
+    frame->symbols = NULL;
     return frame;
 }
 
@@ -136,7 +136,7 @@ static interp_frame *alloc_frame_block_stmt(const toy_block *block_stmt, interp_
     frame->type = FRAME_BLOCK_STMT;
     frame->prev = prev;
     frame->block_stmt = block_stmt;
-    frame->symbols = map_alloc();
+    frame->symbols = NULL;
     return frame;
 }
 
@@ -146,8 +146,7 @@ static interp_frame *alloc_frame_user_def_func(const toy_func_def *func_def, int
     frame->type = FRAME_USER_DEF_FUNC;
     frame->prev = prev;
     frame->user_def_func = func_def;
-    /* TODO: Lazily allocate this map */
-    frame->symbols = map_alloc();
+    frame->symbols = NULL;
     return frame;
 }
 
@@ -322,6 +321,15 @@ enum set_variable_policy_enum {
 };
 typedef enum set_variable_policy_enum set_variable_policy;
 
+static int set_symbol(toy_interp *interp, const toy_str name, const toy_val *value)
+{
+    if (interp->cur_frame->symbols == NULL) {
+        interp->cur_frame->symbols = map_alloc();
+    }
+    int added_new = map_set(interp->cur_frame->symbols, name, value);
+    return added_new;
+}
+
 /* TODO: Move these into symbol-table.c */
 static int set_variable_value_policy(toy_interp *interp, const toy_str name, const toy_val *value, set_variable_policy policy)
 {
@@ -350,7 +358,7 @@ static int set_variable_value_policy(toy_interp *interp, const toy_str name, con
         assert(0);
         break;
     }
-    int added_new = map_set(interp->cur_frame->symbols, name, value);
+    int added_new = set_symbol(interp, name, value);
     return added_new;
 }
 
@@ -385,7 +393,8 @@ static void create_function(toy_interp *interp, const toy_func_def *def)
     }
     /* TODO: Remove cast below using const in .func member? Beware const poisoning... */
     toy_val func_val = { .type = VAL_FUNC, .func = (toy_func_def *) def };
-    map_set(interp->cur_frame->symbols, def->name, &func_val);
+    int created_new = set_symbol(interp, def->name, &func_val);
+    assert(created_new);
 }
 
 static void op_assign(toy_interp *interp, toy_val *result, toy_str name, toy_expr *value)
