@@ -13,7 +13,7 @@
 #include "val-list.h"
 #include "str-list.h"
 #include "expr-list.h"
-#include "map.h"
+#include "generic-map.h"
 #include "util.h"
 #include "operations.h"
 #include "constants.h"

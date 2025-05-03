@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 #include "str.h"
-#include "map.h"
+#include "generic-map.h"
 #include "val.h"
 #include "mymalloc.h"
 #include "dump.h"

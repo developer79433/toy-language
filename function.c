@@ -6,7 +6,7 @@
 #include "str.h"
 #include "val.h"
 #include "val-list.h"
-#include "map.h"
+#include "generic-map.h"
 #include "dump.h"
 #include "constants.h"
 #include "operations.h"

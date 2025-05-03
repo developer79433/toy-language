@@ -7,7 +7,7 @@
 #include "val-list.h"
 #include "expr-list.h"
 #include "var-decl-list.h"
-#include "map.h"
+#include "generic-map.h"
 #include "bool.h"
 #include "str.h"
 #include "val.h"

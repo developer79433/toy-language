@@ -7,7 +7,7 @@
 #include "val.h"
 #include "function.h"
 #include "val-list.h"
-#include "map.h"
+#include "generic-map.h"
 #include "errors.h"
 #include "constants.h"
 

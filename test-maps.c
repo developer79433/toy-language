@@ -5,7 +5,7 @@
 #include "test-maps.h"
 
 #include "val.h"
-#include "map.h"
+#include "generic-map.h"
 
 typedef struct predicate_args_struct {
     toy_str intended_key;

@@ -1,10 +1,10 @@
-#ifndef TOY_MAP_H
-#define TOY_MAP_H 1
+#ifndef TOY_GENERIC_MAP_H
+#define TOY_GENERIC_MAP_H 1
 
 #include <stddef.h>
 #include <stdio.h>
 
-#include "map-types.h"
+#include "generic-map-types.h"
 #include "str-types.h"
 #include "val-types.h"
 
@@ -21,4 +21,4 @@ size_t map_len(const toy_map *map);
 void generic_map_reset(toy_map *map);
 void generic_map_assert_valid(const toy_map *map);
 
-#endif /* TOY_MAP_H */
+#endif /* TOY_GENERIC_MAP_H */
