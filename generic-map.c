@@ -20,24 +20,6 @@ typedef struct generic_map_entry_struct {
     toy_val value;
 } generic_map_entry;
 
-typedef struct ptr_map_entry_struct {
-    toy_str key;
-    void *ptr;
-} ptr_map_entry;
-typedef struct ptr_map_entry_list_struct {
-    struct ptr_map_entry_list_struct *next;
-    ptr_map_entry entry;
-} ptr_map_entry_list;
-
-typedef struct buf_map_entry_struct {
-    toy_str key;
-    uint8_t c; /* Really varable-size */
-} buf_map_entry;
-typedef struct buf_map_entry_list_struct {
-    struct buf_map_entry_list_struct *next;
-    buf_map_entry entry;
-} buf_map_entry_list;
-
 typedef struct generic_map_entry_list_struct {
     struct generic_map_entry_list_struct *next;
     generic_map_entry entry;
