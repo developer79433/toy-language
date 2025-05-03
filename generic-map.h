@@ -8,17 +8,17 @@
 #include "str-types.h"
 #include "val-types.h"
 
-toy_map *generic_map_alloc(void);
-void generic_map_free(toy_map *map);
-toy_val *map_val_get(toy_map *map, const toy_str key);
-int map_val_set(toy_map *map, const toy_str key, const toy_val *value);
-int generic_map_delete(toy_map *map, const toy_str key);
-enumeration_result generic_map_foreach(toy_map *map, map_entry_callback callback, void *cookie);
-enumeration_result generic_map_foreach_const(const toy_map *map, const_map_entry_callback callback, void *cookie);
-void generic_map_dump(FILE *f, const toy_map *map);
-void generic_map_dump_keys(FILE *f, const toy_map *map);
-size_t map_len(const toy_map *map);
-void generic_map_reset(toy_map *map);
-void generic_map_assert_valid(const toy_map *map);
+generic_map *generic_map_alloc(void);
+void generic_map_free(generic_map *map);
+toy_val *map_val_get(generic_map *map, const toy_str key);
+int map_val_set(generic_map *map, const toy_str key, const toy_val *value);
+int generic_map_delete(generic_map *map, const toy_str key);
+enumeration_result generic_map_foreach(generic_map *map, map_entry_callback callback, void *cookie);
+enumeration_result generic_map_foreach_const(const generic_map *map, const_map_entry_callback callback, void *cookie);
+void generic_map_dump(FILE *f, const generic_map *map);
+void generic_map_dump_keys(FILE *f, const generic_map *map);
+size_t map_len(const generic_map *map);
+void generic_map_reset(generic_map *map);
+void generic_map_assert_valid(const generic_map *map);
 
 #endif /* TOY_GENERIC_MAP_H */

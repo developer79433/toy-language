@@ -15,6 +15,15 @@ typedef struct generic_map_entry_list_struct {
     generic_map_entry entry;
 } generic_map_entry_list;
 
+/* TODO: dynamic resizing */
+#define NUM_BUCKETS 13
+
+/* TODO: Use generic list lib */
+typedef struct generic_map_struct {
+    size_t num_items;
+    generic_map_entry_list *buckets[NUM_BUCKETS];
+} generic_map;
+
 typedef item_callback_result (*map_entry_callback)(void *cookie, toy_str key, toy_val *value);
 typedef item_callback_result (*const_map_entry_callback)(void *cookie, const toy_str key, const toy_val *value);
 

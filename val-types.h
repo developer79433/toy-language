@@ -15,8 +15,8 @@ enum toy_val_type {
     VAL_STR
 };
 
-struct toy_map_struct;
-typedef struct toy_map_struct toy_map;
+struct generic_map_struct;
+typedef struct generic_map_struct generic_map;
 
 struct toy_val_list_struct;
 typedef struct toy_val_list_struct toy_val_list;
@@ -30,7 +30,7 @@ typedef struct toy_val_struct {
         toy_bool boolean;
         toy_func_def *func;
         toy_val_list *list;
-        toy_map *map;
+        generic_map *map;
         // null
         toy_num num;
         toy_str str;

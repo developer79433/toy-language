@@ -30,7 +30,7 @@ static item_callback_result map_item_callback(void *cookie, toy_str key, toy_val
 
 void test_maps(void)
 {
-    toy_map *map1 = generic_map_alloc();
+    generic_map *map1 = generic_map_alloc();
 
     assert(0 == map_len(map1));
     // Test first insert

@@ -11,18 +11,9 @@
 #include "dump.h"
 #include "errors.h"
 
-/* TODO: dynamic resizing */
-#define NUM_BUCKETS 13
-
-/* TODO: Use generic list lib */
-struct toy_map_struct {
-    size_t num_items;
-    generic_map_entry_list *buckets[NUM_BUCKETS];
-};
-
-toy_map *generic_map_alloc(void)
+generic_map *generic_map_alloc(void)
 {
-    toy_map *map = mymalloc(toy_map);
+    generic_map *map = mymalloc(generic_map);
     memset(map->buckets, 0, sizeof(map->buckets));
     map->num_items = 0;
     return map;
@@ -42,7 +33,7 @@ static void free_bucket_entries(generic_map_entry_list *entry)
     }
 }
 
-static void free_buckets(toy_map *map)
+static void free_buckets(generic_map *map)
 {
     for (generic_map_entry_list **bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
         if (*bucket) {
@@ -52,13 +43,13 @@ static void free_buckets(toy_map *map)
     }
 }
 
-void generic_map_reset(toy_map *map)
+void generic_map_reset(generic_map *map)
 {
     free_buckets(map);
     map->num_items = 0;
 }
 
-void generic_map_free(toy_map *map)
+void generic_map_free(generic_map *map)
 {
     free_buckets(map);
     free(map);
@@ -88,7 +79,7 @@ static uint32_t jenkins_one_at_a_time_hash(const uint8_t* key, size_t length) {
     return hash;
 }
 
-static generic_map_entry_list **get_bucket(toy_map *map, toy_str key)
+static generic_map_entry_list **get_bucket(generic_map *map, toy_str key)
 {
     uint32_t hashval = jenkins_one_at_a_time_hash((uint8_t *) key, strlen(key));
     return &map->buckets[hashval % NUM_BUCKETS];
@@ -104,7 +95,7 @@ static toy_val *get_bucket_key(generic_map_entry_list *bucket, const toy_str key
     return NULL;
 }
 
-toy_val *map_val_get(toy_map *map, const toy_str key)
+toy_val *map_val_get(generic_map *map, const toy_str key)
 {
     generic_map_entry_list **bucket = get_bucket(map, key);
     if (*bucket) {
@@ -117,7 +108,7 @@ toy_val *map_val_get(toy_map *map, const toy_str key)
     return NULL;
 }
 
-int map_val_set(toy_map *map, const toy_str key, const toy_val *value)
+int map_val_set(generic_map *map, const toy_str key, const toy_val *value)
 {
     generic_map_entry_list *new_entry;
     generic_map_entry_list **bucket = get_bucket(map, key);
@@ -141,7 +132,7 @@ int map_val_set(toy_map *map, const toy_str key, const toy_val *value)
     return 1;
 }
 
-int generic_map_delete(toy_map *map, const toy_str key)
+int generic_map_delete(generic_map *map, const toy_str key)
 {
     generic_map_entry_list **bucket = get_bucket(map, key);
     if (*bucket) {
@@ -171,7 +162,7 @@ static void dump_map_entry(FILE *f, const generic_map_entry_list *entry)
     val_dump(f, &entry->entry.value);
 }
 
-void generic_map_dump(FILE *f, const toy_map *map)
+void generic_map_dump(FILE *f, const generic_map *map)
 {
     int output_anything = 0;
 
@@ -195,7 +186,7 @@ void generic_map_dump(FILE *f, const toy_map *map)
     fputc('}', f);
 }
 
-void generic_map_dump_keys(FILE *f, const toy_map *map)
+void generic_map_dump_keys(FILE *f, const generic_map *map)
 {
     int output_anything = 0;
 
@@ -219,7 +210,7 @@ void generic_map_dump_keys(FILE *f, const toy_map *map)
     fputc(']', f);
 }
 
-enumeration_result generic_map_foreach(toy_map *map, map_entry_callback callback, void *cookie)
+enumeration_result generic_map_foreach(generic_map *map, map_entry_callback callback, void *cookie)
 {
     for (generic_map_entry_list * const * bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
         if (*bucket) {
@@ -234,17 +225,17 @@ enumeration_result generic_map_foreach(toy_map *map, map_entry_callback callback
     return ENUMERATION_COMPLETE;
 }
 
-enumeration_result generic_map_foreach_const(const toy_map *map, const_map_entry_callback callback, void *cookie)
+enumeration_result generic_map_foreach_const(const generic_map *map, const_map_entry_callback callback, void *cookie)
 {
-    return generic_map_foreach((toy_map *) map, (map_entry_callback) callback, cookie);
+    return generic_map_foreach((generic_map *) map, (map_entry_callback) callback, cookie);
 }
 
-size_t map_len(const toy_map *map)
+size_t map_len(const generic_map *map)
 {
     return map->num_items;
 }
 
-void generic_map_assert_valid(const toy_map *map)
+void generic_map_assert_valid(const generic_map *map)
 {
     assert(map);
     /* TODO */

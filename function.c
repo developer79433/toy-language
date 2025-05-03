@@ -282,7 +282,7 @@ static void predefined_map_foreach(toy_interp *interp, toy_val *result, const to
     const toy_val *arg1 = &args->val;
     const toy_val *arg2 = &args->next->val;
     if (arg1->type == VAL_MAP) {
-        toy_map *map = arg1->map;
+        generic_map *map = arg1->map;
         if (arg2->type == VAL_FUNC) {
             toy_func_def *func = arg2->func;
             map_foreach_args cbargs = { .func = func, .interp = interp };

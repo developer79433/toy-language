@@ -40,7 +40,7 @@ typedef struct interp_frame_struct {
         const toy_block *block_stmt;
     };
     toy_stmt_list *cur_stmt;
-    toy_map *symbols;
+    generic_map *symbols;
 } interp_frame;
 
 static const char *frame_type_names[] = {
@@ -543,7 +543,7 @@ static void list_lookup(toy_interp *interp, toy_val *result, toy_val_list *val_l
     }
 }
 
-static void map_lookup(toy_interp *interp, toy_val *result, toy_map *collection, toy_expr *index)
+static void map_lookup(toy_interp *interp, toy_val *result, generic_map *collection, toy_expr *index)
 {
     toy_val index_result;
     eval_expr(interp, &index_result, index);

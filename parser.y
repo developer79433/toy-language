@@ -30,7 +30,7 @@ static toy_stmt_list *program_start;
     toy_num num;
     toy_str str;
     toy_expr_list *expr_list;
-    toy_map *map;
+    generic_map *map;
     toy_expr *expr;
     toy_stmt *stmt;
     toy_stmt_list *stmt_list;
