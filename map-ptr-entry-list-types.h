@@ -1,6 +1,8 @@
 #ifndef TOY_MAP_PTR_ENTRY_LIST_TYPES_H
 #define TOY_MAP_PTR_ENTRY_LIST_TYPES_H 1
 
+#include <stddef.h>
+
 #include "iter-types.h"
 #include "str-types.h"
 
