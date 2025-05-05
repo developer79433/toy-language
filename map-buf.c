@@ -8,17 +8,21 @@
 
 map_buf *map_buf_alloc(void)
 {
+    assert(offsetof(map_buf, buckets) == offsetof(generic_map, buckets));
+    assert(offsetof(map_buf, num_items) == offsetof(generic_map, num_items));
     return (map_buf *) generic_map_alloc();
 }
 
 map_buf_entry_list **map_buf_get_bucket(map_buf *map, const toy_str key)
 {
+    assert(offsetof(map_buf, buckets) == offsetof(generic_map, buckets));
+    assert(offsetof(map_buf, num_items) == offsetof(generic_map, num_items));
     return (map_buf_entry_list **) generic_map_get_bucket((generic_map *) map, key);
 }
 
-void *map_buf_get_bucket_key(map_buf_entry_list *bucket, const toy_str key)
+static map_buf_entry *map_buf_get_bucket_key(map_buf_entry_list *bucket, const toy_str key)
 {
-    return generic_map_bucket_get_key((toy_buf_list *) bucket, key);
+    return (map_buf_entry *) generic_map_bucket_get_key((toy_buf_list *) bucket, key);
 }
 
 enumeration_result map_buf_foreach(map_buf *map, map_buf_entry_callback callback, void *cookie)
@@ -29,6 +33,20 @@ enumeration_result map_buf_foreach(map_buf *map, map_buf_entry_callback callback
 enumeration_result map_buf_foreach_const(const map_buf *map, const_map_buf_entry_callback callback, void *cookie)
 {
     return generic_map_foreach_const((generic_map *) map, (const_generic_map_entry_callback) callback, cookie);
+}
+
+void *map_buf_get(map_buf *map, const toy_str key)
+{
+    map_buf_entry_list **bucket = map_buf_get_bucket(map, key);
+    if (*bucket) {
+        map_buf_entry *existing_entry = map_buf_get_bucket_key(*bucket, key);
+        if (existing_entry) {
+            assert(toy_str_equal(existing_entry->key, key));
+            return &existing_entry->payload;
+        }
+        return NULL;
+    }
+    return NULL;
 }
 
 int map_buf_set(map_buf *map, const toy_str key, void *buf, size_t buf_size)

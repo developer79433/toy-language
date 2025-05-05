@@ -1,12 +1,16 @@
 #include <string.h>
+#include <assert.h>
 
 #include "map-val.h"
 #include "str.h"
 #include "val.h"
 #include "map-buf.h"
+#include "generic-map.h"
 
 map_val *map_val_alloc(void)
 {
+    assert(offsetof(map_val, buckets) == offsetof(generic_map, buckets));
+    assert(offsetof(map_val, num_items) == offsetof(generic_map, num_items));
     return (map_val *) map_buf_alloc();
 }
 
@@ -17,15 +21,7 @@ int map_val_set(map_val *map, const toy_str key, toy_val *value)
 
 toy_val *map_val_get(map_val *map, const toy_str key)
 {
-    map_val_entry_list **bucket = map_val_get_bucket(map, key);
-    if (*bucket) {
-        toy_val *existing_value = map_val_get_bucket_key(*bucket, key);
-        if (existing_value) {
-            return existing_value;
-        }
-        return NULL;
-    }
-    return NULL;
+    return (toy_val *) map_buf_get((map_buf *) map, key);
 }
 
 void map_val_free(map_val *map)
@@ -93,9 +89,4 @@ enumeration_result map_val_foreach(map_val *map, map_val_entry_callback callback
 enumeration_result map_val_foreach_const(const map_val *map, const_map_val_entry_callback callback, void *cookie)
 {
     return map_buf_foreach_const((map_buf *) map, (const_map_buf_entry_callback) callback, cookie);
-}
-
-toy_val *map_val_get_bucket_key(map_val_entry_list *bucket, const toy_str key)
-{
-    return (toy_val *) map_buf_get_bucket_key((map_buf_entry_list *) bucket, key);
 }
