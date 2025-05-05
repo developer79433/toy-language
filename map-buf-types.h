@@ -3,16 +3,19 @@
 
 #include <inttypes.h>
 
+#include "iter-types.h"
 #include "str-types.h"
+#include "map-buf-entry-list-types.h"
 
-typedef struct map_buf_entry_struct {
-    uint8_t c; /* Really varable-size */
-} map_buf_entry;
+/* TODO: dynamic resizing */
+#define NUM_BUCKETS 13
 
-typedef struct map_buf_entry_list_struct {
-    struct map_buf_entry_list_struct *next;
-    toy_str key;
-    map_buf_entry entry;
-} map_buf_entry_list;
+typedef struct map_buf_struct {
+    size_t num_items;
+    map_buf_entry_list *buckets[NUM_BUCKETS];
+} map_buf;
+
+typedef item_callback_result (*map_buf_entry_callback)(void *cookie, toy_str key, void *value);
+typedef item_callback_result (*const_map_buf_entry_callback)(void *cookie, const toy_str key, const void *value);
 
 #endif /* TOY_MAP_BUF_TYPES_H */

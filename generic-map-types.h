@@ -6,24 +6,29 @@
 #include "str-types.h"
 #include "val-types.h"
 #include "iter-types.h"
+#include "buf-list-types.h"
+
+/* TODO: Delete me */
+typedef struct generic_map_payload_struct {
+    unsigned int dummy_payload;
+} generic_map_payload;
 
 typedef struct generic_map_entry_struct {
-    toy_val value;
+    toy_str key;
+    generic_map_payload payload;
 } generic_map_entry;
 
 typedef struct generic_map_entry_list_struct {
     struct generic_map_entry_list_struct *next;
-    toy_str key;
     generic_map_entry entry;
 } generic_map_entry_list;
 
 /* TODO: dynamic resizing */
 #define NUM_BUCKETS 13
 
-/* TODO: Use generic list lib */
 typedef struct generic_map_struct {
     size_t num_items;
-    generic_map_entry_list *buckets[NUM_BUCKETS];
+    toy_buf_list *buckets[NUM_BUCKETS];
 } generic_map;
 
 typedef item_callback_result (*generic_map_entry_callback)(void *cookie, toy_str key, void *value);

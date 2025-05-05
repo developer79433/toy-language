@@ -18,12 +18,31 @@ void buf_list_payload_set(toy_buf_list *list, void *buf, size_t buf_size)
     memcpy(buf_list_payload(list), buf, buf_size);
 }
 
+void buf_list_payload_set_2(toy_buf_list *list, void *buf1, size_t buf1_size, void *buf2, size_t buf2_size)
+{
+    char *p = (char *) buf_list_payload(list);
+    if (buf1) {
+        memcpy(p, buf1, buf1_size);
+        if (buf2) {
+            p += buf1_size;
+            memcpy(p, buf2, buf2_size);
+        }
+    }
+}
+
 toy_buf_list *buf_list_alloc(void *buf, size_t buf_size)
 {
     toy_buf_list *new_list = (toy_buf_list *) generic_list_alloc_size(buf_size);
     if (buf) {
         buf_list_payload_set(new_list, buf, buf_size);
     }
+    return new_list;
+}
+
+toy_buf_list *buf_list_alloc_2(void *buf1, size_t buf1_size, void *buf2, size_t buf2_size)
+{
+    toy_buf_list *new_list = (toy_buf_list *) generic_list_alloc_size(buf1_size + buf2_size);
+    buf_list_payload_set_2(new_list, buf1, buf1_size, buf2, buf2_size);
     return new_list;
 }
 

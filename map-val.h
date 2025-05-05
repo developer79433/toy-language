@@ -6,9 +6,10 @@
 #include "map-val-types.h"
 #include "val-types.h"
 #include "generic-map-types.h"
+#include "map-val-entry-list-types.h"
 
 map_val *map_val_alloc(void);
-map_val_entry_list *map_val_entry_list_alloc(toy_str key_name, toy_val *value);
+map_val_entry_list **map_val_get_bucket(map_val *map, toy_str key);
 toy_val *map_val_get(map_val *map, const toy_str key);
 toy_val *map_val_get_bucket_key(map_val_entry_list *bucket, const toy_str key);
 int map_val_set(map_val *map, const toy_str key, toy_val *value);

@@ -8,8 +8,8 @@
 #include "str-types.h"
 
 generic_map *generic_map_alloc(void);
-generic_map_entry_list **generic_map_get_bucket(generic_map *map, toy_str key);
-void *generic_map_get_bucket_key(generic_map_entry_list *bucket, const toy_str key);
+toy_buf_list **generic_map_get_bucket(generic_map *map, toy_str key);
+void *generic_map_get_bucket_key(toy_buf_list *bucket, const toy_str key);
 void generic_map_free(generic_map *map);
 int generic_map_delete(generic_map *map, const toy_str key);
 enumeration_result generic_map_foreach(generic_map *map, generic_map_entry_callback callback, void *cookie);

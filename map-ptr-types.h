@@ -1,16 +1,19 @@
 #ifndef TOY_MAP_PTR_TYPES_H
 #define TOY_MAP_PTR_TYPES_H
 
+#include "iter-types.h"
 #include "str-types.h"
+#include "map-ptr-entry-list-types.h"
 
-typedef struct map_ptr_entry_struct {
-    toy_str key;
-    void *ptr;
-} map_ptr_entry;
+/* TODO: dynamic resizing */
+#define NUM_BUCKETS 13
 
-typedef struct map_ptr_entry_list_struct {
-    struct map_ptr_entry_list_struct *next;
-    map_ptr_entry entry;
-} map_ptr_entry_list;
+typedef struct map_ptr_struct {
+    size_t num_items;
+    map_ptr_entry_list *buckets[NUM_BUCKETS];
+} map_ptr;
+
+typedef item_callback_result (*map_ptr_entry_callback)(void *cookie, toy_str key, void *value);
+typedef item_callback_result (*const_map_ptr_entry_callback)(void *cookie, const toy_str key, const void *value);
 
 #endif /* TOY_MAP_PTR_TYPES_H */
