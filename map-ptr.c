@@ -18,7 +18,7 @@ map_ptr_entry_list **map_ptr_get_bucket(map_ptr *map, const toy_str key)
 
 void *map_ptr_get_bucket_key(toy_buf_list *bucket, const toy_str key)
 {
-    return generic_map_get_bucket_key(bucket, key);
+    return generic_map_bucket_get_key(bucket, key);
 }
 
 enumeration_result map_ptr_foreach(map_ptr *map, map_ptr_entry_callback callback, void *cookie)
@@ -37,11 +37,12 @@ int map_ptr_set(map_ptr *map, const toy_str key, void *ptr)
     map_ptr_entry_list *new_entry;
     map_ptr_entry_list **bucket = map_ptr_get_bucket(map, key);
     if (*bucket) {
-        for (map_ptr_entry_list *entry = *bucket; entry; entry = entry->next) {
-            map_ptr_entry *map_entry = map_ptr_entry_list_payload(entry);
+        /* TODO: Use map_ptr_entry_list_foreach */
+        for (map_ptr_entry_list *list = *bucket; list; list = list->next) {
+            map_ptr_entry *map_entry = map_ptr_entry_list_payload(list);
             if (toy_str_equal(map_entry->key, key)) {
                 /* Overwrite existing entry */
-                map_ptr_entry_list_payload_set(entry, ptr);
+                map_ptr_entry_list_payload_set(list, ptr);
                 return 0;
             }
         }

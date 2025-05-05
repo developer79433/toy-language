@@ -5,7 +5,6 @@
 
 #include "map-val-types.h"
 #include "val-types.h"
-#include "generic-map-types.h"
 #include "map-val-entry-list-types.h"
 
 map_val *map_val_alloc(void);

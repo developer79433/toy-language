@@ -3,18 +3,22 @@
 
 #include "map-buf.h"
 #include "generic-map.h"
-#include "buf-list.h"
 #include "map-buf-entry-list.h"
 #include "str.h"
+
+map_buf *map_buf_alloc(void)
+{
+    return (map_buf *) generic_map_alloc();
+}
 
 map_buf_entry_list **map_buf_get_bucket(map_buf *map, const toy_str key)
 {
     return (map_buf_entry_list **) generic_map_get_bucket((generic_map *) map, key);
 }
 
-void *map_buf_get_bucket_key(toy_buf_list *bucket, const toy_str key)
+void *map_buf_get_bucket_key(map_buf_entry_list *bucket, const toy_str key)
 {
-    return generic_map_get_bucket_key(bucket, key);
+    return generic_map_bucket_get_key((toy_buf_list *) bucket, key);
 }
 
 enumeration_result map_buf_foreach(map_buf *map, map_buf_entry_callback callback, void *cookie)

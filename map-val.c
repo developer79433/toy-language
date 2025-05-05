@@ -2,17 +2,12 @@
 
 #include "map-val.h"
 #include "str.h"
-#include "mymalloc.h"
 #include "val.h"
-#include "generic-map.h"
 #include "map-buf.h"
-#include "buf-list.h"
-#include "ptr-list.h"
-#include "map-buf-entry-list.h"
 
 map_val *map_val_alloc(void)
 {
-    return (map_val *) generic_map_alloc();
+    return (map_val *) map_buf_alloc();
 }
 
 int map_val_set(map_val *map, const toy_str key, toy_val *value)
@@ -102,5 +97,5 @@ enumeration_result map_val_foreach_const(const map_val *map, const_map_val_entry
 
 toy_val *map_val_get_bucket_key(map_val_entry_list *bucket, const toy_str key)
 {
-    return (toy_val *) map_buf_get_bucket_key((toy_buf_list *) bucket, key);
+    return (toy_val *) map_buf_get_bucket_key((map_buf_entry_list *) bucket, key);
 }
