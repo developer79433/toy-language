@@ -15,6 +15,9 @@ generic_list *generic_list_index(generic_list *list, size_t index);
 size_t generic_list_len(const generic_list *list);
 enumeration_result generic_list_find_all(generic_list *list, generic_list_filter_func filter, generic_list_item_callback callback, void *cookie);
 generic_list *generic_list_find_first(generic_list *list, generic_list_filter_func filter, void *cookie);
+generic_list *generic_list_find_first_not(generic_list *list, generic_list_filter_func filter, void *cookie);
+toy_bool generic_list_none_match(generic_list *list, generic_list_filter_func filter, void *cookie);
+toy_bool generic_list_all_match(generic_list *list, generic_list_filter_func filter, void *cookie);
 generic_list *generic_list_last(generic_list *list);
 
 #endif /* GENERIC_LIST_H */
