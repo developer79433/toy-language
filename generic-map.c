@@ -178,31 +178,6 @@ void generic_map_dump(FILE *f, const generic_map *map)
     fputc('}', f);
 }
 
-void generic_map_dump_keys(FILE *f, const generic_map *map)
-{
-    int output_anything = 0;
-
-    fputc('[', f);
-    for (toy_buf_list * const * bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
-        if (*bucket) {
-            for (toy_buf_list *list = *bucket; list; list = list->next) {
-                if (output_anything) {
-                    fputs(", ", f);
-                } else {
-                    fputc(' ', f);
-                }
-                generic_map_entry *map_entry = generic_map_entry_list_payload(list);
-                dump_str(f, map_entry->key);
-                output_anything = 1;
-            }
-        }
-    }
-    if (output_anything) {
-        fputc(' ', f);
-    }
-    fputc(']', f);
-}
-
 typedef struct buflist_item_cb_args_struct {
     generic_map_entry_callback item_cb;
     void *item_cb_cookie;
@@ -234,6 +209,35 @@ enumeration_result generic_map_foreach(generic_map *map, generic_map_entry_callb
 {
     bucket_cb_args bucket_args = { .item_cb_args.item_cb = callback, .item_cb_args.item_cb_cookie = cookie };
     return generic_map_enum_buckets(map, generic_map_foreach_bucket_cb, &bucket_args);
+}
+
+typedef struct dump_keys_cb_args_struct {
+    FILE *f;
+    int output_anything;
+} dump_keys_cb_args;
+
+static item_callback_result dump_keys_cb(void *cookie, const generic_map_entry *entry)
+{
+    dump_keys_cb_args *args = (dump_keys_cb_args *) cookie;
+    if (args->output_anything) {
+        fputs(", ", args->f);
+    } else {
+        fputc(' ', args->f);
+    }
+    dump_str(args->f, entry->key);
+    args->output_anything = 1;
+    return CONTINUE_ENUMERATION;
+}
+
+void generic_map_dump_keys(FILE *f, const generic_map *map)
+{
+    dump_keys_cb_args cbargs = { .f = f, .output_anything = 0 };
+    fputc('[', f);
+    generic_map_foreach_const(map, dump_keys_cb, &cbargs);
+    if (cbargs.output_anything) {
+        fputc(' ', f);
+    }
+    fputc(']', f);
 }
 
 typedef struct const_buflist_item_cb_args_struct {
