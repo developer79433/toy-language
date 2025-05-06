@@ -104,29 +104,54 @@ toy_buf_list **generic_map_get_bucket(generic_map *map, toy_str key)
     return &map->buckets[hashval % NUM_BUCKETS];
 }
 
-/* TODO: Should return a delete_result */
+typedef struct delete_cb_args_struct {
+    generic_map *map;
+    toy_str key;
+    toy_buf_list **bucket;
+    toy_buf_list *prev;
+} delete_cb_args;
+
+item_callback_result delete_callback(void *cookie, size_t index, toy_buf_list *list)
+{
+    delete_cb_args *args = (delete_cb_args *) cookie;
+    generic_map_entry *map_entry = generic_map_entry_list_payload(list);
+    item_callback_result res;
+    if (toy_str_equal(map_entry->key, args->key)) {
+        /* Found existing entry */
+        args->prev->next = list->next;
+        if (list == *(args->bucket)) {
+            assert(list->next == NULL);
+            *(args->bucket) = NULL;
+        } else {
+            list->next = NULL;
+        }
+        buf_list_free(list);
+        args->map->num_items--;
+        res = STOP_ENUMERATION;
+    } else {
+        res = CONTINUE_ENUMERATION;
+    }
+    args->prev = list;
+    return res;
+}
+
+/* TODO: Push this down into generic_list */
+static delete_result delete_from_bucket(generic_map *map, toy_buf_list **bucket, const toy_str key)
+{
+    delete_cb_args delete_args = { .map = map, .key = key, .bucket = bucket, .prev = *bucket };
+    enumeration_result res = buf_list_foreach(*bucket, delete_callback, &delete_args);
+    if (res == ENUMERATION_COMPLETE) {
+        return NOT_PRESENT;
+    }
+    assert(res == ENUMERATION_INTERRUPTED);
+    return DELETED;
+}
+
 delete_result generic_map_delete(generic_map *map, const toy_str key)
 {
     toy_buf_list **bucket = generic_map_get_bucket(map, key);
     if (*bucket) {
-        toy_buf_list *list, *prev;
-        for (list = *bucket, prev = *bucket; list; prev = list, list = list->next) {
-            generic_map_entry *map_entry = generic_map_entry_list_payload(list);
-            if (toy_str_equal(map_entry->key, key)) {
-                /* Found existing entry */
-                prev->next = list->next;
-                if (list == *bucket) {
-                    assert(list->next == NULL);
-                    *bucket = NULL;
-                } else {
-                    list->next = NULL;
-                }
-                buf_list_free(list);
-                map->num_items--;
-                return DELETED;
-            }
-        }
-        return NOT_PRESENT; /* No entry */
+        return delete_from_bucket(map, bucket, key);
     }
     return NOT_PRESENT; /* No bucket, so no entry */
 }
