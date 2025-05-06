@@ -2,6 +2,7 @@
 #include <assert.h>
 
 #include "map-val.h"
+#include "map-val-entry-list.h"
 #include "str.h"
 #include "val.h"
 #include "map-buf.h"
@@ -34,7 +35,7 @@ size_t map_val_size(map_val *map)
     return map_buf_size((map_buf *) map);
 }
 
-int map_val_delete(map_val *map, const toy_str key)
+delete_result map_val_delete(map_val *map, const toy_str key)
 {
     return map_buf_delete((map_buf *) map, key);
 }
@@ -44,32 +45,30 @@ void map_val_reset(map_val *map)
     return map_buf_reset((map_buf *) map);
 }
 
-static void dump_map_val_entry(FILE *f, const map_val_entry *entry)
+typedef struct dump_item_cb_args_struct {
+    int output_anything;
+    FILE *f;
+} dump_item_cb_args;
+
+static item_callback_result dump_item_callback(void *cookie, const map_val_entry *entry)
 {
-    dump_str(f, entry->key);
-    fputs(": ", f);
-    val_dump(f, &entry->payload.value);
+    dump_item_cb_args *args = (dump_item_cb_args *) cookie;
+    if (args->output_anything) {
+        fputs(", ", args->f);
+    } else {
+        fputc(' ', args->f);
+    }
+    map_val_entry_dump(entry, args->f);
+    args->output_anything = 1;
+    return CONTINUE_ENUMERATION;
 }
 
 void map_val_dump(FILE *f, const map_val *map)
 {
-    int output_anything = 0;
-
+    dump_item_cb_args cbargs = { .f = f, .output_anything = 0 };
     fputc('{', f);
-    for (map_val_entry_list * const * bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
-        if (*bucket) {
-            for (const map_val_entry_list *list = *bucket; list; list = list->next) {
-                if (output_anything) {
-                    fputs(", ", f);
-                } else {
-                    fputc(' ', f);
-                }
-                dump_map_val_entry(f, &list->entry);
-                output_anything = 1;
-            }
-        }
-    }
-    if (output_anything) {
+    map_val_foreach_const(map, dump_item_callback, &cbargs);
+    if (cbargs.output_anything) {
         fputc(' ', f);
     }
     fputc('}', f);

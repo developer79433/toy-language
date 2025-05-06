@@ -87,7 +87,8 @@ void test_map_ptrs(void)
     assert(get3->num == 42);
 
     // Test delete
-    map_ptr_delete(map1, "first key");
+    delete_result delete1_res = map_ptr_delete(map1, "first key");
+    assert(delete1_res == DELETED);
     assert(1 == map_ptr_size(map1));
     toy_val *get4 = map_ptr_get(map1, "first key");
     assert(NULL == get4);

@@ -60,7 +60,8 @@ void test_map_vals(void)
     assert(get3->num == 42);
 
     // Test delete
-    map_val_delete(map1, "first key");
+    delete_result delete1_res = map_val_delete(map1, "first key");
+    assert(delete1_res == DELETED);
     assert(1 == map_val_size(map1));
     toy_val *get4 = map_val_get(map1, "first key");
     assert(NULL == get4);

@@ -105,7 +105,7 @@ toy_buf_list **generic_map_get_bucket(generic_map *map, toy_str key)
 }
 
 /* TODO: Should return a delete_result */
-int generic_map_delete(generic_map *map, const toy_str key)
+delete_result generic_map_delete(generic_map *map, const toy_str key)
 {
     toy_buf_list **bucket = generic_map_get_bucket(map, key);
     if (*bucket) {
@@ -123,15 +123,15 @@ int generic_map_delete(generic_map *map, const toy_str key)
                 }
                 buf_list_free(list);
                 map->num_items--;
-                return 1;
+                return DELETED;
             }
         }
-        return 0; /* No entry */
+        return NOT_PRESENT; /* No entry */
     }
-    return 0; /* No bucket, so no entry */
+    return NOT_PRESENT; /* No bucket, so no entry */
 }
 
-static void dump_map_entry(FILE *f, const generic_map_entry *entry)
+static void dump_map_entry(const generic_map_entry *entry, FILE *f)
 {
     dump_str(f, entry->key);
     fprintf(f, ": %p", &entry->payload);
@@ -142,7 +142,7 @@ typedef struct dump_item_cb_args_struct {
     FILE *f;
 } dump_item_cb_args;
 
-static item_callback_result dump_item_callback(void *cookie, size_t index, const toy_buf_list *list)
+static item_callback_result dump_item_callback(void *cookie, const generic_map_entry *entry)
 {
     dump_item_cb_args *args = (dump_item_cb_args *) cookie;
     if (args->output_anything) {
@@ -150,29 +150,17 @@ static item_callback_result dump_item_callback(void *cookie, size_t index, const
     } else {
         fputc(' ', args->f);
     }
-    const generic_map_entry *map_entry = generic_map_entry_list_payload_const(list);
-    dump_map_entry(args->f, map_entry);
+    dump_map_entry(entry, args->f);
     args->output_anything = 1;
-    return CONTINUE_ENUMERATION;
-}
-typedef struct dump_bucket_cb_args_struct {
-    const_buf_list_item_callback item_callback;
-    dump_item_cb_args item_args;
-} dump_bucket_cb_args;
-
-static item_callback_result dump_bucket_callback(void *cookie, const toy_buf_list *bucket)
-{
-    dump_bucket_cb_args *args = (dump_bucket_cb_args *) cookie;
-    buf_list_foreach_const(bucket, args->item_callback, &args->item_args);
     return CONTINUE_ENUMERATION;
 }
 
 void generic_map_dump(FILE *f, const generic_map *map)
 {
-    dump_bucket_cb_args bucket_cb_args = { .item_args.output_anything = 0, .item_args.f = f, .item_callback = dump_item_callback };
+    dump_item_cb_args cbargs = { .f = f, .output_anything = 0 };
     fputc('{', f);
-    generic_map_enum_buckets_const(map, dump_bucket_callback, &bucket_cb_args);
-    if (bucket_cb_args.item_args.output_anything) {
+    generic_map_foreach_const(map, dump_item_callback, &cbargs);
+    if (cbargs.output_anything) {
         fputc(' ', f);
     }
     fputc('}', f);

@@ -97,7 +97,7 @@ void map_buf_reset(map_buf *map)
     return generic_map_reset((generic_map *) map);
 }
 
-int map_buf_delete(map_buf *map, const toy_str key)
+delete_result map_buf_delete(map_buf *map, const toy_str key)
 {
     return generic_map_delete((generic_map *) map, key);
 }

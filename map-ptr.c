@@ -85,7 +85,7 @@ void map_ptr_assert_valid(const map_ptr *map)
     return generic_map_assert_valid((const generic_map *) map);
 }
 
-int map_ptr_delete(map_ptr *map, const toy_str key)
+delete_result map_ptr_delete(map_ptr *map, const toy_str key)
 {
     return generic_map_delete((generic_map *) map, key);
 }

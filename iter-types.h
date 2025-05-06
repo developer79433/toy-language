@@ -16,4 +16,9 @@ typedef enum set_result_enum {
     SET_EXISTING = 1
 } set_result;
 
+typedef enum delete_result_enum {
+    DELETED = 0,
+    NOT_PRESENT = 1
+} delete_result;
+
 #endif /* TOY_ITER_TYPES_H */
