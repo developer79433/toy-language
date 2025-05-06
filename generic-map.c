@@ -137,35 +137,42 @@ static void dump_map_entry(FILE *f, const generic_map_entry *entry)
     fprintf(f, ": %p", &entry->payload);
 }
 
-typedef struct dump_bucket_cb_args_struct {
-    FILE *f;
+typedef struct dump_item_cb_args_struct {
     int output_anything;
+    FILE *f;
+} dump_item_cb_args;
+
+static item_callback_result dump_item_callback(void *cookie, size_t index, const toy_buf_list *list)
+{
+    dump_item_cb_args *args = (dump_item_cb_args *) cookie;
+    if (args->output_anything) {
+        fputs(", ", args->f);
+    } else {
+        fputc(' ', args->f);
+    }
+    const generic_map_entry *map_entry = generic_map_entry_list_payload_const(list);
+    dump_map_entry(args->f, map_entry);
+    args->output_anything = 1;
+    return CONTINUE_ENUMERATION;
+}
+typedef struct dump_bucket_cb_args_struct {
+    const_buf_list_item_callback item_callback;
+    dump_item_cb_args item_args;
 } dump_bucket_cb_args;
 
 static item_callback_result dump_bucket_callback(void *cookie, const toy_buf_list *bucket)
 {
     dump_bucket_cb_args *args = (dump_bucket_cb_args *) cookie;
-    /* TODO: Use list enum function */
-    for (const toy_buf_list *list = bucket; list; list = list->next) {
-        if (args->output_anything) {
-            fputs(", ", args->f);
-        } else {
-            fputc(' ', args->f);
-        }
-        const generic_map_entry *map_entry = generic_map_entry_list_payload_const(list);
-        dump_map_entry(args->f, map_entry);
-        args->output_anything = 1;
-    }
+    buf_list_foreach_const(bucket, args->item_callback, &args->item_args);
     return CONTINUE_ENUMERATION;
 }
 
 void generic_map_dump(FILE *f, const generic_map *map)
 {
-    dump_bucket_cb_args bucket_cb_args = { .output_anything = 0, .f = f };
+    dump_bucket_cb_args bucket_cb_args = { .item_args.output_anything = 0, .item_args.f = f, .item_callback = dump_item_callback };
     fputc('{', f);
     generic_map_enum_buckets_const(map, dump_bucket_callback, &bucket_cb_args);
-    /* TODO: Use enum functions */
-    if (bucket_cb_args.output_anything) {
+    if (bucket_cb_args.item_args.output_anything) {
         fputc(' ', f);
     }
     fputc('}', f);
