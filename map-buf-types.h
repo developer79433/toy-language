@@ -15,7 +15,8 @@ typedef struct map_buf_struct {
     map_buf_entry_list *buckets[NUM_BUCKETS];
 } map_buf;
 
-typedef item_callback_result (*map_buf_entry_callback)(void *cookie, toy_str key, void *value);
-typedef item_callback_result (*const_map_buf_entry_callback)(void *cookie, const toy_str key, const void *value);
+/* TODO: Insert a 'size_t unused' argument for compatibility with list enumeration callbacks */
+typedef item_callback_result (*map_buf_entry_callback)(void *cookie, map_buf_entry *entry);
+typedef item_callback_result (*const_map_buf_entry_callback)(void *cookie, const map_buf_entry *entry);
 
 #endif /* TOY_MAP_BUF_TYPES_H */

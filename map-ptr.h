@@ -9,7 +9,7 @@
 
 map_ptr *map_ptr_alloc(void);
 void *map_ptr_get(map_ptr *map, const toy_str key);
-int map_ptr_set(map_ptr *map, const toy_str key, void *ptr);
+set_result map_ptr_set(map_ptr *map, const toy_str key, void *ptr);
 size_t map_ptr_size(const map_ptr *map);
 int map_ptr_delete(map_ptr *map, const toy_str key);
 enumeration_result map_ptr_foreach(map_ptr *map, map_ptr_entry_callback callback, void *cookie);

@@ -52,7 +52,7 @@ typedef struct toy_block_stmt_struct {
 
 /* TODO: Sort these alphabetically */
 /* TODO: switch statement */
-enum toy_stmt_type {
+enum toy_stmt_type_enum {
     STMT_BLOCK = 0,
     STMT_BREAK,
     STMT_CONTINUE,
@@ -66,8 +66,12 @@ enum toy_stmt_type {
     STMT_WHILE
 };
 
+#define STMT_MAX STMT_WHILE
+
+typedef enum toy_stmt_type_enum toy_stmt_type;
+
 struct toy_stmt_struct {
-    enum toy_stmt_type type;
+    toy_stmt_type type;
     union {
         toy_expr_stmt expr_stmt;
         toy_if_stmt if_stmt;

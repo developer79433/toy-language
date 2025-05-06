@@ -8,7 +8,7 @@
 struct map_val_struct;
 typedef struct map_val_struct map_val;
 
-enum toy_val_type {
+enum toy_val_type_enum {
     VAL_BOOL = 0,
     VAL_FUNC,
     VAL_LIST,
@@ -17,6 +17,10 @@ enum toy_val_type {
     VAL_NUM,
     VAL_STR
 };
+
+#define VAL_MAX VAL_STR
+
+typedef enum toy_val_type_enum toy_val_type;
 
 struct generic_map_struct;
 typedef struct generic_map_struct generic_map;
@@ -28,7 +32,7 @@ struct toy_func_def_struct;
 typedef struct toy_func_def_struct toy_func_def;
 
 typedef struct toy_val_struct {
-    enum toy_val_type type;
+    toy_val_type type;
     union {
         toy_bool boolean;
         toy_func_def *func;

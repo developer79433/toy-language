@@ -38,12 +38,12 @@ static const char *toy_expr_type_names[] = {
     "unary negation"
 };
 
-const char *toy_expr_type_name(enum toy_expr_type expr_type)
+const char *toy_expr_type_name(toy_expr_type expr_type)
 {
     return toy_expr_type_names[expr_type];
 }
 
-toy_expr *alloc_unary_op_expr(enum toy_expr_type expr_type)
+toy_expr *alloc_unary_op_expr(toy_expr_type expr_type)
 {
     toy_expr *expr;
     expr = mymalloc(toy_expr);
@@ -52,7 +52,7 @@ toy_expr *alloc_unary_op_expr(enum toy_expr_type expr_type)
     return expr;
 }
 
-toy_expr *alloc_binary_op_expr(enum toy_expr_type expr_type)
+toy_expr *alloc_binary_op_expr(toy_expr_type expr_type)
 {
     toy_expr *expr;
     expr = mymalloc(toy_expr);
@@ -62,7 +62,7 @@ toy_expr *alloc_binary_op_expr(enum toy_expr_type expr_type)
     return expr;
 }
 
-toy_expr *alloc_expr(enum toy_expr_type expr_type)
+toy_expr *alloc_expr(toy_expr_type expr_type)
 {
     toy_expr *expr;
     assert(EXPR_LITERAL != expr_type);
@@ -71,7 +71,7 @@ toy_expr *alloc_expr(enum toy_expr_type expr_type)
     return expr;
 }
 
-toy_expr *alloc_expr_literal(enum toy_val_type val_type)
+toy_expr *alloc_expr_literal(toy_val_type val_type)
 {
     toy_expr *expr;
     expr = mymalloc(toy_expr);
@@ -98,3 +98,19 @@ toy_bool toy_expr_equal(const toy_expr *expr1, const toy_expr *expr2)
 {
     return 0 == memcmp(expr1, expr2, sizeof(*expr1));
 }
+
+#ifndef NDEBUG
+
+void expr_type_assert_valid(toy_expr_type type)
+{
+    assert(type >= 0);
+    assert(type <= EXPR_MAX);
+}
+
+void expr_assert_valid(const toy_expr *expr)
+{
+    expr_type_assert_valid(expr->type);
+    /* TODO */
+}
+
+#endif /* NDEBUG */

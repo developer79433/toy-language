@@ -170,7 +170,7 @@ static item_callback_result buflist_item_cb(void *cookie, size_t index, toy_buf_
 {
     buflist_item_cb_args *args = (buflist_item_cb_args *) cookie;
     generic_map_entry *entry = buf_list_payload_typed(list, generic_map_entry);
-    return args->item_cb(args->item_cb_cookie, entry->key, &entry->payload);
+    return args->item_cb(args->item_cb_cookie, entry);
 }
 
 typedef struct bucket_cb_args_struct {

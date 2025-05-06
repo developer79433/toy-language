@@ -50,7 +50,7 @@ void *map_buf_get(map_buf *map, const toy_str key)
     return NULL;
 }
 
-int map_buf_set(map_buf *map, const toy_str key, void *buf, size_t buf_size)
+set_result map_buf_set(map_buf *map, const toy_str key, void *buf, size_t buf_size)
 {
     generic_map *gen_map = (generic_map *) map;
     map_buf_entry_list *new_entry;
@@ -62,7 +62,7 @@ int map_buf_set(map_buf *map, const toy_str key, void *buf, size_t buf_size)
             if (toy_str_equal(map_entry->key, key)) {
                 /* Overwrite existing entry */
                 map_buf_entry_list_payload_set_buf(list, buf, buf_size);
-                return 0;
+                return SET_EXISTING;
             }
         }
         /* Prepend new entry to existing bucket */
@@ -74,7 +74,7 @@ int map_buf_set(map_buf *map, const toy_str key, void *buf, size_t buf_size)
     }
     *bucket = new_entry;
     gen_map->num_items++;
-    return 1;
+    return SET_NEW;
 }
 
 void map_buf_assert_valid(const map_buf *map)

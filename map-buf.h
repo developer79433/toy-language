@@ -10,7 +10,7 @@
 map_buf *map_buf_alloc(void);
 map_buf_entry_list **map_buf_get_bucket(map_buf *map, const toy_str key);
 void *map_buf_get(map_buf *map, const toy_str key);
-int map_buf_set(map_buf *map, const toy_str key, void *buf, size_t buf_size);
+set_result map_buf_set(map_buf *map, const toy_str key, void *buf, size_t buf_size);
 size_t map_buf_size(const map_buf *map);
 int map_buf_delete(map_buf *map, const toy_str key);
 enumeration_result map_buf_foreach(map_buf *map, map_buf_entry_callback callback, void *cookie);

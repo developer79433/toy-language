@@ -23,7 +23,7 @@ void run_tests(void)
     test_str_list_inlines();
     test_val_lists();
     test_map_vals();
-    // test_map_ptrs();
+    test_map_ptrs();
     test_var_decl_lists();
     test_expr_lists();
     test_stmt_lists();

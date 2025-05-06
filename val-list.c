@@ -75,6 +75,7 @@ enumeration_result val_list_foreach_const(const toy_val_list *list, const_val_li
     return buf_list_foreach_const((const toy_buf_list *) list, (const_buf_list_item_callback) callback, cookie);
 }
 
+#ifndef NDEBUG
 void val_list_assert_valid(const toy_val_list *list)
 {
     assert(list);
@@ -82,10 +83,13 @@ void val_list_assert_valid(const toy_val_list *list)
         val_assert_valid(&cur->val);
     }
 }
+#endif /* NDEBUG */
 
 void val_list_free(toy_val_list *list)
 {
+#ifndef NDEBUG
     val_list_assert_valid(list);
+#endif /* NDEBUG */
     /* FIXME: We cannot do this, because we don't know whether we own our storage or not */
 #if 0
     for (const toy_val_list *cur = list; cur; cur = cur->next) {

@@ -22,7 +22,7 @@ static const char *toy_val_type_names[] = {
     "string"
 };
 
-const char *val_type_name(enum toy_val_type val_type)
+const char *val_type_name(toy_val_type val_type)
 {
     return toy_val_type_names[val_type];
 }
@@ -126,9 +126,32 @@ toy_bool val_lte(const toy_val *val1, const toy_val *val2)
     return (val1->num <= val2->num);
 }
 
+#ifndef NDEBUG
+
+void val_type_assert_valid(toy_val_type val_type)
+{
+    assert(val_type >= 0);
+    assert(val_type <= VAL_MAX);
+    switch (val_type) {
+    case VAL_BOOL:
+    case VAL_FUNC:
+    case VAL_LIST:
+    case VAL_MAP:
+    case VAL_NULL:
+    case VAL_NUM:
+    case VAL_STR:
+        break;
+    default:
+        invalid_value_type(val_type);
+        break;
+    }
+}
+
 void val_assert_valid(const toy_val *val)
 {
-    switch(val->type) {
+    assert(val != NULL);
+    val_type_assert_valid(val->type);
+    switch (val->type) {
     case VAL_BOOL:
         bool_assert_valid(val->boolean);
         break;
@@ -154,10 +177,12 @@ void val_assert_valid(const toy_val *val)
     }
 }
 
+#endif /* NDEBUG */
+
 void val_free(toy_val *val)
 {
     val_assert_valid(val);
-    switch(val->type) {
+    switch (val->type) {
     case VAL_BOOL:
         break;
     case VAL_FUNC:
@@ -181,4 +206,17 @@ void val_free(toy_val *val)
         break;
     }
     free(val);
+}
+
+void assert_vals_equal(const toy_val *val1, const toy_val *val2)
+{
+    val_assert_valid(val1);
+    val_assert_valid(val2);
+    toy_bool compare_res = vals_equal(val1, val2);
+    if (compare_res == TOY_TRUE) {
+        return;
+    }
+    val_dump(stderr, val1);
+    val_dump(stderr, val2);
+    assert(0);
 }

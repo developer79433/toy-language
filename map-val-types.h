@@ -16,7 +16,7 @@ typedef struct map_val_struct {
     map_val_entry_list *buckets[NUM_BUCKETS];
 } map_val;
 
-typedef item_callback_result (*map_val_entry_callback)(void *cookie, toy_str key, toy_val *value);
-typedef item_callback_result (*const_map_val_entry_callback)(void *cookie, const toy_str key, const toy_val *value);
+typedef item_callback_result (*map_val_entry_callback)(void *cookie, map_val_entry *entry);
+typedef item_callback_result (*const_map_val_entry_callback)(void *cookie, const map_val_entry *entry);
 
 #endif /* TOY_MAP_VAL_TYPES_H */

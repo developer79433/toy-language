@@ -4,7 +4,7 @@
 
 map_ptr_entry_list *map_ptr_entry_list_alloc(toy_str key, void *ptr)
 {
-    return (map_ptr_entry_list *) buf_list_alloc_2(&key, sizeof(key), ptr, sizeof(ptr));
+    return (map_ptr_entry_list *) buf_list_alloc_2(&key, sizeof(key), &ptr, sizeof(ptr));
 }
 
 map_ptr_entry *map_ptr_entry_list_payload(map_ptr_entry_list *list)

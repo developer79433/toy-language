@@ -14,7 +14,7 @@ map_val *map_val_alloc(void)
     return (map_val *) map_buf_alloc();
 }
 
-int map_val_set(map_val *map, const toy_str key, toy_val *value)
+set_result map_val_set(map_val *map, const toy_str key, toy_val *value)
 {
     return map_buf_set((map_buf *) map, key, value, sizeof(*value));
 }

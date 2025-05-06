@@ -322,17 +322,17 @@ enum set_variable_policy_enum {
 };
 typedef enum set_variable_policy_enum set_variable_policy;
 
-static int set_symbol(toy_interp *interp, const toy_str name, const toy_val *value)
+static set_result set_symbol(toy_interp *interp, const toy_str name, const toy_val *value)
 {
     if (interp->cur_frame->symbols == NULL) {
         interp->cur_frame->symbols = map_val_alloc();
     }
-    int added_new = map_val_set(interp->cur_frame->symbols, name, (toy_val *) value);
-    return added_new;
+    set_result res = map_val_set(interp->cur_frame->symbols, name, (toy_val *) value);
+    return res;
 }
 
 /* TODO: Move these into symbol-table.c */
-static int set_variable_value_policy(toy_interp *interp, const toy_str name, const toy_val *value, set_variable_policy policy)
+static set_result set_variable_value_policy(toy_interp *interp, const toy_str name, const toy_val *value, set_variable_policy policy)
 {
 #if DEBUG_VARIABLES
     fprintf(stderr, "Set %s variable '%s' to ", ((POLICY_MUST_ALREADY_EXIST == policy) ? "existing" : "new"), name);
@@ -359,20 +359,25 @@ static int set_variable_value_policy(toy_interp *interp, const toy_str name, con
         assert(0);
         break;
     }
-    int added_new = set_symbol(interp, name, value);
-    return added_new;
+    set_result res = set_symbol(interp, name, value);
+    assert(
+        (res == SET_NEW && policy == POLICY_MUST_NOT_ALREADY_EXIST)
+        ||
+        (res == SET_EXISTING && policy == POLICY_MUST_ALREADY_EXIST)
+    );
+    return res;
 }
 
 static void set_variable_value(toy_interp *interp, const toy_str name, const toy_val *value)
 {
-    int added_new = set_variable_value_policy(interp, name, value, POLICY_MUST_ALREADY_EXIST);
-    assert(!added_new);
+    set_result res = set_variable_value_policy(interp, name, value, POLICY_MUST_ALREADY_EXIST);
+    assert(res == SET_EXISTING);
 }
 
 static void create_variable_value(toy_interp *interp, const toy_str name, const toy_val *value)
 {
-    int added_new = set_variable_value_policy(interp, name, value, POLICY_MUST_NOT_ALREADY_EXIST);
-    assert(added_new);
+    set_result res = set_variable_value_policy(interp, name, value, POLICY_MUST_NOT_ALREADY_EXIST);
+    assert(res == SET_NEW);
 }
 
 static void create_variable_expr(toy_interp *interp, const toy_str name, const toy_expr *value)
@@ -394,8 +399,8 @@ static void create_function(toy_interp *interp, const toy_func_def *def)
     }
     /* TODO: Remove cast below using const in .func member? Beware const poisoning... */
     toy_val func_val = { .type = VAL_FUNC, .func = (toy_func_def *) def };
-    int created_new = set_symbol(interp, def->name, &func_val);
-    assert(created_new);
+    set_result res = set_symbol(interp, def->name, &func_val);
+    assert(res == SET_NEW);
 }
 
 static void op_assign(toy_interp *interp, toy_val *result, toy_str name, toy_expr *value)

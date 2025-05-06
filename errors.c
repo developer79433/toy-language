@@ -24,14 +24,14 @@ void fatal_error(const char *fmt, ...)
 
 /* TODO: Maybe "invalid argument" makes more sense? */
 
-void invalid_operand(enum toy_expr_type expr_type, const toy_val *operand)
+void invalid_operand(toy_expr_type expr_type, const toy_val *operand)
 {
     val_dump(stderr, operand);
     fputc('\n', stderr);
     fatal_error("Invalid operand for %s", toy_expr_type_name(expr_type));
 }
 
-void invalid_operands(enum toy_expr_type expr_type, const toy_val *operand1, const toy_val *operand2)
+void invalid_operands(toy_expr_type expr_type, const toy_val *operand1, const toy_val *operand2)
 {
     val_dump(stderr, operand1);
     fputc('\n', stderr);
@@ -40,17 +40,17 @@ void invalid_operands(enum toy_expr_type expr_type, const toy_val *operand1, con
     fatal_error("Invalid operands for %s", toy_expr_type_name(expr_type));
 }
 
-void invalid_expr_type(enum toy_expr_type expr_type) {
+void invalid_expr_type(toy_expr_type expr_type) {
     fatal_error("Invalid expression type %s", toy_expr_type_name(expr_type));
 }
 
-void invalid_stmt_type(enum toy_stmt_type stmt_type)
+void invalid_stmt_type(toy_stmt_type stmt_type)
 {
     fatal_error("Invalid statement type %s", stmt_type_name(stmt_type));
 }
 
 /* TODO: Delete me */
-void invalid_cast(enum toy_val_type val_type, const toy_val *val)
+void invalid_cast(toy_val_type val_type, const toy_val *val)
 {
     val_dump(stderr, val);
     fputc('\n', stderr);
@@ -100,14 +100,14 @@ void invalid_string_index(toy_str str, toy_num index)
     fatal_error("Invalid string index %d", index);
 }
 
-void invalid_argument_type(enum toy_val_type expected_type, const toy_val *actual_arg)
+void invalid_argument_type(toy_val_type expected_type, const toy_val *actual_arg)
 {
     val_dump(stderr, actual_arg);
     fputc('\n', stderr);
     fatal_error("Invalid argument type: expected %s", val_type_name(expected_type));
 }
 
-void invalid_value_type(enum toy_val_type value_type)
+void invalid_value_type(toy_val_type value_type)
 {
     fatal_error("Invalid value type %s", val_type_name(value_type));
 }

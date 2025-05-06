@@ -13,7 +13,7 @@ typedef struct map_ptr_struct {
     map_ptr_entry_list *buckets[NUM_BUCKETS];
 } map_ptr;
 
-typedef item_callback_result (*map_ptr_entry_callback)(void *cookie, toy_str key, void *value);
-typedef item_callback_result (*const_map_ptr_entry_callback)(void *cookie, const toy_str key, const void *value);
+typedef item_callback_result (*map_ptr_entry_callback)(void *cookie, map_ptr_entry *entry);
+typedef item_callback_result (*const_map_ptr_entry_callback)(void *cookie, const map_ptr_entry *entry);
 
 #endif /* TOY_MAP_PTR_TYPES_H */

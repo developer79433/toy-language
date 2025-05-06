@@ -9,7 +9,7 @@
 struct toy_expr_struct;
 typedef struct toy_expr_struct toy_expr;
 
-enum toy_expr_type {
+enum toy_expr_type_enum {
     EXPR_AND = 0,
     EXPR_ASSIGN,
     EXPR_COLLECTION_LOOKUP,
@@ -43,6 +43,10 @@ enum toy_expr_type {
     EXPR_TERNARY,
     EXPR_UNEG
 };
+
+#define EXPR_MAX EXPR_UNEG
+
+typedef enum toy_expr_type_enum toy_expr_type;
 
 typedef struct toy_unary_op_struct {
     toy_expr *arg;
@@ -103,7 +107,7 @@ typedef struct toy_collection_lookup_struct {
 } toy_collection_lookup;
 
 struct toy_expr_struct {
-    enum toy_expr_type type;
+    toy_expr_type type;
     union {
         toy_val val;
         toy_func_call func_call;

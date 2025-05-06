@@ -31,7 +31,7 @@ typedef struct generic_map_struct {
     toy_buf_list *buckets[NUM_BUCKETS];
 } generic_map;
 
-typedef item_callback_result (*generic_map_entry_callback)(void *cookie, toy_str key, void *value);
-typedef item_callback_result (*const_generic_map_entry_callback)(void *cookie, const toy_str key, const void *value);
+typedef item_callback_result (*generic_map_entry_callback)(void *cookie, generic_map_entry *entry);
+typedef item_callback_result (*const_generic_map_entry_callback)(void *cookie, const generic_map_entry *entry);
 
 #endif /* TOY_GENERIC_MAP_TYPES_H */
