@@ -22,7 +22,7 @@ static map_buf_entry_list **map_buf_get_bucket(map_buf *map, const toy_str key)
 
 static map_buf_entry *map_buf_bucket_get_key(map_buf_entry_list *bucket, const toy_str key)
 {
-    return (map_buf_entry *) generic_map_bucket_get_key((toy_buf_list *) bucket, key);
+    return (map_buf_entry *) generic_map_bucket_get_key((generic_map_entry_list *) bucket, key);
 }
 
 enumeration_result map_buf_foreach(map_buf *map, map_buf_entry_callback callback, void *cookie)

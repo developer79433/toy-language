@@ -22,12 +22,15 @@ typedef struct generic_map_entry_list_struct {
     generic_map_entry entry;
 } generic_map_entry_list;
 
+typedef item_callback_result (*generic_map_entry_list_item_callback)(void *cookie, size_t index, generic_map_entry_list *item);
+typedef item_callback_result (*const_generic_map_entry_list_item_callback)(void *cookie, size_t index, const generic_map_entry_list *item);
+
 /* TODO: dynamic resizing */
 #define NUM_BUCKETS 13
 
 typedef struct generic_map_struct {
     size_t num_items;
-    toy_buf_list *buckets[NUM_BUCKETS];
+    generic_map_entry_list *buckets[NUM_BUCKETS];
 } generic_map;
 
 typedef item_callback_result (*generic_map_entry_callback)(void *cookie, generic_map_entry *entry);
