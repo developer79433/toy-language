@@ -9,7 +9,7 @@
 #include "mymalloc.h"
 #include "dump.h"
 #include "errors.h"
-#include "buf-list.h"
+#include "generic-map-entry-list.h"
 
 generic_map *generic_map_alloc(void)
 {
@@ -17,16 +17,6 @@ generic_map *generic_map_alloc(void)
     memset(map->buckets, 0, sizeof(map->buckets));
     map->num_items = 0;
     return map;
-}
-
-generic_map_entry *generic_map_entry_list_payload(generic_map_entry_list *list)
-{
-    return buf_list_payload_typed((toy_buf_list *) list, generic_map_entry);
-}
-
-static const generic_map_entry *generic_map_entry_list_payload_const(const generic_map_entry_list *list)
-{
-    return buf_list_payload_const_typed((toy_buf_list *) list, generic_map_entry);
 }
 
 typedef item_callback_result (*generic_map_bucket_callback)(void *cookie, generic_map_entry_list *bucket);
@@ -58,11 +48,6 @@ static enumeration_result generic_map_enum_buckets_const(const generic_map *map,
         }
     }
     return ENUMERATION_COMPLETE;
-}
-
-void generic_map_entry_list_free(generic_map_entry_list *list)
-{
-    return buf_list_free((toy_buf_list *) list);
 }
 
 item_callback_result bucket_free_cb(void *cookie, generic_map_entry_list *bucket)
@@ -107,16 +92,6 @@ generic_map_entry_list **generic_map_get_bucket(generic_map *map, toy_str key)
 {
     uint32_t hashval = jenkins_one_at_a_time_hash((uint8_t *) key, strlen(key));
     return &map->buckets[hashval % NUM_BUCKETS];
-}
-
-enumeration_result generic_map_entry_list_foreach(generic_map_entry_list *list, generic_map_entry_list_item_callback callback, void *cookie)
-{
-    return buf_list_foreach((toy_buf_list *) list, (buf_list_item_callback) callback, cookie);
-}
-
-enumeration_result generic_map_entry_list_foreach_const(const generic_map_entry_list *list, const_generic_map_entry_list_item_callback callback, void *cookie)
-{
-    return buf_list_foreach_const((const toy_buf_list *) list, (const_buf_list_item_callback) callback, cookie);
 }
 
 typedef struct delete_cb_args_struct {
