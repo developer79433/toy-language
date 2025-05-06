@@ -98,3 +98,18 @@ void val_list_free(toy_val_list *list)
 #endif
     buf_list_free((toy_buf_list *) list);
 }
+
+toy_val *val_list_payload(toy_val_list *list)
+{
+    return buf_list_payload((toy_buf_list *) list);
+}
+
+const void *val_list_payload_const(const toy_val_list *list)
+{
+    return buf_list_payload_const((const toy_buf_list *) list);
+}
+
+void val_list_set_payload(toy_val_list *list, toy_val *value)
+{
+    return buf_list_payload_set((toy_buf_list *) list, value, sizeof(*value));
+}

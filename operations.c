@@ -4,6 +4,7 @@
 #include <math.h>
 
 #include "val.h"
+#include "val-list.h"
 #include "str.h"
 #include "operations.h"
 #include "interp.h"
@@ -119,6 +120,22 @@ void op_gte(toy_interp *interp, toy_val *result, const toy_expr *expr1, const to
     do_numeric_binary_op(do_op_gte, result, &val1, &val2);
 }
 
+typedef struct item_cb_args_struct {
+    toy_val *result;
+    toy_val *needle;
+} item_cb_args;
+
+static item_callback_result item_find_callback(void *cookie, size_t index, toy_val_list *list)
+{
+    item_cb_args *args = (item_cb_args *) cookie;
+    toy_val *val = val_list_payload(list);
+    if (vals_equal(val, args->needle)) {
+        args->result->boolean = TOY_TRUE;
+        return STOP_ENUMERATION;
+    }
+    return CONTINUE_ENUMERATION;
+}
+
 void op_in(toy_interp *interp, toy_val *result, const toy_expr *needle_expr, const toy_expr *haystack_expr)
 {
     toy_val needle, haystack;
@@ -130,18 +147,15 @@ void op_in(toy_interp *interp, toy_val *result, const toy_expr *needle_expr, con
         return;
     }
     result->type = VAL_BOOL;
-    assert(haystack.type == VAL_LIST);
-    for (
-        const toy_val_list *list_item = haystack.list;
-        list_item;
-        list_item = list_item->next
-    ) {
-        if (vals_equal(&list_item->val, &needle)) {
-            result->boolean = TOY_TRUE;
-            return;
-        }
-    }
     result->boolean = TOY_FALSE;
+    assert(haystack.type == VAL_LIST);
+    item_cb_args item_args = { .result = result, .needle = &needle };
+    enumeration_result res = val_list_foreach(haystack.list, item_find_callback, &item_args);
+    assert(
+        (res == ENUMERATION_COMPLETE && result->boolean == TOY_FALSE)
+        ||
+        (res == ENUMERATION_INTERRUPTED && result->boolean == TOY_TRUE)
+    );
 }
 
 static void do_op_lt(toy_val *result, const toy_val *val1, const toy_val *val2)
