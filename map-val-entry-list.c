@@ -35,8 +35,3 @@ void map_val_entry_list_payload_set(map_val_entry_list *list, map_val_entry *ent
 {
     memcpy(map_val_entry_list_payload(list), entry, sizeof(*entry));
 }
-
-map_val_entry_list **map_val_get_bucket(map_val *map, toy_str key)
-{
-    return (map_val_entry_list **) map_buf_get_bucket((map_buf *) map, key);
-}

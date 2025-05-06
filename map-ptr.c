@@ -12,7 +12,7 @@ map_ptr *map_ptr_alloc(void)
     return (map_ptr *) generic_map_alloc();
 }
 
-map_ptr_entry_list **map_ptr_get_bucket(map_ptr *map, const toy_str key)
+static map_ptr_entry_list **map_ptr_get_bucket(map_ptr *map, const toy_str key)
 {
     assert(offsetof(map_ptr, buckets) == offsetof(generic_map, buckets));
     assert(offsetof(map_ptr, num_items) == offsetof(generic_map, num_items));

@@ -8,7 +8,6 @@
 #include "map-val-entry-list-types.h"
 
 map_val *map_val_alloc(void);
-map_val_entry_list **map_val_get_bucket(map_val *map, toy_str key);
 toy_val *map_val_get(map_val *map, const toy_str key);
 set_result map_val_set(map_val *map, const toy_str key, toy_val *value);
 int map_val_delete(map_val *map, const toy_str key);

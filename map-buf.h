@@ -8,7 +8,6 @@
 #include "map-buf-entry-list-types.h"
 
 map_buf *map_buf_alloc(void);
-map_buf_entry_list **map_buf_get_bucket(map_buf *map, const toy_str key);
 void *map_buf_get(map_buf *map, const toy_str key);
 set_result map_buf_set(map_buf *map, const toy_str key, void *buf, size_t buf_size);
 size_t map_buf_size(const map_buf *map);
