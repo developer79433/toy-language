@@ -46,6 +46,7 @@ void *map_ptr_get(map_ptr *map, const toy_str key)
         map_ptr_entry *existing_entry = map_ptr_bucket_get_key(*bucket, key);
         if (existing_entry) {
             assert(toy_str_equal(existing_entry->key, key));
+            assert((void *) &existing_entry->payload.ptr == (void *) &existing_entry->payload);
             return existing_entry->payload.ptr;
         }
         return NULL;

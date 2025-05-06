@@ -10,7 +10,6 @@
 
 /* TODO: Delete me */
 typedef struct generic_map_payload_struct {
-    unsigned int dummy_payload;
 } generic_map_payload;
 
 typedef struct generic_map_entry_struct {
