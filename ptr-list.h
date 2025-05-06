@@ -13,6 +13,8 @@ enumeration_result ptr_list_foreach_const(const toy_ptr_list *list, const_ptr_li
 void *ptr_list_payload(toy_ptr_list *list);
 const void *ptr_list_payload_const(const toy_ptr_list *list);
 void ptr_list_set_payload(toy_ptr_list *list, void *new_payload);
+#define ptr_list_payload_typed(list, type) ((type *) ptr_list_payload(list))
+#define ptr_list_payload_const_typed(list, type) ((const type *) ptr_list_payload_const(list))
 void ptr_list_free(toy_ptr_list *list);
 
 #endif /* TOY_PTR_LIST_H */

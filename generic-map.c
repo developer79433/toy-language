@@ -104,9 +104,9 @@ toy_buf_list **generic_map_get_bucket(generic_map *map, toy_str key)
     return &map->buckets[hashval % NUM_BUCKETS];
 }
 
+/* TODO: Should return a delete_result */
 int generic_map_delete(generic_map *map, const toy_str key)
 {
-    /* TODO: Use enum_buckets */
     toy_buf_list **bucket = generic_map_get_bucket(map, key);
     if (*bucket) {
         toy_buf_list *list, *prev;
@@ -137,27 +137,35 @@ static void dump_map_entry(FILE *f, const generic_map_entry *entry)
     fprintf(f, ": %p", &entry->payload);
 }
 
+typedef struct dump_bucket_cb_args_struct {
+    FILE *f;
+    int output_anything;
+} dump_bucket_cb_args;
+
+static item_callback_result dump_bucket_callback(void *cookie, const toy_buf_list *bucket)
+{
+    dump_bucket_cb_args *args = (dump_bucket_cb_args *) cookie;
+    /* TODO: Use list enum function */
+    for (const toy_buf_list *list = bucket; list; list = list->next) {
+        if (args->output_anything) {
+            fputs(", ", args->f);
+        } else {
+            fputc(' ', args->f);
+        }
+        const generic_map_entry *map_entry = generic_map_entry_list_payload_const(list);
+        dump_map_entry(args->f, map_entry);
+        args->output_anything = 1;
+    }
+    return CONTINUE_ENUMERATION;
+}
+
 void generic_map_dump(FILE *f, const generic_map *map)
 {
-    int output_anything = 0;
-
+    dump_bucket_cb_args bucket_cb_args = { .output_anything = 0, .f = f };
     fputc('{', f);
+    generic_map_enum_buckets_const(map, dump_bucket_callback, &bucket_cb_args);
     /* TODO: Use enum functions */
-    for (toy_buf_list * const * bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
-        if (*bucket) {
-            for (toy_buf_list *list = *bucket; list; list = list->next) {
-                if (output_anything) {
-                    fputs(", ", f);
-                } else {
-                    fputc(' ', f);
-                }
-                generic_map_entry *map_entry = generic_map_entry_list_payload(list);
-                dump_map_entry(f, map_entry);
-                output_anything = 1;
-            }
-        }
-    }
-    if (output_anything) {
+    if (bucket_cb_args.output_anything) {
         fputc(' ', f);
     }
     fputc('}', f);
