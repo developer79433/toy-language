@@ -48,6 +48,7 @@ typedef item_callback_result (*const_generic_map_bucket_callback)(void *cookie, 
 
 static enumeration_result generic_map_enum_buckets_const(const generic_map *map, const_generic_map_bucket_callback callback, void *cookie)
 {
+    /* TODO: Push this down into an array enumerator */
     for (toy_buf_list * const * bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
         if (*bucket) {
             item_callback_result res = callback(cookie, *bucket);
@@ -59,21 +60,22 @@ static enumeration_result generic_map_enum_buckets_const(const generic_map *map,
     return ENUMERATION_COMPLETE;
 }
 
+item_callback_result bucket_free_cb(void *cookie, toy_buf_list *bucket)
+{
+    buf_list_free(bucket);
+    return CONTINUE_ENUMERATION;
+}
+
 static void free_buckets(generic_map *map)
 {
-    /* TODO: Use enum buckets */
-    for (toy_buf_list **bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
-        if (*bucket) {
-            buf_list_free(*bucket);
-            *bucket = 0;
-        }
-    }
+    generic_map_enum_buckets(map, bucket_free_cb, NULL);
+    memset(map->buckets, 0, sizeof(map->buckets));
+    map->num_items = 0;
 }
 
 void generic_map_reset(generic_map *map)
 {
     free_buckets(map);
-    map->num_items = 0;
 }
 
 void generic_map_free(generic_map *map)
@@ -104,6 +106,7 @@ toy_buf_list **generic_map_get_bucket(generic_map *map, toy_str key)
 
 int generic_map_delete(generic_map *map, const toy_str key)
 {
+    /* TODO: Use enum_buckets */
     toy_buf_list **bucket = generic_map_get_bucket(map, key);
     if (*bucket) {
         toy_buf_list *list, *prev;
