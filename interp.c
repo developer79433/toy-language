@@ -411,6 +411,22 @@ static void op_assign(toy_interp *interp, toy_val *result, toy_str name, toy_exp
     *result = value_result;
 }
 
+typedef struct append_cb_args_struct {
+    toy_interp *interp;
+    toy_val *result;
+} append_cb_args;
+
+static item_callback_result append_val_list_callback(void *cookie, size_t index, toy_expr_list *list)
+{
+    append_cb_args *args = (append_cb_args *) cookie;
+    toy_expr *expr = expr_list_payload(list);
+    toy_val value;
+    eval_expr(args->interp, &value, expr);
+    assert(args->result->type == VAL_LIST);
+    val_list_append(args->result->list, &value);
+    return CONTINUE_ENUMERATION;
+}
+
 static void eval_expr_list(toy_interp *interp, toy_val *result, const toy_expr_list *expr_list)
 {
     result->type = VAL_LIST;
@@ -418,10 +434,10 @@ static void eval_expr_list(toy_interp *interp, toy_val *result, const toy_expr_l
         toy_val element;
         eval_expr(interp, &element, expr_list->expr);
         result->list = val_list_alloc(&element);
-        for (expr_list = expr_list->next; expr_list; expr_list = expr_list->next) {
-            eval_expr(interp, &element, expr_list->expr);
-            val_list_append(result->list, &element);
-        }
+        append_cb_args append_args = { .interp = interp, .result = result };
+        /* TODO: Remove this ugly -> next, which is there because we distinguish betwen initial list alloc and append cases */
+        enumeration_result res = expr_list_foreach(expr_list->next, append_val_list_callback, &append_args);
+        assert(ENUMERATION_COMPLETE == res);
     } else {
         result->list = NULL;
     }

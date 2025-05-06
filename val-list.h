@@ -15,7 +15,7 @@ toy_val_list *val_list_append(toy_val_list *orig, toy_val *new_item);
 toy_val_list *val_list_alloc(toy_val *first_elem);
 toy_val *val_list_payload(toy_val_list *list);
 const void *val_list_payload_const(const toy_val_list *list);
-void val_list_set_payload(toy_val_list *list, toy_val *new_payload);
+void val_list_set_payload(toy_val_list *list, toy_val *value);
 enumeration_result val_list_foreach(toy_val_list *list, val_list_item_callback callback, void *cookie);
 enumeration_result val_list_foreach_const(const toy_val_list *list, const_val_list_item_callback callback, void *cookie);
 void val_list_assert_valid(const toy_val_list *val_list);
