@@ -9,14 +9,14 @@
 #include "generic-map.h"
 #include "map-val.h"
 
-typedef struct predicate_args_struct {
+typedef struct my_filter_args_struct {
     toy_str intended_key;
     toy_val *intended_value;
-} predicate_args;
+} my_filter_args;
 
 static toy_bool test_map_entry(void *cookie, const toy_str key, const toy_val *value)
 {
-    predicate_args *args = (predicate_args *) cookie;
+    my_filter_args *args = (my_filter_args *) cookie;
     assert(toy_str_equal(key, args->intended_key));
     assert_vals_equal(value, args->intended_value);
     return TOY_TRUE;
@@ -79,7 +79,7 @@ void test_map_vals(void)
     assert(toy_str_equal(get6->str, "new value"));
 
     // Test enumerate
-    predicate_args args = { .intended_key = "second key", .intended_value = &val3};
+    my_filter_args args = { .intended_key = "second key", .intended_value = &val3};
     enumeration_result res = map_val_foreach_const(map1, map_item_callback, &args);
     assert(res == ENUMERATION_COMPLETE);
 

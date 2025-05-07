@@ -7,14 +7,14 @@
 #include "val.h"
 #include "util.h"
 
-typedef struct predicate_args_struct {
+typedef struct my_filter_args_struct {
     toy_str intended_key;
     toy_val *intended_value;
-} predicate_args;
+} my_filter_args;
 
 static toy_bool test_map_entry(void *cookie, toy_str key, const toy_val *value)
 {
-    predicate_args *args = (predicate_args *) cookie;
+    my_filter_args *args = (my_filter_args *) cookie;
     assert(toy_str_equal(key, args->intended_key));
     assert(value != NULL);
     assert(args->intended_value != NULL);
@@ -107,7 +107,7 @@ void test_map_ptrs(void)
     assert(toy_str_equal(get6->str, "new value"));
 
     // Test enumerate
-    predicate_args args = { .intended_key = "second key", .intended_value = &val3};
+    my_filter_args args = { .intended_key = "second key", .intended_value = &val3};
     enumeration_result res = map_ptr_foreach_const(map1, map_item_callback, &args);
     assert(res == ENUMERATION_COMPLETE);
 

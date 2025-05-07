@@ -21,6 +21,12 @@ typedef struct generic_map_struct {
 typedef item_callback_result (*generic_map_entry_callback)(void *cookie, generic_map_entry *entry);
 typedef item_callback_result (*const_generic_map_entry_callback)(void *cookie, const generic_map_entry *entry);
 
-typedef toy_bool (*generic_map_entry_filter_func)(void *cookie, const generic_map_entry *entry);
+typedef toy_bool (*generic_map_filter_func)(void *cookie, const generic_map_entry *entry);
+
+typedef struct map_filter_args_struct {
+    generic_map_filter_func filter;
+    generic_map_entry_callback user_callback;
+    void *user_cookie;
+} map_filter_args;
 
 #endif /* TOY_GENERIC_MAP_TYPES_H */

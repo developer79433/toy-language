@@ -106,7 +106,7 @@ static toy_bool map_entry_has_desired_name(void *cookie, const generic_map_entry
 
 typedef struct delete_cb_args_struct {
     generic_map *map;
-    generic_map_entry_filter_func filter_func;
+    generic_map_filter_func filter_func;
     map_entry_has_name_args filter_func_arg;
     generic_map_entry_list **bucket;
     generic_map_entry_list *prev;
