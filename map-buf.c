@@ -49,21 +49,36 @@ void *map_buf_get(map_buf *map, const toy_str key)
     return NULL;
 }
 
+typedef struct map_buf_set_entry_cb_args_struct {
+    toy_str desired_key;
+    void *new_value;
+    size_t new_value_size;
+} map_buf_set_entry_cb_args;
+
+static item_callback_result map_buf_set_entry_callback(void *cookie, size_t index, map_buf_entry_list *list)
+{
+    map_buf_set_entry_cb_args *args = (map_buf_set_entry_cb_args *) cookie;
+    map_buf_entry *entry = map_buf_entry_list_payload(list);
+    if (toy_str_equal(entry->key, args->desired_key)) {
+        /* Overwrite existing entry */
+        map_buf_entry_list_payload_set_buf(list, args->new_value, args->new_value_size);
+        return STOP_ENUMERATION;
+    }
+    return CONTINUE_ENUMERATION;
+}
+
 set_result map_buf_set(map_buf *map, const toy_str key, void *buf, size_t buf_size)
 {
     generic_map *gen_map = (generic_map *) map;
     map_buf_entry_list *new_entry;
     map_buf_entry_list **bucket = map_buf_get_bucket(map, key);
     if (*bucket) {
-        /* TODO: Use map_buf_entry_list_foreach */
-        for (map_buf_entry_list *list = *bucket; list; list = list->next) {
-            map_buf_entry *map_entry = map_buf_entry_list_payload(list);
-            if (toy_str_equal(map_entry->key, key)) {
-                /* Overwrite existing entry */
-                map_buf_entry_list_payload_set_buf(list, buf, buf_size);
-                return SET_EXISTING;
-            }
+        map_buf_set_entry_cb_args map_buf_entry_args = { .desired_key = key, .new_value = buf, .new_value_size = buf_size };
+        enumeration_result res = map_buf_entry_list_foreach(*bucket, map_buf_set_entry_callback, &map_buf_entry_args);
+        if (res == ENUMERATION_INTERRUPTED) {
+            return SET_EXISTING;
         }
+        assert(ENUMERATION_COMPLETE == res);
         /* Prepend new entry to existing bucket */
         new_entry = map_buf_entry_list_alloc(key, buf, buf_size);
         new_entry->next = *bucket;

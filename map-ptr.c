@@ -81,6 +81,7 @@ set_result map_ptr_set(map_ptr *map, const toy_str key, void *ptr)
         if (res == ENUMERATION_INTERRUPTED) {
             return SET_EXISTING;
         }
+        assert(ENUMERATION_COMPLETE == res);
         /* Prepend new entry to existing bucket */
         new_entry = map_ptr_entry_list_alloc(key, ptr);
         new_entry->next = *bucket;

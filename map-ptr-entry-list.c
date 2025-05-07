@@ -1,10 +1,17 @@
+#include <assert.h>
+
 #include "str.h"
 #include "map-ptr-entry-list.h"
 #include "buf-list.h"
+#include "generic-map-entry-list.h"
 
-map_ptr_entry_list *map_ptr_entry_list_alloc(toy_str key, void *ptr)
+map_ptr_entry_list *map_ptr_entry_list_alloc(const toy_str key, void *ptr)
 {
-    return (map_ptr_entry_list *) buf_list_alloc_2(&key, sizeof(key), &ptr, sizeof(ptr));
+    map_ptr_entry_list *entry_list = (map_ptr_entry_list *) generic_map_entry_list_alloc(key, &ptr, sizeof(ptr));
+    assert(entry_list->entry.key == key);
+    assert(entry_list->entry.ptr == ptr);
+    assert(NULL == entry_list->next);
+    return entry_list;
 }
 
 map_ptr_entry *map_ptr_entry_list_payload(map_ptr_entry_list *list)

@@ -1,5 +1,15 @@
+#include <assert.h>
+
 #include "generic-map-entry-list.h"
 #include "buf-list.h"
+
+generic_map_entry_list *generic_map_entry_list_alloc(const toy_str key, void *buf, size_t buf_size)
+{
+    generic_map_entry_list *list = (generic_map_entry_list *) buf_list_alloc_2((void *) &key, sizeof(key), buf, buf_size);
+    assert(list->entry.key == key);
+    assert(NULL == list->next);
+    return list;
+}
 
 generic_map_entry *generic_map_entry_list_payload(generic_map_entry_list *list)
 {

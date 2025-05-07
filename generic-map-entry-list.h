@@ -3,6 +3,7 @@
 
 #include "generic-map-entry-list-types.h"
 
+generic_map_entry_list *generic_map_entry_list_alloc(const toy_str key, void *buf, size_t buf_size);
 generic_map_entry *generic_map_entry_list_payload(generic_map_entry_list *list);
 const generic_map_entry *generic_map_entry_list_payload_const(const generic_map_entry_list *list);
 enumeration_result generic_map_entry_list_foreach(generic_map_entry_list *list, generic_map_entry_list_item_callback callback, void *cookie);
