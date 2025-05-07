@@ -21,3 +21,13 @@ void map_ptr_entry_list_payload_set(map_ptr_entry_list *list, void *ptr)
 {
     map_ptr_entry_list_payload(list)->ptr = ptr;
 }
+
+enumeration_result map_ptr_entry_list_foreach(map_ptr_entry_list *list, map_ptr_entry_list_item_callback callback, void *cookie)
+{
+    return buf_list_foreach((toy_buf_list *) list, (buf_list_item_callback) callback, cookie);
+}
+
+enumeration_result map_ptr_entry_list_foreach_const(const map_ptr_entry_list *list, const_map_ptr_entry_list_item_callback callback, void *cookie)
+{
+    return buf_list_foreach_const((const toy_buf_list *) list, (const_buf_list_item_callback) callback, cookie);
+}
