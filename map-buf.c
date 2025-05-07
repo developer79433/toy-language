@@ -13,14 +13,14 @@ map_buf *map_buf_alloc(void)
     return (map_buf *) generic_map_alloc();
 }
 
-static map_buf_entry_list **map_buf_get_bucket(map_buf *map, const toy_str key)
+map_buf_entry_list **map_buf_get_bucket(map_buf *map, const toy_str key)
 {
     assert(offsetof(map_buf, buckets) == offsetof(generic_map, buckets));
     assert(offsetof(map_buf, num_items) == offsetof(generic_map, num_items));
     return (map_buf_entry_list **) generic_map_get_bucket((generic_map *) map, key);
 }
 
-static map_buf_entry *map_buf_bucket_get_key(map_buf_entry_list *bucket, const toy_str key)
+map_buf_entry *map_buf_bucket_get_key(map_buf_entry_list *bucket, const toy_str key)
 {
     return (map_buf_entry *) generic_map_bucket_get_key((generic_map_entry_list *) bucket, key);
 }
@@ -61,6 +61,7 @@ static item_callback_result map_buf_set_entry_callback(void *cookie, size_t inde
     map_buf_entry *entry = map_buf_entry_list_payload(list);
     if (toy_str_equal(entry->key, args->desired_key)) {
         /* Overwrite existing entry */
+        /* FIXME: Needs to at least be a map_buf in order to have a payload set function */
         map_buf_entry_list_payload_set_buf(list, args->new_value, args->new_value_size);
         return STOP_ENUMERATION;
     }
@@ -69,7 +70,6 @@ static item_callback_result map_buf_set_entry_callback(void *cookie, size_t inde
 
 set_result map_buf_set(map_buf *map, const toy_str key, void *buf, size_t buf_size)
 {
-    generic_map *gen_map = (generic_map *) map;
     map_buf_entry_list *new_entry;
     map_buf_entry_list **bucket = map_buf_get_bucket(map, key);
     if (*bucket) {
@@ -87,7 +87,7 @@ set_result map_buf_set(map_buf *map, const toy_str key, void *buf, size_t buf_si
         new_entry = map_buf_entry_list_alloc(key, buf, buf_size);
     }
     *bucket = new_entry;
-    gen_map->num_items++;
+    map->num_items++;
     return SET_NEW;
 }
 
