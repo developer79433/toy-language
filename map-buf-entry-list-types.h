@@ -6,13 +6,9 @@
 #include "iter-types.h"
 #include "str-types.h"
 
-typedef struct map_buf_payload_struct {
-    uint8_t c; /* Really varable-size */
-} map_buf_payload;
-
 typedef struct map_buf_entry_struct {
     toy_str key;
-    map_buf_payload payload;
+    uint8_t c; /* Really varable-size */
 } map_buf_entry;
 
 typedef struct map_buf_entry_list_struct {

@@ -42,8 +42,7 @@ void *map_buf_get(map_buf *map, const toy_str key)
         map_buf_entry *existing_entry = map_buf_bucket_get_key(*bucket, key);
         if (existing_entry) {
             assert(toy_str_equal(existing_entry->key, key));
-            assert((void *) &existing_entry->payload.c == (void *) &existing_entry->payload);
-            return &existing_entry->payload.c;
+            return &existing_entry->c;
         }
         return NULL;
     }

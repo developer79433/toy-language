@@ -6,13 +6,8 @@
 #include "iter-types.h"
 #include "str-types.h"
 
-/* TODO: Delete me */
-typedef struct generic_map_payload_struct {
-} generic_map_payload;
-
 typedef struct generic_map_entry_struct {
     toy_str key;
-    generic_map_payload payload;
 } generic_map_entry;
 
 typedef struct generic_map_entry_list_struct {

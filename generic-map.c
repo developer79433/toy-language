@@ -149,7 +149,7 @@ delete_result generic_map_delete(generic_map *map, const toy_str key)
 static void dump_map_entry(const generic_map_entry *entry, FILE *f)
 {
     dump_str(f, entry->key);
-    fprintf(f, ": %p", &entry->payload);
+    fprintf(f, ": %p", entry + 1);
 }
 
 typedef struct dump_item_cb_args_struct {
