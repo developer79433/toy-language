@@ -3,8 +3,6 @@
 #include "str.h"
 #include "map-ptr-entry-list.h"
 #include "map-buf-entry-list.h"
-#include "buf-list.h"
-#include "generic-map-entry-list.h"
 
 map_ptr_entry_list *map_ptr_entry_list_alloc(const toy_str key, void *ptr)
 {

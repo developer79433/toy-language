@@ -9,6 +9,7 @@
 
 map_val *map_val_alloc(void);
 toy_val *map_val_get(map_val *map, const toy_str key);
+const toy_val *map_val_get_const(const map_val *map, const toy_str key);
 set_result map_val_set(map_val *map, const toy_str key, toy_val *value);
 delete_result map_val_delete(map_val *map, const toy_str key);
 enumeration_result map_val_foreach_const(const map_val *map, const_map_val_entry_callback callback, void *cookie);

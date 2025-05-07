@@ -25,6 +25,11 @@ toy_val *map_val_get(map_val *map, const toy_str key)
     return (toy_val *) map_buf_get((map_buf *) map, key);
 }
 
+const toy_val *map_val_get_const(const map_val *map, const toy_str key)
+{
+    return (const toy_val *) map_buf_get_const((const map_buf *) map, key);
+}
+
 void map_val_free(map_val *map)
 {
     return map_buf_free((map_buf *) map);
