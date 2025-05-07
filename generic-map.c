@@ -94,19 +94,30 @@ generic_map_entry_list **generic_map_get_bucket(generic_map *map, toy_str key)
     return &map->buckets[hashval % NUM_BUCKETS];
 }
 
+typedef struct map_entry_has_name_args_struct {
+    toy_str desired_key;
+} map_entry_has_name_args;
+
+static toy_bool map_entry_has_desired_name(void *cookie, const generic_map_entry *entry)
+{
+    map_entry_has_name_args *args = (map_entry_has_name_args *) cookie;
+    return toy_str_equal(entry->key, args->desired_key);
+}
+
 typedef struct delete_cb_args_struct {
     generic_map *map;
-    toy_str key;
+    generic_map_entry_filter_func filter_func;
+    map_entry_has_name_args filter_func_arg;
     generic_map_entry_list **bucket;
     generic_map_entry_list *prev;
 } delete_cb_args;
 
-static item_callback_result delete_callback(void *cookie, size_t index, generic_map_entry_list *list)
+static item_callback_result delete_first_callback(void *cookie, size_t index, generic_map_entry_list *list)
 {
     delete_cb_args *args = (delete_cb_args *) cookie;
     generic_map_entry *map_entry = generic_map_entry_list_payload(list);
     item_callback_result res;
-    if (toy_str_equal(map_entry->key, args->key)) {
+    if (args->filter_func(&args->filter_func_arg, map_entry)) {
         /* Found existing entry */
         args->prev->next = list->next;
         if (list == *(args->bucket)) {
@@ -128,8 +139,9 @@ static item_callback_result delete_callback(void *cookie, size_t index, generic_
 /* TODO: Push this down into generic_list */
 static delete_result delete_from_bucket(generic_map *map, generic_map_entry_list **bucket, const toy_str key)
 {
-    delete_cb_args delete_args = { .map = map, .key = key, .bucket = bucket, .prev = *bucket };
-    enumeration_result res = generic_map_entry_list_foreach(*bucket, delete_callback, &delete_args);
+    map_entry_has_name_args has_name_args = { .desired_key = key };
+    delete_cb_args delete_args = { .map = map, .filter_func = map_entry_has_desired_name, .filter_func_arg = has_name_args, .bucket = bucket, .prev = *bucket };
+    enumeration_result res = generic_map_entry_list_foreach(*bucket, delete_first_callback, &delete_args);
     if (res == ENUMERATION_COMPLETE) {
         return NOT_PRESENT;
     }

@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 
+#include "bool-types.h"
 #include "str-types.h"
 #include "val-types.h"
 #include "iter-types.h"
@@ -19,5 +20,7 @@ typedef struct generic_map_struct {
 
 typedef item_callback_result (*generic_map_entry_callback)(void *cookie, generic_map_entry *entry);
 typedef item_callback_result (*const_generic_map_entry_callback)(void *cookie, const generic_map_entry *entry);
+
+typedef toy_bool (*generic_map_entry_filter_func)(void *cookie, const generic_map_entry *entry);
 
 #endif /* TOY_GENERIC_MAP_TYPES_H */
