@@ -20,6 +20,7 @@ typedef toy_bool (*generic_list_filter_func)(void *cookie, size_t index, const g
 
 typedef struct filter_args_struct {
     generic_list_filter_func filter;
+    void *filter_cookie;
     generic_list_item_callback user_callback;
     void *user_cookie;
 } filter_args;

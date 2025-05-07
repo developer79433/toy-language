@@ -347,3 +347,87 @@ const generic_map_entry *generic_map_get_entry_const(const generic_map *map, con
 {
     return (const generic_map_entry *) generic_map_get_entry((generic_map *) map, key);
 }
+
+typedef struct generic_map_find_all_args_struct {
+    generic_map_filter_func filter_func;
+    void *filter_cookie;
+    generic_map_entry_callback entry_cb;
+    void *entry_cookie;
+} generic_map_find_all_args;
+
+static item_callback_result generic_map_find_all_cb(void *cookie, generic_map_entry *entry)
+{
+    generic_map_find_all_args *args = (generic_map_find_all_args *) cookie;
+    if (args->filter_func(args->filter_cookie, entry)) {
+        return args->entry_cb(args->entry_cookie, entry);
+    }
+    return CONTINUE_ENUMERATION;
+}
+
+enumeration_result generic_map_find_all(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie, generic_map_entry_callback callback, void *callback_cookie)
+{
+    generic_map_find_all_args find_all_args = { .entry_cb = callback, .entry_cookie = callback_cookie, .filter_cookie = filter_cookie, .filter_func = filter_func };
+    return generic_map_foreach(map, generic_map_find_all_cb, &find_all_args);
+}
+
+typedef struct generic_map_find_one_args_struct {
+    generic_map_filter_func filter_func;
+    void *filter_cookie;
+    generic_map_entry *found_entry;
+} generic_map_find_one_args;
+
+static item_callback_result generic_map_find_first_cb(void *cookie, generic_map_entry *entry)
+{
+    generic_map_find_one_args *args = (generic_map_find_one_args *) cookie;
+    if (args->filter_func(args->filter_cookie, entry)) {
+        args->found_entry = entry;
+        return STOP_ENUMERATION;
+    }
+    return CONTINUE_ENUMERATION;
+}
+
+generic_map_entry *generic_map_find_first(generic_map *map, generic_map_filter_func filter, void *cookie)
+{
+    generic_map_find_one_args find_one_args = { .filter_cookie = cookie, .filter_func = filter, .found_entry = NULL };
+    enumeration_result res = generic_map_foreach(map, generic_map_find_first_cb, &find_one_args);
+    assert(
+        (res == ENUMERATION_COMPLETE && find_one_args.found_entry == NULL)
+        ||
+        (res == ENUMERATION_INTERRUPTED && find_one_args.found_entry != NULL)
+    );
+    return find_one_args.found_entry;
+}
+
+static item_callback_result generic_map_find_first_not_cb(void *cookie, generic_map_entry *entry)
+{
+    generic_map_find_one_args *args = (generic_map_find_one_args *) cookie;
+    if (!args->filter_func(args->filter_cookie, entry)) {
+        args->found_entry = entry;
+        return STOP_ENUMERATION;
+    }
+    return CONTINUE_ENUMERATION;
+}
+
+generic_map_entry *generic_map_find_first_not(generic_map *map, generic_map_filter_func filter, void *cookie)
+{
+    generic_map_find_one_args find_one_args = { .filter_cookie = cookie, .filter_func = filter, .found_entry = NULL };
+    enumeration_result res = generic_map_foreach(map, generic_map_find_first_not_cb, &find_one_args);
+    assert(
+        (res == ENUMERATION_COMPLETE && find_one_args.found_entry == NULL)
+        ||
+        (res == ENUMERATION_INTERRUPTED && find_one_args.found_entry != NULL)
+    );
+    return find_one_args.found_entry;
+}
+
+toy_bool generic_map_none_match(generic_map *map, generic_map_filter_func filter, void *cookie)
+{
+    generic_map_entry *entry = generic_map_find_first(map, filter, cookie);
+    return entry == NULL;
+}
+
+toy_bool generic_map_all_match(generic_map *map, generic_map_filter_func filter, void *cookie)
+{
+    generic_map_entry *entry = generic_map_find_first_not(map, filter, cookie);
+    return entry == NULL;
+}
