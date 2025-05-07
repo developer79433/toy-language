@@ -13,16 +13,11 @@ map_buf *map_buf_alloc(void)
     return (map_buf *) generic_map_alloc();
 }
 
-map_buf_entry_list **map_buf_get_bucket(map_buf *map, const toy_str key)
+static map_buf_entry_list **map_buf_get_bucket(map_buf *map, const toy_str key)
 {
     assert(offsetof(map_buf, buckets) == offsetof(generic_map, buckets));
     assert(offsetof(map_buf, num_items) == offsetof(generic_map, num_items));
     return (map_buf_entry_list **) generic_map_get_bucket((generic_map *) map, key);
-}
-
-map_buf_entry *map_buf_bucket_get_key(map_buf_entry_list *bucket, const toy_str key)
-{
-    return (map_buf_entry *) generic_map_bucket_get_key((generic_map_entry_list *) bucket, key);
 }
 
 enumeration_result map_buf_foreach(map_buf *map, map_buf_entry_callback callback, void *cookie)
@@ -35,16 +30,30 @@ enumeration_result map_buf_foreach_const(const map_buf *map, const_map_buf_entry
     return generic_map_foreach_const((generic_map *) map, (const_generic_map_entry_callback) callback, cookie);
 }
 
+map_buf_entry *map_buf_get_entry(map_buf *map, const toy_str key)
+{
+    return (map_buf_entry *) generic_map_get_entry((generic_map *) map, key);
+}
+
+const map_buf_entry *map_buf_get_entry_const(const map_buf *map, const toy_str key)
+{
+    return (const map_buf_entry *) generic_map_get_entry_const((const generic_map *) map, key);
+}
+
 void *map_buf_get(map_buf *map, const toy_str key)
 {
-    map_buf_entry_list **bucket = map_buf_get_bucket(map, key);
-    if (*bucket) {
-        map_buf_entry *existing_entry = map_buf_bucket_get_key(*bucket, key);
-        if (existing_entry) {
-            assert(toy_str_equal(existing_entry->key, key));
-            return &existing_entry->c;
-        }
-        return NULL;
+    map_buf_entry *entry = map_buf_get_entry(map, key);
+    if (entry) {
+        return &entry->c;
+    }
+    return NULL;
+}
+
+const void *map_buf_get_const(const map_buf *map, const toy_str key)
+{
+    const map_buf_entry *entry = map_buf_get_entry_const(map, key);
+    if (entry) {
+        return &entry->c;
     }
     return NULL;
 }
@@ -61,8 +70,7 @@ static item_callback_result map_buf_set_entry_callback(void *cookie, size_t inde
     map_buf_entry *entry = map_buf_entry_list_payload(list);
     if (toy_str_equal(entry->key, args->desired_key)) {
         /* Overwrite existing entry */
-        /* FIXME: Needs to at least be a map_buf in order to have a payload set function */
-        map_buf_entry_list_payload_set_buf(list, args->new_value, args->new_value_size);
+        map_buf_entry_list_payload_set(list, args->new_value, args->new_value_size);
         return STOP_ENUMERATION;
     }
     return CONTINUE_ENUMERATION;

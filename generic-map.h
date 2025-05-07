@@ -9,8 +9,9 @@
 
 generic_map *generic_map_alloc(void);
 generic_map_entry_list **generic_map_get_bucket(generic_map *map, toy_str key);
-generic_map_entry *generic_map_bucket_get_key(generic_map_entry_list *bucket, const toy_str key);
 void generic_map_free(generic_map *map);
+generic_map_entry *generic_map_get_entry(generic_map *map, const toy_str key);
+const generic_map_entry *generic_map_get_entry_const(const generic_map *map, const toy_str key);
 delete_result generic_map_delete(generic_map *map, const toy_str key);
 enumeration_result generic_map_foreach(generic_map *map, generic_map_entry_callback callback, void *cookie);
 enumeration_result generic_map_foreach_const(const generic_map *map, const_generic_map_entry_callback callback, void *cookie);

@@ -294,7 +294,7 @@ static item_callback_result generic_map_get_listentry_cb(void *cookie, size_t in
     return CONTINUE_ENUMERATION;
 }
 
-generic_map_entry *generic_map_bucket_get_key(generic_map_entry_list *bucket, const toy_str key)
+static generic_map_entry *generic_map_bucket_get_key(generic_map_entry_list *bucket, const toy_str key)
 {
     listentry_cb_args args = { .desired_name = key, .entry_to_find = NULL };
     enumeration_result res = generic_map_entry_list_foreach(bucket, generic_map_get_listentry_cb, &args);
@@ -306,6 +306,20 @@ generic_map_entry *generic_map_bucket_get_key(generic_map_entry_list *bucket, co
     return args.entry_to_find;
 }
 
+generic_map_entry *generic_map_get_entry(generic_map *map, const toy_str key)
+{
+    generic_map_entry_list **bucket = generic_map_get_bucket(map, key);
+    if (*bucket) {
+        generic_map_entry *existing_entry = generic_map_bucket_get_key(*bucket, key);
+        if (existing_entry) {
+            assert(toy_str_equal(existing_entry->key, key));
+            return existing_entry;
+        }
+        return NULL;
+    }
+    return NULL;
+}
+
 size_t generic_map_size(const generic_map *map)
 {
     return map->num_items;
@@ -315,4 +329,9 @@ void generic_map_assert_valid(const generic_map *map)
 {
     assert(map);
     /* TODO */
+}
+
+const generic_map_entry *generic_map_get_entry_const(const generic_map *map, const toy_str key)
+{
+    return (const generic_map_entry *) generic_map_get_entry((generic_map *) map, key);
 }

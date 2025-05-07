@@ -25,7 +25,7 @@ const map_buf_entry *map_buf_entry_list_payload_const(const map_buf_entry_list *
     return &list->entry;
 }
 
-void map_buf_entry_list_payload_set_buf(map_buf_entry_list *list, void *buf, size_t buf_size)
+void map_buf_entry_list_payload_set(map_buf_entry_list *list, void *buf, size_t buf_size)
 {
     map_buf_entry *entry = map_buf_entry_list_payload(list);
     memcpy(&entry->c, buf, buf_size);

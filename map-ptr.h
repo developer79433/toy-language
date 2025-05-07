@@ -9,6 +9,7 @@
 
 map_ptr *map_ptr_alloc(void);
 void *map_ptr_get(map_ptr *map, const toy_str key);
+const void *map_ptr_get_const(const map_ptr *map, const toy_str key);
 set_result map_ptr_set(map_ptr *map, const toy_str key, void *ptr);
 size_t map_ptr_size(const map_ptr *map);
 delete_result map_ptr_delete(map_ptr *map, const toy_str key);

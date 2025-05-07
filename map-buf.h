@@ -8,9 +8,10 @@
 #include "map-buf-entry-list-types.h"
 
 map_buf *map_buf_alloc(void);
-map_buf_entry_list **map_buf_get_bucket(map_buf *map, const toy_str key);
-map_buf_entry *map_buf_bucket_get_key(map_buf_entry_list *bucket, const toy_str key);
+map_buf_entry *map_buf_get_entry(map_buf *map, const toy_str key);
+const map_buf_entry *map_buf_get_entry_const(const map_buf *map, const toy_str key);
 void *map_buf_get(map_buf *map, const toy_str key);
+const void *map_buf_get_const(const map_buf *map, const toy_str key);
 set_result map_buf_set(map_buf *map, const toy_str key, void *buf, size_t buf_size);
 size_t map_buf_size(const map_buf *map);
 set_result map_buf_set(map_buf *map, const toy_str key, void *buf, size_t buf_size);
