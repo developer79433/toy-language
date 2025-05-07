@@ -24,7 +24,7 @@ toy_str map_val_entry_list_key(map_val_entry_list *list)
 
 toy_val *map_val_entry_list_val(map_val_entry_list *list)
 {
-    return &list->entry.payload.value;
+    return &list->entry.value;
 }
 
 const map_val_entry *map_val_entry_list_payload_const(const map_val_entry_list *list)
@@ -41,5 +41,5 @@ void map_val_entry_dump(const map_val_entry *entry, FILE *f)
 {
     dump_str(f, entry->key);
     fputs(": ", f);
-    val_dump(f, &entry->payload.value);
+    val_dump(f, &entry->value);
 }

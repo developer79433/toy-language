@@ -6,13 +6,9 @@
 #include "iter-types.h"
 #include "str-types.h"
 
-typedef struct map_ptr_payload_struct {
-    void *ptr;
-} map_ptr_payload;
-
 typedef struct map_ptr_entry_struct {
     toy_str key;
-    map_ptr_payload payload;
+    void *ptr;
 } map_ptr_entry;
 
 /* TODO: Goes in separate header */

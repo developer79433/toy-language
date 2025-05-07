@@ -271,7 +271,7 @@ static item_callback_result map_foreach_callback(void *cookie, const map_val_ent
 {
     map_foreach_args *args = (map_foreach_args *) cookie;
     const toy_val key_val = { .type = VAL_STR, .str = entry->key };
-    const toy_val_list value_arg = { .val = entry->payload.value, .next = NULL };
+    const toy_val_list value_arg = { .val = entry->value, .next = NULL };
     const toy_val_list func_args = { .val = key_val, .next = (toy_val_list *) &value_arg };
     toy_val result;
     run_toy_function_val_list(args->interp, &result, args->func, &func_args);

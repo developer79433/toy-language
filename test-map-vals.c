@@ -24,7 +24,7 @@ static toy_bool test_map_entry(void *cookie, const toy_str key, const toy_val *v
 
 static item_callback_result map_item_callback(void *cookie, const map_val_entry *entry)
 {
-    if (!test_map_entry(cookie, entry->key, &entry->payload.value)) {
+    if (!test_map_entry(cookie, entry->key, &entry->value)) {
         return STOP_ENUMERATION;
     }
     return CONTINUE_ENUMERATION;

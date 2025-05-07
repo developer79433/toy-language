@@ -19,5 +19,5 @@ const map_ptr_entry *map_ptr_entry_list_payload_const(map_ptr_entry_list *list)
 
 void map_ptr_entry_list_payload_set(map_ptr_entry_list *list, void *ptr)
 {
-    map_ptr_entry_list_payload(list)->payload.ptr = ptr;
+    map_ptr_entry_list_payload(list)->ptr = ptr;
 }

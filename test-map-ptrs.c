@@ -25,7 +25,7 @@ static toy_bool test_map_entry(void *cookie, toy_str key, const toy_val *value)
 
 static item_callback_result map_item_callback(void *cookie, const map_ptr_entry *entry)
 {
-    const toy_val *value = (toy_val *) entry->payload.ptr;
+    const toy_val *value = (toy_val *) entry->ptr;
     val_assert_valid(value);
     if (!test_map_entry(cookie, entry->key, value)) {
         return STOP_ENUMERATION;
@@ -63,9 +63,8 @@ void test_map_ptrs(void)
     assert(bucket != NULL);
     assert(bucket->next == NULL);
     assert(toy_str_equal(bucket->entry.key, "first key"));
-    assert(bucket->entry.payload.ptr != NULL);
-    assert((void *) &bucket->entry.payload == (void *) &bucket->entry.payload.ptr);
-    assert(bucket->entry.payload.ptr == &val1);
+    assert(bucket->entry.ptr != NULL);
+    assert(bucket->entry.ptr == &val1);
 
     // Test retrieve
     toy_val *get1 = map_ptr_get(map1, "first key");

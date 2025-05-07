@@ -15,7 +15,6 @@ typedef struct map_buf_entry_struct {
     map_buf_payload payload;
 } map_buf_entry;
 
-/* TODO: This should go in its own header and be a subtype of toy_buf_list */
 typedef struct map_buf_entry_list_struct {
     struct map_buf_entry_list_struct *next;
     map_buf_entry entry;

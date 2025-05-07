@@ -3,13 +3,9 @@
 
 #include "val-types.h"
 
-typedef struct map_val_payload_struct {
-    toy_val value;
-} map_val_payload;
-
 typedef struct map_val_entry_struct {
     toy_str key;
-    map_val_payload payload;
+    toy_val value;
 } map_val_entry;
 
 typedef struct map_val_entry_list_struct {
