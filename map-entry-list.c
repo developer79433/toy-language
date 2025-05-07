@@ -8,6 +8,26 @@
 #include "dump.h"
 #include "str.h"
 
+toy_map_entry *map_entry_list_payload(toy_map_entry_list *list)
+{
+    return buf_list_payload_typed((toy_buf_list *) list, toy_map_entry);
+}
+
+const toy_map_entry *map_entry_list_payload_const(const toy_map_entry_list *list)
+{
+    return buf_list_payload_const_typed((const toy_buf_list *) list, toy_map_entry);
+}
+
+enumeration_result map_entry_list_foreach(toy_map_entry_list *list, toy_map_entry_list_item_callback callback, void *cookie)
+{
+    return buf_list_foreach((toy_buf_list *) list, (buf_list_item_callback) callback, cookie);
+}
+
+enumeration_result map_entry_list_foreach_const(const toy_map_entry_list *list, const_toy_map_entry_list_item_callback callback, void *cookie)
+{
+    return buf_list_foreach_const((const toy_buf_list *) list, (const_buf_list_item_callback) callback, cookie);
+}
+
 toy_map_entry_list *map_entry_list_alloc_ref(toy_str first_key, toy_expr *first_value)
 {
     toy_map_entry entry = { .key = first_key, .value = first_value };

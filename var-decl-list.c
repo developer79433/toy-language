@@ -6,6 +6,18 @@
 #include "var-decl.h"
 #include "var-decl-list.h"
 
+toy_var_decl *var_decl_list_payload(toy_var_decl_list *list)
+{
+    assert(&list->decl == buf_list_payload_typed((toy_buf_list *) list, toy_var_decl));
+    return buf_list_payload_typed((toy_buf_list *) list, toy_var_decl);
+}
+
+const toy_var_decl *var_decl_list_payload_const(const toy_var_decl_list *list)
+{
+    assert(&list->decl == buf_list_payload_const_typed((const toy_buf_list *) list, toy_var_decl));
+    return buf_list_payload_const_typed((const toy_buf_list *) list, toy_var_decl);
+}
+
 toy_var_decl_list *var_decl_list_alloc(toy_var_decl *decl)
 {
     assert(offsetof(toy_var_decl_list, decl) == offsetof(toy_buf_list, c));
@@ -16,6 +28,16 @@ toy_var_decl_list *var_decl_list_alloc(toy_var_decl *decl)
     assert(decl_list->decl.name == decl->name);
     assert(decl_list->decl.value == decl->value);
     return decl_list;
+}
+
+enumeration_result var_decl_list_foreach(toy_var_decl_list *list, toy_var_decl_list_item_callback callback, void *cookie)
+{
+    return buf_list_foreach((toy_buf_list *) list, (buf_list_item_callback) callback, cookie);
+}
+
+enumeration_result var_decl_list_foreach_const(const toy_var_decl_list *list, const_toy_var_decl_list_item_callback callback, void *cookie)
+{
+    return buf_list_foreach_const((const toy_buf_list *) list, (const_buf_list_item_callback) callback, cookie);
 }
 
 void var_decl_list_dump(FILE *f, const toy_var_decl_list *list)

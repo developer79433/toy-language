@@ -21,6 +21,7 @@
 #include "errors.h"
 #include "stmt-list.h"
 #include "map-val.h"
+#include "var-decl-list.h"
 
 #if 0
 #define DEBUG_STACK 1
@@ -459,6 +460,7 @@ static void run_predefined_func_expr_list(toy_interp *interp, toy_val *result, p
 static void run_user_func_val_list(toy_interp *interp, toy_val *result, toy_block *block, toy_str_list *param_names, const toy_val_list *args)
 {
     val_list_assert_valid(args);
+    /* TODO: Use str_list_foreach_const, but it doesn't support enumerating over two lists together, which is what we need here */
     for (toy_str_list *param_name = param_names; param_name && args; param_name = param_name->next, args = args->next) {
         val_assert_valid(&args->val);
         create_variable_value(interp, param_name->str, &args->val);
@@ -470,6 +472,7 @@ static void run_user_func_val_list(toy_interp *interp, toy_val *result, toy_bloc
 
 static void run_user_func_expr_list(toy_interp *interp, toy_val *result, toy_block *block, toy_str_list *param_names, toy_expr_list *args)
 {
+    /* TODO: Use str_list_foreach_const, but it doesn't support enumerating over two lists together, which is what we need here */
     for (toy_str_list *param_name = param_names; param_name && args; param_name = param_name->next, args = args->next) {
         create_variable_expr(interp, param_name->str, args->expr);
     }
@@ -687,15 +690,28 @@ static void op_prefix_increment(toy_interp *interp, toy_val *result, toy_str id)
     }
 }
 
+typedef struct map_entry_cb_args_struct {
+    toy_interp *interp;
+    map_val *map;
+} map_entry_cb_args;
+
+static item_callback_result map_entry_callback(void *cookie, size_t index, const toy_map_entry_list *list)
+{
+    map_entry_cb_args *args = (map_entry_cb_args *) cookie;
+    const toy_map_entry *map_entry = map_entry_list_payload_const(list);
+    toy_val value;
+    eval_expr(args->interp, &value, map_entry->value);
+    map_val_set(args->map, map_entry->key, &value);
+    return CONTINUE_ENUMERATION;
+}
+
 static void eval_map(toy_interp *interp, toy_val *result, const toy_map_entry_list *entry_list)
 {
     result->type = VAL_MAP;
     result->map = map_val_alloc();
-    for (; entry_list; entry_list = entry_list->next) {
-        toy_val value;
-        eval_expr(interp, &value, entry_list->entry.value);
-        map_val_set(result->map, entry_list->entry.key, &value);
-    }
+    map_entry_cb_args map_entry_args = { .interp = interp, .map = result->map };
+    enumeration_result res = map_entry_list_foreach_const(entry_list, map_entry_callback, &map_entry_args);
+    assert(res == ENUMERATION_COMPLETE);
 }
 
 void eval_expr(toy_interp *interp, toy_val *result, const toy_expr *expr)
@@ -922,11 +938,23 @@ static void return_stmt(toy_interp *interp, const toy_return_stmt *return_stmt)
     eval_expr(interp, &interp->return_val, return_stmt->expr);
 }
 
+typedef struct var_decl_cb_args_struct {
+    toy_interp *interp;
+} var_decl_cb_args;
+
+static item_callback_result var_decl_callback(void *cookie, size_t index, const toy_var_decl_list *var_decl_list)
+{
+    var_decl_cb_args *args = (var_decl_cb_args *) cookie;
+    const toy_var_decl *decl = var_decl_list_payload_const(var_decl_list);
+    create_variable_expr(args->interp, decl->name, decl->value);
+    return CONTINUE_ENUMERATION;
+}
+
 static void var_decl_stmt(toy_interp *interp, const toy_var_decl_list *var_decl_list)
 {
-    for (const toy_var_decl_list *decl = var_decl_list; decl; decl = decl->next) {
-        create_variable_expr(interp, decl->decl.name, decl->decl.value);
-    }
+    var_decl_cb_args var_decl_args = { .interp = interp };
+    enumeration_result res = var_decl_list_foreach_const(var_decl_list, var_decl_callback, &var_decl_args);
+    assert(res == ENUMERATION_COMPLETE);
 }
 
 enum run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt)
