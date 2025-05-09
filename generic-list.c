@@ -83,7 +83,7 @@ static item_callback_result find_all_callback(void *cookie, size_t index, generi
     return CONTINUE_ENUMERATION;
 }
 
-enumeration_result generic_list_find_all(generic_list *list, generic_list_filter_func filter, void *filter_cookie, generic_list_item_callback callback, void *cookie)
+enumeration_result generic_list_filter(generic_list *list, generic_list_filter_func filter, void *filter_cookie, generic_list_item_callback callback, void *cookie)
 {
     filter_args args = { .filter = filter, .filter_cookie = filter_cookie, .user_callback = callback, .user_cookie = cookie };
     enumeration_result res = generic_list_foreach(list, find_all_callback, &args);
@@ -99,7 +99,7 @@ static item_callback_result const_find_all_callback(void *cookie, size_t index, 
     return CONTINUE_ENUMERATION;
 }
 
-enumeration_result generic_list_find_all_const(const generic_list *list, generic_list_filter_func filter, void *filter_cookie, const_generic_list_item_callback callback, void *cookie)
+enumeration_result generic_list_flter_const(const generic_list *list, generic_list_filter_func filter, void *filter_cookie, const_generic_list_item_callback callback, void *cookie)
 {
     const_filter_args args = { .filter = filter, .filter_cookie = filter_cookie, .user_callback = callback, .user_cookie = cookie };
     enumeration_result res = generic_list_foreach_const(list, const_find_all_callback, &args);

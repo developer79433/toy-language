@@ -393,13 +393,7 @@ static item_callback_result map_filter_callback(void *cookie, const map_val_entr
     }
     if (truthy_return) {
         assert(args->map_to_insert_into != NULL);
-        log_printf("\nReturn value before insert:\n");
-        map_val_dump(stderr, args->map_to_insert_into);
-        log_printf("\n");
         set_result set_res = map_val_set(args->map_to_insert_into, entry->key, &entry->value);
-        log_printf("\nReturn value after insert:\n");
-        map_val_dump(stderr, args->map_to_insert_into);
-        log_printf("\n");
         assert(SET_NEW == set_res);
         map_val_assert_valid(args->map_to_insert_into);
     }

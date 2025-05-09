@@ -17,7 +17,6 @@ enumeration_result generic_map_foreach(generic_map *map, generic_map_entry_callb
 enumeration_result generic_map_foreach_const(const generic_map *map, const_generic_map_entry_callback callback, void *cookie);
 enumeration_result generic_map_filter(generic_map *map, generic_map_filter_func filter, void *filter_cookie, generic_map_entry_callback callback, void *cookie);
 generic_map_entry *generic_map_find(generic_map *map, generic_map_filter_func filter, void *cookie);
-/* TODO: Should be named generic_map_find_not */
 generic_map_entry *generic_map_find_not(generic_map *map, generic_map_filter_func filter, void *cookie);
 toy_bool generic_map_none_match(generic_map *map, generic_map_filter_func filter, void *cookie);
 toy_bool generic_map_all_match(generic_map *map, generic_map_filter_func filter, void *cookie);
