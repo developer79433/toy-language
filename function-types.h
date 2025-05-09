@@ -6,11 +6,10 @@
 #include "val-list-types.h"
 #include "str-list-types.h"
 #include "interp-types.h"
+#include "predef-function-types.h"
 
 struct toy_interp_struct;
 typedef struct toy_interp_struct toy_interp;
-
-typedef run_stmt_result (*predefined_func_addr)(toy_interp *interp, const toy_val_list *args);
 
 struct toy_stmt_list_struct;
 typedef struct toy_stmt_list_struct toy_stmt_list;

@@ -29,6 +29,7 @@
 #include "interp-var-decl.h"
 #include "interp-while.h"
 #include "interp-frame.h"
+#include "predef-function.h"
 
 #if 0
 #define DEBUG_STACK 1
