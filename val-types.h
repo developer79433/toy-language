@@ -28,14 +28,14 @@ typedef struct generic_map_struct generic_map;
 struct toy_val_list_struct;
 typedef struct toy_val_list_struct toy_val_list;
 
-struct toy_func_def_struct;
-typedef struct toy_func_def_struct toy_func_def;
+struct toy_function_struct;
+typedef struct toy_function_struct toy_function;
 
 typedef struct toy_val_struct {
     toy_val_type type;
     union {
         toy_bool boolean;
-        toy_func_def *func;
+        toy_function *func;
         toy_val_list *list;
         map_val *map;
         // null

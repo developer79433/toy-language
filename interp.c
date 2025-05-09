@@ -38,8 +38,8 @@ typedef struct interp_frame_struct {
     union {
         const toy_block *loop_body;
         const toy_block *if_body;
-        const toy_func_def *pre_def_func;
-        const toy_func_def *user_def_func;
+        const toy_function *pre_def_func;
+        const toy_function *user_def_func;
         const toy_block *block_stmt;
     };
     toy_stmt_list *cur_stmt;
@@ -60,7 +60,7 @@ const char *frame_type_name(frame_type type)
 }
 
 typedef struct toy_interp_struct {
-    toy_func_def main_program;
+    toy_function main_program;
     interp_frame *cur_frame;
     toy_val return_val;
 } toy_interp;
@@ -97,7 +97,7 @@ static interp_frame *alloc_frame_block_stmt(const toy_block *block_stmt, interp_
     return frame;
 }
 
-static interp_frame *alloc_frame_user_def_func(const toy_func_def *func_def, interp_frame *prev)
+static interp_frame *alloc_frame_user_def_func(const toy_function *func_def, interp_frame *prev)
 {
     interp_frame *frame = mymalloc(interp_frame);
     frame->type = FRAME_USER_DEF_FUNC;
@@ -107,7 +107,7 @@ static interp_frame *alloc_frame_user_def_func(const toy_func_def *func_def, int
     return frame;
 }
 
-static interp_frame *alloc_frame_pre_def_func(const toy_func_def *func_def, interp_frame *prev)
+static interp_frame *alloc_frame_pre_def_func(const toy_function *func_def, interp_frame *prev)
 {
     interp_frame *frame = mymalloc(interp_frame);
     frame->type = FRAME_PRE_DEF_FUNC;
@@ -187,7 +187,7 @@ static void push_context_loop_body(toy_interp *interp, const toy_block *block)
     dump_stack(stderr, "after push loop body", interp);
 }
 
-static void push_context_pre_def_func(toy_interp *interp, const toy_func_def *func_def)
+static void push_context_pre_def_func(toy_interp *interp, const toy_function *func_def)
 {
     interp_frame *new_frame = alloc_frame_pre_def_func(func_def, interp->cur_frame);
     interp->cur_frame = new_frame;
@@ -195,7 +195,7 @@ static void push_context_pre_def_func(toy_interp *interp, const toy_func_def *fu
     dump_stack(stderr, "after push predef func", interp);
 }
 
-static void push_context_user_def_func(toy_interp *interp, const toy_func_def *func_def)
+static void push_context_user_def_func(toy_interp *interp, const toy_function *func_def)
 {
     interp_frame *new_frame = alloc_frame_user_def_func(func_def, interp->cur_frame);
     interp->cur_frame = new_frame;
@@ -263,10 +263,10 @@ int lookup_identifier(toy_interp *interp, toy_val *result, const toy_str name)
         *result = *((toy_val *) predef_const);
         return 1;
     }
-    const toy_func_def *predef_func = func_lookup_predef_name(name);
+    const toy_function *predef_func = func_lookup_predef_name(name);
     if (predef_func) {
         result->type = VAL_FUNC;
-        result->func = (toy_func_def *) predef_func;
+        result->func = (toy_function *) predef_func;
         return 1;
     }
     return lookup_user_identifier(interp, result, name);
@@ -349,7 +349,7 @@ static void create_variable_expr(toy_interp *interp, const toy_str name, const t
     create_variable_value(interp, name, &value);
 }
 
-static void create_function(toy_interp *interp, const toy_func_def *def)
+static void create_function(toy_interp *interp, const toy_function *def)
 {
     if (is_predefined(def->name)) {
         readonly_identifier(def->name);
@@ -360,7 +360,7 @@ static void create_function(toy_interp *interp, const toy_func_def *def)
         duplicate_identifier(def->name);
     }
     /* TODO: Remove cast below using const in .func member? Beware const poisoning... */
-    toy_val func_val = { .type = VAL_FUNC, .func = (toy_func_def *) def };
+    toy_val func_val = { .type = VAL_FUNC, .func = (toy_function *) def };
     set_result res = set_symbol(interp, def->name, &func_val);
     assert(res == SET_NEW);
 }
@@ -438,7 +438,7 @@ static run_stmt_result run_user_func_expr_list(toy_interp *interp, toy_block *bl
     return run_current_block(interp);
 }
 
-run_stmt_result run_toy_function_expr_list(toy_interp *interp, toy_func_def *def, const toy_expr_list *args)
+run_stmt_result run_toy_function_expr_list(toy_interp *interp, toy_function *def, const toy_expr_list *args)
 {
     switch (def->type) {
     case FUNC_PREDEFINED:
@@ -477,7 +477,7 @@ void interp_set_return_value(toy_interp *interp, toy_val *val)
     memcpy(&interp->return_val, val, sizeof(interp->return_val));
 }
 
-run_stmt_result run_toy_function_val_list(toy_interp *interp, toy_func_def *def, const toy_val_list *args)
+run_stmt_result run_toy_function_val_list(toy_interp *interp, toy_function *def, const toy_val_list *args)
 {
     val_list_assert_valid(args);
     switch (def->type) {
@@ -499,7 +499,7 @@ run_stmt_result run_toy_function_val_list(toy_interp *interp, toy_func_def *def,
     return REACHED_BLOCK_END;
 }
 
-run_stmt_result run_toy_function_val(toy_interp *interp, toy_func_def *def, const toy_val *arg)
+run_stmt_result run_toy_function_val(toy_interp *interp, toy_function *def, const toy_val *arg)
 {
     toy_val_list func_args = { .val = *arg, .next = NULL };
     return run_toy_function_val_list(interp, def, &func_args);
@@ -512,7 +512,7 @@ run_stmt_result call_func(toy_interp *interp, toy_str func_name, const toy_expr_
     int already_exists = lookup_identifier(interp, &expr, func_name);
     if (already_exists) {
         if (expr.type == VAL_FUNC) {
-            toy_func_def *def = expr.func;
+            toy_function *def = expr.func;
             if (def->param_names == &INFINITE_PARAMS) {
                 res = run_toy_function_expr_list(interp, def, args);
             } else {

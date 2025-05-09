@@ -83,10 +83,10 @@ toy_expr *alloc_expr_literal(toy_val_type val_type)
 toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_block *body)
 {
     toy_expr *expr;
-    expr = (toy_expr *) malloc(sizeof(toy_expr) + sizeof(toy_func_def));
+    expr = (toy_expr *) malloc(sizeof(toy_expr) + sizeof(toy_function));
     expr->type = EXPR_LITERAL;
     expr->val.type = VAL_FUNC;
-    expr->val.func = (toy_func_def *) (expr + 1);
+    expr->val.func = (toy_function *) (expr + 1);
     expr->val.func->type = FUNC_USER_DECLARED;
     expr->val.func->name = ""; /* TODO: generated unique name */
     expr->val.func->param_names = formalparams;

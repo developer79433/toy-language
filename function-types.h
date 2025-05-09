@@ -24,8 +24,7 @@ enum toy_func_type {
     FUNC_USER_DECLARED = 1
 };
 
-/* TODO: Should be named toy_function */
-typedef struct toy_func_def_struct {
+typedef struct toy_function_struct {
     toy_str name;
     toy_str_list *param_names;
     toy_str doc;
@@ -34,6 +33,6 @@ typedef struct toy_func_def_struct {
         toy_block code;
         predefined_func_addr predef;
     };
-} toy_func_def;
+} toy_function;
 
 #endif /* TOY_FUNCTION_TYPES_H */

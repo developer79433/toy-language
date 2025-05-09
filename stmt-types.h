@@ -15,7 +15,7 @@ struct toy_stmt_struct;
 typedef struct toy_stmt_struct toy_stmt;
 
 typedef struct toy_func_decl_stmt_struct {
-    toy_func_def def;
+    toy_function def;
 } toy_func_decl_stmt;
 
 typedef struct toy_expr_stmt_struct {
