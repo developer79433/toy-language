@@ -11,6 +11,7 @@
 #include "stmt.h"
 #include "function.h"
 #include "interp.h"
+#include "interp-frame.h"
 
 void fatal_error(const char *fmt, ...)
 {
@@ -135,5 +136,5 @@ void invalid_function_type(enum toy_func_type func_type)
 
 void return_outside_function(frame_type ftype)
 {
-    fatal_error("Encountered return statement outside function, in frame of type %s", frame_type_name(ftype));
+    fatal_error("Encountered return statement outside function, in frame of type %s", interp_frame_type_name(ftype));
 }

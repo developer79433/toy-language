@@ -1,4 +1,5 @@
 #include "interp.h"
+#include "interp-frame.h"
 
 static run_stmt_result run_if_stmt_block(toy_interp *interp, const toy_block *block)
 {

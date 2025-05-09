@@ -1,6 +1,7 @@
 #include <assert.h>
 
 #include "interp.h"
+#include "interp-frame.h"
 
 static toy_bool while_stmt_condition_truthy(toy_interp *interp, const toy_while_stmt *while_stmt)
 {

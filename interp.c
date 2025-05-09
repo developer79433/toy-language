@@ -28,6 +28,7 @@
 #include "interp-return.h"
 #include "interp-var-decl.h"
 #include "interp-while.h"
+#include "interp-frame.h"
 
 #if 0
 #define DEBUG_STACK 1
@@ -37,33 +38,6 @@
 #define DEBUG_VARIABLES 1
 #endif
 
-typedef struct interp_frame_struct {
-    struct interp_frame_struct *prev;
-    frame_type type;
-    union {
-        const toy_block *loop_body;
-        const toy_block *if_body;
-        const toy_function *pre_def_func;
-        const toy_function *user_def_func;
-        const toy_block *block_stmt;
-    };
-    toy_stmt_list *cur_stmt;
-    map_val *symbols;
-} interp_frame;
-
-static const char *frame_type_names[] = {
-    "Loop body",
-    "If body",
-    "Pre-defined function",
-    "User-defined function",
-    "Block statement"
-};
-
-const char *frame_type_name(frame_type type)
-{
-    return frame_type_names[type];
-}
-
 typedef struct toy_interp_struct {
     toy_function main_program;
     interp_frame *cur_frame;
@@ -72,167 +46,25 @@ typedef struct toy_interp_struct {
 
 static run_stmt_result block_stmt(toy_interp *interp, const toy_block *block);
 
-static interp_frame *alloc_frame_loop_body(const toy_block *loop_body, interp_frame *prev)
+interp_frame *interp_cur_frame(toy_interp *interp)
 {
-    interp_frame *frame = mymalloc(interp_frame);
-    frame->type = FRAME_LOOP_BODY;
-    frame->prev = prev;
-    frame->loop_body = loop_body;
-    frame->symbols = NULL;
-    return frame;
+    return interp->cur_frame;
 }
 
-static interp_frame *alloc_frame_if_body(const toy_block *if_body, interp_frame *prev)
+void interp_set_cur_frame(toy_interp *interp, interp_frame *frame)
 {
-    interp_frame *frame = mymalloc(interp_frame);
-    frame->type = FRAME_IF_BODY;
-    frame->prev = prev;
-    frame->if_body = if_body;
-    frame->symbols = NULL;
-    return frame;
+    interp->cur_frame = frame;
 }
 
-static interp_frame *alloc_frame_block_stmt(const toy_block *block_stmt, interp_frame *prev)
-{
-    interp_frame *frame = mymalloc(interp_frame);
-    frame->type = FRAME_BLOCK_STMT;
-    frame->prev = prev;
-    frame->block_stmt = block_stmt;
-    frame->symbols = NULL;
-    return frame;
-}
-
-static interp_frame *alloc_frame_user_def_func(const toy_function *func_def, interp_frame *prev)
-{
-    interp_frame *frame = mymalloc(interp_frame);
-    frame->type = FRAME_USER_DEF_FUNC;
-    frame->prev = prev;
-    frame->user_def_func = func_def;
-    frame->symbols = NULL;
-    return frame;
-}
-
-static interp_frame *alloc_frame_pre_def_func(const toy_function *func_def, interp_frame *prev)
-{
-    interp_frame *frame = mymalloc(interp_frame);
-    frame->type = FRAME_PRE_DEF_FUNC;
-    frame->prev = prev;
-    frame->pre_def_func = func_def;
-    frame->symbols = NULL;
-    return frame;
-}
-
-static void free_frame(interp_frame *frame)
-{
-    if (frame->symbols) {
-        map_val_free(frame->symbols);
-    }
-    free(frame);
-}
-
-#if DEBUG_STACK
-static void dump_frame(FILE *f, const interp_frame *frame)
-{
-    switch (frame->type) {
-    case FRAME_BLOCK_STMT:
-        fprintf(f, "block_stmt %p", frame->block_stmt);
-        break;
-    case FRAME_IF_BODY:
-        fprintf(f, "if_body %p", frame->if_body);
-        break;
-    case FRAME_LOOP_BODY:
-        fprintf(f, "loop_body %p", frame->loop_body);
-        break;
-    case FRAME_PRE_DEF_FUNC:
-        fprintf(f, "Predefined function %s", frame->pre_def_func->name);
-        break;
-    case FRAME_USER_DEF_FUNC:
-        fprintf(f, "User-defined function %s", frame->user_def_func->name);
-        break;
-    default:
-        assert(0);
-        break;
-    }
-    fprintf(stderr, ", symbols=");
-    if (frame->symbols) {
-        // dump_map_keys(f, frame->symbols);
-        dump_map(f, frame->symbols);
-    } else {
-        fputs("null", f);
-    }
-}
-
-static void dump_stack(FILE *f, const char *context, const toy_interp *interp)
-{
-    fprintf(stderr, "STACK %s:\n", context);
-    size_t frame_num = 0;
-    for (const interp_frame *frame = interp->cur_frame; frame; frame = frame->prev, frame_num++) {
-        fprintf(stderr, "  Frame %02lu: ", (unsigned long) frame_num);
-        dump_frame(f, frame);
-        fprintf(stderr, "\n");
-    }
-}
-#else /* ndef DEBUG_STACK */
-#define dump_stack(f, context, interp) do { } while (0)
-#endif /* DEBUG_STACK */
-
-void push_context_if_body(toy_interp *interp, const toy_block *block)
-{
-    interp_frame *new_frame = alloc_frame_if_body(block, interp->cur_frame);
-    interp->cur_frame = new_frame;
-    interp->cur_frame->cur_stmt = block->stmts;
-    dump_stack(stderr, "after push if body", interp);
-}
-
-void push_context_loop_body(toy_interp *interp, const toy_block *block)
-{
-    interp_frame *new_frame = alloc_frame_loop_body(block, interp->cur_frame);
-    interp->cur_frame = new_frame;
-    interp->cur_frame->cur_stmt = block->stmts;
-    dump_stack(stderr, "after push loop body", interp);
-}
-
-static void push_context_pre_def_func(toy_interp *interp, const toy_function *func_def)
-{
-    interp_frame *new_frame = alloc_frame_pre_def_func(func_def, interp->cur_frame);
-    interp->cur_frame = new_frame;
-    interp->cur_frame->cur_stmt = func_def->code.stmts;
-    dump_stack(stderr, "after push predef func", interp);
-}
-
-static void push_context_user_def_func(toy_interp *interp, const toy_function *func_def)
-{
-    interp_frame *new_frame = alloc_frame_user_def_func(func_def, interp->cur_frame);
-    interp->cur_frame = new_frame;
-    interp->cur_frame->cur_stmt = func_def->code.stmts;
-    dump_stack(stderr, "after push user func", interp);
-}
-
-static void push_context_block_stmt(toy_interp *interp, const toy_block *block)
-{
-    interp_frame *new_frame = alloc_frame_block_stmt(block, interp->cur_frame);
-    interp->cur_frame = new_frame;
-    interp->cur_frame->cur_stmt = block->stmts;
-    dump_stack(stderr, "after push block stmt", interp);
-}
-
-void pop_context(toy_interp *interp)
-{
-    interp_frame *prev = interp->cur_frame->prev;
-    free_frame(interp->cur_frame);
-    interp->cur_frame = prev;
-    dump_stack(stderr, "after pop", interp);
-}
-
-static int is_predefined(toy_str name)
+static toy_bool is_predefined(toy_str name)
 {
     if (lookup_predefined_constant(name)) {
-        return 1;
+        return TOY_TRUE;
     }
     if (func_lookup_predef_name(name)) {
-        return 1;
+        return TOY_TRUE;
     }
-    return 0;
+    return TOY_FALSE;
 }
 
 static int lookup_identifier_in_frame(interp_frame *frame, toy_val *result, toy_str name)
@@ -349,7 +181,7 @@ void create_variable_expr(toy_interp *interp, const toy_str name, const toy_expr
 {
     toy_val value;
     expr_assert_valid(expr);
-    eval_expr(interp, &value, expr);
+    expr_eval(interp, &value, expr);
     val_assert_valid(&value);
     create_variable_value(interp, name, &value);
 }
@@ -373,7 +205,7 @@ static void create_function(toy_interp *interp, const toy_function *def)
 static void op_assign(toy_interp *interp, toy_val *result, toy_str name, toy_expr *value)
 {
     toy_val value_result;
-    eval_expr(interp, &value_result, value);
+    expr_eval(interp, &value_result, value);
     set_variable_value(interp, name, &value_result);
     *result = value_result;
 }
@@ -388,7 +220,7 @@ static item_callback_result append_val_list_callback(void *cookie, size_t index,
     append_cb_args *args = (append_cb_args *) cookie;
     toy_expr *expr = expr_list_payload(list);
     toy_val value;
-    eval_expr(args->interp, &value, expr);
+    expr_eval(args->interp, &value, expr);
     assert(args->result->type == VAL_LIST);
     val_list_append(args->result->list, &value);
     return CONTINUE_ENUMERATION;
@@ -399,7 +231,7 @@ static void eval_expr_list(toy_interp *interp, toy_val *result, const toy_expr_l
     result->type = VAL_LIST;
     if (expr_list) {
         toy_val element;
-        eval_expr(interp, &element, expr_list->expr);
+        expr_eval(interp, &element, expr_list->expr);
         result->list = val_list_alloc(&element);
         append_cb_args append_args = { .interp = interp, .result = result };
         /* TODO: Remove this ugly -> next, which is here so we distinguish betwen initial list alloc and append cases */
@@ -543,58 +375,49 @@ run_stmt_result call_func(toy_interp *interp, toy_str func_name, const toy_expr_
     return res;
 }
 
-static void list_lookup(toy_interp *interp, toy_val *result, toy_val_list *val_list, toy_expr *index)
+static void list_lookup(toy_interp *interp, toy_val *result, toy_val_list *val_list, toy_val *index)
 {
-    toy_val index_result;
-    eval_expr(interp, &index_result, index);
-    if (index_result.type == VAL_NUM) {
-        if (index_result.num < 0) {
-            invalid_val_list_index(val_list, index_result.num);
+    if (index->type == VAL_NUM) {
+        if (index->num < 0) {
+            invalid_val_list_index(val_list, index->num);
         } else {
-            toy_val *lookup_result = val_list_index(val_list, index_result.num);
+            toy_val *lookup_result = val_list_index(val_list, index->num);
             if (lookup_result) {
                 *result = *lookup_result;
             } else {
-                invalid_val_list_index(val_list, index_result.num);
+                invalid_val_list_index(val_list, index->num);
             }
         }
     } else {
-        invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
+        invalid_operand(EXPR_COLLECTION_LOOKUP, index);
     }
 }
 
-static void map_lookup(toy_interp *interp, toy_val *result, map_val *collection, toy_expr *index)
+static void map_lookup(toy_interp *interp, toy_val *result, map_val *collection, toy_val *index)
 {
-    toy_val index_result;
-    eval_expr(interp, &index_result, index);
-    if (index_result.type == VAL_STR) {
-        toy_val *existing_value = map_val_get(collection, index_result.str);
+    if (index->type == VAL_STR) {
+        toy_val *existing_value = map_val_get(collection, index->str);
         if (existing_value) {
             *result = *existing_value;
         } else {
             *result = null_val;
         }
     } else {
-        invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
+        invalid_operand(EXPR_COLLECTION_LOOKUP, index);
     }
 }
 
-static void str_lookup(toy_interp *interp, toy_val *result, toy_str collection, toy_expr *index)
+static void str_lookup(toy_interp *interp, toy_val *result, toy_str collection, toy_val *index)
 {
-    toy_val index_result;
-    eval_expr(interp, &index_result, index);
-    if (index_result.type == VAL_NUM) {
-        if (index_result.num >= 0 && index_result.num < strlen(collection)) {
-            result->type = VAL_STR;
-            /* TODO: Hide string memory management */
-            result->str = malloc(2);
-            result->str[0] = collection[(int) index_result.num];
-            result->str[1] = '\0';
+    if (index->type == VAL_NUM) {
+        if (index->num >= 0 && index->num < strlen(collection)) {
+            result->type = VAL_NUM;
+            result->num = collection[(int) index->num];
         } else {
-            invalid_string_index(collection, index_result.num);
+            invalid_string_index(collection, index->num);
         }
     } else {
-        invalid_operand(EXPR_COLLECTION_LOOKUP, &index_result);
+        invalid_operand(EXPR_COLLECTION_LOOKUP, index);
     }
 }
 
@@ -603,12 +426,14 @@ static void collection_lookup(toy_interp *interp, toy_val *result, toy_str ident
     toy_val collection;
     int already_exists = lookup_identifier(interp, &collection, identifier);
     if (already_exists) {
+        toy_val index_result;
+        expr_eval(interp, &index_result, index);    
         if (collection.type == VAL_LIST) {
-            list_lookup(interp, result, collection.list, index);
+            list_lookup(interp, result, collection.list, &index_result);
         } else if (collection.type == VAL_MAP) {
-            map_lookup(interp, result, collection.map, index);
+            map_lookup(interp, result, collection.map, &index_result);
         } else if (collection.type == VAL_STR) {
-            str_lookup(interp, result, collection.str, index);
+            str_lookup(interp, result, collection.str, &index_result);
         } else {
             invalid_operand(EXPR_COLLECTION_LOOKUP, &collection);
         }
@@ -695,7 +520,7 @@ static item_callback_result map_entry_callback(void *cookie, size_t index, const
     map_entry_cb_args *args = (map_entry_cb_args *) cookie;
     const toy_map_entry *map_entry = map_entry_list_payload_const(list);
     toy_val value;
-    eval_expr(args->interp, &value, map_entry->value);
+    expr_eval(args->interp, &value, map_entry->value);
     map_val_set(args->map, map_entry->key, &value);
     return CONTINUE_ENUMERATION;
 }
@@ -709,7 +534,7 @@ static void eval_map(toy_interp *interp, toy_val *result, const toy_map_entry_li
     assert(res == ENUMERATION_COMPLETE);
 }
 
-void eval_expr(toy_interp *interp, toy_val *result, const toy_expr *expr)
+void expr_eval(toy_interp *interp, toy_val *result, const toy_expr *expr)
 {
     if (!expr) {
         *result = null_val;
@@ -862,7 +687,7 @@ toy_bool condition_truthy(toy_interp *interp, const toy_expr *expr)
 {
     if (expr) {
         toy_val cond_result;
-        eval_expr(interp, &cond_result, expr);
+        expr_eval(interp, &cond_result, expr);
         return val_truthy(&cond_result);
     }
     return TOY_TRUE;
@@ -879,7 +704,7 @@ run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt)
         return REACHED_CONTINUE;
     case STMT_EXPR:
         toy_val result;
-        eval_expr(interp, &result, stmt->expr_stmt.expr);
+        expr_eval(interp, &result, stmt->expr_stmt.expr);
         /* throw result away */
         return EXECUTED_STATEMENT;
     case STMT_FOR:
@@ -962,7 +787,7 @@ void free_interp(toy_interp *interp)
     pop_context(interp);
     while (interp->cur_frame) {
         interp_frame *prev = interp->cur_frame->prev;
-        free_frame(interp->cur_frame);
+        interp_frame_free(interp->cur_frame);
         interp->cur_frame = prev;
     }
     free(interp);

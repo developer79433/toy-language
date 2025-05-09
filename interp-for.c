@@ -1,6 +1,7 @@
 #include <assert.h>
 
 #include "interp.h"
+#include "interp-frame.h"
 
 static void illegal_instruction_in_for_stmt_at_end(const toy_stmt *stmt)
 {

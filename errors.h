@@ -7,6 +7,7 @@
 #include "stmt-types.h"
 #include "interp-types.h"
 #include "function-types.h"
+#include "interp-frame-types.h"
 
 void fatal_error(const char *fmt, ...);
 void undeclared_identifier(const toy_str name);
