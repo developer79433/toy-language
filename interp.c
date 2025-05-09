@@ -57,17 +57,6 @@ void interp_set_cur_frame(toy_interp *interp, interp_frame *frame)
     interp->cur_frame = frame;
 }
 
-static toy_bool is_predefined(toy_str name)
-{
-    if (lookup_predefined_constant(name)) {
-        return TOY_TRUE;
-    }
-    if (func_lookup_predef_name(name)) {
-        return TOY_TRUE;
-    }
-    return TOY_FALSE;
-}
-
 static get_result lookup_identifier_in_frame(interp_frame *frame, toy_val *result, toy_str name)
 {
     if (frame->symbols) {
@@ -83,7 +72,7 @@ static get_result lookup_identifier_in_frame(interp_frame *frame, toy_val *resul
 static get_result lookup_user_identifier(toy_interp *interp, toy_val *result, toy_str name)
 {
     assert(!lookup_predefined_constant(name));
-    assert(!func_lookup_predef_name(name));
+    assert(!predef_func_lookup_name(name));
     for (interp_frame *frame = interp->cur_frame; frame; frame = frame->prev) {
         get_result found = lookup_identifier_in_frame(frame, result, name);
         if (found == GET_FOUND) {
@@ -100,7 +89,7 @@ get_result lookup_identifier(toy_interp *interp, toy_val *result, const toy_str 
         *result = *((toy_val *) predef_const);
         return GET_FOUND;
     }
-    const toy_function *predef_func = func_lookup_predef_name(name);
+    const toy_function *predef_func = predef_func_lookup_name(name);
     if (predef_func) {
         result->type = VAL_FUNC;
         result->func = (toy_function *) predef_func;

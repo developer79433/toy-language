@@ -2,6 +2,7 @@
 
 #include "constants.h"
 #include "util.h"
+#include "predef-function.h"
 
 const toy_val null_val = { .type = VAL_NULL };
 const toy_expr null_expr = { .type = EXPR_LITERAL, .val = null_val };
@@ -26,4 +27,15 @@ const toy_val *lookup_predefined_constant(toy_str name)
         }
     }
     return NULL;
+}
+
+toy_bool is_predefined(toy_str name)
+{
+    if (lookup_predefined_constant(name)) {
+        return TOY_TRUE;
+    }
+    if (predef_func_lookup_name(name)) {
+        return TOY_TRUE;
+    }
+    return TOY_FALSE;
 }

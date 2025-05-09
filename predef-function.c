@@ -440,7 +440,7 @@ static const toy_function predefined_functions[] = {
     { .name = "print", .type = FUNC_PREDEFINED, .predef = predefined_print,    .param_names = (toy_str_list *) &INFINITE_PARAMS }
 };
 
-const toy_function *func_lookup_predef_name(const toy_str name)
+const toy_function *predef_func_lookup_name(const toy_str name)
 {
     /* TODO: Use pointer array enumerator */
     for (
@@ -455,7 +455,7 @@ const toy_function *func_lookup_predef_name(const toy_str name)
     return NULL;
 }
 
-const toy_function *func_lookup_predef_addr(predefined_func_addr func_addr)
+const toy_function *predef_func_lookup_addr(predefined_func_addr func_addr)
 {
     /* TODO: Use pointer array enumerator */
     for (
