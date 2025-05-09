@@ -21,7 +21,7 @@ run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt);
 run_stmt_result run_one_stmt(toy_interp *interp, toy_stmt *stmt);
 run_stmt_result run_current_block(toy_interp *interp);
 void create_variable_expr(toy_interp *interp, const toy_str name, const toy_expr *expr);
-int lookup_identifier(toy_interp *interp, toy_val *result, const toy_str name);
+get_result lookup_identifier(toy_interp *interp, toy_val *result, const toy_str name);
 toy_bool condition_truthy(toy_interp *interp, const toy_expr *expr);
 run_stmt_result call_func(toy_interp *interp, toy_str func_name, const toy_expr_list *args);
 run_stmt_result run_toy_function_expr_list(toy_interp *interp, toy_function *def, const toy_expr_list *args);

@@ -67,44 +67,43 @@ static toy_bool is_predefined(toy_str name)
     return TOY_FALSE;
 }
 
-static int lookup_identifier_in_frame(interp_frame *frame, toy_val *result, toy_str name)
+static get_result lookup_identifier_in_frame(interp_frame *frame, toy_val *result, toy_str name)
 {
     if (frame->symbols) {
         toy_val *existing_value = map_val_get(frame->symbols, name);
         if (existing_value) {
             *result = *existing_value;
-            return 1;
+            return GET_FOUND;
         }
     }
-    return 0;
+    return GET_NOT_FOUND;
 }
 
-static int lookup_user_identifier(toy_interp *interp, toy_val *result, toy_str name)
+static get_result lookup_user_identifier(toy_interp *interp, toy_val *result, toy_str name)
 {
     assert(!lookup_predefined_constant(name));
     assert(!func_lookup_predef_name(name));
     for (interp_frame *frame = interp->cur_frame; frame; frame = frame->prev) {
-        int found = lookup_identifier_in_frame(frame, result, name);
-        if (found) {
-            return 1;
+        get_result found = lookup_identifier_in_frame(frame, result, name);
+        if (found == GET_FOUND) {
+            return GET_FOUND;
         }
     }
-    *result = null_val;
-    return 0;
+    return GET_NOT_FOUND;
 }
 
-int lookup_identifier(toy_interp *interp, toy_val *result, const toy_str name)
+get_result lookup_identifier(toy_interp *interp, toy_val *result, const toy_str name)
 {
     const toy_val *predef_const = lookup_predefined_constant(name);
     if (predef_const) {
         *result = *((toy_val *) predef_const);
-        return 1;
+        return GET_FOUND;
     }
     const toy_function *predef_func = func_lookup_predef_name(name);
     if (predef_func) {
         result->type = VAL_FUNC;
         result->func = (toy_function *) predef_func;
-        return 1;
+        return GET_FOUND;
     }
     return lookup_user_identifier(interp, result, name);
 }
@@ -138,15 +137,15 @@ static set_result set_variable_value_policy(toy_interp *interp, const toy_str na
         readonly_identifier(name);
     }
     toy_val old_value;
-    int already_exists = lookup_identifier(interp, &old_value, name);
+    get_result get_res = lookup_identifier(interp, &old_value, name);
     switch (policy) {
     case POLICY_MUST_ALREADY_EXIST:
-        if (!already_exists) {
+        if (get_res == GET_NOT_FOUND) {
             undeclared_identifier(name);
         }
         break;
     case POLICY_MUST_NOT_ALREADY_EXIST:
-        if (already_exists) {
+        if (get_res == GET_FOUND) {
             duplicate_identifier(name);
         }
         break;
@@ -154,13 +153,13 @@ static set_result set_variable_value_policy(toy_interp *interp, const toy_str na
         assert(0);
         break;
     }
-    set_result res = set_symbol(interp, name, value);
+    set_result set_res = set_symbol(interp, name, value);
     assert(
-        (res == SET_NEW && policy == POLICY_MUST_NOT_ALREADY_EXIST)
+        (set_res == SET_NEW && policy == POLICY_MUST_NOT_ALREADY_EXIST)
         ||
-        (res == SET_EXISTING && policy == POLICY_MUST_ALREADY_EXIST)
+        (set_res == SET_EXISTING && policy == POLICY_MUST_ALREADY_EXIST)
     );
-    return res;
+    return set_res;
 }
 
 static void set_variable_value(toy_interp *interp, const toy_str name, const toy_val *value)
@@ -192,14 +191,13 @@ static void create_function(toy_interp *interp, const toy_function *def)
         readonly_identifier(def->name);
     }
     toy_val old_value;
-    int already_exists = lookup_identifier(interp, &old_value, def->name);
-    if (already_exists) {
+    get_result get_res = lookup_identifier(interp, &old_value, def->name);
+    if (get_res == GET_FOUND) {
         duplicate_identifier(def->name);
     }
-    /* TODO: Remove cast below using const in .func member? Beware const poisoning... */
-    toy_val func_val = { .type = VAL_FUNC, .func = (toy_function *) def };
-    set_result res = set_symbol(interp, def->name, &func_val);
-    assert(res == SET_NEW);
+    const toy_val func_val = { .type = VAL_FUNC, .func = (toy_function *) def };
+    set_result set_res = set_symbol(interp, def->name, &func_val);
+    assert(set_res == SET_NEW);
 }
 
 static void op_assign(toy_interp *interp, toy_val *result, toy_str name, toy_expr *value)
@@ -346,8 +344,8 @@ run_stmt_result call_func(toy_interp *interp, toy_str func_name, const toy_expr_
 {
     run_stmt_result res;
     toy_val expr;
-    int already_exists = lookup_identifier(interp, &expr, func_name);
-    if (already_exists) {
+    get_result get_res = lookup_identifier(interp, &expr, func_name);
+    if (get_res == GET_FOUND) {
         if (expr.type == VAL_FUNC) {
             toy_function *def = expr.func;
             if (def->param_names == &INFINITE_PARAMS) {
@@ -424,8 +422,8 @@ static void str_lookup(toy_interp *interp, toy_val *result, toy_str collection, 
 static void collection_lookup(toy_interp *interp, toy_val *result, toy_str identifier, toy_expr *index)
 {
     toy_val collection;
-    int already_exists = lookup_identifier(interp, &collection, identifier);
-    if (already_exists) {
+    get_result get_res = lookup_identifier(interp, &collection, identifier);
+    if (get_res == GET_FOUND) {
         toy_val index_result;
         expr_eval(interp, &index_result, index);    
         if (collection.type == VAL_LIST) {
@@ -445,8 +443,8 @@ static void collection_lookup(toy_interp *interp, toy_val *result, toy_str ident
 static void op_postfix_decrement(toy_interp *interp, toy_val *result, toy_str id)
 {
     toy_val cur_value;
-    int found = lookup_identifier(interp, &cur_value, id);
-    if (found) {
+    get_result get_res = lookup_identifier(interp, &cur_value, id);
+    if (get_res == GET_FOUND) {
         if (cur_value.type == VAL_NUM) {
             toy_val new_value = { .type = VAL_NUM, .num = cur_value.num - 1 };
             set_variable_value(interp, id, &new_value);
@@ -462,8 +460,8 @@ static void op_postfix_decrement(toy_interp *interp, toy_val *result, toy_str id
 static void op_postfix_increment(toy_interp *interp, toy_val *result, toy_str id)
 {
     toy_val cur_value;
-    int found = lookup_identifier(interp, &cur_value, id);
-    if (found) {
+    get_result get_res = lookup_identifier(interp, &cur_value, id);
+    if (get_res == GET_FOUND) {
         if (cur_value.type == VAL_NUM) {
             toy_val new_value = { .type = VAL_NUM, .num = cur_value.num + 1 };
             set_variable_value(interp, id, &new_value);
@@ -479,8 +477,8 @@ static void op_postfix_increment(toy_interp *interp, toy_val *result, toy_str id
 static void op_prefix_decrement(toy_interp *interp, toy_val *result, toy_str id)
 {
     toy_val cur_value;
-    int found = lookup_identifier(interp, &cur_value, id);
-    if (found) {
+    get_result get_res = lookup_identifier(interp, &cur_value, id);
+    if (get_res == GET_FOUND) {
         if (cur_value.type == VAL_NUM) {
             toy_val new_value = { .type = VAL_NUM, .num = cur_value.num - 1 };
             set_variable_value(interp, id, &new_value);
@@ -496,8 +494,8 @@ static void op_prefix_decrement(toy_interp *interp, toy_val *result, toy_str id)
 static void op_prefix_increment(toy_interp *interp, toy_val *result, toy_str id)
 {
     toy_val cur_value;
-    int found = lookup_identifier(interp, &cur_value, id);
-    if (found) {
+    get_result get_res = lookup_identifier(interp, &cur_value, id);
+    if (get_res == GET_FOUND) {
         if (cur_value.type == VAL_NUM) {
             toy_val new_value = { .type = VAL_NUM, .num = cur_value.num + 1 };
             set_variable_value(interp, id, &new_value);
@@ -581,8 +579,8 @@ void expr_eval(toy_interp *interp, toy_val *result, const toy_expr *expr)
         op_gte(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_IDENTIFIER:
-        int found = lookup_identifier(interp, result, expr->val.str);
-        if (!found) {
+        get_result get_res = lookup_identifier(interp, result, expr->val.str);
+        if (get_res == GET_NOT_FOUND) {
             undeclared_identifier(expr->val.str);
         }
         break;
