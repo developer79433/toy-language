@@ -6,6 +6,7 @@
 #include <math.h>
 
 #include "mymalloc.h"
+#include "str.h"
 #include "log.h"
 #include "dump.h"
 #include "interp.h"
@@ -289,6 +290,8 @@ static set_result set_symbol(toy_interp *interp, const toy_str name, const toy_v
 /* TODO: Move these into symbol-table.c */
 static set_result set_variable_value_policy(toy_interp *interp, const toy_str name, const toy_val *value, set_variable_policy policy)
 {
+    str_assert_valid(name);
+    val_assert_valid(value);
 #if DEBUG_VARIABLES
     fprintf(stderr, "Set %s variable '%s' to ", ((POLICY_MUST_ALREADY_EXIST == policy) ? "existing" : "new"), name);
     val_dump(stderr, value);
@@ -1035,6 +1038,8 @@ static item_callback_result var_decl_callback(void *cookie, size_t index, const 
 {
     var_decl_cb_args *args = (var_decl_cb_args *) cookie;
     const toy_var_decl *decl = var_decl_list_payload_const(var_decl_list);
+    str_assert_valid(decl->name);
+    expr_assert_valid(decl->value);
     create_variable_expr(args->interp, decl->name, decl->value);
     return CONTINUE_ENUMERATION;
 }

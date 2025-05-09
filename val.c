@@ -106,10 +106,40 @@ toy_bool val_list_equal(const toy_val_list *list1, const toy_val_list *list2)
     return TOY_TRUE;
 }
 
-toy_bool map_equal(const map_val *map1, const map_val *map2)
+typedef struct test_entry_same_other_map_cb_args_struct {
+    const map_val *other_map;
+} test_entry_same_other_map_cb_args;
+
+static item_callback_result test_entry_othermap_callback(void *cookie, const map_val_entry *entry)
 {
-    /* TODO */
-    assert(0);
+    test_entry_same_other_map_cb_args *args = (test_entry_same_other_map_cb_args *) cookie;
+    assert(args->other_map != NULL);
+    map_val_assert_valid(args->other_map);
+    const toy_val *other_map_val = map_val_get_const(args->other_map, entry->key);
+    if (other_map_val == NULL) {
+        return STOP_ENUMERATION;
+    }
+    if (vals_nequal(&entry->value, other_map_val)) {
+        return STOP_ENUMERATION;
+    }
+    return CONTINUE_ENUMERATION;
+}
+
+/* TODO: Belongs in map_val.c */
+toy_bool map_val_equal(const map_val *map1, const map_val *map2)
+{
+    if (map1 == map2) {
+        return TOY_TRUE;
+    }
+    if (map_val_size(map1) != map_val_size(map2)) {
+        return TOY_FALSE;
+    }
+    test_entry_same_other_map_cb_args entry_exists_args = { .other_map = map2 };
+    enumeration_result res = map_val_foreach_const(map1, test_entry_othermap_callback, &entry_exists_args);
+    if (res == ENUMERATION_COMPLETE) {
+        return TOY_TRUE;
+    }
+    assert(res == ENUMERATION_INTERRUPTED);
     return TOY_FALSE;
 }
 
@@ -126,7 +156,7 @@ toy_bool vals_equal(const toy_val *val1, const toy_val *val2)
             return val_list_equal(val1->list, val2->list);
             break;
         case VAL_MAP:
-            return map_equal(val1->map, val2->map);
+            return map_val_equal(val1->map, val2->map);
             break;
         case VAL_NULL:
             return TOY_TRUE;

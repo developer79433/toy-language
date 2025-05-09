@@ -27,7 +27,7 @@ enumeration_result map_buf_foreach(map_buf *map, map_buf_entry_callback callback
 
 enumeration_result map_buf_foreach_const(const map_buf *map, const_map_buf_entry_callback callback, void *cookie)
 {
-    return generic_map_foreach_const((generic_map *) map, (const_generic_map_entry_callback) callback, cookie);
+    return generic_map_foreach_const((const generic_map *) map, (const_generic_map_entry_callback) callback, cookie);
 }
 
 map_buf_entry *map_buf_get_entry(map_buf *map, const toy_str key)

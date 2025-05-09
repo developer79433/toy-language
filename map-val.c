@@ -15,7 +15,7 @@ map_val *map_val_alloc(void)
     return (map_val *) map_buf_alloc();
 }
 
-set_result map_val_set(map_val *map, const toy_str key, toy_val *value)
+set_result map_val_set(map_val *map, const toy_str key, const toy_val *value)
 {
     val_assert_valid(value);
     return map_buf_set((map_buf *) map, key, value, sizeof(*value));
@@ -40,9 +40,9 @@ void map_val_free(map_val *map)
     return map_buf_free((map_buf *) map);
 }
 
-size_t map_val_size(map_val *map)
+size_t map_val_size(const map_val *map)
 {
-    return map_buf_size((map_buf *) map);
+    return map_buf_size((const map_buf *) map);
 }
 
 delete_result map_val_delete(map_val *map, const toy_str key)
@@ -77,17 +77,26 @@ void map_val_dump(FILE *f, const map_val *map)
 {
     dump_item_cb_args cbargs = { .f = f, .output_anything = 0 };
     fputc('{', f);
-    map_val_foreach_const(map, dump_item_callback, &cbargs);
+    enumeration_result res = map_val_foreach_const(map, dump_item_callback, &cbargs);
+    assert(res == ENUMERATION_COMPLETE);
     if (cbargs.output_anything) {
         fputc(' ', f);
     }
     fputc('}', f);
 }
 
-void map_val_assert_valid(map_val *map)
+static item_callback_result item_assert_valid_callback(void *cookie, const map_val_entry *entry)
 {
-    /* TODO: Validate values */
-    return map_buf_assert_valid((map_buf *) map);
+    str_assert_valid(entry->key);
+    val_assert_valid(&entry->value);
+    return CONTINUE_ENUMERATION;
+}
+
+void map_val_assert_valid(const map_val *map)
+{
+    enumeration_result res = map_val_foreach_const(map, item_assert_valid_callback, NULL);
+    assert(res == ENUMERATION_COMPLETE);
+    return map_buf_assert_valid((const map_buf *) map);
 }
 
 enumeration_result map_val_foreach(map_val *map, map_val_entry_callback callback, void *cookie)

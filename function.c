@@ -239,7 +239,7 @@ typedef struct val_list_foreach_args_struct {
     toy_func_def *toy_func;
 } val_list_foreach_args;
 
-static item_callback_result list_foreach_item_callback(void *cookie, size_t index, const toy_val_list *list)
+static item_callback_result val_list_foreach_item_callback(void *cookie, size_t index, const toy_val_list *list)
 {
     val_list_foreach_args *args = (val_list_foreach_args *) cookie;
     const toy_val *value = val_list_payload_const(list);
@@ -259,7 +259,7 @@ static run_stmt_result predefined_list_foreach(toy_interp *interp, const toy_val
         if (arg2->type == VAL_FUNC) {
             toy_func_def *toy_func = arg2->func;
             val_list_foreach_args cbargs = { .toy_func = toy_func, .interp = interp };
-            enumeration_result res = val_list_foreach_const(list, list_foreach_item_callback, &cbargs);
+            enumeration_result res = val_list_foreach_const(list, val_list_foreach_item_callback, &cbargs);
             assert(res == ENUMERATION_COMPLETE);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
@@ -281,6 +281,7 @@ static item_callback_result val_list_filter_item_callback(void *cookie, size_t i
     val_list_filter_args *args = (val_list_filter_args *) cookie;
     const toy_val *list_elem = val_list_payload_const(list);
     val_assert_valid(list_elem);
+    /* TODO: This aliases the arg. Does that allow the user function to modify the value that gets appended? */
     run_stmt_result res = run_toy_function_val(args->foreach_args.interp, args->foreach_args.toy_func, list_elem);
     toy_bool truthy_return;
     if (res == REACHED_RETURN) {
@@ -293,14 +294,8 @@ static item_callback_result val_list_filter_item_callback(void *cookie, size_t i
     if (truthy_return) {
         val_list_assert_valid(args->list_to_append_to);
         if (args->list_to_append_to == NULL) {
-            log_printf("\nList elem to append to null list:\n");
-            val_dump(stderr, list_elem);
-            log_printf("\n");
             args->list_to_append_to = val_list_alloc(list_elem);
         } else {
-            log_printf("\nList elem to append to existing list:\n");
-            val_dump(stderr, list_elem);
-            log_printf("\n");
             args->list_to_append_to = val_list_append(args->list_to_append_to, list_elem);
         }
         val_list_assert_valid(args->list_to_append_to);
@@ -318,15 +313,13 @@ static run_stmt_result predefined_list_filter(toy_interp *interp, const toy_val_
         if (arg2->type == VAL_FUNC) {
             toy_func_def *user_func = arg2->func;
             /* TODO: Use val_list_find_all_const */
-            toy_val *return_value = interp_get_return_value(interp);
-            return_value->type = VAL_LIST;
-            return_value->list = NULL;
-            val_list_filter_args cb_args = { .list_to_append_to = return_value->list, .foreach_args.interp = interp, .foreach_args.toy_func = user_func };
+            toy_val list_to_return = { .type = VAL_LIST, .list = NULL };
+            val_list_filter_args cb_args = { .list_to_append_to = list_to_return.list, .foreach_args.interp = interp, .foreach_args.toy_func = user_func };
             enumeration_result res = val_list_foreach_const(list, val_list_filter_item_callback, &cb_args);
             assert(ENUMERATION_COMPLETE == res);
-            return_value->type = VAL_LIST;
-            return_value->list = cb_args.list_to_append_to;
-            val_list_assert_valid(return_value->list);
+            assert(list_to_return.type == VAL_LIST);
+            val_list_assert_valid(list_to_return.list);
+            interp_set_return_value(interp, &list_to_return);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
         }
@@ -375,9 +368,68 @@ static run_stmt_result predefined_map_foreach(toy_interp *interp, const toy_val_
     return REACHED_BLOCK_END;
 }
 
+typedef struct map_filter_cb_args_struct {
+    map_foreach_args foreach_args;
+    map_val *map_to_insert_into;
+} map_filter_cb_args;
+
+static item_callback_result map_filter_callback(void *cookie, const map_val_entry *entry)
+{
+    val_assert_valid(&entry->value);
+    map_filter_cb_args *args = (map_filter_cb_args *) cookie;
+    map_val_assert_valid(args->map_to_insert_into);
+    const toy_val key_val = { .type = VAL_STR, .str = entry->key };
+    /* TODO: This aliases the args. Does that allow the user function to modify the value that gets inserted? */
+    const toy_val_list func_arg_2 = { .val = entry->value, .next = NULL };
+    const toy_val_list func_args = { .val = key_val, .next = (toy_val_list *) &func_arg_2 };
+    run_stmt_result res = run_toy_function_val_list(args->foreach_args.interp, args->foreach_args.func, &func_args);
+    toy_bool truthy_return;
+    if (res == REACHED_RETURN) {
+        toy_val *return_value = interp_get_return_value(args->foreach_args.interp);
+        val_assert_valid(return_value);
+        truthy_return = val_truthy(return_value);
+    } else {
+        truthy_return = TOY_FALSE;
+    }
+    if (truthy_return) {
+        assert(args->map_to_insert_into != NULL);
+        log_printf("\nReturn value before insert:\n");
+        map_val_dump(stderr, args->map_to_insert_into);
+        log_printf("\n");
+        set_result set_res = map_val_set(args->map_to_insert_into, entry->key, &entry->value);
+        log_printf("\nReturn value after insert:\n");
+        map_val_dump(stderr, args->map_to_insert_into);
+        log_printf("\n");
+        assert(SET_NEW == set_res);
+        map_val_assert_valid(args->map_to_insert_into);
+    }
+    return CONTINUE_ENUMERATION;
+}
+
 static run_stmt_result predefined_map_filter(toy_interp *interp, const toy_val_list *args)
 {
-    /* TODO */
+    assert(val_list_len(args) == 2);
+    const toy_val *arg1 = &args->val;
+    const toy_val *arg2 = &args->next->val;
+    if (arg1->type == VAL_MAP) {
+        map_val *map = arg1->map;
+        map_val_assert_valid(map);
+        if (arg2->type == VAL_FUNC) {
+            toy_func_def *func = arg2->func;
+            toy_val map_to_return = { .type = VAL_MAP, .map = map_val_alloc() };
+            map_val_assert_valid(map_to_return.map);
+            map_filter_cb_args filter_args = { .foreach_args.func = func, .foreach_args.interp = interp, .map_to_insert_into = map_to_return.map };
+            enumeration_result res = map_val_foreach_const(map, map_filter_callback, &filter_args);
+            assert(res == ENUMERATION_COMPLETE);
+            assert(map_to_return.type == VAL_MAP);
+            map_val_assert_valid(map_to_return.map);
+            interp_set_return_value(interp, &map_to_return);
+        } else {
+            invalid_argument_type(VAL_FUNC, arg2);
+        }
+    } else {
+        invalid_argument_type(VAL_LIST, arg1);
+    }
     return REACHED_RETURN;
 }
 
