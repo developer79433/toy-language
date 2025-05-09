@@ -23,6 +23,11 @@
 #include "stmt-list.h"
 #include "map-val.h"
 #include "var-decl-list.h"
+#include "interp-for.h"
+#include "interp-if.h"
+#include "interp-return.h"
+#include "interp-var-decl.h"
+#include "interp-while.h"
 
 #if 0
 #define DEBUG_STACK 1
@@ -171,7 +176,7 @@ static void dump_stack(FILE *f, const char *context, const toy_interp *interp)
 #define dump_stack(f, context, interp) do { } while (0)
 #endif /* DEBUG_STACK */
 
-static void push_context_if_body(toy_interp *interp, const toy_block *block)
+void push_context_if_body(toy_interp *interp, const toy_block *block)
 {
     interp_frame *new_frame = alloc_frame_if_body(block, interp->cur_frame);
     interp->cur_frame = new_frame;
@@ -179,7 +184,7 @@ static void push_context_if_body(toy_interp *interp, const toy_block *block)
     dump_stack(stderr, "after push if body", interp);
 }
 
-static void push_context_loop_body(toy_interp *interp, const toy_block *block)
+void push_context_loop_body(toy_interp *interp, const toy_block *block)
 {
     interp_frame *new_frame = alloc_frame_loop_body(block, interp->cur_frame);
     interp->cur_frame = new_frame;
@@ -211,7 +216,7 @@ static void push_context_block_stmt(toy_interp *interp, const toy_block *block)
     dump_stack(stderr, "after push block stmt", interp);
 }
 
-static void pop_context(toy_interp *interp)
+void pop_context(toy_interp *interp)
 {
     interp_frame *prev = interp->cur_frame->prev;
     free_frame(interp->cur_frame);
@@ -340,7 +345,7 @@ static void create_variable_value(toy_interp *interp, const toy_str name, const 
     assert(res == SET_NEW);
 }
 
-static void create_variable_expr(toy_interp *interp, const toy_str name, const toy_expr *expr)
+void create_variable_expr(toy_interp *interp, const toy_str name, const toy_expr *expr)
 {
     toy_val value;
     expr_assert_valid(expr);
@@ -397,7 +402,7 @@ static void eval_expr_list(toy_interp *interp, toy_val *result, const toy_expr_l
         eval_expr(interp, &element, expr_list->expr);
         result->list = val_list_alloc(&element);
         append_cb_args append_args = { .interp = interp, .result = result };
-        /* TODO: Remove this ugly -> next, which is there because we distinguish betwen initial list alloc and append cases */
+        /* TODO: Remove this ugly -> next, which is here so we distinguish betwen initial list alloc and append cases */
         enumeration_result res = expr_list_foreach(expr_list->next, append_val_list_callback, &append_args);
         assert(ENUMERATION_COMPLETE == res);
     } else {
@@ -829,7 +834,7 @@ void invalid_run_stmt_result(run_stmt_result stmt_result)
     assert(0);
 }
 
-static toy_bool is_control_result(run_stmt_result stmt_result)
+toy_bool is_control_result(run_stmt_result stmt_result)
 {
     switch (stmt_result) {
     case REACHED_BLOCK_END:
@@ -848,44 +853,12 @@ static toy_bool is_control_result(run_stmt_result stmt_result)
 }
 
 /* TODO: Delete me */
-static run_stmt_result run_one_stmt(toy_interp *interp, toy_stmt *stmt)
+run_stmt_result run_one_stmt(toy_interp *interp, toy_stmt *stmt)
 {
     return run_stmt(interp, stmt);
 }
 
-static void illegal_instruction_in_for_stmt_at_end(const toy_stmt *stmt)
-{
-    /* TODO */
-    assert(0);
-}
-
-static void run_for_stmt_at_end(toy_interp *interp, const toy_for_stmt *for_stmt)
-{
-    if (for_stmt->at_end) {
-        run_stmt_result res = run_one_stmt(interp, for_stmt->at_end);
-        if (is_control_result(res)) {
-            illegal_instruction_in_for_stmt_at_end(for_stmt->at_end);
-        }
-    }
-}
-
-static void illegal_instruction_in_for_stmt_at_start(const toy_stmt *stmt)
-{
-    /* TODO */
-    assert(0);
-}
-
-static void run_for_stmt_at_start(toy_interp *interp, const toy_for_stmt *for_stmt)
-{
-    if (for_stmt->at_start) {
-        run_stmt_result res = run_one_stmt(interp, for_stmt->at_start);
-        if (is_control_result(res)) {
-            illegal_instruction_in_for_stmt_at_start(for_stmt->at_start);
-        }
-    }
-}
-
-static toy_bool condition_truthy(toy_interp *interp, const toy_expr *expr)
+toy_bool condition_truthy(toy_interp *interp, const toy_expr *expr)
 {
     if (expr) {
         toy_val cond_result;
@@ -893,163 +866,6 @@ static toy_bool condition_truthy(toy_interp *interp, const toy_expr *expr)
         return val_truthy(&cond_result);
     }
     return TOY_TRUE;
-}
-
-static toy_bool for_stmt_condition_truthy(toy_interp *interp, const toy_for_stmt *for_stmt)
-{
-    return condition_truthy(interp, for_stmt->condition);
-}
-
-static run_stmt_result for_stmt(toy_interp *interp, const toy_for_stmt *for_stmt)
-{
-    run_stmt_result res = EXECUTED_STATEMENT;
-    for (
-        run_for_stmt_at_start(interp, for_stmt);
-        /* TRUE */;
-        run_for_stmt_at_end(interp, for_stmt)
-    ) {
-        push_context_loop_body(interp, &for_stmt->body);
-        if (!for_stmt_condition_truthy(interp, for_stmt)) {
-            pop_context(interp);
-            res = EXECUTED_STATEMENT;
-            break;
-        }
-        res = run_current_block(interp);
-        pop_context(interp);
-        toy_bool break_loop = TOY_FALSE;
-        switch (res) {
-        case REACHED_RETURN:
-            break_loop = TOY_TRUE;
-            break;
-        case REACHED_BREAK:
-            res = EXECUTED_STATEMENT;
-            break_loop = TOY_TRUE;
-            break;
-        case REACHED_CONTINUE:
-            continue;
-        case REACHED_BLOCK_END:
-        case EXECUTED_STATEMENT:
-            break;
-        default:
-            assert(0);
-            break;
-        }
-        if (break_loop) {
-            break;
-        }
-    }
-    return res;
-}
-
-static run_stmt_result run_if_stmt_block(toy_interp *interp, const toy_block *block)
-{
-    run_stmt_result res;
-    if (block) {
-        push_context_if_body(interp, block);
-        res = run_current_block(interp);
-        pop_context(interp);
-    } else {
-        res = EXECUTED_STATEMENT;
-    }
-    return res;
-}
-
-static toy_bool if_arm_condition_truthy(toy_interp *interp, const toy_if_arm *arm)
-{
-        /* TODO: Use if_arm_list_payload */
-        return condition_truthy(interp, arm->condition);
-}
-
-static run_stmt_result if_stmt(toy_interp *interp, const toy_if_stmt *if_stmt)
-{
-    const toy_if_arm *found_arm = NULL;
-    /* TODO: Use if_arm_list_foreach */
-    for (toy_if_arm_list *arm_list = if_stmt->arms; arm_list; arm_list = arm_list->next) {
-        if (if_arm_condition_truthy(interp, &arm_list->arm)) {
-            found_arm = &arm_list->arm;
-            break;
-        }
-    }
-    run_stmt_result res;
-    if (found_arm) {
-        res = run_if_stmt_block(interp, &found_arm->code);
-    } else {
-        res = run_if_stmt_block(interp, &if_stmt->elsepart);
-    }
-    if (res == REACHED_BLOCK_END) {
-        res = EXECUTED_STATEMENT;
-    }
-    return res;
-}
-
-static toy_bool while_stmt_condition_truthy(toy_interp *interp, const toy_while_stmt *while_stmt)
-{
-    return condition_truthy(interp, while_stmt->condition);
-}
-
-static run_stmt_result while_stmt(toy_interp *interp, const toy_while_stmt *while_stmt)
-{
-    run_stmt_result res;
-    for (;;) {
-        push_context_loop_body(interp, &while_stmt->body);
-        if (!while_stmt_condition_truthy(interp, while_stmt)) {
-            res = EXECUTED_STATEMENT;
-            pop_context(interp);
-            break;
-        }
-        res = run_current_block(interp);
-        pop_context(interp);
-        toy_bool break_loop = TOY_FALSE;
-        switch (res) {
-        case REACHED_RETURN:
-            break_loop = TOY_TRUE;
-            break;
-        case REACHED_BREAK:
-            res = EXECUTED_STATEMENT;
-            break_loop = TOY_TRUE;
-            break;
-        case REACHED_CONTINUE:
-            continue;
-        case REACHED_BLOCK_END:
-        case EXECUTED_STATEMENT:
-            break;
-        default:
-            assert(0);
-            break;
-        }
-        if (break_loop) {
-            break;
-        }
-    }
-    return res;
-}
-
-static run_stmt_result return_stmt(toy_interp *interp, const toy_return_stmt *return_stmt)
-{
-    eval_expr(interp, &interp->return_val, return_stmt->expr);
-    return REACHED_RETURN;
-}
-
-typedef struct var_decl_cb_args_struct {
-    toy_interp *interp;
-} var_decl_cb_args;
-
-static item_callback_result var_decl_callback(void *cookie, size_t index, const toy_var_decl_list *var_decl_list)
-{
-    var_decl_cb_args *args = (var_decl_cb_args *) cookie;
-    const toy_var_decl *decl = var_decl_list_payload_const(var_decl_list);
-    str_assert_valid(decl->name);
-    expr_assert_valid(decl->value);
-    create_variable_expr(args->interp, decl->name, decl->value);
-    return CONTINUE_ENUMERATION;
-}
-
-static run_stmt_result var_decl_stmt(toy_interp *interp, const toy_var_decl_list *var_decl_list)
-{
-    var_decl_cb_args var_decl_args = { .interp = interp };
-    enumeration_result res = var_decl_list_foreach_const(var_decl_list, var_decl_callback, &var_decl_args);
-    assert(res == ENUMERATION_COMPLETE);
-    return EXECUTED_STATEMENT;
 }
 
 run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt)
