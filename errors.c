@@ -57,43 +57,43 @@ void invalid_cast(toy_val_type val_type, const toy_val *val)
     fatal_error("Cannot convert to %s", val_type_name(val_type));
 }
 
-void duplicate_identifier(toy_str name)
+void duplicate_identifier(const toy_str name)
 {
     fatal_error("Attempt to redeclare identifier '%s'", name);
 }
 
-void undeclared_identifier(toy_str name)
+void undeclared_identifier(const toy_str name)
 {
     fatal_error("Undeclared identifier '%s'", name);
 }
 
-void readonly_identifier(toy_str name)
+void readonly_identifier(const toy_str name)
 {
     fatal_error("Read-only identifier '%s'", name);
 }
 
-void invalid_val_list_index(toy_val_list *list, toy_num index)
+void invalid_val_list_index(const toy_val_list *list, toy_num index)
 {
     val_list_dump(stderr, list);
     fputc('\n', stderr);
     fatal_error("Invalid val list index %d", index);
 }
 
-void too_few_arguments(toy_num expected, toy_expr_list *args)
+void too_few_arguments(toy_num expected, const toy_expr_list *args)
 {
     expr_list_dump(stderr, args);
     fputc('\n', stderr);
     fatal_error("Too few arguments: expected %d, received %d", expected, expr_list_len(args));
 }
 
-void too_many_arguments(toy_num expected, toy_expr_list *args)
+void too_many_arguments(toy_num expected, const toy_expr_list *args)
 {
     expr_list_dump(stderr, args);
     fputc('\n', stderr);
     fatal_error("Too many arguments: expected %d, received %d", expected, expr_list_len(args));
 }
 
-void invalid_string_index(toy_str str, toy_num index)
+void invalid_string_index(const toy_str str, toy_num index)
 {
     dump_str(stderr, str);
     fputc('\n', stderr);

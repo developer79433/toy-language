@@ -14,6 +14,8 @@
 #include "errors.h"
 #include "map-val.h"
 #include "map-val-entry-list.h"
+#include "log.h"
+#include "interp.h"
 
 void func_dump(FILE *f, const toy_func_def *def)
 {
@@ -34,7 +36,7 @@ void func_dump(FILE *f, const toy_func_def *def)
     fputs("}\n", f);
 }
 
-static void predefined_list_len(toy_interp *interp, toy_val *result, const toy_val_list *args)
+static run_stmt_result predefined_list_len(toy_interp *interp, const toy_val_list *args)
 {
     assert(args);
     const toy_val *arg = &args->val;
@@ -42,12 +44,14 @@ static void predefined_list_len(toy_interp *interp, toy_val *result, const toy_v
     if (arg->type != VAL_LIST) {
         invalid_argument_type(VAL_LIST, arg);
     }
-    result->type = VAL_NUM;
+    toy_val *return_val = interp_get_return_value(interp);
+    return_val->type = VAL_NUM;
     assert(arg->type == VAL_LIST);
-    result->num = val_list_len(arg->list);
+    return_val->num = val_list_len(arg->list);
+    return REACHED_RETURN;
 }
 
-static void predefined_map_len(toy_interp *interp, toy_val *result, const toy_val_list *args)
+static run_stmt_result predefined_map_len(toy_interp *interp, const toy_val_list *args)
 {
     assert(args);
     const toy_val *arg = &args->val;
@@ -55,12 +59,14 @@ static void predefined_map_len(toy_interp *interp, toy_val *result, const toy_va
     if (arg->type != VAL_MAP) {
         invalid_argument_type(VAL_MAP, arg);
     }
-    result->type = VAL_NUM;
+    toy_val *return_val = interp_get_return_value(interp);
+    return_val->type = VAL_NUM;
     assert(arg->type == VAL_MAP);
-    result->num = map_val_size(arg->map);
+    return_val->num = map_val_size(arg->map);
+    return REACHED_RETURN;
 }
 
-static void predefined_print(toy_interp *interp, toy_val *result, const toy_val_list *args)
+static run_stmt_result predefined_print(toy_interp *interp, const toy_val_list *args)
 {
     for (; args; args = args->next) {
         if (args->val.type == VAL_STR) {
@@ -70,7 +76,7 @@ static void predefined_print(toy_interp *interp, toy_val *result, const toy_val_
         }
         fputc('\n', stderr);
     }
-    *result = null_val;
+    return REACHED_BLOCK_END;
 }
 
 static void toy_assert_fail(const char * msg, size_t num_vals, ...)
@@ -86,7 +92,7 @@ static void toy_assert_fail(const char * msg, size_t num_vals, ...)
     fatal_error("Assertion failed: %s", msg);
 }
 
-static void predefined_assert_equal(toy_interp *interp, toy_val *result, const toy_val_list *args)
+static run_stmt_result predefined_assert_equal(toy_interp *interp, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
     const toy_val *arg1 = &args->val;
@@ -96,10 +102,10 @@ static void predefined_assert_equal(toy_interp *interp, toy_val *result, const t
     } else {
         toy_assert_fail("Should be equal", 2, arg1, arg2);
     }
-    *result = null_val;
+    return REACHED_BLOCK_END;
 }
 
-static void predefined_assert_not_equal(toy_interp *interp, toy_val *result, const toy_val_list *args)
+static run_stmt_result predefined_assert_not_equal(toy_interp *interp, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
     const toy_val *arg1 = &args->val;
@@ -109,10 +115,10 @@ static void predefined_assert_not_equal(toy_interp *interp, toy_val *result, con
     } else {
         toy_assert_fail("Should not be equal", 2, arg1, arg2);
     }
-    *result = null_val;
+    return REACHED_BLOCK_END;
 }
 
-static void predefined_assert_gt(toy_interp *interp, toy_val *result, const toy_val_list *args)
+static run_stmt_result predefined_assert_gt(toy_interp *interp, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
     const toy_val *arg1 = &args->val;
@@ -122,10 +128,10 @@ static void predefined_assert_gt(toy_interp *interp, toy_val *result, const toy_
     } else {
         toy_assert_fail("Should be greater than", 2, arg1, arg2);
     }
-    *result = null_val;
+    return REACHED_BLOCK_END;
 }
 
-static void predefined_assert_gte(toy_interp *interp, toy_val *result, const toy_val_list *args)
+static run_stmt_result predefined_assert_gte(toy_interp *interp, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
     const toy_val *arg1 = &args->val;
@@ -135,10 +141,10 @@ static void predefined_assert_gte(toy_interp *interp, toy_val *result, const toy
     } else {
         toy_assert_fail("Should be greater than or equal", 2, arg1, arg2);
     }
-    *result = null_val;
+    return REACHED_BLOCK_END;
 }
 
-static void predefined_assert_lt(toy_interp *interp, toy_val *result, const toy_val_list *args)
+static run_stmt_result predefined_assert_lt(toy_interp *interp, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
     const toy_val *arg1 = &args->val;
@@ -148,10 +154,10 @@ static void predefined_assert_lt(toy_interp *interp, toy_val *result, const toy_
     } else {
         toy_assert_fail("Should be less than", 2, arg1, arg2);
     }
-    *result = null_val;
+    return REACHED_BLOCK_END;
 }
 
-static void predefined_assert_lte(toy_interp *interp, toy_val *result, const toy_val_list *args)
+static run_stmt_result predefined_assert_lte(toy_interp *interp, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
     const toy_val *arg1 = &args->val;
@@ -161,12 +167,12 @@ static void predefined_assert_lte(toy_interp *interp, toy_val *result, const toy
     } else {
         toy_assert_fail("Should be less than or equal", 2, arg1, arg2);
     }
-    *result = null_val;
+    return REACHED_BLOCK_END;
 }
 
 static const toy_val zero = { .type = VAL_NUM, .num = 0 };
 
-static void predefined_assert_zero(toy_interp *interp, toy_val *result, const toy_val_list *args)
+static run_stmt_result predefined_assert_zero(toy_interp *interp, const toy_val_list *args)
 {
     assert(val_list_len(args) == 1);
     const toy_val *arg1 = &args->val;
@@ -175,10 +181,10 @@ static void predefined_assert_zero(toy_interp *interp, toy_val *result, const to
     } else {
         toy_assert_fail("Should be zero", 1, arg1);
     }
-    *result = null_val;
+    return REACHED_BLOCK_END;
 }
 
-static void predefined_assert_not_zero(toy_interp *interp, toy_val *result, const toy_val_list *args)
+static run_stmt_result predefined_assert_not_zero(toy_interp *interp, const toy_val_list *args)
 {
     assert(val_list_len(args) == 1);
     const toy_val *arg1 = &args->val;
@@ -187,10 +193,10 @@ static void predefined_assert_not_zero(toy_interp *interp, toy_val *result, cons
     } else {
         toy_assert_fail("Should be non-zero", 1, arg1);
     }
-    *result = null_val;
+    return REACHED_BLOCK_END;
 }
 
-static void predefined_assert_null(toy_interp *interp, toy_val *result, const toy_val_list *args)
+static run_stmt_result predefined_assert_null(toy_interp *interp, const toy_val_list *args)
 {
     assert(val_list_len(args) == 1);
     const toy_val *arg1 = &args->val;
@@ -199,10 +205,10 @@ static void predefined_assert_null(toy_interp *interp, toy_val *result, const to
     } else {
         toy_assert_fail("Should be null", 1, arg1);
     }
-    *result = null_val;
+    return REACHED_BLOCK_END;
 }
 
-static void predefined_assert_not_null(toy_interp *interp, toy_val *result, const toy_val_list *args)
+static run_stmt_result predefined_assert_not_null(toy_interp *interp, const toy_val_list *args)
 {
     assert(val_list_len(args) == 1);
     const toy_val *arg1 = &args->val;
@@ -211,38 +217,39 @@ static void predefined_assert_not_null(toy_interp *interp, toy_val *result, cons
     } else {
         toy_assert_fail("Should not be null", 1, arg1);
     }
-    *result = null_val;
+    return REACHED_BLOCK_END;
 }
 
-static void predefined_assert(toy_interp *interp, toy_val *result, const toy_val_list *args)
+static run_stmt_result predefined_assert(toy_interp *interp, const toy_val_list *args)
 {
     assert(val_list_len(args) == 1);
     assert(!args->next);
     const toy_val *arg = &args->val;
-    toy_bool b = convert_to_bool(arg);
+    toy_bool b = val_truthy(arg);
     if (b) {
         /* Assertion succeeded */
     } else {
         toy_assert_fail("Should be true", 1, arg);
     }
-    *result = null_val;
+    return REACHED_BLOCK_END;
 }
 
 typedef struct val_list_foreach_args_struct {
     toy_interp *interp;
-    toy_func_def *func;
+    toy_func_def *toy_func;
 } val_list_foreach_args;
 
-static item_callback_result list_foreach_callback(void *cookie, size_t index, const toy_val_list *item)
+static item_callback_result list_foreach_item_callback(void *cookie, size_t index, const toy_val_list *list)
 {
     val_list_foreach_args *args = (val_list_foreach_args *) cookie;
-    toy_val_list func_args = { .val = item->val, .next = NULL };
-    toy_val result;
-    run_toy_function_val_list(args->interp, &result, args->func, &func_args);
-    return CONTINUE_ENUMERATION; /* TODO: early bailout? */
+    const toy_val *value = val_list_payload_const(list);
+    run_stmt_result res = run_toy_function_val(args->interp, args->toy_func, value);
+    (void) res; /* ignore reason for user function exit */
+    /* TODO: Use val_truthy to allow the user function to return a truthy value to terminate enumeration */
+    return CONTINUE_ENUMERATION;
 }
 
-static void predefined_list_foreach(toy_interp *interp, toy_val *result, const toy_val_list *args)
+static run_stmt_result predefined_list_foreach(toy_interp *interp, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
     const toy_val *arg1 = &args->val;
@@ -250,16 +257,83 @@ static void predefined_list_foreach(toy_interp *interp, toy_val *result, const t
     if (arg1->type == VAL_LIST) {
         toy_val_list *list = arg1->list;
         if (arg2->type == VAL_FUNC) {
-            toy_func_def *func = arg2->func;
-            val_list_foreach_args cbargs = { .func = func, .interp = interp };
-            val_list_foreach_const(list, list_foreach_callback, &cbargs);
+            toy_func_def *toy_func = arg2->func;
+            val_list_foreach_args cbargs = { .toy_func = toy_func, .interp = interp };
+            enumeration_result res = val_list_foreach_const(list, list_foreach_item_callback, &cbargs);
+            assert(res == ENUMERATION_COMPLETE);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
         }
     } else {
         invalid_argument_type(VAL_LIST, arg1);
     }
-    *result = null_val;
+    /* TODO: Return count of items enumerated, or something else meaningful? */
+    return REACHED_BLOCK_END;
+}
+
+typedef struct val_list_filter_args_struct {
+    val_list_foreach_args foreach_args;
+    toy_val_list *list_to_append_to;
+} val_list_filter_args;
+
+static item_callback_result val_list_filter_item_callback(void *cookie, size_t index, const toy_val_list *list)
+{
+    val_list_filter_args *args = (val_list_filter_args *) cookie;
+    const toy_val *list_elem = val_list_payload_const(list);
+    val_assert_valid(list_elem);
+    run_stmt_result res = run_toy_function_val(args->foreach_args.interp, args->foreach_args.toy_func, list_elem);
+    toy_bool truthy_return;
+    if (res == REACHED_RETURN) {
+        toy_val *return_value = interp_get_return_value(args->foreach_args.interp);
+        val_assert_valid(return_value);
+        truthy_return = val_truthy(return_value);
+    } else {
+        truthy_return = TOY_FALSE;
+    }
+    if (truthy_return) {
+        val_list_assert_valid(args->list_to_append_to);
+        if (args->list_to_append_to == NULL) {
+            log_printf("\nList elem to append to null list:\n");
+            val_dump(stderr, list_elem);
+            log_printf("\n");
+            args->list_to_append_to = val_list_alloc(list_elem);
+        } else {
+            log_printf("\nList elem to append to existing list:\n");
+            val_dump(stderr, list_elem);
+            log_printf("\n");
+            args->list_to_append_to = val_list_append(args->list_to_append_to, list_elem);
+        }
+        val_list_assert_valid(args->list_to_append_to);
+    }
+    return CONTINUE_ENUMERATION;
+}
+
+static run_stmt_result predefined_list_filter(toy_interp *interp, const toy_val_list *args)
+{
+    assert(val_list_len(args) == 2);
+    const toy_val *arg1 = &args->val;
+    const toy_val *arg2 = &args->next->val;
+    if (arg1->type == VAL_LIST) {
+        toy_val_list *list = arg1->list;
+        if (arg2->type == VAL_FUNC) {
+            toy_func_def *user_func = arg2->func;
+            /* TODO: Use val_list_find_all_const */
+            toy_val *return_value = interp_get_return_value(interp);
+            return_value->type = VAL_LIST;
+            return_value->list = NULL;
+            val_list_filter_args cb_args = { .list_to_append_to = return_value->list, .foreach_args.interp = interp, .foreach_args.toy_func = user_func };
+            enumeration_result res = val_list_foreach_const(list, val_list_filter_item_callback, &cb_args);
+            assert(ENUMERATION_COMPLETE == res);
+            return_value->type = VAL_LIST;
+            return_value->list = cb_args.list_to_append_to;
+            val_list_assert_valid(return_value->list);
+        } else {
+            invalid_argument_type(VAL_FUNC, arg2);
+        }
+    } else {
+        invalid_argument_type(VAL_LIST, arg1);
+    }
+    return REACHED_RETURN;
 }
 
 typedef struct map_foreach_args_struct {
@@ -273,13 +347,13 @@ static item_callback_result map_foreach_callback(void *cookie, const map_val_ent
     const toy_val key_val = { .type = VAL_STR, .str = entry->key };
     const toy_val_list value_arg = { .val = entry->value, .next = NULL };
     const toy_val_list func_args = { .val = key_val, .next = (toy_val_list *) &value_arg };
-    toy_val result;
-    run_toy_function_val_list(args->interp, &result, args->func, &func_args);
+    run_toy_function_val_list(args->interp, args->func, &func_args);
+    /* TODO: Allow the user function to return a truthy value to terminate enumeration */
     return CONTINUE_ENUMERATION;
 }
 
 /* TODO: Early exit if user-defined callback returns true */
-static void predefined_map_foreach(toy_interp *interp, toy_val *result, const toy_val_list *args)
+static run_stmt_result predefined_map_foreach(toy_interp *interp, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
     const toy_val *arg1 = &args->val;
@@ -297,21 +371,35 @@ static void predefined_map_foreach(toy_interp *interp, toy_val *result, const to
     } else {
         invalid_argument_type(VAL_LIST, arg1);
     }
+    /* TODO: Return some kind of meaningful value, such as whether enumeration completed? */
+    return REACHED_BLOCK_END;
 }
 
+static run_stmt_result predefined_map_filter(toy_interp *interp, const toy_val_list *args)
+{
+    /* TODO */
+    return REACHED_RETURN;
+}
+
+/* TODO: These should accept toy_exprs, so their types can be statically validated */
 const toy_str_list INFINITE_PARAMS;
 static const toy_str_list assert_binary_param_2 = { .str = "val2", .next = NULL };
 static const toy_str_list assert_binary_params = { .str = "val1", .next = (toy_str_list *) &assert_binary_param_2 };
 static const toy_str_list assert_unary_params = { .str = "val", .next = NULL };
 static const toy_str_list list_foreach_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list list_foreach_params = { .str = "list", .next = (toy_str_list *) &list_foreach_param_2 };
+static const toy_str_list list_filter_param_2 = { .str = "func", .next = NULL };
+static const toy_str_list list_filter_params = { .str = "list", .next = (toy_str_list *) &list_filter_param_2 };
 static const toy_str_list list_len_params = { .str = "list", .next = NULL };
 static const toy_str_list map_foreach_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list map_foreach_params = { .str = "map", .next = (toy_str_list *) &map_foreach_param_2 };
+static const toy_str_list map_filter_param_2 = { .str = "func", .next = NULL };
+static const toy_str_list map_filter_params = { .str = "map", .next = (toy_str_list *) &map_filter_param_2 };
 static const toy_str_list map_len_params = { .str = "map", .next = NULL };
 
+/* TODO: More documentation */
 static const toy_func_def predefined_functions[] = {
-    { .name = "assert", .type = FUNC_PREDEFINED, .predef = predefined_assert, .param_names = (toy_str_list *) &assert_unary_params },
+    { .name = "assert", .type = FUNC_PREDEFINED, .predef = predefined_assert, .param_names = (toy_str_list *) &assert_unary_params, .doc = "Assert that a givel value is truthy. Fail if it is not." },
     { .name = "assert_equal", .type = FUNC_PREDEFINED, .predef = predefined_assert_equal, .param_names = (toy_str_list *) &assert_binary_params },
     { .name = "assert_gt", .type = FUNC_PREDEFINED, .predef = predefined_assert_gt, .param_names = (toy_str_list *) &assert_binary_params },
     { .name = "assert_gte", .type = FUNC_PREDEFINED, .predef = predefined_assert_gte, .param_names = (toy_str_list *) &assert_binary_params },
@@ -324,7 +412,9 @@ static const toy_func_def predefined_functions[] = {
     { .name = "assert_zero", .type = FUNC_PREDEFINED, .predef = predefined_assert_zero, .param_names = (toy_str_list *) &assert_unary_params },
     { .name = "list_len",   .type = FUNC_PREDEFINED, .predef = predefined_list_len, .param_names = (toy_str_list *) &list_len_params },
     { .name = "list_foreach", .type = FUNC_PREDEFINED, .predef = predefined_list_foreach, .param_names = (toy_str_list *) &list_foreach_params },
+    { .name = "list_filter", .type = FUNC_PREDEFINED, .predef = predefined_list_filter, .param_names = (toy_str_list *) &list_filter_params },
     { .name = "map_foreach", .type = FUNC_PREDEFINED, .predef = predefined_map_foreach, .param_names = (toy_str_list *) &map_foreach_params },
+    { .name = "map_filter", .type = FUNC_PREDEFINED, .predef = predefined_map_filter, .param_names = (toy_str_list *) &map_filter_params },
     { .name = "map_len",   .type = FUNC_PREDEFINED, .predef = predefined_map_len, .param_names = (toy_str_list *) &map_len_params },
     { .name = "print", .type = FUNC_PREDEFINED, .predef = predefined_print,    .param_names = (toy_str_list *) &INFINITE_PARAMS }
 };

@@ -5,11 +5,12 @@
 #include "val-types.h"
 #include "val-list-types.h"
 #include "str-list-types.h"
+#include "interp-types.h"
 
 struct toy_interp_struct;
 typedef struct toy_interp_struct toy_interp;
 
-typedef void (*predefined_func_addr)(toy_interp *interp, toy_val *result, const toy_val_list *args);
+typedef run_stmt_result (*predefined_func_addr)(toy_interp *interp, const toy_val_list *args);
 
 struct toy_stmt_list_struct;
 typedef struct toy_stmt_list_struct toy_stmt_list;
@@ -23,9 +24,11 @@ enum toy_func_type {
     FUNC_USER_DECLARED = 1
 };
 
+/* TODO: Should be named toy_function */
 typedef struct toy_func_def_struct {
     toy_str name;
     toy_str_list *param_names;
+    toy_str doc;
     enum toy_func_type type;
     union {
         toy_block code;

@@ -9,19 +9,18 @@
 #include "function-types.h"
 
 void fatal_error(const char *fmt, ...);
-void undeclared_identifier(toy_str name);
-void duplicate_identifier(toy_str name);
-void readonly_identifier(toy_str name);
+void undeclared_identifier(const toy_str name);
+void duplicate_identifier(const toy_str name);
+void readonly_identifier(const toy_str name);
 void invalid_operand(toy_expr_type expr_type, const toy_val *operand);
 void invalid_operands(toy_expr_type expr_type, const toy_val *operand1, const toy_val *operand2);
 void invalid_expr_type(toy_expr_type expr_type);
 void invalid_stmt_type(toy_stmt_type stmt_type);
 void invalid_cast(toy_val_type val_type, const toy_val *val);
-void invalid_val_list_index(toy_val_list *list, toy_num index);
-void invalid_string_index(toy_str str, toy_num index);
-/* TODO: These should be const */
-void too_few_arguments(toy_num expected, toy_expr_list *args);
-void too_many_arguments(toy_num expected, toy_expr_list *args);
+void invalid_val_list_index(const toy_val_list *list, toy_num index);
+void invalid_string_index(const toy_str str, toy_num index);
+void too_few_arguments(toy_num expected, const toy_expr_list *args);
+void too_many_arguments(toy_num expected, const toy_expr_list *args);
 void invalid_argument_type(toy_val_type expected_type, const toy_val *actual_arg);
 void invalid_value_type(toy_val_type value_type);
 void divide_by_zero(void);

@@ -13,12 +13,13 @@ typedef enum frame_type_enum frame_type;
 struct toy_interp_struct;
 typedef struct toy_interp_struct toy_interp;
 
-enum run_stmt_result {
+typedef enum run_stmt_result_enum {
     EXECUTED_STATEMENT,
     REACHED_RETURN,
     REACHED_BREAK,
     REACHED_CONTINUE,
+    /* TODO: Can this be merged with EXECUTED_STATEMENT? */
     REACHED_BLOCK_END
-};
+} run_stmt_result;
 
 #endif /* TOY_INTER_TYPES_H */

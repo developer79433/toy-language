@@ -1,0 +1,17 @@
+val my_map_of_ints = { "third": 3, "quattro": 4, "two": 2, "first": 1 };
+fun is_even(even_val) {
+    return (even_val % 2) == 0;
+}
+fun is_odd(odd_val) {
+    return !is_even(odd_val);
+}
+fun map_entry_even(entry_even_key, entry_even_val) {
+    return is_even(entry_even_val);
+}
+fun map_entry_odd(entry_odd_key, entry_odd_val) {
+    return is_odd(entry_odd_val);
+}
+var evens = map_filter(mymap, map_entry_even);
+assert_equal(evens, { "two": 2, "quattro": 4 });
+var odds = map_filter(mymap, map_entry_odd);
+assert_equal(odds, { "first": 1, "third": 3 });

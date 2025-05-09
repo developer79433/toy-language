@@ -364,7 +364,7 @@ static item_callback_result generic_map_find_all_cb(void *cookie, generic_map_en
     return CONTINUE_ENUMERATION;
 }
 
-enumeration_result generic_map_find_all(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie, generic_map_entry_callback callback, void *callback_cookie)
+enumeration_result generic_map_filter(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie, generic_map_entry_callback callback, void *callback_cookie)
 {
     generic_map_find_all_args find_all_args = { .entry_cb = callback, .entry_cookie = callback_cookie, .filter_cookie = filter_cookie, .filter_func = filter_func };
     return generic_map_foreach(map, generic_map_find_all_cb, &find_all_args);
@@ -386,7 +386,7 @@ static item_callback_result generic_map_find_first_cb(void *cookie, generic_map_
     return CONTINUE_ENUMERATION;
 }
 
-generic_map_entry *generic_map_find_first(generic_map *map, generic_map_filter_func filter, void *cookie)
+generic_map_entry *generic_map_find(generic_map *map, generic_map_filter_func filter, void *cookie)
 {
     generic_map_find_one_args find_one_args = { .filter_cookie = cookie, .filter_func = filter, .found_entry = NULL };
     enumeration_result res = generic_map_foreach(map, generic_map_find_first_cb, &find_one_args);
@@ -408,7 +408,7 @@ static item_callback_result generic_map_find_first_not_cb(void *cookie, generic_
     return CONTINUE_ENUMERATION;
 }
 
-generic_map_entry *generic_map_find_first_not(generic_map *map, generic_map_filter_func filter, void *cookie)
+generic_map_entry *generic_map_find_not(generic_map *map, generic_map_filter_func filter, void *cookie)
 {
     generic_map_find_one_args find_one_args = { .filter_cookie = cookie, .filter_func = filter, .found_entry = NULL };
     enumeration_result res = generic_map_foreach(map, generic_map_find_first_not_cb, &find_one_args);
@@ -422,12 +422,12 @@ generic_map_entry *generic_map_find_first_not(generic_map *map, generic_map_filt
 
 toy_bool generic_map_none_match(generic_map *map, generic_map_filter_func filter, void *cookie)
 {
-    generic_map_entry *entry = generic_map_find_first(map, filter, cookie);
+    generic_map_entry *entry = generic_map_find(map, filter, cookie);
     return entry == NULL;
 }
 
 toy_bool generic_map_all_match(generic_map *map, generic_map_filter_func filter, void *cookie)
 {
-    generic_map_entry *entry = generic_map_find_first_not(map, filter, cookie);
+    generic_map_entry *entry = generic_map_find_not(map, filter, cookie);
     return entry == NULL;
 }

@@ -60,7 +60,7 @@ const void *map_buf_get_const(const map_buf *map, const toy_str key)
 
 typedef struct map_buf_set_entry_cb_args_struct {
     toy_str desired_key;
-    void *new_value;
+    const void *new_value;
     size_t new_value_size;
 } map_buf_set_entry_cb_args;
 
@@ -76,7 +76,7 @@ static item_callback_result map_buf_set_entry_callback(void *cookie, size_t inde
     return CONTINUE_ENUMERATION;
 }
 
-set_result map_buf_set(map_buf *map, const toy_str key, void *buf, size_t buf_size)
+set_result map_buf_set(map_buf *map, const toy_str key, const void *buf, size_t buf_size)
 {
     map_buf_entry_list *new_entry;
     map_buf_entry_list **bucket = map_buf_get_bucket(map, key);

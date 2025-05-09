@@ -2,6 +2,7 @@
 
 #include "generic-list.h"
 #include "buf-list.h"
+#include "mymalloc.h"
 
 void *buf_list_payload(toy_buf_list *list)
 {
@@ -13,33 +14,24 @@ const void *buf_list_payload_const(const toy_buf_list *list)
     return &list->c;
 }
 
-void buf_list_payload_set(toy_buf_list *list, void *buf, size_t buf_size)
+void buf_list_payload_set(toy_buf_list *list, const void *buf, size_t buf_size)
 {
     memcpy(buf_list_payload(list), buf, buf_size);
 }
 
-void buf_list_payload_set_2(toy_buf_list *list, void *buf1, size_t buf1_size, void *buf2, size_t buf2_size)
+void buf_list_payload_set_2(toy_buf_list *list, const void *buf1, size_t buf1_size, const void *buf2, size_t buf2_size)
 {
-    char *p = (char *) buf_list_payload(list);
-    if (buf1) {
-        memcpy(p, buf1, buf1_size);
-        if (buf2) {
-            p += buf1_size;
-            memcpy(p, buf2, buf2_size);
-        }
-    }
+    memcpy_2(buf_list_payload(list), buf1, buf1_size, buf2, buf2_size);
 }
 
-toy_buf_list *buf_list_alloc(void *buf, size_t buf_size)
+toy_buf_list *buf_list_alloc(const void *buf, size_t buf_size)
 {
     toy_buf_list *new_list = (toy_buf_list *) generic_list_alloc_size(buf_size);
-    if (buf) {
-        buf_list_payload_set(new_list, buf, buf_size);
-    }
+    buf_list_payload_set(new_list, buf, buf_size);
     return new_list;
 }
 
-toy_buf_list *buf_list_alloc_2(void *buf1, size_t buf1_size, void *buf2, size_t buf2_size)
+toy_buf_list *buf_list_alloc_2(const void *buf1, size_t buf1_size, const void *buf2, size_t buf2_size)
 {
     toy_buf_list *new_list = (toy_buf_list *) generic_list_alloc_size(buf1_size + buf2_size);
     buf_list_payload_set_2(new_list, buf1, buf1_size, buf2, buf2_size);
@@ -51,7 +43,7 @@ toy_buf_list *buf_list_concat(toy_buf_list *list, toy_buf_list *new_list)
     return (toy_buf_list *) generic_list_concat((generic_list *) list, (generic_list *) new_list);
 }
 
-toy_buf_list *buf_list_append(toy_buf_list *list, void *buf, size_t buf_size)
+toy_buf_list *buf_list_append(toy_buf_list *list, const void *buf, size_t buf_size)
 {
     toy_buf_list *new_list = buf_list_alloc(buf, buf_size);
     return (toy_buf_list *) generic_list_concat((generic_list *) list, (generic_list *) new_list);

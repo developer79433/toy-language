@@ -9,6 +9,7 @@
 #include "operations.h"
 #include "interp.h"
 #include "errors.h"
+#include "constants.h"
 
 void op_and(toy_interp *interp, toy_val *result, const toy_expr *arg1, const toy_expr *arg2)
 {
@@ -16,11 +17,11 @@ void op_and(toy_interp *interp, toy_val *result, const toy_expr *arg1, const toy
 
     result->type = VAL_BOOL;
     eval_expr(interp, &arg_result1, arg1);
-    toy_bool bool1 = convert_to_bool(&arg_result1);
+    toy_bool bool1 = val_truthy(&arg_result1);
     if (bool1) {
         toy_val arg_result2;
         eval_expr(interp, &arg_result2, arg2);
-        toy_bool bool2 = convert_to_bool(&arg_result2);
+        toy_bool bool2 = val_truthy(&arg_result2);
         result->boolean = bool2;
     } else {
         result->boolean = TOY_FALSE;
@@ -231,7 +232,7 @@ void op_not(toy_interp *interp, toy_val *result, const toy_expr *expr)
     toy_val val;
 
     eval_expr(interp, &val, expr);
-    toy_bool arg_bool = convert_to_bool(&val);
+    toy_bool arg_bool = val_truthy(&val);
     result->type = VAL_BOOL;
     result->boolean = !arg_bool;
 }
@@ -242,13 +243,13 @@ void op_or(toy_interp *interp, toy_val *result, const toy_expr *expr1, const toy
 
     result->type = VAL_BOOL;
     eval_expr(interp, &val1, expr1);
-    toy_bool bool1 = convert_to_bool(&val1);
+    toy_bool bool1 = val_truthy(&val1);
     if (bool1) {
         result->boolean = TOY_TRUE;
     } else {
         toy_val val2;
         eval_expr(interp, &val2, expr2);
-        toy_bool bool2 = convert_to_bool(&val2);
+        toy_bool bool2 = val_truthy(&val2);
         result->boolean = bool2;
     }
 }
@@ -373,7 +374,12 @@ void op_method_call(toy_interp *interp, toy_val *result, const toy_method_call *
         toy_val field;
         lookup_field(&field, &target, method_call->method_name);
         if (field.type == VAL_FUNC) {
-            run_toy_function_expr_list(interp, result, field.func, method_call->args);
+            run_stmt_result res = run_toy_function_expr_list(interp, field.func, method_call->args);
+            if (res == REACHED_RETURN) {
+                *result = *interp_get_return_value(interp);
+            } else {
+                *result = null_val;
+            }
         } else {
             invalid_operand(EXPR_FUNC_CALL, &field);
         }

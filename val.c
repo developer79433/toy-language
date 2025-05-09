@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 
 #include "mymalloc.h"
 #include "bool.h"
@@ -27,6 +28,7 @@ const char *val_type_name(toy_val_type val_type)
     return toy_val_type_names[val_type];
 }
 
+/* TODO: Remove first arg, and use debug_printf etc instead */
 void val_dump(FILE *f, const toy_val *val)
 {
     if (val) {
@@ -61,6 +63,56 @@ void val_dump(FILE *f, const toy_val *val)
     }
 }
 
+toy_bool val_truthy(const toy_val *val)
+{
+    switch(val->type) {
+    case VAL_BOOL:
+        return val->boolean == TOY_TRUE;
+    case VAL_FUNC:
+        return TOY_TRUE;
+    case VAL_LIST:
+        return val_list_len(val->list) != 0;
+    case VAL_MAP:
+        return map_val_size(val->map) != 0;
+    case VAL_NULL:
+        return TOY_FALSE;
+    case VAL_NUM:
+        return val->num != 0;
+    case VAL_STR:
+        return (val->str != NULL && strlen(val->str) != 0);
+    default:
+        invalid_value_type(val->type);
+        break;
+    }
+    assert(0);
+    return TOY_FALSE;
+}
+
+toy_bool val_falsey(const toy_val *val)
+{
+    return !val_truthy(val);
+}
+
+toy_bool val_list_equal(const toy_val_list *list1, const toy_val_list *list2)
+{
+    /* TODO: Use a joint enumeration function yet to be created */
+    for (; list1 && list2 ; list1 = list1->next, list2 = list2->next) {
+        const toy_val *val1 = val_list_payload_const(list1);
+        const toy_val *val2 = val_list_payload_const(list2);
+        if (vals_nequal(val1, val2)) {
+            return TOY_FALSE;
+        }
+    }
+    return TOY_TRUE;
+}
+
+toy_bool map_equal(const map_val *map1, const map_val *map2)
+{
+    /* TODO */
+    assert(0);
+    return TOY_FALSE;
+}
+
 toy_bool vals_equal(const toy_val *val1, const toy_val *val2)
 {
     if (val1->type == val2->type) {
@@ -71,10 +123,10 @@ toy_bool vals_equal(const toy_val *val1, const toy_val *val2)
             return (val1->func == val2->func);
             break;
         case VAL_LIST:
-            return (val1->list == val2->list);
+            return val_list_equal(val1->list, val2->list);
             break;
         case VAL_MAP:
-            return (val1->map == val2->map);
+            return map_equal(val1->map, val2->map);
             break;
         case VAL_NULL:
             return TOY_TRUE;
@@ -174,6 +226,13 @@ void val_assert_valid(const toy_val *val)
     default:
         invalid_value_type(val->type);
         break;
+    }
+}
+
+void val_assert_valid_or_null(const toy_val *val)
+{
+    if (val != NULL) {
+        val_assert_valid(val);
     }
 }
 

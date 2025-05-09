@@ -1,0 +1,15 @@
+var mylist = [ 1, 7, 2, -3, 4, 17, -148 ];
+fun is_even(even_val) {
+    return (even_val % 2) == 0;
+}
+fun is_odd(odd_val) {
+    return !is_even(odd_val);
+}
+assert(is_even(2));
+assert(is_even(-2));
+assert(is_odd(17));
+assert(is_odd(-13));
+var evens = list_filter(mylist, is_even);
+assert_equal(evens, [ 2, 4, -148 ]);
+var odds = list_filter(mylist, is_odd);
+assert_equal(odds, [ 1, 7, -3, 17 ]);

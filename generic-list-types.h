@@ -25,4 +25,11 @@ typedef struct filter_args_struct {
     void *user_cookie;
 } filter_args;
 
+typedef struct const_filter_args_struct {
+    generic_list_filter_func filter;
+    void *filter_cookie;
+    const_generic_list_item_callback user_callback;
+    void *user_cookie;
+} const_filter_args;
+
 #endif /* GENERIC_LIST_TYPES_H */

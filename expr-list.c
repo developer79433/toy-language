@@ -41,12 +41,13 @@ toy_expr_list *expr_list_append(toy_expr_list *list, toy_expr *new_expr)
     return (toy_expr_list *) ptr_list_append((toy_ptr_list *) list, new_expr);
 }
 
-void expr_list_dump(FILE *f, toy_expr_list *list)
+void expr_list_dump(FILE *f, const toy_expr_list *list)
 {
     int printed_anything = 0;
     fputc('[', f);
     if (list) {
-        for (toy_expr_list *cur = list; cur; cur = cur->next) {
+        /* TODO: Use expr_list_foreach_const */
+        for (const toy_expr_list *cur = list; cur; cur = cur->next) {
             if (printed_anything) {
                 fputs(", ", f);
             } else {
