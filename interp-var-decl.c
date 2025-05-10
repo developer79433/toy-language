@@ -2,6 +2,7 @@
 
 #include "str.h"
 #include "interp.h"
+#include "interp-symbol.h"
 #include "var-decl-list.h"
 
 typedef struct var_decl_cb_args_struct {

@@ -8,6 +8,7 @@
 #include "str.h"
 #include "operations.h"
 #include "interp.h"
+#include "interp-symbol.h"
 #include "errors.h"
 #include "constants.h"
 

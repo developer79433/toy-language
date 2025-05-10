@@ -23,5 +23,6 @@ static void dump_stack(FILE *f, const char *context, const toy_interp *interp);
 #else /* ndef DEBUG_STACK */
 #define dump_stack(f, context, interp) do { } while (0)
 #endif /* DEBUG_STACK */
+get_result lookup_identifier_in_frame(interp_frame *frame, toy_val *result, toy_str name);
 
 #endif /* TOY_INTERP_FRAME_H */

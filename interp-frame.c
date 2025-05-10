@@ -168,3 +168,15 @@ void pop_context(toy_interp *interp)
     interp_set_cur_frame(interp, prev);
     dump_stack(stderr, "after pop", interp);
 }
+
+get_result lookup_identifier_in_frame(interp_frame *frame, toy_val *result, toy_str name)
+{
+    if (frame->symbols) {
+        toy_val *existing_value = map_val_get(frame->symbols, name);
+        if (existing_value) {
+            *result = *existing_value;
+            return GET_FOUND;
+        }
+    }
+    return GET_NOT_FOUND;
+}
