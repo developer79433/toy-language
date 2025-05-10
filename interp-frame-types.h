@@ -14,7 +14,6 @@ enum frame_type_enum {
 typedef enum frame_type_enum frame_type;
 
 typedef struct interp_frame_struct {
-    struct interp_frame_struct *prev;
     frame_type type;
     union {
         const toy_block *loop_body;
@@ -26,5 +25,10 @@ typedef struct interp_frame_struct {
     toy_stmt_list *cur_stmt;
     map_val *symbols;
 } interp_frame;
+
+typedef struct interp_frame_list_struct {
+    struct interp_frame_list_struct *prev;
+    interp_frame frame;
+} interp_frame_list;
 
 #endif /* TOY_INTERP_FRAME_TYPES_H */

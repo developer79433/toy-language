@@ -16,7 +16,7 @@ static get_result lookup_user_identifier(toy_interp *interp, toy_val *result, to
     assert(!lookup_predefined_constant(name));
     assert(!predef_func_lookup_name(name));
     /* TODO: Use interp_frame_foreach */
-    for (interp_frame *frame = interp_cur_frame(interp); frame; frame = frame->prev) {
+    for (interp_frame_list *frame = interp_cur_frame(interp); frame; frame = frame->prev) {
         get_result found = lookup_identifier_in_frame(frame, result, name);
         if (found == GET_FOUND) {
             return GET_FOUND;
@@ -49,7 +49,8 @@ typedef enum set_variable_policy_enum set_variable_policy;
 
 static set_result interp_set_symbol(toy_interp *interp, const toy_str name, const toy_val *value)
 {
-    interp_frame *cur_frame = interp_cur_frame(interp);
+    interp_frame_list *frame_list = interp_cur_frame(interp);
+    interp_frame *cur_frame = interp_frame_list_payload(frame_list);
     if (cur_frame->symbols == NULL) {
         cur_frame->symbols = map_val_alloc();
     }

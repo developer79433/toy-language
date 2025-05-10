@@ -13,8 +13,8 @@
 toy_bool is_control_result(run_stmt_result stmt_result);
 toy_interp *alloc_interp(const toy_stmt_list *program);
 void free_interp(toy_interp *interp);
-interp_frame *interp_cur_frame(toy_interp *interp);
-void interp_set_cur_frame(toy_interp *interp, interp_frame *frame);
+interp_frame_list *interp_cur_frame(toy_interp *interp);
+void interp_set_cur_frame(toy_interp *interp, interp_frame_list *frame);
 void expr_eval(toy_interp *interp, toy_val *result, const toy_expr *expr);
 run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt);
 /* TODO: Delete me */

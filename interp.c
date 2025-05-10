@@ -42,18 +42,18 @@
 
 typedef struct toy_interp_struct {
     toy_function main_program;
-    interp_frame *cur_frame;
+    interp_frame_list *cur_frame;
     toy_val return_val;
 } toy_interp;
 
 static run_stmt_result block_stmt(toy_interp *interp, const toy_block *block);
 
-interp_frame *interp_cur_frame(toy_interp *interp)
+interp_frame_list *interp_cur_frame(toy_interp *interp)
 {
     return interp->cur_frame;
 }
 
-void interp_set_cur_frame(toy_interp *interp, interp_frame *frame)
+void interp_set_cur_frame(toy_interp *interp, interp_frame_list *frame)
 {
     interp->cur_frame = frame;
 }
@@ -581,9 +581,11 @@ run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt)
 run_stmt_result run_current_block(toy_interp *interp)
 {
     /* TODO: Should use stmt_list_foreach */
-    for (; interp->cur_frame->cur_stmt; interp->cur_frame->cur_stmt = interp->cur_frame->cur_stmt->next) {
+    interp_frame_list *frame_list = interp_cur_frame(interp);
+    interp_frame *cur_frame = interp_frame_list_payload(frame_list);
+    for (; cur_frame->cur_stmt; cur_frame->cur_stmt = cur_frame->cur_stmt->next) {
         run_stmt_result stmt_result;
-        stmt_result = run_stmt(interp, &interp->cur_frame->cur_stmt->stmt);
+        stmt_result = run_stmt(interp, &cur_frame->cur_stmt->stmt);
         assert(stmt_result != REACHED_BLOCK_END);
         switch (stmt_result) {
         case EXECUTED_STATEMENT:
@@ -634,7 +636,7 @@ void free_interp(toy_interp *interp)
 {
     pop_context(interp);
     while (interp->cur_frame) {
-        interp_frame *prev = interp->cur_frame->prev;
+        interp_frame_list *prev = interp->cur_frame->prev;
         interp_frame_free(interp->cur_frame);
         interp->cur_frame = prev;
     }

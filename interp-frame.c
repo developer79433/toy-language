@@ -16,63 +16,84 @@ const char *interp_frame_type_name(frame_type type)
     return frame_type_names[type];
 }
 
-interp_frame *alloc_frame_loop_body(const toy_block *loop_body, interp_frame *prev)
+interp_frame *interp_frame_list_payload(interp_frame_list *list)
 {
-    interp_frame *frame = mymalloc(interp_frame);
+    return &list->frame;
+}
+
+const interp_frame *interp_frame_list_payload_const(const interp_frame_list *list)
+{
+    return &list->frame;
+}
+
+interp_frame_list *alloc_frame_loop_body(const toy_block *loop_body, interp_frame_list *prev)
+{
+    interp_frame_list *frame_list = mymalloc(interp_frame_list);
+    frame_list->prev = prev;
+    interp_frame *frame = interp_frame_list_payload(frame_list);
     frame->type = FRAME_LOOP_BODY;
-    frame->prev = prev;
     frame->loop_body = loop_body;
     frame->symbols = NULL;
-    return frame;
+    frame->cur_stmt = loop_body->stmts;
+    return frame_list;
 }
 
-interp_frame *alloc_frame_if_body(const toy_block *if_body, interp_frame *prev)
+interp_frame_list *alloc_frame_if_body(const toy_block *if_body, interp_frame_list *prev)
 {
-    interp_frame *frame = mymalloc(interp_frame);
+    interp_frame_list *frame_list = mymalloc(interp_frame_list);
+    frame_list->prev = prev;
+    interp_frame *frame = interp_frame_list_payload(frame_list);
     frame->type = FRAME_IF_BODY;
-    frame->prev = prev;
     frame->if_body = if_body;
     frame->symbols = NULL;
-    return frame;
+    frame->cur_stmt = if_body->stmts;
+    return frame_list;
 }
 
-interp_frame *alloc_frame_block_stmt(const toy_block *block_stmt, interp_frame *prev)
+interp_frame_list *alloc_frame_block_stmt(const toy_block *block, interp_frame_list *prev)
 {
-    interp_frame *frame = mymalloc(interp_frame);
+    interp_frame_list *frame_list = mymalloc(interp_frame_list);
+    frame_list->prev = prev;
+    interp_frame *frame = interp_frame_list_payload(frame_list);
     frame->type = FRAME_BLOCK_STMT;
-    frame->prev = prev;
-    frame->block_stmt = block_stmt;
+    frame->block_stmt = block;
     frame->symbols = NULL;
-    return frame;
+    frame->cur_stmt = block->stmts;
+    return frame_list;
 }
 
-interp_frame *alloc_frame_user_def_func(const toy_function *func_def, interp_frame *prev)
+interp_frame_list *alloc_frame_user_def_func(const toy_function *func_def, interp_frame_list *prev)
 {
-    interp_frame *frame = mymalloc(interp_frame);
+    interp_frame_list *frame_list = mymalloc(interp_frame_list);
+    frame_list->prev = prev;
+    interp_frame *frame = interp_frame_list_payload(frame_list);
     frame->type = FRAME_USER_DEF_FUNC;
-    frame->prev = prev;
     frame->user_def_func = func_def;
     frame->symbols = NULL;
-    return frame;
+    frame->cur_stmt = func_def->code.stmts;
+    return frame_list;
 }
 
 
-interp_frame *alloc_frame_pre_def_func(const toy_function *func_def, interp_frame *prev)
+interp_frame_list *alloc_frame_pre_def_func(const toy_function *func_def, interp_frame_list *prev)
 {
-    interp_frame *frame = mymalloc(interp_frame);
+    interp_frame_list *frame_list = mymalloc(interp_frame_list);
+    frame_list->prev = prev;
+    interp_frame *frame = interp_frame_list_payload(frame_list);
     frame->type = FRAME_PRE_DEF_FUNC;
-    frame->prev = prev;
     frame->pre_def_func = func_def;
     frame->symbols = NULL;
-    return frame;
+    frame->cur_stmt = func_def->code.stmts;
+    return frame_list;
 }
 
-void interp_frame_free(interp_frame *frame)
+void interp_frame_free(interp_frame_list *frame_list)
 {
+    interp_frame *frame = interp_frame_list_payload(frame_list);
     if (frame->symbols) {
         map_val_free(frame->symbols);
     }
-    free(frame);
+    free(frame_list);
 }
 
 #if DEBUG_STACK
@@ -123,54 +144,50 @@ static void dump_stack(FILE *f, const char *context, const toy_interp *interp)
 
 void push_context_if_body(toy_interp *interp, const toy_block *block)
 {
-    interp_frame *new_frame = alloc_frame_if_body(block, interp_cur_frame(interp));
+    interp_frame_list *new_frame = alloc_frame_if_body(block, interp_cur_frame(interp));
     interp_set_cur_frame(interp, new_frame);
-    interp_cur_frame(interp)->cur_stmt = block->stmts;
     dump_stack(stderr, "after push if body", interp);
 }
 
 void push_context_loop_body(toy_interp *interp, const toy_block *block)
 {
-    interp_frame *new_frame = alloc_frame_loop_body(block, interp_cur_frame(interp));
+    interp_frame_list *new_frame = alloc_frame_loop_body(block, interp_cur_frame(interp));
     interp_set_cur_frame(interp, new_frame);
-    interp_cur_frame(interp)->cur_stmt = block->stmts;
     dump_stack(stderr, "after push loop body", interp);
 }
 
 void push_context_pre_def_func(toy_interp *interp, const toy_function *func_def)
 {
-    interp_frame *new_frame = alloc_frame_pre_def_func(func_def, interp_cur_frame(interp));
+    interp_frame_list *new_frame = alloc_frame_pre_def_func(func_def, interp_cur_frame(interp));
     interp_set_cur_frame(interp, new_frame);
-    interp_cur_frame(interp)->cur_stmt = func_def->code.stmts;
     dump_stack(stderr, "after push predef func", interp);
 }
 
 void push_context_user_def_func(toy_interp *interp, const toy_function *func_def)
 {
-    interp_frame *new_frame = alloc_frame_user_def_func(func_def, interp_cur_frame(interp));
+    interp_frame_list *new_frame = alloc_frame_user_def_func(func_def, interp_cur_frame(interp));
     interp_set_cur_frame(interp, new_frame);
-    interp_cur_frame(interp)->cur_stmt = func_def->code.stmts;
     dump_stack(stderr, "after push user func", interp);
 }
 
 void push_context_block_stmt(toy_interp *interp, const toy_block *block)
 {
-    interp_frame *new_frame = alloc_frame_block_stmt(block, interp_cur_frame(interp));
+    interp_frame_list *new_frame = alloc_frame_block_stmt(block, interp_cur_frame(interp));
     interp_set_cur_frame(interp, new_frame);
-    interp_cur_frame(interp)->cur_stmt = block->stmts;
     dump_stack(stderr, "after push block stmt", interp);
 }
 
 void pop_context(toy_interp *interp)
 {
-    interp_frame *prev = interp_cur_frame(interp)->prev;
+    interp_frame_list *prev = interp_cur_frame(interp)->prev;
     interp_frame_free(interp_cur_frame(interp));
     interp_set_cur_frame(interp, prev);
     dump_stack(stderr, "after pop", interp);
 }
 
-get_result lookup_identifier_in_frame(interp_frame *frame, toy_val *result, toy_str name)
+get_result lookup_identifier_in_frame(interp_frame_list *frame_list, toy_val *result, toy_str name)
 {
+    interp_frame *frame = interp_frame_list_payload(frame_list);
     if (frame->symbols) {
         toy_val *existing_value = map_val_get(frame->symbols, name);
         if (existing_value) {
