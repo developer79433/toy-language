@@ -3,6 +3,18 @@
 
 #include "expr.h"
 #include "mymalloc.h"
+#include "map-val.h"
+#include "function.h"
+#include "constants.h"
+#include "predef-function.h"
+#include "errors.h"
+#include "str.h"
+#include "str-list.h"
+#include "stmt.h"
+#include "stmt-list.h"
+#include "var-decl-list.h"
+#include "if-arm-list.h"
+#include "expr-list.h"
 
 static const char *toy_expr_type_names[] = {
     "logical and",
@@ -80,7 +92,7 @@ toy_expr *alloc_expr_literal(toy_val_type val_type)
     return expr;
 }
 
-toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_block *body)
+toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_block *block)
 {
     toy_expr *expr;
     expr = (toy_expr *) malloc(sizeof(toy_expr) + sizeof(toy_function));
@@ -89,8 +101,30 @@ toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_block *body)
     expr->val.func = (toy_function *) (expr + 1);
     expr->val.func->type = FUNC_USER_DECLARED;
     expr->val.func->name = ""; /* TODO: generated unique name */
+    expr->val.func->parent = NULL;
+    expr->val.func->code.stmts = block->stmts;
     expr->val.func->param_names = formalparams;
-    expr->val.func->code.stmts = body->stmts;
+    return expr;
+}
+
+toy_expr *alloc_expr_func_call(toy_str id, toy_expr_list *args)
+{
+    toy_expr *expr;
+    expr = mymalloc(toy_expr);
+    expr->type = EXPR_FUNC_CALL;
+    expr->func_call.id = id;
+    expr->func_call.args = args;
+    return expr;
+}
+
+toy_expr *alloc_expr_method_call(toy_str lhs, toy_str method_name, toy_expr_list *args)
+{
+    toy_expr *expr;
+    expr = mymalloc(toy_expr);
+    expr->type = EXPR_METHOD_CALL;
+    expr->method_call.lhs = lhs;
+    expr->method_call.method_name = method_name;
+    expr->method_call.args = args;
     return expr;
 }
 

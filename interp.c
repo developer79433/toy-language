@@ -31,6 +31,7 @@
 #include "interp-frame.h"
 #include "interp-symbol.h"
 #include "predef-function.h"
+#include "interp-stack.h"
 
 #if 0
 #define DEBUG_STACK 1
@@ -42,20 +43,21 @@
 
 typedef struct toy_interp_struct {
     toy_function main_program;
-    interp_frame_list *cur_frame;
+    interp_frame_stack *stack;
     toy_val return_val;
 } toy_interp;
 
 static run_stmt_result block_stmt(toy_interp *interp, const toy_block *block);
 
-interp_frame_list *interp_cur_frame(toy_interp *interp)
+interp_frame_stack *interp_get_stack(toy_interp *interp)
 {
-    return interp->cur_frame;
+    return interp->stack;
 }
 
-void interp_set_cur_frame(toy_interp *interp, interp_frame_list *frame)
+interp_frame *interp_cur_frame(toy_interp *interp)
 {
-    interp->cur_frame = frame;
+    interp_frame_stack *frame_list = interp_get_stack(interp);
+    return interp_stack_payload(frame_list);
 }
 
 typedef struct append_cb_args_struct {
@@ -82,7 +84,7 @@ static void eval_expr_list(toy_interp *interp, toy_val *result, const toy_expr_l
         expr_eval(interp, &element, expr_list->expr);
         result->list = val_list_alloc(&element);
         append_cb_args append_args = { .interp = interp, .result = result };
-        /* TODO: Remove this ugly -> next, which is here so we distinguish betwen initial list alloc and append cases */
+        /* TODO: Remove this ugly -> next, which is here so we distinguish between initial list alloc and append cases */
         enumeration_result res = expr_list_foreach(expr_list->next, append_val_list_callback, &append_args);
         assert(ENUMERATION_COMPLETE == res);
     } else {
@@ -114,7 +116,7 @@ static run_stmt_result run_user_func_val_list(toy_interp *interp, toy_block *blo
     return run_current_block(interp);
 }
 
-static run_stmt_result run_user_func_expr_list(toy_interp *interp, toy_block *block, toy_str_list *param_names, const toy_expr_list *args)
+static run_stmt_result run_user_func_expr_list(toy_interp *interp, const toy_block *block, toy_str_list *param_names, const toy_expr_list *args)
 {
     /* TODO: Use str_list_foreach_const, but it doesn't support enumerating over two lists together, which is what we need here */
     for (toy_str_list *param_name = param_names; param_name && args; param_name = param_name->next, args = args->next) {
@@ -123,27 +125,27 @@ static run_stmt_result run_user_func_expr_list(toy_interp *interp, toy_block *bl
     return run_current_block(interp);
 }
 
-run_stmt_result run_toy_function_expr_list(toy_interp *interp, toy_function *def, const toy_expr_list *args)
+run_stmt_result run_toy_function_expr_list(toy_interp *interp, const toy_function *func, const toy_expr_list *args)
 {
-    switch (def->type) {
+    switch (func->type) {
     case FUNC_PREDEFINED:
-        push_context_pre_def_func(interp, def);
-        run_stmt_result res1 = run_predefined_func_expr_list(interp, def->predef, args);
-        pop_context(interp);
+        interp_stack_push_predef_func(interp->stack, func);
+        run_stmt_result res1 = run_predefined_func_expr_list(interp, func->predef, args);
+        interp_stack_pop(interp->stack);
         if (res1 == REACHED_RETURN) {
             val_assert_valid(&interp->return_val);
         }
         return res1;
     case FUNC_USER_DECLARED:
-        push_context_user_def_func(interp, def);
-        run_stmt_result res2 = run_user_func_expr_list(interp, &def->code, def->param_names, args);
-        pop_context(interp);
+        interp_stack_push_user_func(interp->stack, func);
+        run_stmt_result res2 = run_user_func_expr_list(interp, &func->code, func->param_names, args);
+        interp_stack_pop(interp->stack);
         if (res2 == REACHED_RETURN) {
             val_assert_valid(&interp->return_val);
         }
         return res2;
     default:
-        invalid_function_type(def->type);
+        invalid_function_type(func->type);
         break;
     }
     assert(0);
@@ -167,14 +169,14 @@ run_stmt_result run_toy_function_val_list(toy_interp *interp, toy_function *def,
     val_list_assert_valid(args);
     switch (def->type) {
     case FUNC_PREDEFINED:
-        push_context_pre_def_func(interp, def);
+        interp_stack_push_predef_func(interp->stack, def);
         run_stmt_result res1 = run_predefined_func_val_list(interp, def->predef, args);
-        pop_context(interp);
+        interp_stack_pop(interp->stack);
         return res1;
     case FUNC_USER_DECLARED:
-        push_context_user_def_func(interp, def);
+        interp_stack_push_user_func(interp->stack, def);
         run_stmt_result res2 = run_user_func_val_list(interp, &def->code, def->param_names, args);
-        pop_context(interp);
+        interp_stack_pop(interp->stack);
         return res2;
     default:
         invalid_function_type(def->type);
@@ -190,32 +192,21 @@ run_stmt_result run_toy_function_val(toy_interp *interp, toy_function *def, cons
     return run_toy_function_val_list(interp, def, &func_args);
 }
 
-run_stmt_result call_func(toy_interp *interp, toy_str func_name, const toy_expr_list *args)
+run_stmt_result call_func(toy_interp *interp, const toy_function *func, const toy_expr_list *args)
 {
     run_stmt_result res;
-    toy_val expr;
-    get_result get_res = lookup_identifier(interp, &expr, func_name);
-    if (get_res == GET_FOUND) {
-        if (expr.type == VAL_FUNC) {
-            toy_function *def = expr.func;
-            if (def->param_names == &INFINITE_PARAMS) {
-                res = run_toy_function_expr_list(interp, def, args);
-            } else {
-                size_t num_params = str_list_len(def->param_names);
-                size_t num_args = expr_list_len(args);
-                if (num_args < num_params) {
-                    too_few_arguments(num_params, args);
-                } else if (num_args > num_params) {
-                    too_many_arguments(num_params, args);
-                } else {
-                    res = run_toy_function_expr_list(interp, def, args);
-                }
-            }
-        } else {
-            invalid_operand(EXPR_FUNC_CALL, &expr);
-        }
+    if (func->param_names == &INFINITE_PARAMS) {
+        res = run_toy_function_expr_list(interp, func, args);
     } else {
-        undeclared_identifier(func_name);
+        size_t num_params = str_list_len(func->param_names);
+        size_t num_args = expr_list_len(args);
+        if (num_args < num_params) {
+            too_few_arguments(num_params, args);
+        } else if (num_args > num_params) {
+            too_many_arguments(num_params, args);
+        } else {
+            res = run_toy_function_expr_list(interp, func, args);
+        }
     }
     if (res == REACHED_RETURN) {
         val_assert_valid(&interp->return_val);
@@ -223,17 +214,17 @@ run_stmt_result call_func(toy_interp *interp, toy_str func_name, const toy_expr_
     return res;
 }
 
-static void list_lookup(toy_interp *interp, toy_val *result, toy_val_list *val_list, toy_val *index)
+static void list_lookup(toy_interp *interp, toy_val *result, toy_val_list *list, toy_val *index)
 {
     if (index->type == VAL_NUM) {
         if (index->num < 0) {
-            invalid_val_list_index(val_list, index->num);
+            invalid_val_list_index(list, index->num);
         } else {
-            toy_val *lookup_result = val_list_index(val_list, index->num);
+            toy_val *lookup_result = val_list_index(list, index->num);
             if (lookup_result) {
                 *result = *lookup_result;
             } else {
-                invalid_val_list_index(val_list, index->num);
+                invalid_val_list_index(list, index->num);
             }
         }
     } else {
@@ -241,10 +232,10 @@ static void list_lookup(toy_interp *interp, toy_val *result, toy_val_list *val_l
     }
 }
 
-static void map_lookup(toy_interp *interp, toy_val *result, map_val *collection, toy_val *index)
+static void map_lookup(toy_interp *interp, toy_val *result, map_val *map, toy_val *index)
 {
     if (index->type == VAL_STR) {
-        toy_val *existing_value = map_val_get(collection, index->str);
+        toy_val *existing_value = map_val_get(map, index->str);
         if (existing_value) {
             *result = *existing_value;
         } else {
@@ -255,106 +246,140 @@ static void map_lookup(toy_interp *interp, toy_val *result, map_val *collection,
     }
 }
 
-static void str_lookup(toy_interp *interp, toy_val *result, toy_str collection, toy_val *index)
+static void str_lookup(toy_interp *interp, toy_val *result, toy_str str, toy_val *index)
 {
     if (index->type == VAL_NUM) {
-        if (index->num >= 0 && index->num < strlen(collection)) {
+        if (index->num >= 0 && index->num < strlen(str)) {
             result->type = VAL_NUM;
-            result->num = collection[(int) index->num];
+            result->num = str[(int) index->num];
         } else {
-            invalid_string_index(collection, index->num);
+            invalid_string_index(str, index->num);
         }
     } else {
         invalid_operand(EXPR_COLLECTION_LOOKUP, index);
     }
 }
 
-static void collection_lookup(toy_interp *interp, toy_val *result, toy_str identifier, toy_expr *index)
+static void collection_lookup(toy_interp *interp, toy_val *result, resolved_name *resolved, toy_expr *index)
 {
-    toy_val collection;
-    get_result get_res = lookup_identifier(interp, &collection, identifier);
-    if (get_res == GET_FOUND) {
-        toy_val index_result;
-        expr_eval(interp, &index_result, index);    
-        if (collection.type == VAL_LIST) {
-            list_lookup(interp, result, collection.list, &index_result);
-        } else if (collection.type == VAL_MAP) {
-            map_lookup(interp, result, collection.map, &index_result);
-        } else if (collection.type == VAL_STR) {
-            str_lookup(interp, result, collection.str, &index_result);
-        } else {
-            invalid_operand(EXPR_COLLECTION_LOOKUP, &collection);
-        }
+    toy_val index_result;
+    expr_eval(interp, &index_result, index);
+    toy_val *val = get_lvalue(interp, resolved);
+    if (val->type == VAL_LIST) {
+        list_lookup(interp, result, val->list, &index_result);
+    } else if (val->type == VAL_MAP) {
+        map_lookup(interp, result, val->map, &index_result);
+    } else if (val->type == VAL_STR) {
+        str_lookup(interp, result, val->str, &index_result);
     } else {
-        undeclared_identifier(identifier);
+        invalid_operand(EXPR_COLLECTION_LOOKUP, val);
     }
 }
 
-static void op_postfix_decrement(toy_interp *interp, toy_val *result, toy_str id)
+static toy_val *interp_get_func_param(toy_interp *interp, func_param_ref *param_ref)
 {
-    toy_val cur_value;
-    get_result get_res = lookup_identifier(interp, &cur_value, id);
-    if (get_res == GET_FOUND) {
-        if (cur_value.type == VAL_NUM) {
-            toy_val new_value = { .type = VAL_NUM, .num = cur_value.num - 1 };
-            set_variable_value(interp, id, &new_value);
-            *result = cur_value;
-        } else {
-            invalid_operand(EXPR_POSTFIX_DECREMENT, &cur_value);
-        }
+    /* TODO */
+    return NULL;
+}
+
+static toy_val *interp_get_variable(toy_interp *interp, toy_str name)
+{
+    /* TODO */
+    return NULL;
+}
+
+toy_val *get_lvalue(toy_interp *interp, resolved_name *resolved)
+{
+    toy_val *val;
+
+    switch (resolved->type) {
+    case REF_FUNC_PARAM:
+        func_param_ref *param_ref = &resolved->func_param;
+        val = interp_get_func_param(interp, param_ref);
+        break;
+    case REF_UNDEFINED:
+        assert(0);
+        break;
+    case REF_VAR_DECL:
+        toy_var_decl *var_decl = resolved->var_decl;
+        val = interp_get_variable(interp, var_decl->name);
+        break;
+    default:
+        invalid_lvalue(resolved);
+        break;
+    }
+
+    return val;
+}
+
+const toy_val *get_rvalue(toy_interp *interp, resolved_name *resolved)
+{
+    switch (resolved->type) {
+    case REF_FUNC_DECL:
+        toy_func_decl_stmt *func_decl = resolved->func_decl;
+        return &func_decl->val;
+    case REF_FUNC_PARAM:
+        func_param_ref *param_ref = &resolved->func_param;
+        return interp_get_func_param(interp, param_ref);
+    case REF_PREDEF_CONST:
+        return resolved->predef_const;
+    case REF_PREDEF_FUNC:
+        return predef_func_to_val(resolved->predef_func);
+    case REF_UNDEFINED:
+        assert(0);
+        break;
+    case REF_VAR_DECL:
+        toy_var_decl *var_decl = resolved->var_decl;
+        return interp_get_variable(interp, var_decl->name);
+    default:
+        invalid_lvalue(resolved);
+        break;
+    }
+
+    return NULL;
+}
+
+static void op_postfix_decrement(toy_interp *interp, toy_val *result, resolved_name *resolved)
+{
+    toy_val *val = get_lvalue(interp, resolved);
+    if (val->type == VAL_NUM) {
+        *result = *val;
+        val->num--;
     } else {
-        undeclared_identifier(id);
+        invalid_operand(EXPR_POSTFIX_DECREMENT, val);
     }
 }
 
-static void op_postfix_increment(toy_interp *interp, toy_val *result, toy_str id)
+static void op_postfix_increment(toy_interp *interp, toy_val *result, resolved_name *resolved)
 {
-    toy_val cur_value;
-    get_result get_res = lookup_identifier(interp, &cur_value, id);
-    if (get_res == GET_FOUND) {
-        if (cur_value.type == VAL_NUM) {
-            toy_val new_value = { .type = VAL_NUM, .num = cur_value.num + 1 };
-            set_variable_value(interp, id, &new_value);
-            *result = cur_value;
-        } else {
-            invalid_operand(EXPR_POSTFIX_DECREMENT, &cur_value);
-        }
+    toy_val *val = get_lvalue(interp, resolved);
+    if (val->type == VAL_NUM) {
+        *result = *val;
+        val->num++;
     } else {
-        undeclared_identifier(id);
+        invalid_operand(EXPR_POSTFIX_DECREMENT, val);
     }
 }
 
-static void op_prefix_decrement(toy_interp *interp, toy_val *result, toy_str id)
+static void op_prefix_decrement(toy_interp *interp, toy_val *result, resolved_name *resolved)
 {
-    toy_val cur_value;
-    get_result get_res = lookup_identifier(interp, &cur_value, id);
-    if (get_res == GET_FOUND) {
-        if (cur_value.type == VAL_NUM) {
-            toy_val new_value = { .type = VAL_NUM, .num = cur_value.num - 1 };
-            set_variable_value(interp, id, &new_value);
-            *result = new_value;
-        } else {
-            invalid_operand(EXPR_POSTFIX_DECREMENT, &cur_value);
-        }
+    toy_val *val = get_lvalue(interp, resolved);
+    if (val->type == VAL_NUM) {
+        val->num--;
+        *result = *val;
     } else {
-        undeclared_identifier(id);
+        invalid_operand(EXPR_POSTFIX_DECREMENT, val);
     }
 }
 
-static void op_prefix_increment(toy_interp *interp, toy_val *result, toy_str id)
+static void op_prefix_increment(toy_interp *interp, toy_val *result, resolved_name *resolved)
 {
-    toy_val cur_value;
-    get_result get_res = lookup_identifier(interp, &cur_value, id);
-    if (get_res == GET_FOUND) {
-        if (cur_value.type == VAL_NUM) {
-            toy_val new_value = { .type = VAL_NUM, .num = cur_value.num + 1 };
-            set_variable_value(interp, id, &new_value);
-            *result = new_value;
-        } else {
-            invalid_operand(EXPR_POSTFIX_DECREMENT, &cur_value);
-        }
+    toy_val *val = get_lvalue(interp, resolved);
+    if (val->type == VAL_NUM) {
+        val->num++;
+        *result = *val;
     } else {
-        undeclared_identifier(id);
+        invalid_operand(EXPR_POSTFIX_DECREMENT, val);
     }
 }
 
@@ -382,7 +407,23 @@ static void eval_map(toy_interp *interp, toy_val *result, const toy_map_entry_li
     assert(res == ENUMERATION_COMPLETE);
 }
 
-void expr_eval(toy_interp *interp, toy_val *result, const toy_expr *expr)
+static void op_func_call(toy_interp *interp, toy_val *result, toy_func_call *call)
+{
+    const toy_val *val = get_rvalue(interp, &call->resolved);
+    if (VAL_FUNC == val->type) {
+        const toy_function *func = val->func;
+        run_stmt_result res = call_func(interp, func, call->args);
+        if (res == REACHED_RETURN) {
+            *result = *interp_get_return_value(interp);
+        } else {
+            *result = null_val;
+        }
+    } else {
+        invalid_operand(EXPR_FUNC_CALL, val);
+    }
+}
+
+void expr_eval(toy_interp *interp, toy_val *result, toy_expr *expr)
 {
     if (!expr) {
         *result = null_val;
@@ -394,10 +435,10 @@ void expr_eval(toy_interp *interp, toy_val *result, const toy_expr *expr)
         op_and(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_ASSIGN:
-        op_assign(interp, result, expr->assignment.lhs, expr->assignment.rhs);
+        op_assign(interp, result, &expr->assignment.resolved, expr->assignment.rhs);
         break;
     case EXPR_COLLECTION_LOOKUP:
-        collection_lookup(interp, result, expr->collection_lookup.lhs, expr->collection_lookup.rhs);
+        collection_lookup(interp, result, &expr->collection_lookup.resolved, expr->collection_lookup.rhs);
         break;
     case EXPR_COMMA:
         op_comma(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
@@ -412,15 +453,10 @@ void expr_eval(toy_interp *interp, toy_val *result, const toy_expr *expr)
         op_exponent(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_FIELD_REF:
-        op_field_ref(interp, result, expr->field_ref.lhs, expr->field_ref.rhs);
+        op_field_ref(interp, result, &expr->field_ref.resolved, expr->field_ref.rhs);
         break;
     case EXPR_FUNC_CALL:
-        run_stmt_result res = call_func(interp, expr->func_call.func_name, expr->func_call.args);
-        if (res == REACHED_RETURN) {
-            *result = *interp_get_return_value(interp);
-        } else {
-            *result = null_val;
-        }
+        op_func_call(interp, result, &expr->func_call);
         break;
     case EXPR_GT:
         op_gt(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
@@ -441,6 +477,7 @@ void expr_eval(toy_interp *interp, toy_val *result, const toy_expr *expr)
         eval_expr_list(interp, result, expr->list);
         break;
     case EXPR_LITERAL:
+        assert(expr->val.type != VAL_FUNC);
         *result = expr->val;
         break;
     case EXPR_LT:
@@ -477,16 +514,16 @@ void expr_eval(toy_interp *interp, toy_val *result, const toy_expr *expr)
         op_plus(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_POSTFIX_DECREMENT:
-        op_postfix_decrement(interp, result, expr->postfix_decrement.id);
+        op_postfix_decrement(interp, result, &expr->postfix_decrement.resolved);
         break;
     case EXPR_POSTFIX_INCREMENT:
-        op_postfix_increment(interp, result, expr->postfix_increment.id);
+        op_postfix_increment(interp, result, &expr->postfix_increment.resolved);
         break;
     case EXPR_PREFIX_DECREMENT:
-        op_prefix_decrement(interp, result, expr->prefix_decrement.id);
+        op_prefix_decrement(interp, result, &expr->prefix_decrement.resolved);
         break;
     case EXPR_PREFIX_INCREMENT:
-        op_prefix_increment(interp, result, expr->prefix_increment.id);
+        op_prefix_increment(interp, result, &expr->prefix_increment.resolved);
         break;
     case EXPR_TERNARY:
         op_ternary(interp, result, expr->ternary.condition, expr->ternary.if_true, expr->ternary.if_false);
@@ -531,7 +568,7 @@ run_stmt_result run_one_stmt(toy_interp *interp, toy_stmt *stmt)
     return run_stmt(interp, stmt);
 }
 
-toy_bool condition_truthy(toy_interp *interp, const toy_expr *expr)
+toy_bool condition_truthy(toy_interp *interp, toy_expr *expr)
 {
     if (expr) {
         toy_val cond_result;
@@ -541,7 +578,7 @@ toy_bool condition_truthy(toy_interp *interp, const toy_expr *expr)
     return TOY_TRUE;
 }
 
-run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt)
+run_stmt_result run_stmt(toy_interp *interp, toy_stmt *stmt)
 {
     switch (stmt->type) {
     case STMT_BLOCK:
@@ -558,7 +595,7 @@ run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt)
     case STMT_FOR:
         return for_stmt(interp, &stmt->for_stmt);
     case STMT_FUNC_DECL:
-        create_function(interp, &stmt->func_decl_stmt.def);
+        create_function(interp, &stmt->func_decl_stmt.func);
         return EXECUTED_STATEMENT;
     case STMT_IF:
         return if_stmt(interp, &stmt->if_stmt);
@@ -581,8 +618,8 @@ run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt)
 run_stmt_result run_current_block(toy_interp *interp)
 {
     /* TODO: Should use stmt_list_foreach */
-    interp_frame_list *frame_list = interp_cur_frame(interp);
-    interp_frame *cur_frame = interp_frame_list_payload(frame_list);
+    interp_stack *stack = interp_get_stack(interp);
+    interp_frame *cur_frame = interp_stack_payload(stack);
     for (; cur_frame->cur_stmt; cur_frame->cur_stmt = cur_frame->cur_stmt->next) {
         run_stmt_result stmt_result;
         stmt_result = run_stmt(interp, &cur_frame->cur_stmt->stmt);
@@ -609,16 +646,16 @@ run_stmt_result run_current_block(toy_interp *interp)
 
 static run_stmt_result block_stmt(toy_interp *interp, const toy_block *block)
 {
-    push_context_block_stmt(interp, block);
+    interp_stack_push_block(interp->stack, block);
     run_stmt_result res = run_current_block(interp);
-    pop_context(interp);
+    interp_stack_pop(interp->stack);
     if (res == REACHED_BLOCK_END) {
         res = EXECUTED_STATEMENT;
     }
     return res;
 }
 
-toy_interp *alloc_interp(const toy_stmt_list *program)
+toy_interp *interp_alloc(const toy_stmt_list *program)
 {
     toy_interp *interp;
     interp = mymalloc(toy_interp);
@@ -626,19 +663,31 @@ toy_interp *alloc_interp(const toy_stmt_list *program)
     interp->main_program.code.stmts = (toy_stmt_list *) program;
     interp->main_program.name = "Top-level";
     interp->main_program.param_names = NULL;
-    interp->cur_frame = NULL;
-    dump_stack(stderr, "at program start", interp);
-    push_context_user_def_func(interp, &interp->main_program);
+    interp->stack = NULL;
+    interp_stack_push_user_func(interp->stack, &interp->main_program);
+    interp_stack_dump(stderr, "at program start", interp->stack);
     return interp;
 }
 
-void free_interp(toy_interp *interp)
+void interp_free(toy_interp *interp)
 {
-    pop_context(interp);
-    while (interp->cur_frame) {
-        interp_frame_list *prev = interp->cur_frame->prev;
-        interp_frame_free(interp->cur_frame);
-        interp->cur_frame = prev;
-    }
+    interp_stack_pop(interp->stack);
+    interp_stack_free(interp->stack);
     free(interp);
+}
+
+/* TODO: Can these be unified? */
+void interp_push_if(toy_interp *interp, const toy_block *block)
+{
+    interp->stack = interp_stack_push_if(interp->stack, block);
+}
+
+void interp_push_loop(toy_interp *interp, const toy_block *body)
+{
+    interp->stack = interp_stack_push_loop(interp->stack, body);
+}
+
+void interp_pop(toy_interp *interp)
+{
+    interp->stack = interp_stack_pop(interp->stack);
 }

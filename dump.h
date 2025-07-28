@@ -13,5 +13,6 @@ void identifier_list_dump(FILE *f, const toy_str_list *list);
 void expr_dump(FILE *f, const toy_expr *expr);
 void stmt_list_dump(FILE *f, const toy_stmt_list *stmts);
 void stmt_dump(FILE *f, const toy_stmt *stmt, int append_semicolon);
+void resolved_name_dump(FILE *f, const resolved_name *resolved);
 
 #endif /* TOY_DUMP_H */

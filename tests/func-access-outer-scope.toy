@@ -1,0 +1,5 @@
+var outside = 42;
+fun myfun() {
+    print(outside);
+}
+myfun();

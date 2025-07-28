@@ -6,6 +6,13 @@
 #include "map-buf-entry-list.h"
 #include "str.h"
 
+void map_buf_init(map_buf *map)
+{
+    assert(offsetof(map_buf, buckets) == offsetof(generic_map, buckets));
+    assert(offsetof(map_buf, num_items) == offsetof(generic_map, num_items));
+    return generic_map_init((generic_map *) map);
+}
+
 map_buf *map_buf_alloc(void)
 {
     assert(offsetof(map_buf, buckets) == offsetof(generic_map, buckets));
@@ -99,10 +106,12 @@ set_result map_buf_set(map_buf *map, const toy_str key, const void *buf, size_t 
     return SET_NEW;
 }
 
+#ifndef NDEBUG
 void map_buf_assert_valid(const map_buf *map)
 {
     return generic_map_assert_valid((const generic_map *) map);
 }
+#endif /* ndef NDEBUG */
 
 void map_buf_free(map_buf *map)
 {

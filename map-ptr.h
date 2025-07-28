@@ -7,6 +7,7 @@
 #include "map-ptr-types.h"
 #include "buf-list.h"
 
+void map_ptr_init(map_ptr *map);
 map_ptr *map_ptr_alloc(void);
 void *map_ptr_get(map_ptr *map, const toy_str key);
 const void *map_ptr_get_const(const map_ptr *map, const toy_str key);
@@ -17,5 +18,10 @@ enumeration_result map_ptr_foreach(map_ptr *map, map_ptr_entry_callback callback
 enumeration_result map_ptr_foreach_const(const map_ptr *map, const_map_ptr_entry_callback callback, void *cookie);
 void map_ptr_reset(map_ptr *map);
 void map_ptr_free(map_ptr *map);
+#ifdef NDEBUG
+#define map_ptr_assert_valid(map) do {} while (0)
+#else /* ndef NDEBUG */
+void map_ptr_assert_valid(const map_ptr *map);
+#endif /* ndef NDEBUG */
 
 #endif /* TOY_MAP_PTR_H */

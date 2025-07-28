@@ -1,0 +1,19 @@
+var firstfunc_called = 0;
+fun firstfunc() {
+    if (firstfunc_called) {
+        /* Do nothing */
+    } else {
+        firstfunc_called = 1;
+        secondfunc();
+    }
+}
+
+var secondfunc_called = 0;
+fun secondfunc() {
+    if (secondfunc_called) {
+        /* Do nothing */
+    } else {
+        secondfunc_called = 1;
+        firstfunc();
+    }
+}

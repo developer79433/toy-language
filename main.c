@@ -7,10 +7,15 @@
 #include "interp.h"
 #include "tests.h"
 #include "parser.tab.h"
+#include "log.h"
+#include "add-function-parents.h"
+#include "name-resolver.h"
 
 extern toy_stmt_list *get_program_start(void);
 extern void init_lexer(FILE *f);
 extern void init_parser(void);
+
+static toy_function toplevel_function = { .code = { .stmts = NULL }, .doc = "Global environment", .name = "global", .param_names = NULL, .parent = NULL, .type = FUNC_USER_DECLARED };
 
 int main(int argc, char **argv)
 {
@@ -34,8 +39,13 @@ int main(int argc, char **argv)
     }
     toy_stmt_list *program_start = get_program_start();
     stmt_list_dump(stderr, program_start);
-    toy_interp *interp = alloc_interp(program_start);
+    toplevel_function.code.stmts = program_start;
+    add_parent_links_to_stmt_list(&toplevel_function, program_start);
+    name_resolver resolver;
+    resolver_init(&resolver);
+    resolve_names(&resolver, &toplevel_function);
+    toy_interp *interp = interp_alloc(program_start);
     run_current_block(interp);
-    free_interp(interp);
+    interp_free(interp);
     return EXIT_SUCCESS;
 }

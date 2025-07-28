@@ -15,7 +15,8 @@ struct toy_stmt_struct;
 typedef struct toy_stmt_struct toy_stmt;
 
 typedef struct toy_func_decl_stmt_struct {
-    toy_function def;
+    toy_val val;
+    toy_function func;
 } toy_func_decl_stmt;
 
 typedef struct toy_expr_stmt_struct {
@@ -50,8 +51,6 @@ typedef struct toy_block_stmt_struct {
     toy_block block;
 } toy_block_stmt;
 
-/* TODO: Sort these alphabetically */
-/* TODO: switch statement */
 enum toy_stmt_type_enum {
     STMT_BLOCK = 0,
     STMT_BREAK,

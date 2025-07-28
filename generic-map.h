@@ -7,6 +7,7 @@
 #include "generic-map-types.h"
 #include "str-types.h"
 
+void generic_map_init(generic_map *map);
 generic_map *generic_map_alloc(void);
 generic_map_entry_list **generic_map_get_bucket(generic_map *map, toy_str key);
 void generic_map_free(generic_map *map);

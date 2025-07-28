@@ -19,6 +19,11 @@ void ptr_list_set_payload(toy_ptr_list *list, void *new_payload)
     list->ptr = new_payload;
 }
 
+void ptr_list_init(toy_ptr_list *list)
+{
+    list->ptr = NULL;
+}
+
 toy_ptr_list *ptr_list_alloc(void *ptr)
 {
     toy_ptr_list *list = (toy_ptr_list *) generic_list_alloc_size(sizeof(list->ptr));
@@ -44,6 +49,22 @@ toy_ptr_list *ptr_list_append(toy_ptr_list *list, void *new_ptr)
 toy_ptr_list *ptr_list_concat(toy_ptr_list *list, toy_ptr_list *new_list)
 {
     return (toy_ptr_list *) generic_list_concat((generic_list *) list, (generic_list *) new_list);
+}
+
+toy_ptr_list *ptr_list_prepend(toy_ptr_list *list, void *new_ptr)
+{
+    toy_ptr_list *new_list = ptr_list_alloc(new_ptr);
+    return (toy_ptr_list *) generic_list_concat((generic_list *) new_list, (generic_list *) list);
+}
+
+toy_ptr_list *ptr_list_remove_first(toy_ptr_list *list, toy_ptr_list **removed)
+{
+    return (toy_ptr_list *) generic_list_remove_first((generic_list *) list, (generic_list **) removed);
+}
+
+toy_ptr_list *ptr_list_remove_last(toy_ptr_list *list, toy_ptr_list **removed)
+{
+    return (toy_ptr_list *) generic_list_remove_last((generic_list *) list, (generic_list **) removed);
 }
 
 size_t ptr_list_len(const toy_ptr_list *list)

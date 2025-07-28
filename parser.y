@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
+#include <assert.h>
 
+#include "log.h"
 #include "bool-types.h"
 #include "expr.h"
 #include "constants.h"
@@ -179,18 +181,13 @@ expr_stmt:
 
 func_decl_stmt:
     T_FUN T_IDENTIFIER T_LPAREN formalparams T_RPAREN block {
-        $$ = stmt_alloc(STMT_FUNC_DECL);
-        $$->func_decl_stmt.def.type = FUNC_USER_DECLARED;
-        $$->func_decl_stmt.def.name = $2;
-        $$->func_decl_stmt.def.param_names = $4;
-        $$->func_decl_stmt.def.code = $6;
+        $$ = func_decl_stmt_alloc($2, $4, &$6);
     }
 ;
 
 var_decl_stmt:
     T_VAR vardecllist {
-        $$ = stmt_alloc(STMT_VAR_DECL);
-        $$->var_decl_stmt = *$2;
+        $$ = var_decl_stmt_alloc($2);
     }
 ;
 
@@ -575,9 +572,11 @@ map_expr: T_LBRACE mapitems T_RBRACE {
     }
 ;
 
-function_decl_expr: T_FUN T_LPAREN formalparams T_RPAREN block {
-        /* TODO: This should be a literal, not an expression */
+/* TODO: This should be a literal, not an expression */
+function_decl_expr:
+    T_FUN T_LPAREN formalparams T_RPAREN block {
         $$ = alloc_expr_func_decl($3, &$5);
+        assert($$->val.type == VAL_FUNC);
     }
 ;
 
@@ -587,9 +586,7 @@ function_decl_expr: T_FUN T_LPAREN formalparams T_RPAREN block {
  * But this probably requires duplicating all of the relevant grammar rules.
  */
 function_call_expr: T_IDENTIFIER T_LPAREN actualargs T_RPAREN {
-        $$ = alloc_expr(EXPR_FUNC_CALL);
-        $$->func_call.func_name = $1;
-        $$->func_call.args = $3;
+        $$ = alloc_expr_func_call($1, $3);
     }
 ;
 
@@ -600,10 +597,7 @@ function_call_expr: T_IDENTIFIER T_LPAREN actualargs T_RPAREN {
  */
 method_call_expr:
     T_IDENTIFIER T_DOT T_IDENTIFIER T_LPAREN actualargs T_RPAREN {
-        $$ = alloc_expr(EXPR_METHOD_CALL);
-        $$->method_call.target = $1;
-        $$->method_call.method_name = $3;
-        $$->method_call.args = $5;
+        $$ = alloc_expr_method_call($1, $3, $5);
     }
 ;
 

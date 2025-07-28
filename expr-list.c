@@ -12,7 +12,7 @@ toy_expr *expr_list_payload(toy_expr_list *list)
     return list->expr;
 }
 
-const void *expr_list_payload_const(const toy_expr_list *list)
+const toy_expr *expr_list_payload_const(const toy_expr_list *list)
 {
     return list->expr;
 }

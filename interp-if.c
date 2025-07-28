@@ -1,13 +1,12 @@
 #include "interp.h"
-#include "interp-frame.h"
 
 static run_stmt_result run_if_stmt_block(toy_interp *interp, const toy_block *block)
 {
     run_stmt_result res;
     if (block) {
-        push_context_if_body(interp, block);
+        interp_push_if(interp, block);
         res = run_current_block(interp);
-        pop_context(interp);
+        interp_pop(interp);
     } else {
         res = EXECUTED_STATEMENT;
     }

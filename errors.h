@@ -27,5 +27,6 @@ void invalid_value_type(toy_val_type value_type);
 void divide_by_zero(void);
 void invalid_function_type(enum toy_func_type func_type);
 void return_outside_function(frame_type ftype);
+void invalid_lvalue(resolved_name *resolved);
 
 #endif /* TOY_ERRORS_H */

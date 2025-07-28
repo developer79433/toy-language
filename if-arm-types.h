@@ -1,7 +1,7 @@
 #ifndef TOY_IF_ARM_TYPES_H
 #define TOY_IF_ARM_TYPES_H 1
 
-#include "stmt-types.h"
+#include "block-types.h"
 
 struct toy_expr_struct;
 typedef struct toy_expr_struct toy_expr;

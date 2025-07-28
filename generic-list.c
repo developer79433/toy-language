@@ -108,6 +108,7 @@ enumeration_result generic_list_flter_const(const generic_list *list, generic_li
 
 typedef struct find_one_args_struct {
     filter_args filtargs;
+    generic_list *prev_item;
     generic_list *found_item;
 } find_one_args;
 
@@ -119,12 +120,13 @@ static item_callback_result find_first_callback(void *cookie, size_t index, gene
         args->found_item = item;
         return STOP_ENUMERATION;
     }
+    args->prev_item = item;
     return CONTINUE_ENUMERATION;
 }
 
-generic_list *generic_list_find_first(generic_list *list, generic_list_filter_func filter, void *cookie)
+generic_list *generic_list_find_first(generic_list *list, generic_list_filter_func filter, void *cookie, generic_list **prev)
 {
-    find_one_args args = { .found_item = NULL, .filtargs.filter = filter, .filtargs.user_callback = NULL, .filtargs.user_cookie = cookie };
+    find_one_args args = { .prev_item = NULL, .found_item = NULL, .filtargs.filter = filter, .filtargs.user_callback = NULL, .filtargs.user_cookie = cookie };
     enumeration_result res = generic_list_foreach(list, find_first_callback, &args);
     assert(
         (
@@ -133,12 +135,15 @@ generic_list *generic_list_find_first(generic_list *list, generic_list_filter_fu
             (res == ENUMERATION_COMPLETE) && (args.found_item == NULL)
         )
     );
+    if (prev) {
+        *prev = args.prev_item;
+    }
     return args.found_item;
 }
 
 toy_bool generic_list_none_match(generic_list *list, generic_list_filter_func filter, void *cookie)
 {
-    generic_list *found = generic_list_find_first(list, filter, cookie);
+    generic_list *found = generic_list_find_first(list, filter, cookie, NULL);
     return (found == NULL);
 }
 
@@ -155,7 +160,7 @@ static item_callback_result find_first_not_callback(void *cookie, size_t index, 
 
 generic_list *generic_list_find_first_not(generic_list *list, generic_list_filter_func filter, void *cookie)
 {
-    find_one_args args = { .found_item = NULL, .filtargs.filter = filter, .filtargs.user_callback = NULL, .filtargs.user_cookie = cookie };
+    find_one_args args = { .prev_item = NULL, .found_item = NULL, .filtargs.filter = filter, .filtargs.user_callback = NULL, .filtargs.user_cookie = cookie };
     enumeration_result res = generic_list_foreach(list, find_first_not_callback, &args);
     assert(
         (
@@ -181,7 +186,7 @@ static toy_bool is_desired_index(void *cookie, size_t index, const generic_list 
 
 generic_list *generic_list_index(generic_list *list, size_t index)
 {
-    return generic_list_find_first(list, is_desired_index, &index);
+    return generic_list_find_first(list, is_desired_index, &index, NULL);
 }
 
 static item_callback_result increment_count_callback(void *cookie, size_t index, const generic_list *item)
@@ -208,17 +213,50 @@ static toy_bool has_null_next(void *cookie, size_t index, const generic_list *it
     return item->next == NULL;
 }
 
-generic_list *generic_list_last(generic_list *list)
+generic_list *generic_list_last(generic_list *list, generic_list **prev)
 {
-    generic_list *last = generic_list_find_first(list, has_null_next, NULL);
+    generic_list *last = generic_list_find_first(list, has_null_next, NULL, prev);
     assert(NULL == last->next);
     return last;
 }
 
 generic_list *generic_list_concat(generic_list *list, generic_list *new_list)
 {
-    generic_list *last = generic_list_last(list);
+    generic_list *last = generic_list_last(list, NULL);
     assert(NULL == last->next);
     last->next = new_list;
+    return list;
+}
+
+generic_list *generic_list_remove_first(generic_list *list, generic_list **removed)
+{
+    assert(list);
+    if (removed) {
+        *removed = list;
+    }
+    generic_list *ret = list->next;
+    list->next = NULL;
+    return ret;
+}
+
+generic_list *generic_list_remove_last(generic_list *list, generic_list **removed)
+{
+    assert(list);
+    generic_list *prev = NULL;
+    generic_list *last = generic_list_last(list, &prev);
+    assert(NULL == last->next);
+    if (prev == NULL) {
+        assert(last == list);
+        assert(NULL == list->next);
+        list = NULL;
+    } else {
+        assert(last != list);
+        assert(prev->next != NULL);
+        assert(prev->next == last);
+        prev->next = NULL;
+    }
+    if (removed) {
+        *removed = last;
+    }
     return list;
 }

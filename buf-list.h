@@ -5,11 +5,15 @@
 
 #include "buf-list-types.h"
 
+void buf_list_init(toy_buf_list *list);
 toy_buf_list *buf_list_alloc(const void *buf, size_t buf_size);
 toy_buf_list *buf_list_alloc_2(const void *buf1, size_t buf1_size, const void *buf2, size_t buf2_size);
 void buf_list_free(toy_buf_list *list);
 toy_buf_list *buf_list_concat(toy_buf_list *list, toy_buf_list *new_list);
 toy_buf_list *buf_list_append(toy_buf_list *list, const void *buf, size_t buf_size);
+toy_buf_list *buf_list_prepend(toy_buf_list *list, const void *buf, size_t buf_size);
+toy_buf_list *buf_list_remove_first(toy_buf_list *list, toy_buf_list **removed);
+toy_buf_list *buf_list_remove_last(toy_buf_list *list, toy_buf_list **removed);
 size_t buf_list_len(const toy_buf_list *list);
 void *buf_list_index(toy_buf_list *list, size_t index);
 enumeration_result buf_list_foreach(toy_buf_list *list, buf_list_item_callback callback, void *cookie);

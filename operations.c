@@ -12,7 +12,7 @@
 #include "errors.h"
 #include "constants.h"
 
-void op_and(toy_interp *interp, toy_val *result, const toy_expr *arg1, const toy_expr *arg2)
+void op_and(toy_interp *interp, toy_val *result, toy_expr *arg1, toy_expr *arg2)
 {
     toy_val arg_result1;
 
@@ -29,14 +29,14 @@ void op_and(toy_interp *interp, toy_val *result, const toy_expr *arg1, const toy
     }
 }
 
-void op_comma(toy_interp *interp, toy_val *result, const toy_expr *arg1, const toy_expr *arg2)
+void op_comma(toy_interp *interp, toy_val *result, toy_expr *arg1, toy_expr *arg2)
 {
     toy_val arg_result1;
     expr_eval(interp, &arg_result1, arg1);
     expr_eval(interp, result, arg2);
 }
 
-void op_div(toy_interp *interp, toy_val *result, const toy_expr *arg1, const toy_expr *arg2)
+void op_div(toy_interp *interp, toy_val *result, toy_expr *arg1, toy_expr *arg2)
 {
     toy_val arg_result1, arg_result2;
 
@@ -57,7 +57,7 @@ void op_div(toy_interp *interp, toy_val *result, const toy_expr *arg1, const toy
     result->num = arg_result1.num / arg_result2.num;
 }
 
-void op_equal(toy_interp *interp, toy_val *result, const toy_expr *expr1, const toy_expr *expr2)
+void op_equal(toy_interp *interp, toy_val *result, toy_expr *expr1, toy_expr *expr2)
 {
     toy_val val1, val2;
 
@@ -67,7 +67,7 @@ void op_equal(toy_interp *interp, toy_val *result, const toy_expr *expr1, const 
     result->boolean = vals_equal(&val1, &val2);
 }
 
-void op_nequal(toy_interp *interp, toy_val *result, const toy_expr *expr1, const toy_expr *expr2)
+void op_nequal(toy_interp *interp, toy_val *result, toy_expr *expr1, toy_expr *expr2)
 {
     toy_val val1, val2;
 
@@ -79,7 +79,9 @@ void op_nequal(toy_interp *interp, toy_val *result, const toy_expr *expr1, const
 
 typedef void (*binary_op_func)(toy_val *result, const toy_val *val1, const toy_val *val2);
 
-static void do_numeric_binary_op(binary_op_func binop_func, toy_val *result, const toy_val *val1, const toy_val *val2)
+typedef void (*binary_numeric_op_func)(toy_val *result, toy_num num1, toy_num num2);
+
+static void do_numeric_binary_op(binary_numeric_op_func numeric_binop_func, toy_val *result, const toy_val *val1, const toy_val *val2)
 {
     if (val1->type != VAL_NUM) {
         invalid_cast(VAL_NUM, val1);
@@ -89,22 +91,34 @@ static void do_numeric_binary_op(binary_op_func binop_func, toy_val *result, con
         invalid_cast(VAL_NUM, val2);
         return;
     }
-    binop_func(result, val1, val2);
+    numeric_binop_func(result, val1->num, val2->num);
 }
 
-static void do_op_gt(toy_val *result, const toy_val *val1, const toy_val *val2)
+static void do_op_gt(toy_val *result, toy_num num1, toy_num num2)
 {
     result->type = VAL_BOOL;
-    result->boolean = val_gt(val1, val2);
+    result->boolean = num_gt(num1, num2);
 }
 
-static void do_op_gte(toy_val *result, const toy_val *val1, const toy_val *val2)
+static void do_op_gte(toy_val *result, toy_num num1, toy_num num2)
 {
     result->type = VAL_BOOL;
-    result->boolean = val_gte(val1, val2);
+    result->boolean = num_gte(num1, num2);
 }
 
-void op_gt(toy_interp *interp, toy_val *result, const toy_expr *expr1, const toy_expr *expr2)
+static void do_op_lt(toy_val *result, toy_num num1, toy_num num2)
+{
+    result->type = VAL_BOOL;
+    result->boolean = num_lt(num1, num2);
+}
+
+static void do_op_lte(toy_val *result, toy_num num1, toy_num num2)
+{
+    result->type = VAL_BOOL;
+    result->boolean = num_lte(num1, num2);
+}
+
+void op_gt(toy_interp *interp, toy_val *result, toy_expr *expr1, toy_expr *expr2)
 {
     toy_val val1, val2;
 
@@ -113,13 +127,31 @@ void op_gt(toy_interp *interp, toy_val *result, const toy_expr *expr1, const toy
     do_numeric_binary_op(do_op_gt, result, &val1, &val2);
 }
 
-void op_gte(toy_interp *interp, toy_val *result, const toy_expr *expr1, const toy_expr *expr2)
+void op_gte(toy_interp *interp, toy_val *result, toy_expr *expr1, toy_expr *expr2)
 {
     toy_val val1, val2;
 
     expr_eval(interp, &val1, expr1);
     expr_eval(interp, &val2, expr2);
     do_numeric_binary_op(do_op_gte, result, &val1, &val2);
+}
+
+void op_lt(toy_interp *interp, toy_val *result, toy_expr *expr1, toy_expr *expr2)
+{
+    toy_val val1, val2;
+
+    expr_eval(interp, &val1, expr1);
+    expr_eval(interp, &val2, expr2);
+    do_numeric_binary_op(do_op_lt, result, &val1, &val2);
+}
+
+void op_lte(toy_interp *interp, toy_val *result, toy_expr *expr1, toy_expr *expr2)
+{
+    toy_val val1, val2;
+
+    expr_eval(interp, &val1, expr1);
+    expr_eval(interp, &val2, expr2);
+    do_numeric_binary_op(do_op_lte, result, &val1, &val2);
 }
 
 typedef struct item_cb_args_struct {
@@ -138,7 +170,7 @@ static item_callback_result item_find_callback(void *cookie, size_t index, toy_v
     return CONTINUE_ENUMERATION;
 }
 
-void op_in(toy_interp *interp, toy_val *result, const toy_expr *needle_expr, const toy_expr *haystack_expr)
+void op_in(toy_interp *interp, toy_val *result, toy_expr *needle_expr, toy_expr *haystack_expr)
 {
     toy_val needle, haystack;
 
@@ -160,49 +192,13 @@ void op_in(toy_interp *interp, toy_val *result, const toy_expr *needle_expr, con
     );
 }
 
-static void do_op_lt(toy_val *result, const toy_val *val1, const toy_val *val2)
+static void do_op_minus(toy_val *result, toy_num num1, toy_num num2)
 {
-    assert(val1->type == VAL_NUM);
-    assert(val2->type == VAL_NUM);
-    result->type = VAL_BOOL;
-    result->boolean = (val1->num < val2->num);
-}
-
-void op_lt(toy_interp *interp, toy_val *result, const toy_expr *expr1, const toy_expr *expr2)
-{
-    toy_val val1, val2;
-
-    expr_eval(interp, &val1, expr1);
-    expr_eval(interp, &val2, expr2);
-    do_numeric_binary_op(do_op_lt, result, &val1, &val2);
-}
-
-static void do_op_lte(toy_val *result, const toy_val *val1, const toy_val *val2)
-{
-    assert(val1->type == VAL_NUM);
-    assert(val2->type == VAL_NUM);
-    result->type = VAL_BOOL;
-    result->boolean = (val1->num <= val2->num);
-}
-
-void op_lte(toy_interp *interp, toy_val *result, const toy_expr *expr1, const toy_expr *expr2)
-{
-    toy_val val1, val2;
-
-    expr_eval(interp, &val1, expr1);
-    expr_eval(interp, &val2, expr2);
-    do_numeric_binary_op(do_op_lte, result, &val1, &val2);
-}
-
-static void do_op_minus(toy_val *result, const toy_val *val1, const toy_val *val2)
-{
-    assert(val1->type == VAL_NUM);
-    assert(val2->type == VAL_NUM);
     result->type = VAL_NUM;
-    result->num = (val1->num - val2->num);
+    result->num = (num1 - num2);
 }
 
-void op_minus(toy_interp *interp, toy_val *result, const toy_expr *expr1, const toy_expr *expr2)
+void op_minus(toy_interp *interp, toy_val *result, toy_expr *expr1, toy_expr *expr2)
 {
     toy_val val1, val2;
 
@@ -211,15 +207,13 @@ void op_minus(toy_interp *interp, toy_val *result, const toy_expr *expr1, const 
     do_numeric_binary_op(do_op_minus, result, &val1, &val2);
 }
 
-static void do_op_mul(toy_val *result, const toy_val *val1, const toy_val *val2)
+static void do_op_mul(toy_val *result, toy_num num1, toy_num num2)
 {
-    assert(val1->type == VAL_NUM);
-    assert(val2->type == VAL_NUM);
     result->type = VAL_NUM;
-    result->num = (val1->num * val2->num);
+    result->num = (num1 * num2);
 }
 
-void op_mul(toy_interp *interp, toy_val *result, const toy_expr *expr1, const toy_expr *expr2)
+void op_mul(toy_interp *interp, toy_val *result, toy_expr *expr1, toy_expr *expr2)
 {
     toy_val val1, val2;
 
@@ -228,7 +222,7 @@ void op_mul(toy_interp *interp, toy_val *result, const toy_expr *expr1, const to
     do_numeric_binary_op(do_op_mul, result, &val1, &val2);
 }
 
-void op_not(toy_interp *interp, toy_val *result, const toy_expr *expr)
+void op_not(toy_interp *interp, toy_val *result, toy_expr *expr)
 {
     toy_val val;
 
@@ -238,7 +232,7 @@ void op_not(toy_interp *interp, toy_val *result, const toy_expr *expr)
     result->boolean = !arg_bool;
 }
 
-void op_or(toy_interp *interp, toy_val *result, const toy_expr *expr1, const toy_expr *expr2)
+void op_or(toy_interp *interp, toy_val *result, toy_expr *expr1, toy_expr *expr2)
 {
     toy_val val1;
 
@@ -255,15 +249,13 @@ void op_or(toy_interp *interp, toy_val *result, const toy_expr *expr1, const toy
     }
 }
 
-static void do_op_plus(toy_val *result, const toy_val *val1, const toy_val *val2)
+static void do_op_plus(toy_val *result, toy_num num1, toy_num num2)
 {
-    assert(val1->type == VAL_NUM);
-    assert(val2->type == VAL_NUM);
     result->type = VAL_NUM;
-    result->num = (val1->num + val2->num);
+    result->num = (num1 + num2);
 }
 
-void op_plus(toy_interp *interp, toy_val *result, const toy_expr *expr1, const toy_expr *expr2)
+void op_plus(toy_interp *interp, toy_val *result, toy_expr *expr1, toy_expr *expr2)
 {
     toy_val val1;
 
@@ -289,15 +281,13 @@ void op_plus(toy_interp *interp, toy_val *result, const toy_expr *expr1, const t
     }
 }
 
-static void do_op_modulus(toy_val *result, const toy_val *val1, const toy_val *val2)
+static void do_op_modulus(toy_val *result, toy_num num1, toy_num num2)
 {
-    assert(val1->type == VAL_NUM);
-    assert(val2->type == VAL_NUM);
     result->type = VAL_NUM;
-    result->num = ((int) val1->num % (int) val2->num);
+    result->num = ((int) num1 % (int) num2);
 }
 
-void op_modulus(toy_interp *interp, toy_val *result, const toy_expr *expr1, const toy_expr *expr2)
+void op_modulus(toy_interp *interp, toy_val *result, toy_expr *expr1, toy_expr *expr2)
 {
     toy_val val1, val2;
 
@@ -306,7 +296,7 @@ void op_modulus(toy_interp *interp, toy_val *result, const toy_expr *expr1, cons
     do_numeric_binary_op(do_op_modulus, result, &val1, &val2);
 }
 
-void op_uneg(toy_interp *interp, toy_val *result, const toy_expr *arg)
+void op_uneg(toy_interp *interp, toy_val *result, toy_expr *arg)
 {
     toy_val arg_result;
 
@@ -319,15 +309,13 @@ void op_uneg(toy_interp *interp, toy_val *result, const toy_expr *arg)
     result->num = -arg_result.num;
 }
 
-static void do_op_exponent(toy_val *result, const toy_val *val1, const toy_val *val2)
+static void do_op_exponent(toy_val *result, toy_num num1, toy_num num2)
 {
-    assert(val1->type == VAL_NUM);
-    assert(val2->type == VAL_NUM);
     result->type = VAL_NUM;
-    result->num = pow(val1->num, val2->num);
+    result->num = pow(num1, num2);
 }
 
-void op_exponent(toy_interp *interp, toy_val *result, const toy_expr *expr1, const toy_expr *expr2)
+void op_exponent(toy_interp *interp, toy_val *result, toy_expr *expr1, toy_expr *expr2)
 {
     toy_val val1, val2;
 
@@ -356,35 +344,25 @@ static void lookup_field(toy_val *result, toy_val *target, toy_str field_name)
     /* TODO */
 }
 
-void op_field_ref(toy_interp *interp, toy_val *result, toy_str target_name, toy_str field_name)
+void op_field_ref(toy_interp *interp, toy_val *result, resolved_name *resolved, toy_str field_name)
 {
-    toy_val target;
-    int target_exists = lookup_identifier(interp, &target, target_name);
-    if (target_exists) {
-        lookup_field(result, &target, field_name);
-    } else {
-        undeclared_identifier(target_name);
-    }
+    toy_val *val = get_lvalue(interp, resolved);
+    lookup_field(result, val, field_name);
 }
 
 void op_method_call(toy_interp *interp, toy_val *result, const toy_method_call *method_call)
 {
     toy_val target;
-    int target_exists = lookup_identifier(interp, &target, method_call->target);
-    if (target_exists) {
-        toy_val field;
-        lookup_field(&field, &target, method_call->method_name);
-        if (field.type == VAL_FUNC) {
-            run_stmt_result res = run_toy_function_expr_list(interp, field.func, method_call->args);
-            if (res == REACHED_RETURN) {
-                *result = *interp_get_return_value(interp);
-            } else {
-                *result = null_val;
-            }
+    toy_val field;
+    lookup_field(&field, &target, method_call->method_name);
+    if (field.type == VAL_FUNC) {
+        run_stmt_result res = run_toy_function_expr_list(interp, field.func, method_call->args);
+        if (res == REACHED_RETURN) {
+            *result = *interp_get_return_value(interp);
         } else {
-            invalid_operand(EXPR_FUNC_CALL, &field);
+            *result = null_val;
         }
     } else {
-        undeclared_identifier(method_call->target);
+        invalid_operand(EXPR_FUNC_CALL, &field);
     }
 }

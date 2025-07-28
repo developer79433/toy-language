@@ -77,3 +77,17 @@ enumeration_result str_list_foreach_const(const toy_str_list *list, const_toy_st
 {
     return ptr_list_foreach_const((const toy_ptr_list *) list, (const_ptr_list_item_callback) callback, cookie);
 }
+
+#ifndef NDEBUG
+static item_callback_result item_valid_callback(void *cookie, size_t index, const toy_str_list *list)
+{
+    toy_str str = str_list_payload_const(list);
+    str_assert_valid(str);
+    return CONTINUE_ENUMERATION;
+}
+
+void str_list_assert_valid(const toy_str_list *list)
+{
+    str_list_foreach_const(list, item_valid_callback, NULL);
+}
+#endif /* ndef NDEBUG */

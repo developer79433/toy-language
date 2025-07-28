@@ -12,6 +12,7 @@
 #include "errors.h"
 #include "constants.h"
 #include "map-val.h"
+#include "debug.h"
 
 static const char *toy_val_type_names[] = {
     "boolean",
@@ -180,32 +181,52 @@ toy_bool vals_nequal(const toy_val *val1, const toy_val *val2)
     return !vals_equal(val1, val2);
 }
 
+toy_bool num_gt(toy_num num1, toy_num num2)
+{
+    return (num1 > num2);
+}
+
+toy_bool num_gte(toy_num num1, toy_num num2)
+{
+    return (num1 >= num2);
+}
+
+toy_bool num_lt(toy_num num1, toy_num num2)
+{
+    return (num1 < num2);
+}
+
+toy_bool num_lte(toy_num num1, toy_num num2)
+{
+    return (num1 <= num2);
+}
+
 toy_bool val_gt(const toy_val *val1, const toy_val *val2)
 {
     assert(val1->type == VAL_NUM);
     assert(val2->type == VAL_NUM);
-    return (val1->num > val2->num);
+    return num_gt(val1->num, val2->num);
 }
 
 toy_bool val_gte(const toy_val *val1, const toy_val *val2)
 {
     assert(val1->type == VAL_NUM);
     assert(val2->type == VAL_NUM);
-    return (val1->num >= val2->num);
+    return num_gte(val1->num, val2->num);
 }
 
 toy_bool val_lt(const toy_val *val1, const toy_val *val2)
 {
     assert(val1->type == VAL_NUM);
     assert(val2->type == VAL_NUM);
-    return (val1->num < val2->num);
+    return num_lt(val1->num, val2->num);
 }
 
 toy_bool val_lte(const toy_val *val1, const toy_val *val2)
 {
     assert(val1->type == VAL_NUM);
     assert(val2->type == VAL_NUM);
-    return (val1->num <= val2->num);
+    return num_lte(val1->num, val2->num);
 }
 
 #ifndef NDEBUG
@@ -238,13 +259,25 @@ void val_assert_valid(const toy_val *val)
         bool_assert_valid(val->boolean);
         break;
     case VAL_FUNC:
-        func_assert_valid(val->func);
+        if (valid_check_depth < VALID_CHECK_RECURSION_DEPTH) {
+            valid_check_depth++;
+            func_assert_valid(val->func);
+            valid_check_depth--;
+        }
         break;
     case VAL_LIST:
-        val_list_assert_valid(val->list);
+        if (valid_check_depth < VALID_CHECK_RECURSION_DEPTH) {
+            valid_check_depth++;
+            val_list_assert_valid(val->list);
+            valid_check_depth--;
+        }
         break;
     case VAL_MAP:
-        map_val_assert_valid(val->map);
+        if (valid_check_depth < VALID_CHECK_RECURSION_DEPTH) {
+            valid_check_depth++;
+            map_val_assert_valid(val->map);
+            valid_check_depth--;
+        }
         break;
     case VAL_NULL:
         break;
@@ -308,4 +341,17 @@ void assert_vals_equal(const toy_val *val1, const toy_val *val2)
     val_dump(stderr, val1);
     val_dump(stderr, val2);
     assert(0);
+}
+
+toy_val *val_alloc_func_decl(toy_str_list *formalparams, toy_block *body)
+{
+    toy_val *val;
+    val = (toy_val *) malloc(sizeof(toy_val) + sizeof(toy_function));
+    val->type = VAL_FUNC;
+    val->func = (toy_function *) (val + 1);
+    val->func->type = FUNC_USER_DECLARED;
+    val->func->name = ""; /* TODO: generated unique name */
+    val->func->param_names = formalparams;
+    val->func->code.stmts = body->stmts;
+    return val;
 }

@@ -1,12 +1,19 @@
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 
+#include "str.h"
 #include "function.h"
 #include "dump.h"
 #include "errors.h"
+#include "str-list.h"
+#include "symbol-table.h"
+#include "val.h"
+#include "debug.h"
 
 void func_dump(FILE *f, const toy_function *func)
 {
+    func_assert_valid(func);
     fprintf(f, "fun %s(", func->name);
     if (func->param_names == &INFINITE_PARAMS) {
         fputs("*", f);
@@ -24,13 +31,23 @@ void func_dump(FILE *f, const toy_function *func)
     fputs("}\n", f);
 }
 
+#ifndef NDEBUG
 void func_assert_valid(const toy_function *func)
 {
     assert(func);
-    /* TODO */
+    str_assert_valid(func->name);
+    if (func->param_names) {
+        if (valid_check_depth < VALID_CHECK_RECURSION_DEPTH) {
+            valid_check_depth++;
+            str_list_assert_valid(func->param_names);
+            valid_check_depth--;
+        }
+    }
 }
+#endif /* NDEBUG */
 
 void func_free(toy_function *func)
 {
-    /* TODO */
+    func_assert_valid(func);
+    free(func);
 }

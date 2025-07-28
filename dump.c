@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <assert.h>
 
 #include "dump.h"
 #include "errors.h"
@@ -41,22 +42,50 @@ static void dump_binary_op(FILE *f, const toy_expr *arg1, const toy_expr *arg2, 
     fputc(')', f);
 }
 
+void resolved_name_dump(FILE *f, const resolved_name *resolved)
+{
+    switch (resolved->type) {
+    case REF_FUNC_DECL:
+        func_decl_stmt_dump(f, resolved->func_decl);
+        break;
+    case REF_FUNC_PARAM:
+        const func_param_ref *param_ref = &resolved->func_param;
+        fprintf(f, "Function parameter #%zd, %zd frames up", param_ref->param_index, param_ref->frames_up);
+        break;
+    case REF_PREDEF_CONST:
+        val_dump(f, resolved->predef_const);
+        break;
+    case REF_PREDEF_FUNC:
+        func_dump(f, resolved->predef_func);
+        break;
+    case REF_UNDEFINED:
+        fputs("Undefined reference", f);
+        break;
+    case REF_VAR_DECL:
+        var_decl_dump(f, resolved->var_decl);
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+
 static void dump_assignment(FILE *f, const toy_str lhs, const toy_expr *rhs)
 {
-    identifier_dump(f, lhs);
+    dump_str(f, lhs);
     fputs(" = ", f);
     expr_dump(f, rhs);
 }
 
-static void dump_collection_lookup(FILE *f, toy_str lhs, toy_expr *rhs)
+static void dump_collection_lookup(FILE *f, const toy_str lhs, const toy_expr *rhs)
 {
-    identifier_dump(f, lhs);
+    dump_str(f, lhs);
     fputc('[', f);
     expr_dump(f, rhs);
     fputc(']', f);
 }
 
-static void dump_function_call(FILE *f, toy_str func_name, toy_expr_list *args)
+static void dump_function_call(FILE *f, const toy_str func_name, const toy_expr_list *args)
 {
     fprintf(f, "%s(", func_name);
     unsigned int output_something = 0;
@@ -72,7 +101,7 @@ static void dump_function_call(FILE *f, toy_str func_name, toy_expr_list *args)
 
 static void dump_method_call(FILE *f, const toy_method_call *method_call)
 {
-    fprintf(f, "%s.%s(", method_call->target, method_call->method_name);
+    fprintf(f, "%s.%s(", method_call->lhs, method_call->method_name);
     unsigned int output_something = 0;
     for (toy_expr_list *arg = method_call->args; arg; arg = arg->next) {
         if (output_something) {
@@ -112,7 +141,7 @@ void expr_dump(FILE *f, const toy_expr *expr) {
             /* TODO */
             break;
         case EXPR_FUNC_CALL:
-            dump_function_call(f, expr->func_call.func_name, expr->func_call.args);
+            dump_function_call(f, expr->func_call.id, expr->func_call.args);
             break;
         case EXPR_GT:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " > ");
@@ -252,10 +281,10 @@ void stmt_dump(FILE *f, const toy_stmt *stmt, int append_semicolon)
         fputs("}", f);
         break;
     case STMT_FUNC_DECL:
-        fprintf(f, "fun %s(", stmt->func_decl_stmt.def.name);
-        identifier_list_dump(f, stmt->func_decl_stmt.def.param_names);
+        fprintf(f, "fun %s(", stmt->func_decl_stmt.func.name);
+        identifier_list_dump(f, stmt->func_decl_stmt.func.param_names);
         fputs(") {\n", f);
-        stmt_list_dump(f, stmt->func_decl_stmt.def.code.stmts);
+        stmt_list_dump(f, stmt->func_decl_stmt.func.code.stmts);
         fputs("}", f);
         break;
     case STMT_IF:

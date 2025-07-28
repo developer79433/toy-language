@@ -7,6 +7,14 @@
 #include "val.h"
 #include "map-buf.h"
 #include "generic-map.h"
+#include "debug.h"
+
+void map_val_init(map_val *map)
+{
+    assert(offsetof(map_val, buckets) == offsetof(generic_map, buckets));
+    assert(offsetof(map_val, num_items) == offsetof(generic_map, num_items));
+    return map_buf_init((map_buf *) map);
+}
 
 map_val *map_val_alloc(void)
 {
@@ -17,12 +25,16 @@ map_val *map_val_alloc(void)
 
 set_result map_val_set(map_val *map, const toy_str key, const toy_val *value)
 {
+    map_val_assert_valid(map);
+    str_assert_valid(key);
     val_assert_valid(value);
     return map_buf_set((map_buf *) map, key, value, sizeof(*value));
 }
 
 toy_val *map_val_get(map_val *map, const toy_str key)
 {
+    map_val_assert_valid(map);
+    str_assert_valid(key);
     toy_val *value = (toy_val *) map_buf_get((map_buf *) map, key);
     val_assert_valid_or_null(value);
     return value;
@@ -85,10 +97,16 @@ void map_val_dump(FILE *f, const map_val *map)
     fputc('}', f);
 }
 
+#ifndef NDEBUG
+
 static item_callback_result item_assert_valid_callback(void *cookie, const map_val_entry *entry)
 {
     str_assert_valid(entry->key);
-    val_assert_valid(&entry->value);
+    if (valid_check_depth < VALID_CHECK_RECURSION_DEPTH) {
+        valid_check_depth++;
+        val_assert_valid(&entry->value);
+        valid_check_depth--;
+    }
     return CONTINUE_ENUMERATION;
 }
 
@@ -98,6 +116,7 @@ void map_val_assert_valid(const map_val *map)
     assert(res == ENUMERATION_COMPLETE);
     return map_buf_assert_valid((const map_buf *) map);
 }
+#endif /* ndef NDEBUG */
 
 enumeration_result map_val_foreach(map_val *map, map_val_entry_callback callback, void *cookie)
 {
@@ -107,4 +126,28 @@ enumeration_result map_val_foreach(map_val *map, map_val_entry_callback callback
 enumeration_result map_val_foreach_const(const map_val *map, const_map_val_entry_callback callback, void *cookie)
 {
     return map_buf_foreach_const((map_buf *) map, (const_map_buf_entry_callback) callback, cookie);
+}
+
+typedef struct insert_othermap_args_struct {
+    map_val *insert_into;
+} insert_othermap_args;
+
+static item_callback_result item_insert_othermap_callback(void *cookie, const map_val_entry *entry)
+{
+    insert_othermap_args *args = (insert_othermap_args *) cookie;
+    str_assert_valid(entry->key);
+    val_assert_valid(&entry->value);
+    map_val_assert_valid(args->insert_into);
+    map_val_set(args->insert_into, entry->key, &entry->value);
+    return CONTINUE_ENUMERATION;
+}
+
+map_val *map_val_dup(const map_val *map)
+{
+    /* TODO: Optimise this */
+    map_val *new_map = map_val_alloc();
+    insert_othermap_args args = { .insert_into = new_map };
+    enumeration_result res = map_val_foreach_const(map, item_insert_othermap_callback, &args);
+    assert(res == ENUMERATION_COMPLETE);
+    return new_map;
 }

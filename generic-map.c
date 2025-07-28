@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "log.h"
 #include "str.h"
 #include "generic-map.h"
 #include "mymalloc.h"
@@ -11,11 +12,16 @@
 #include "errors.h"
 #include "generic-map-entry-list.h"
 
+void generic_map_init(generic_map *map)
+{
+    memset(map->buckets, 0, sizeof(map->buckets));
+    map->num_items = 0;
+}
+
 generic_map *generic_map_alloc(void)
 {
     generic_map *map = mymalloc(generic_map);
-    memset(map->buckets, 0, sizeof(map->buckets));
-    map->num_items = 0;
+    generic_map_init(map);
     return map;
 }
 
@@ -23,9 +29,12 @@ typedef item_callback_result (*generic_map_bucket_callback)(void *cookie, generi
 
 static enumeration_result generic_map_enum_buckets(generic_map *map, generic_map_bucket_callback callback, void *cookie)
 {
-    for (generic_map_entry_list * const * bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
-        if (*bucket) {
-            item_callback_result res = callback(cookie, *bucket);
+    /* TODO: Push this down into an array enumerator */
+    for (generic_map_entry_list * const * pbucket = &map->buckets[0]; pbucket < &map->buckets[NUM_BUCKETS]; pbucket++) {
+        assert(pbucket);
+        generic_map_entry_list *bucket = *pbucket;
+        if (bucket) {
+            item_callback_result res = callback(cookie, bucket);
             if (res == STOP_ENUMERATION) {
                 return ENUMERATION_INTERRUPTED;
             }
@@ -39,9 +48,11 @@ typedef item_callback_result (*const_generic_map_bucket_callback)(void *cookie, 
 static enumeration_result generic_map_enum_buckets_const(const generic_map *map, const_generic_map_bucket_callback callback, void *cookie)
 {
     /* TODO: Push this down into an array enumerator */
-    for (generic_map_entry_list * const * bucket = &map->buckets[0]; bucket < &map->buckets[NUM_BUCKETS]; bucket++) {
-        if (*bucket) {
-            item_callback_result res = callback(cookie, *bucket);
+    for (generic_map_entry_list * const * pbucket = &map->buckets[0]; pbucket < &map->buckets[NUM_BUCKETS]; pbucket++) {
+        assert(pbucket);
+        const generic_map_entry_list *bucket = *pbucket;
+        if (bucket) {
+            item_callback_result res = callback(cookie, bucket);
             if (res == STOP_ENUMERATION) {
                 return ENUMERATION_INTERRUPTED;
             }

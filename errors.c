@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "errors.h"
 #include "dump.h"
@@ -118,7 +119,7 @@ void divide_by_zero(void)
     fatal_error("Divide by zero");
 }
 
-const char *func_type_names[] = {
+static const char *func_type_names[] = {
     "Predefined",
     "User-defined"
 };
@@ -137,4 +138,53 @@ void invalid_function_type(enum toy_func_type func_type)
 void return_outside_function(frame_type ftype)
 {
     fatal_error("Encountered return statement outside function, in frame of type %s", interp_frame_type_name(ftype));
+}
+
+/* TODO: Belongs elsewhere */
+
+static const char *reference_type_names[] = {
+    "undefined reference",
+    "function declaration",
+    "function parameter",
+    "local variable",
+    "predefined constant",
+    "predefined function"
+};
+
+const char *resolved_name_type_name(reference_type reftype)
+{
+    return reference_type_names[(int) reftype];
+}
+
+const char *resolved_name_ref_name(const resolved_name *resolved)
+{
+    switch (resolved->type) {
+    case REF_UNDEFINED:
+        return "null";
+    case REF_FUNC_DECL:
+        toy_func_decl_stmt *func_decl = resolved->func_decl;
+        return func_decl->func.name;
+    case REF_FUNC_PARAM:
+        const func_param_ref *param_ref = &resolved->func_param;
+        /* TODO */
+        return NULL;
+    case REF_VAR_DECL:
+        const toy_var_decl *var_decl = resolved->var_decl;
+        return var_decl->name;
+    case REF_PREDEF_CONST:
+        const toy_val *predef_const = resolved->predef_const;
+        /* TODO */
+        return NULL;
+    case REF_PREDEF_FUNC:
+        const toy_function *predef_func = resolved->predef_func;
+        return predef_func->name;
+    default:
+        assert(0);
+        break;
+    }
+}
+
+void invalid_lvalue(resolved_name *resolved)
+{
+    fatal_error("Cannot assign to %s", resolved_name_type_name(resolved->type), resolved_name_ref_name(resolved));
 }

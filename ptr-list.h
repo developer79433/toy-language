@@ -3,8 +3,12 @@
 
 #include "ptr-list-types.h"
 
+void ptr_list_init(toy_ptr_list *list);
 toy_ptr_list *ptr_list_alloc(void *ptr);
 toy_ptr_list *ptr_list_append(toy_ptr_list *list, void *new_ptr);
+toy_ptr_list *ptr_list_prepend(toy_ptr_list *list, void *new_ptr);
+toy_ptr_list *ptr_list_remove_first(toy_ptr_list *list, toy_ptr_list **removed);
+toy_ptr_list *ptr_list_remove_last(toy_ptr_list *list, toy_ptr_list **removed);
 toy_ptr_list *ptr_list_concat(toy_ptr_list *list, toy_ptr_list *new_list);
 void *ptr_list_index(toy_ptr_list *list, size_t index);
 size_t ptr_list_len(const toy_ptr_list *list);

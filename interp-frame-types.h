@@ -3,6 +3,7 @@
 
 #include "stmt-list-types.h"
 #include "map-val-types.h"
+#include "symbol-table-types.h"
 
 enum frame_type_enum {
     FRAME_LOOP_BODY,
@@ -23,12 +24,7 @@ typedef struct interp_frame_struct {
         const toy_block *block_stmt;
     };
     toy_stmt_list *cur_stmt;
-    map_val *symbols;
+    symbol_table symbols;
 } interp_frame;
-
-typedef struct interp_frame_list_struct {
-    struct interp_frame_list_struct *prev;
-    interp_frame frame;
-} interp_frame_list;
 
 #endif /* TOY_INTERP_FRAME_TYPES_H */

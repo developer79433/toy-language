@@ -1,10 +1,9 @@
-/* TODO: Fails because return values aren't implemented yet */
 fun make_counter() {
     var counter = 0;
-    fun get_counter() {
+    fun get_counter_incr() {
         return counter++;
     }
-    return get_counter;
+    return get_counter_incr;
 }
 var my_counter = make_counter();
 assert(my_counter() == 0);

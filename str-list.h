@@ -9,6 +9,11 @@
 toy_str_list *str_list_alloc(const char * str);
 toy_str_list *str_list_append(toy_str_list *list, toy_str new_item);
 toy_str_list *str_list_concat(toy_str_list *orig, toy_str_list *new);
+#ifdef NDEBUG
+#define str_list_assert_valid(list) do {} while (0)
+#else /* ndef NDEBUG */
+void str_list_assert_valid(const toy_str_list *list);
+#endif /* ndef NDEBUG */
 void str_list_free(toy_str_list *str_list);
 void str_list_dump(FILE *f, const toy_str_list *list);
 toy_str str_list_index(toy_str_list *list, size_t index);

@@ -5,6 +5,11 @@
 #include "map-ptr.h"
 #include "map-buf.h"
 
+void map_ptr_init(map_ptr *map)
+{
+    return map_buf_init((map_buf *) map);
+}
+
 map_ptr *map_ptr_alloc(void)
 {
     return (map_ptr *) map_buf_alloc();
@@ -49,10 +54,12 @@ set_result map_ptr_set(map_ptr *map, const toy_str key, void *ptr)
     return map_buf_set((map_buf *) map, key, &ptr, sizeof(ptr));
 }
 
+#ifndef NDEBUG
 void map_ptr_assert_valid(const map_ptr *map)
 {
     return map_buf_assert_valid((const map_buf *) map);
 }
+#endif /* ndef NDEBUG */
 
 delete_result map_ptr_delete(map_ptr *map, const toy_str key)
 {

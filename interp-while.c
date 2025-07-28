@@ -1,7 +1,6 @@
 #include <assert.h>
 
 #include "interp.h"
-#include "interp-frame.h"
 
 static toy_bool while_stmt_condition_truthy(toy_interp *interp, const toy_while_stmt *while_stmt)
 {
@@ -12,14 +11,14 @@ run_stmt_result while_stmt(toy_interp *interp, const toy_while_stmt *while_stmt)
 {
     run_stmt_result res;
     for (;;) {
-        push_context_loop_body(interp, &while_stmt->body);
+        interp_push_loop(interp, &while_stmt->body);
         if (!while_stmt_condition_truthy(interp, while_stmt)) {
             res = EXECUTED_STATEMENT;
-            pop_context(interp);
+            interp_pop(interp);
             break;
         }
         res = run_current_block(interp);
-        pop_context(interp);
+        interp_pop(interp);
         toy_bool break_loop = TOY_FALSE;
         switch (res) {
         case REACHED_RETURN:
@@ -31,6 +30,7 @@ run_stmt_result while_stmt(toy_interp *interp, const toy_while_stmt *while_stmt)
             break;
         case REACHED_CONTINUE:
             continue;
+        /* TODO: Can these be merged? */
         case REACHED_BLOCK_END:
         case EXECUTED_STATEMENT:
             break;

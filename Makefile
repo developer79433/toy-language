@@ -51,3 +51,7 @@ tests: $(BINARY)
 		fi ; \
 	done
 	@echo $$?
+
+.PHONY: debug
+debug: $(BINARY)
+	gdb $(BINARY) --eval-command='run tests/closures.toy'

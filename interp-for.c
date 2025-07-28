@@ -1,7 +1,6 @@
 #include <assert.h>
 
 #include "interp.h"
-#include "interp-frame.h"
 
 static void illegal_instruction_in_for_stmt_at_end(const toy_stmt *stmt)
 {
@@ -48,14 +47,14 @@ run_stmt_result for_stmt(toy_interp *interp, const toy_for_stmt *for_stmt)
         /* TRUE */;
         run_for_stmt_at_end(interp, for_stmt)
     ) {
-        push_context_loop_body(interp, &for_stmt->body);
+        interp_push_loop(interp, &for_stmt->body);
         if (!for_stmt_condition_truthy(interp, for_stmt)) {
-            pop_context(interp);
+            interp_pop(interp);
             res = EXECUTED_STATEMENT;
             break;
         }
         res = run_current_block(interp);
-        pop_context(interp);
+        interp_pop(interp);
         toy_bool break_loop = TOY_FALSE;
         switch (res) {
         case REACHED_RETURN:
