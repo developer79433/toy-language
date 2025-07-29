@@ -131,7 +131,7 @@ void create_variable_expr(toy_interp *interp, const toy_str name, toy_expr *expr
     create_variable_value(interp, name, &value);
 }
 
-void create_function(toy_interp *interp, toy_function *func)
+void create_function(toy_interp *interp, const toy_function *func)
 {
     if (is_predefined(func->name)) {
         readonly_identifier(func->name);

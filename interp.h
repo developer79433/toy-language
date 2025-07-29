@@ -19,7 +19,7 @@ void interp_push_if(toy_interp *interp, const toy_block *block);
 void interp_push_loop(toy_interp *interp, const toy_block *body);
 void interp_pop(toy_interp *interp);
 void expr_eval(toy_interp *interp, toy_val *result, toy_expr *expr);
-run_stmt_result run_stmt(toy_interp *interp, toy_stmt *stmt);
+run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt);
 /* TODO: Delete me */
 run_stmt_result run_one_stmt(toy_interp *interp, toy_stmt *stmt);
 run_stmt_result run_current_block(toy_interp *interp);

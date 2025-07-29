@@ -85,17 +85,29 @@ static void dump_collection_lookup(FILE *f, const toy_str lhs, const toy_expr *r
     fputc(']', f);
 }
 
-static void dump_function_call(FILE *f, const toy_str func_name, const toy_expr_list *args)
+typedef struct expr_dump_cb_args_struct {
+    FILE *f;
+    unsigned int output_something;
+} expr_dump_cb_args;
+
+static item_callback_result expr_dump_callback(void *cookie, size_t index, const toy_expr_list *item)
+{
+    expr_dump_cb_args *args = (expr_dump_cb_args *) cookie;
+    const toy_expr *expr = expr_list_payload_const(item);
+    if (args->output_something) {
+        fputs(", ", args->f);
+    }
+    expr_dump(args->f, expr);
+    args->output_something = 1;
+    return CONTINUE_ENUMERATION;
+}
+
+static void dump_function_call(FILE *f, const toy_str func_name, const toy_expr_list *func_args)
 {
     fprintf(f, "%s(", func_name);
-    unsigned int output_something = 0;
-    for (; args; args = args->next) {
-        if (output_something) {
-            fputs(", ", f);
-        }
-        expr_dump(f, args->expr);
-        output_something = 1;
-    }
+    expr_dump_cb_args cb_args = { .f = f, .output_something = 0 };
+    enumeration_result res = expr_list_foreach_const(func_args, expr_dump_callback, &cb_args);
+    assert(ENUMERATION_COMPLETE == res);
     fputc(')', f);
 }
 
@@ -150,7 +162,7 @@ void expr_dump(FILE *f, const toy_expr *expr) {
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " >= ");
             break;
         case EXPR_IDENTIFIER:
-            fprintf(f, "%s", expr->val.str);
+            fprintf(f, "%s", expr->id.id);
             break;
         case EXPR_IN:
             dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " in ");

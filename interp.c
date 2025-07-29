@@ -578,7 +578,7 @@ toy_bool condition_truthy(toy_interp *interp, toy_expr *expr)
     return TOY_TRUE;
 }
 
-run_stmt_result run_stmt(toy_interp *interp, toy_stmt *stmt)
+run_stmt_result run_stmt(toy_interp *interp, const toy_stmt *stmt)
 {
     switch (stmt->type) {
     case STMT_BLOCK:
@@ -615,33 +615,46 @@ run_stmt_result run_stmt(toy_interp *interp, toy_stmt *stmt)
     return EXECUTED_STATEMENT;
 }
 
+typedef struct stmt_run_cb_args_struct {
+    toy_interp *interp;
+    run_stmt_result result;
+} stmt_run_cb_args;
+
+static item_callback_result stmt_run_callback(void *cookie, size_t index, const toy_stmt_list *item)
+{
+    stmt_run_cb_args *args = (stmt_run_cb_args *) cookie;
+    const toy_stmt *stmt = stmt_list_payload_const(item);
+    args->result = run_stmt(args->interp, stmt);
+    assert(args->result != REACHED_BLOCK_END);
+    switch (args->result) {
+    case EXECUTED_STATEMENT:
+        break;
+    case REACHED_RETURN:
+    case REACHED_BREAK:
+    case REACHED_CONTINUE:
+        return STOP_ENUMERATION;
+    case REACHED_BLOCK_END:
+        assert(0); /* shouldn't happen, because not yet at end */
+        break;
+    default:
+        assert(0);
+        break;
+    }
+    return CONTINUE_ENUMERATION;
+}
+
 run_stmt_result run_current_block(toy_interp *interp)
 {
-    /* TODO: Should use stmt_list_foreach */
     interp_stack *stack = interp_get_stack(interp);
     interp_frame *cur_frame = interp_stack_payload(stack);
-    for (; cur_frame->cur_stmt; cur_frame->cur_stmt = cur_frame->cur_stmt->next) {
-        run_stmt_result stmt_result;
-        stmt_result = run_stmt(interp, &cur_frame->cur_stmt->stmt);
-        assert(stmt_result != REACHED_BLOCK_END);
-        switch (stmt_result) {
-        case EXECUTED_STATEMENT:
-            break;
-        case REACHED_RETURN:
-        case REACHED_BREAK:
-        case REACHED_CONTINUE:
-            return stmt_result;
-        case REACHED_BLOCK_END:
-            assert(0); /* shouldn't happen, because not yet at end */
-            break;
-        default:
-            assert(0);
-            break;
-        }
+    stmt_run_cb_args args = { .interp = interp };
+    enumeration_result res = stmt_list_foreach_const(cur_frame->cur_stmt, stmt_run_callback, &args);
+    if (ENUMERATION_COMPLETE == res) {
+        /* Reaching the end of a function is equivalent to returning null */
+        interp->return_val = null_val;
+        args.result = REACHED_BLOCK_END;
     }
-    /* Reaching the end of a function is equivalent to returning null */
-    interp->return_val = null_val;
-    return REACHED_BLOCK_END;
+    return args.result;
 }
 
 static run_stmt_result block_stmt(toy_interp *interp, const toy_block *block)

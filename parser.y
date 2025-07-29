@@ -369,7 +369,7 @@ mapitemlist :
 
 mapitem :
     T_STRING T_COLON expr_no_comma {
-        /* TODO: Should this be an expression, or a string/identifier? */
+        /* TODO: Should $1 be an expression, or a string/identifier? */
         $$ = map_entry_list_alloc_ref($1, $3);
     }
 ;
@@ -394,7 +394,7 @@ literal:
     /* TODO: identifier is not a literal - this needs breaking up */
     | T_IDENTIFIER {
         $$ = alloc_expr(EXPR_IDENTIFIER);
-        $$->val.str = $1;
+        $$->id.id = $1;
     }
     /* TODO: list and map are literals too */
 ;
