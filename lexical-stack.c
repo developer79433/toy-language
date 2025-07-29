@@ -81,10 +81,10 @@ typedef struct stack_frame_cur_function_cb_args_struct {
     toy_function *found_function;
 } stack_frame_cur_function_cb_args;
 
-static item_callback_result stack_frame_cur_function_cb(void *cookie, size_t index, buf_stack *item)
+static item_callback_result stack_frame_cur_function_cb(void *cookie, size_t index, lexical_stack *stack)
 {
     stack_frame_cur_function_cb_args *args = (stack_frame_cur_function_cb_args *) cookie;
-    lexical_stack_entry *entry = (lexical_stack_entry *) buf_stack_payload(item);
+    lexical_stack_entry *entry = lexical_stack_payload(stack);
     if (entry->function) {
         args->found_function = entry->function;
         return STOP_ENUMERATION;
@@ -95,7 +95,7 @@ static item_callback_result stack_frame_cur_function_cb(void *cookie, size_t ind
 toy_function *cur_function(lexical_stack *stack)
 {
     stack_frame_cur_function_cb_args args = { .found_function = NULL };
-    enumeration_result res = buf_stack_foreach((buf_stack *) stack, stack_frame_cur_function_cb, &args);
+    enumeration_result res = lexical_stack_foreach(stack, stack_frame_cur_function_cb, &args);
     assert(
         ((ENUMERATION_COMPLETE == res) && !args.found_function)
         ||
@@ -203,7 +203,7 @@ static item_callback_result stmt_list_lookup_decls_callback(void *cookie, size_t
     return CONTINUE_ENUMERATION;
 }
 
-static void lookup_name_in_decls(lexical_stack_entry *frame, toy_str name, resolved_name *resolved)
+static void lookup_name_in_decls(const lexical_stack_entry *frame, toy_str name, resolved_name *resolved)
 {
     assert(frame);
     assert(frame->block);
@@ -220,10 +220,10 @@ typedef struct param_name_resolve_cb_args_struct {
 
 /* FIXME: This does a linear search through the list for each named parameter, which is inefficient */
 
-static item_callback_result param_name_resolve_callback(void *cookie, size_t index, toy_str_list *entry)
+static item_callback_result param_name_resolve_callback(void *cookie, size_t index, const toy_str_list *entry)
 {
     param_name_resolve_cb_args *args = (param_name_resolve_cb_args *) cookie;
-    toy_str str = str_list_payload(entry);
+    const toy_str str = str_list_payload_const(entry);
     if (toy_str_equal(str, args->desired_name)) {
         if (is_resolved(args->resolved)) {
             duplicate_identifier(str);
@@ -238,14 +238,14 @@ static item_callback_result param_name_resolve_callback(void *cookie, size_t ind
     return CONTINUE_ENUMERATION;
 }
 
-static void lookup_name_in_params(toy_function *function, size_t stack_depth, toy_str name, resolved_name *resolved)
+static void lookup_name_in_params(const toy_function *function, size_t stack_depth, toy_str name, resolved_name *resolved)
 {
     param_name_resolve_cb_args args = { .desired_name = name, .resolved = resolved, .stack_depth = stack_depth };
-    enumeration_result res = str_list_foreach(function->param_names, param_name_resolve_callback, &args);
+    enumeration_result res = str_list_foreach_const(function->param_names, param_name_resolve_callback, &args);
     assert(res == ENUMERATION_COMPLETE);
 }
 
-static void lookup_name_in_frame(lexical_stack_entry *frame, size_t stack_depth, toy_str name, resolved_name *resolved)
+static void lookup_name_in_frame(const lexical_stack_entry *frame, size_t stack_depth, toy_str name, resolved_name *resolved)
 {
     assert(REF_UNDEFINED == resolved->type);
     assert(frame);
@@ -270,10 +270,10 @@ typedef struct stack_frame_resolve_cb_args_struct {
     resolved_name *resolved;
 } stack_frame_resolve_cb_args;
 
-static item_callback_result stack_frame_resolve_cb(void *cookie, size_t index, lexical_stack *item)
+static item_callback_result stack_frame_resolve_cb(void *cookie, size_t index, const lexical_stack *stack)
 {
     stack_frame_resolve_cb_args *args = (stack_frame_resolve_cb_args *) cookie;
-    lexical_stack_entry *entry = lexical_stack_payload(item);
+    const lexical_stack_entry *entry = lexical_stack_payload_const(stack);
     assert(entry);
     assert(entry->block);
     if (entry->function) {
@@ -287,12 +287,12 @@ static item_callback_result stack_frame_resolve_cb(void *cookie, size_t index, l
     return CONTINUE_ENUMERATION;
 }
 
-void lexical_stack_resolve(lexical_stack *stack, toy_str name, resolved_name *resolved)
+void lexical_stack_resolve(const lexical_stack *stack, toy_str name, resolved_name *resolved)
 {
     assert(stack);
     lexical_stack_dump(stack);
     stack_frame_resolve_cb_args args = { .wanted_name = name, .resolved = resolved };
-    enumeration_result res = lexical_stack_foreach(stack, stack_frame_resolve_cb, &args);
+    enumeration_result res = lexical_stack_foreach_const(stack, stack_frame_resolve_cb, &args);
     assert(
         ((ENUMERATION_COMPLETE == res) && !is_resolved(args.resolved))
         ||

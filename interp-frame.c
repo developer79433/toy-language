@@ -47,7 +47,7 @@ void interp_frame_dump(FILE *f, const interp_frame *frame)
     symbol_table_dump(f, &frame->symbols);
 }
 
-get_result lookup_identifier_in_frame(interp_frame *frame, toy_val *result, toy_str name)
+get_result interp_frame_lookup_identifier(interp_frame *frame, toy_val *result, toy_str name)
 {
     toy_val *existing_value = symbol_table_get(&frame->symbols, name);
     if (existing_value) {

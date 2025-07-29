@@ -8,12 +8,12 @@
 #include "function-types.h"
 #include "interp-types.h"
 #include "stmt-types.h"
-#include "interp-frame-stack-types.h"
+#include "interp-stack-types.h"
 
 toy_bool is_control_result(run_stmt_result stmt_result);
 toy_interp *interp_alloc(const toy_stmt_list *program);
 void interp_free(toy_interp *interp);
-interp_frame_stack *interp_get_stack(toy_interp *interp);
+interp_stack *interp_get_stack(toy_interp *interp);
 interp_frame *interp_cur_frame(toy_interp *interp);
 void interp_push_if(toy_interp *interp, const toy_block *block);
 void interp_push_loop(toy_interp *interp, const toy_block *body);

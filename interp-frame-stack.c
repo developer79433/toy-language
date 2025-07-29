@@ -11,6 +11,11 @@
 
 /* TODO: Use buf_stack */
 
+typedef struct interp_frame_stack_struct {
+    struct interp_frame_stack_struct *next;
+    interp_frame frame;
+} interp_frame_stack;
+
 interp_frame *interp_frame_stack_payload(interp_frame_stack *stack)
 {
     return &stack->frame;
@@ -21,43 +26,77 @@ const interp_frame *interp_frame_stack_payload_const(const interp_frame_stack *s
     return &stack->frame;
 }
 
-void interp_frame_stack_free(interp_frame_stack *stack)
+enumeration_result interp_frame_stack_foreach(interp_frame_stack *stack, interp_frame_stack_item_callback callback, void *cookie)
 {
-    while (stack) {
-        interp_frame_stack *prev = stack->prev;
-        interp_frame_free(&stack->frame);
-        stack = prev;
-    }
+    return buf_stack_foreach((buf_stack *) stack, (buf_stack_item_callback) callback, cookie);
 }
 
-void interp_frame_stack_assert_valid(const interp_frame_stack *frame_list)
+enumeration_result interp_frame_stack_foreach_const(const interp_frame_stack *stack, const_interp_frame_stack_item_callback callback, void *cookie)
 {
-    const interp_frame *frame = interp_frame_stack_payload_const(frame_list);
+    return buf_stack_foreach_const((const buf_stack *) stack, (const_buf_stack_item_callback) callback, cookie);
+}
+
+static item_callback_result frame_free_callback(void *cookie, size_t index, interp_frame_stack *stack)
+{
+    interp_frame *frame = interp_frame_stack_payload(stack);
+    interp_frame_free(frame);
+    return CONTINUE_ENUMERATION;
+}
+
+void interp_frame_stack_free(interp_frame_stack *stack)
+{
+    enumeration_result res = interp_frame_stack_foreach(stack, frame_free_callback, NULL);
+    assert(ENUMERATION_COMPLETE == res);
+}
+
+static item_callback_result frame_assert_valid_callback(void *cookie, size_t index, const interp_frame_stack *stack)
+{
+    const interp_frame *frame = interp_frame_stack_payload_const(stack);
     interp_frame_assert_valid(frame);
+    return CONTINUE_ENUMERATION;
+}
+
+void interp_frame_stack_assert_valid(const interp_frame_stack *stack)
+{
+    enumeration_result res = interp_frame_stack_foreach_const(stack, frame_assert_valid_callback, NULL);
+    assert(ENUMERATION_COMPLETE == res);
+}
+
+typedef struct frame_dump_cb_args_struct {
+    FILE *f;
+    size_t *frame_num;
+} frame_dump_cb_args;
+
+static item_callback_result frame_dump_callback(void *cookie, size_t index, const interp_frame_stack *item)
+{
+    frame_dump_cb_args *args = (frame_dump_cb_args *) cookie;
+    const interp_frame *frame = interp_frame_stack_payload_const(item);
+    fprintf(stderr, "  Frame %02zu: ", *args->frame_num);
+    interp_frame_dump(args->f, frame);
+    fprintf(stderr, "\n");
+    *args->frame_num = *args->frame_num + 1;
+    return CONTINUE_ENUMERATION;
 }
 
 void interp_frame_stack_dump(FILE *f, const char *context, const interp_frame_stack *stack)
 {
     fprintf(stderr, "STACK %s:\n", context);
     size_t frame_num = 0;
-    /* TODO: Use buf_stack_foreach */
-    for (; stack; stack = stack->prev, frame_num++) {
-        fprintf(stderr, "  Frame %02lu: ", (unsigned long) frame_num);
-        const interp_frame *frame = interp_frame_stack_payload_const(stack);
-        interp_frame_dump(f, frame);
-        fprintf(stderr, "\n");
-    }
+    frame_dump_cb_args args = { .f = f, .frame_num = &frame_num };
+    enumeration_result res = interp_frame_stack_foreach_const(stack, frame_dump_callback, &args);
+    assert(res == ENUMERATION_COMPLETE);
 }
 
-interp_frame_stack *interp_frame_stack_push(interp_frame_stack *stack, interp_frame_stack *other_stack)
+interp_frame_stack *interp_frame_stack_push(interp_frame_stack *stack, interp_frame *frame)
 {
-    other_stack->prev = stack;
+    stack = (interp_frame_stack *) buf_stack_push((buf_stack *) stack, frame, sizeof(*frame));
+    interp_frame_stack_dump(stderr, "after push", stack);
     return stack;
 }
 
-interp_frame_stack *interp_frame_stack_pop(interp_frame_stack *stack)
+interp_frame_stack *interp_frame_stack_pop(interp_frame_stack *stack, interp_frame **removed_frame)
 {
-    interp_frame_stack *prev = stack->prev;
+    stack = (interp_frame_stack *) buf_stack_pop((buf_stack *) stack, (void **) removed_frame);
     interp_frame_stack_dump(stderr, "after pop", stack);
-    return prev;
+    return stack;
 }

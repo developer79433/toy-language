@@ -43,21 +43,21 @@
 
 typedef struct toy_interp_struct {
     toy_function main_program;
-    interp_frame_stack *stack;
+    interp_stack *stack;
     toy_val return_val;
 } toy_interp;
 
 static run_stmt_result block_stmt(toy_interp *interp, const toy_block *block);
 
-interp_frame_stack *interp_get_stack(toy_interp *interp)
+interp_stack *interp_get_stack(toy_interp *interp)
 {
     return interp->stack;
 }
 
 interp_frame *interp_cur_frame(toy_interp *interp)
 {
-    interp_frame_stack *frame_list = interp_get_stack(interp);
-    return interp_stack_payload(frame_list);
+    interp_stack *stack = interp_get_stack(interp);
+    return interp_stack_payload(stack);
 }
 
 typedef struct append_cb_args_struct {
