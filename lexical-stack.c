@@ -10,6 +10,7 @@
 #include "str-list.h"
 #include "function.h"
 #include "val.h"
+#include "constants.h"
 
 static lexical_stack_entry *lexical_stack_payload(lexical_stack *stack)
 {
@@ -151,7 +152,7 @@ int is_resolved(const resolved_name *resolved)
         return 1;
     case REF_PREDEF_CONST:
         assert(resolved->predef_const);
-        val_assert_valid(resolved->predef_const);
+        predef_const_assert_valid(resolved->predef_const);
         return 1;
     case REF_PREDEF_FUNC:
         assert(resolved->predef_func);

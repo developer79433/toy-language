@@ -5,6 +5,7 @@
 #include "val-types.h"
 #include "map-entry-list-types.h"
 #include "expr-list-types.h"
+#include "constant-types.h"
 
 struct toy_expr_struct;
 typedef struct toy_expr_struct toy_expr;
@@ -76,7 +77,7 @@ typedef struct resolved_name_struct {
         toy_func_decl_stmt *func_decl;
         func_param_ref func_param;
         toy_var_decl *var_decl;
-        const toy_val *predef_const;
+        const predefined_constant *predef_const;
         const toy_val *predef_func;
     };
 } resolved_name;

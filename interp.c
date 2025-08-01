@@ -299,7 +299,8 @@ const toy_val *interp_get_rvalue(toy_interp *interp, resolved_name *resolved)
         func_param_ref *param_ref = &resolved->func_param;
         return interp_get_func_param(interp, param_ref);
     case REF_PREDEF_CONST:
-        return resolved->predef_const;
+        const predefined_constant *predef_const = resolved->predef_const;
+        return &predef_const->value;
     case REF_PREDEF_FUNC:
         return resolved->predef_func;
     case REF_UNDEFINED:

@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -5,6 +6,7 @@
 #include "constants.h"
 #include "util.h"
 #include "predef-function.h"
+#include "val.h"
 
 const toy_val null_val = { .type = VAL_NULL };
 const toy_expr null_expr = { .type = EXPR_LITERAL, .val = null_val };
@@ -23,8 +25,7 @@ static int compare_constant_names(const void *p1, const void *p2)
     return strcmp(name1, name2);
 }
 
-/* TODO: Return a predefined_constant * */
-const toy_val *lookup_predefined_constant(toy_str name)
+const predefined_constant *lookup_predefined_constant(toy_str name)
 {
     predefined_constant look_for_const = { .name = name };
     return bsearch(&look_for_const, predefined_constants, ELEMENTSOF(predefined_constants), sizeof(predefined_constants[0]), compare_constant_names);
@@ -39,4 +40,16 @@ toy_bool is_predefined(toy_str name)
         return TOY_TRUE;
     }
     return TOY_FALSE;
+}
+
+void predef_const_dump(FILE *f, const predefined_constant *predef_const)
+{
+    dump_str(f, predef_const->name);
+    val_dump(f, &predef_const->value);
+}
+
+void predef_const_assert_valid(const predefined_constant *predef_const)
+{
+    str_assert_valid(predef_const->name);
+    val_assert_valid(&predef_const->value);
 }

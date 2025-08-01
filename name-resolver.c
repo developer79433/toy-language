@@ -38,7 +38,7 @@ static void resolve_name(name_resolver *resolver, toy_str name, resolved_name *r
     lexical_stack_resolve(resolver->lexical_scopes, name, resolved);
     if (!is_resolved(resolved)) {
         log_printf("Attempting resolution of predef constant name %d, '%s'\n", strlen(name), name);
-        const toy_val *predef_const = lookup_predefined_constant(name);
+        const predefined_constant *predef_const = lookup_predefined_constant(name);
         if (predef_const) {
             resolved->type = REF_PREDEF_CONST;
             resolved->predef_const = predef_const;

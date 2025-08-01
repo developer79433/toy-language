@@ -53,7 +53,7 @@ void resolved_name_dump(FILE *f, const resolved_name *resolved)
         fprintf(f, "Function parameter #%zd, %zd frames up", param_ref->param_index, param_ref->frames_up);
         break;
     case REF_PREDEF_CONST:
-        val_dump(f, resolved->predef_const);
+        predef_const_dump(f, resolved->predef_const);
         break;
     case REF_PREDEF_FUNC:
         val_dump(f, resolved->predef_func);

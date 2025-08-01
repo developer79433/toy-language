@@ -174,10 +174,9 @@ const char *resolved_name_ref_name(const resolved_name *resolved)
         const toy_var_decl *var_decl = resolved->var_decl;
         return var_decl->name;
     case REF_PREDEF_CONST:
-        const toy_val *predef_const = resolved->predef_const;
+        const predefined_constant *predef_const = resolved->predef_const;
         assert(predef_const);
-        /* TODO */
-        return "predefined constant";
+        return predef_const->name;
     case REF_PREDEF_FUNC:
         const toy_val *predef_func_val = resolved->predef_func;
         assert(VAL_FUNC == predef_func_val->type);
