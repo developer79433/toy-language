@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "predef-function.h"
 #include "util.h"
@@ -209,6 +210,41 @@ static run_stmt_result predefined_assert(toy_interp *interp, const toy_val_list 
     return REACHED_BLOCK_END;
 }
 
+typedef struct val_list_all_args_struct {
+    toy_interp *interp;
+    toy_function *func;
+} val_list_all_args;
+
+static toy_bool val_list_all_callback(void *cookie, size_t index, const toy_val_list *list)
+{
+    val_list_all_args *args = (val_list_all_args *) cookie;
+    const toy_val *value = val_list_payload_const(list);
+    run_stmt_result res = interp_run_func_single_arg(args->interp, args->func, value);
+    (void) res; /* ignore reason for user function exit */
+    return val_truthy(value);
+}
+
+static run_stmt_result predefined_list_all(toy_interp *interp, const toy_val_list *args)
+{
+    assert(val_list_len(args) == 2);
+    toy_bool ret;
+    const toy_val *arg1 = &args->val;
+    const toy_val *arg2 = &args->next->val;
+    if (arg1->type == VAL_LIST) {
+        toy_val_list *list = arg1->list;
+        if (arg2->type == VAL_FUNC) {
+            toy_function *func = arg2->func;
+            val_list_all_args args = { .func = func, .interp = interp };
+            ret = val_list_all_match(list, val_list_all_callback, &args);
+        } else {
+            invalid_argument_type(VAL_FUNC, arg2);
+        }
+    } else {
+        invalid_argument_type(VAL_LIST, arg1);
+    }
+    return ret;
+}
+
 typedef struct val_list_foreach_args_struct {
     toy_interp *interp;
     toy_function *toy_func;
@@ -218,7 +254,7 @@ static item_callback_result val_list_foreach_item_callback(void *cookie, size_t 
 {
     val_list_foreach_args *args = (val_list_foreach_args *) cookie;
     const toy_val *value = val_list_payload_const(list);
-    run_stmt_result res = run_toy_function_val(args->interp, args->toy_func, value);
+    run_stmt_result res = interp_run_func_single_arg(args->interp, args->toy_func, value);
     (void) res; /* ignore reason for user function exit */
     /* TODO: Use val_truthy to allow the user function to return a truthy value to terminate enumeration */
     return CONTINUE_ENUMERATION;
@@ -232,8 +268,8 @@ static run_stmt_result predefined_list_foreach(toy_interp *interp, const toy_val
     if (arg1->type == VAL_LIST) {
         toy_val_list *list = arg1->list;
         if (arg2->type == VAL_FUNC) {
-            toy_function *toy_func = arg2->func;
-            val_list_foreach_args cbargs = { .toy_func = toy_func, .interp = interp };
+            toy_function *func = arg2->func;
+            val_list_foreach_args cbargs = { .toy_func = func, .interp = interp };
             enumeration_result res = val_list_foreach_const(list, val_list_foreach_item_callback, &cbargs);
             assert(res == ENUMERATION_COMPLETE);
         } else {
@@ -257,7 +293,7 @@ static item_callback_result val_list_filter_item_callback(void *cookie, size_t i
     const toy_val *list_elem = val_list_payload_const(list);
     val_assert_valid(list_elem);
     /* TODO: This aliases the arg. Does that allow the user function to modify the value that gets appended? */
-    run_stmt_result res = run_toy_function_val(args->foreach_args.interp, args->foreach_args.toy_func, list_elem);
+    run_stmt_result res = interp_run_func_single_arg(args->foreach_args.interp, args->foreach_args.toy_func, list_elem);
     toy_bool truthy_return;
     if (res == REACHED_RETURN) {
         toy_val *return_value = interp_get_return_value(args->foreach_args.interp);
@@ -304,6 +340,36 @@ static run_stmt_result predefined_list_filter(toy_interp *interp, const toy_val_
     return REACHED_RETURN;
 }
 
+static toy_bool val_list_none_callback(void *cookie, size_t index, const toy_val_list *list)
+{
+    val_list_all_args *args = (val_list_all_args *) cookie;
+    const toy_val *value = val_list_payload_const(list);
+    run_stmt_result res = interp_run_func_single_arg(args->interp, args->func, value);
+    (void) res; /* ignore reason for user function exit */
+    return val_truthy(value);
+}
+
+static run_stmt_result predefined_list_none(toy_interp *interp, const toy_val_list *args)
+{
+    assert(val_list_len(args) == 2);
+    toy_bool ret;
+    const toy_val *arg1 = &args->val;
+    const toy_val *arg2 = &args->next->val;
+    if (arg1->type == VAL_LIST) {
+        toy_val_list *list = arg1->list;
+        if (arg2->type == VAL_FUNC) {
+            toy_function *func = arg2->func;
+            val_list_all_args args = { .func = func, .interp = interp };
+            ret = val_list_none_match(list, val_list_none_callback, &args);
+        } else {
+            invalid_argument_type(VAL_FUNC, arg2);
+        }
+    } else {
+        invalid_argument_type(VAL_LIST, arg1);
+    }
+    return ret;
+}
+
 typedef struct map_foreach_args_struct {
     toy_interp *interp;
     toy_function *func;
@@ -315,7 +381,7 @@ static item_callback_result map_foreach_callback(void *cookie, const map_val_ent
     const toy_val key_val = { .type = VAL_STR, .str = entry->key };
     const toy_val_list value_arg = { .val = entry->value, .next = NULL };
     const toy_val_list func_args = { .val = key_val, .next = (toy_val_list *) &value_arg };
-    run_toy_function_val_list(args->interp, args->func, &func_args);
+    interp_run_func_val_list(args->interp, args->func, &func_args);
     /* TODO: Allow the user function to return a truthy value to terminate enumeration */
     return CONTINUE_ENUMERATION;
 }
@@ -357,7 +423,7 @@ static item_callback_result map_filter_callback(void *cookie, const map_val_entr
     /* TODO: This aliases the args. Does that allow the user function to modify the value that gets inserted? */
     const toy_val_list func_arg_2 = { .val = entry->value, .next = NULL };
     const toy_val_list func_args = { .val = key_val, .next = (toy_val_list *) &func_arg_2 };
-    run_stmt_result res = run_toy_function_val_list(args->foreach_args.interp, args->foreach_args.func, &func_args);
+    run_stmt_result res = interp_run_func_val_list(args->foreach_args.interp, args->foreach_args.func, &func_args);
     toy_bool truthy_return;
     if (res == REACHED_RETURN) {
         toy_val *return_value = interp_get_return_value(args->foreach_args.interp);
@@ -407,94 +473,76 @@ const toy_str_list INFINITE_PARAMS;
 static const toy_str_list assert_binary_param_2 = { .str = "val2", .next = NULL };
 static const toy_str_list assert_binary_params = { .str = "val1", .next = (toy_str_list *) &assert_binary_param_2 };
 static const toy_str_list assert_unary_params = { .str = "val", .next = NULL };
+static const toy_str_list list_all_param_2 = { .str = "func", .next = NULL };
+static const toy_str_list list_all_params = { .str = "list", .next = (toy_str_list *) &list_all_param_2 };
 static const toy_str_list list_foreach_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list list_foreach_params = { .str = "list", .next = (toy_str_list *) &list_foreach_param_2 };
 static const toy_str_list list_filter_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list list_filter_params = { .str = "list", .next = (toy_str_list *) &list_filter_param_2 };
 static const toy_str_list list_len_params = { .str = "list", .next = NULL };
+static const toy_str_list list_none_param_2 = { .str = "func", .next = NULL };
+static const toy_str_list list_none_params = { .str = "list", .next = (toy_str_list *) &list_none_param_2 };
 static const toy_str_list map_foreach_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list map_foreach_params = { .str = "map", .next = (toy_str_list *) &map_foreach_param_2 };
 static const toy_str_list map_filter_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list map_filter_params = { .str = "map", .next = (toy_str_list *) &map_filter_param_2 };
 static const toy_str_list map_len_params = { .str = "map", .next = NULL };
 
-const toy_function predefined_functions[] = {
-    { .parent = NULL, .name = "assert",           .type = FUNC_PREDEFINED, .predef = predefined_assert,           .param_names = (toy_str_list *) &assert_unary_params,  .doc = "Assert that a givel value is truthy. Fail if it is not." },
-    { .parent = NULL, .name = "assert_equal",     .type = FUNC_PREDEFINED, .predef = predefined_assert_equal,     .param_names = (toy_str_list *) &assert_binary_params, .doc = "Assert that two values are equal. Fail if they are not." },
-    { .parent = NULL, .name = "assert_gt",        .type = FUNC_PREDEFINED, .predef = predefined_assert_gt,        .param_names = (toy_str_list *) &assert_binary_params, .doc = "Assert that the first value is strictly greater than the second. Fail if it is not." },
-    { .parent = NULL, .name = "assert_gte",       .type = FUNC_PREDEFINED, .predef = predefined_assert_gte,       .param_names = (toy_str_list *) &assert_binary_params, .doc = "Assert that the first value is greater than or equal to the second. Fail if it is not." },
-    { .parent = NULL, .name = "assert_lt",        .type = FUNC_PREDEFINED, .predef = predefined_assert_lt,        .param_names = (toy_str_list *) &assert_binary_params, .doc = "Assert that the first value is strictly less than the second. Fail if it is not." },
-    { .parent = NULL, .name = "assert_lte",       .type = FUNC_PREDEFINED, .predef = predefined_assert_lte,       .param_names = (toy_str_list *) &assert_binary_params, .doc = "Assert that the first value is less than or equal to the second. Fail if it is not." },
-    { .parent = NULL, .name = "assert_not_equal", .type = FUNC_PREDEFINED, .predef = predefined_assert_not_equal, .param_names = (toy_str_list *) &assert_binary_params, .doc = "Assert that two values are not equal. Fail if they are." },
-    { .parent = NULL, .name = "assert_not_null",  .type = FUNC_PREDEFINED, .predef = predefined_assert_not_null,  .param_names = (toy_str_list *) &assert_unary_params,  .doc = "Assert that a value is not null. Fail if it is." },
-    { .parent = NULL, .name = "assert_not_zero",  .type = FUNC_PREDEFINED, .predef = predefined_assert_not_zero,  .param_names = (toy_str_list *) &assert_unary_params,  .doc = "Assert that a value is not zero. Fail if it is." },
-    { .parent = NULL, .name = "assert_null",      .type = FUNC_PREDEFINED, .predef = predefined_assert_null,      .param_names = (toy_str_list *) &assert_unary_params,  .doc = "Assert that a value is null. Fail if it is not."},
-    { .parent = NULL, .name = "assert_zero",      .type = FUNC_PREDEFINED, .predef = predefined_assert_zero,      .param_names = (toy_str_list *) &assert_unary_params,  .doc = "Assert that a value is zero. Fail if it is not." },
-    { .parent = NULL, .name = "list_len",         .type = FUNC_PREDEFINED, .predef = predefined_list_len,         .param_names = (toy_str_list *) &list_len_params,      .doc = "Count the number of items in the given list." },
-    { .parent = NULL, .name = "list_foreach",     .type = FUNC_PREDEFINED, .predef = predefined_list_foreach,     .param_names = (toy_str_list *) &list_foreach_params,  .doc = "Call the given function once with each item of the given list." },
-    { .parent = NULL, .name = "list_filter",      .type = FUNC_PREDEFINED, .predef = predefined_list_filter,      .param_names = (toy_str_list *) &list_filter_params,   .doc = "Call the first function once with each item of the given list. If it returns a truthy value, call the second function with it." },
-    { .parent = NULL, .name = "map_foreach",      .type = FUNC_PREDEFINED, .predef = predefined_map_foreach,      .param_names = (toy_str_list *) &map_foreach_params,   .doc = "Call the given function once with each entry in the given map." },
-    { .parent = NULL, .name = "map_filter",       .type = FUNC_PREDEFINED, .predef = predefined_map_filter,       .param_names = (toy_str_list *) &map_filter_params,    .doc = "Call the first function once with each entry in the given map. If it returns a truthy value, call the second function with it." },
-    { .parent = NULL, .name = "map_len",          .type = FUNC_PREDEFINED, .predef = predefined_map_len,          .param_names = (toy_str_list *) &map_len_params,       .doc = "Count the number of entries in the given map." },
-    { .parent = NULL, .name = "print",            .type = FUNC_PREDEFINED, .predef = predefined_print,            .param_names = (toy_str_list *) &INFINITE_PARAMS,      .doc = "Output the given message to the console." }
+static const toy_function func_assert           = { .parent = NULL, .name = "assert",           .type = FUNC_PREDEFINED, .predef = predefined_assert,           .param_names = (toy_str_list *) &assert_unary_params,  .doc = "Assert that a givel value is truthy. Fail if it is not." };
+static const toy_function func_assert_equal     = { .parent = NULL, .name = "assert_equal",     .type = FUNC_PREDEFINED, .predef = predefined_assert_equal,     .param_names = (toy_str_list *) &assert_binary_params, .doc = "Assert that two values are equal. Fail if they are not." };
+static const toy_function func_assert_gt        = { .parent = NULL, .name = "assert_gt",        .type = FUNC_PREDEFINED, .predef = predefined_assert_gt,        .param_names = (toy_str_list *) &assert_binary_params, .doc = "Assert that the first value is strictly greater than the second. Fail if it is not." };
+static const toy_function func_assert_gte       = { .parent = NULL, .name = "assert_gte",       .type = FUNC_PREDEFINED, .predef = predefined_assert_gte,       .param_names = (toy_str_list *) &assert_binary_params, .doc = "Assert that the first value is greater than or equal to the second. Fail if it is not." };
+static const toy_function func_assert_lt        = { .parent = NULL, .name = "assert_lt",        .type = FUNC_PREDEFINED, .predef = predefined_assert_lt,        .param_names = (toy_str_list *) &assert_binary_params, .doc = "Assert that the first value is strictly less than the second. Fail if it is not." };
+static const toy_function func_assert_lte       = { .parent = NULL, .name = "assert_lte",       .type = FUNC_PREDEFINED, .predef = predefined_assert_lte,       .param_names = (toy_str_list *) &assert_binary_params, .doc = "Assert that the first value is less than or equal to the second. Fail if it is not." };
+static const toy_function func_assert_not_equal = { .parent = NULL, .name = "assert_not_equal", .type = FUNC_PREDEFINED, .predef = predefined_assert_not_equal, .param_names = (toy_str_list *) &assert_binary_params, .doc = "Assert that two values are not equal. Fail if they are." };
+static const toy_function func_assert_not_null  = { .parent = NULL, .name = "assert_not_null",  .type = FUNC_PREDEFINED, .predef = predefined_assert_not_null,  .param_names = (toy_str_list *) &assert_unary_params,  .doc = "Assert that a value is not null. Fail if it is." };
+static const toy_function func_assert_not_zero  = { .parent = NULL, .name = "assert_not_zero",  .type = FUNC_PREDEFINED, .predef = predefined_assert_not_zero,  .param_names = (toy_str_list *) &assert_unary_params,  .doc = "Assert that a value is not zero. Fail if it is." };
+static const toy_function func_assert_null      = { .parent = NULL, .name = "assert_null",      .type = FUNC_PREDEFINED, .predef = predefined_assert_null,      .param_names = (toy_str_list *) &assert_unary_params,  .doc = "Assert that a value is null. Fail if it is not."};
+static const toy_function func_assert_zero      = { .parent = NULL, .name = "assert_zero",      .type = FUNC_PREDEFINED, .predef = predefined_assert_zero,      .param_names = (toy_str_list *) &assert_unary_params,  .doc = "Assert that a value is zero. Fail if it is not." };
+static const toy_function func_list_all         = { .parent = NULL, .name = "list_all",         .type = FUNC_PREDEFINED, .predef = predefined_list_all,         .param_names = (toy_str_list *) &list_all_params,      .doc = "Return true if the given function returns a truthy value when called with each item in the given list." };
+static const toy_function func_list_len         = { .parent = NULL, .name = "list_len",         .type = FUNC_PREDEFINED, .predef = predefined_list_len,         .param_names = (toy_str_list *) &list_len_params,      .doc = "Count the number of items in the given list." };
+static const toy_function func_list_foreach     = { .parent = NULL, .name = "list_foreach",     .type = FUNC_PREDEFINED, .predef = predefined_list_foreach,     .param_names = (toy_str_list *) &list_foreach_params,  .doc = "Call the given function once with each item of the given list." };
+static const toy_function func_list_filter      = { .parent = NULL, .name = "list_filter",      .type = FUNC_PREDEFINED, .predef = predefined_list_filter,      .param_names = (toy_str_list *) &list_filter_params,   .doc = "Call the first function once with each item of the given list. If it returns a truthy value, call the second function with it." };
+static const toy_function func_list_none        = { .parent = NULL, .name = "list_none",        .type = FUNC_PREDEFINED, .predef = predefined_list_none,        .param_names = (toy_str_list *) &list_none_params,     .doc = "Return true if the given function returns a falsy value when called with each item in the given list." };
+/* TODO: map_all */
+static const toy_function func_map_foreach      = { .parent = NULL, .name = "map_foreach",      .type = FUNC_PREDEFINED, .predef = predefined_map_foreach,      .param_names = (toy_str_list *) &map_foreach_params,   .doc = "Call the given function once with each (name, value) entry in the given map." };
+static const toy_function func_map_filter       = { .parent = NULL, .name = "map_filter",       .type = FUNC_PREDEFINED, .predef = predefined_map_filter,       .param_names = (toy_str_list *) &map_filter_params,    .doc = "Call the first function once with each (name, value) entry in the given map. If it returns a truthy value, call the second function with the same entry." };
+static const toy_function func_map_len          = { .parent = NULL, .name = "map_len",          .type = FUNC_PREDEFINED, .predef = predefined_map_len,          .param_names = (toy_str_list *) &map_len_params,       .doc = "Count the number of entries in the given map." };
+/* TODO: map_none */
+static const toy_function func_print            = { .parent = NULL, .name = "print",            .type = FUNC_PREDEFINED, .predef = predefined_print,            .param_names = (toy_str_list *) &INFINITE_PARAMS,      .doc = "Output the given message to the console." };
+
+static const toy_val predef_functions[] = {
+    { .type = VAL_FUNC, .func = (toy_function *) &func_assert },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_equal },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_gt },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_gte },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_lt },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_lte },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_not_equal },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_not_null },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_not_zero },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_null },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_zero },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_list_all },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_list_len },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_list_foreach },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_list_filter },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_list_none },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_map_foreach },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_map_filter },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_map_len },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_print }
 };
 
-const toy_function *predef_func_lookup_name(const toy_str name)
+static int compare_function_names(const void *p1, const void *p2)
 {
-    /* TODO: Use pointer array enumerator */
-    for (
-        const toy_function *function = &predefined_functions[0];
-        function < &predefined_functions[ELEMENTSOF(predefined_functions)];
-        function++)
-    {
-        if (0 == strcasecmp(function->name, name)) {
-            return function;
-        }
-    }
-    return NULL;
+    const toy_val *val1 = p1, *val2 = p2;
+    return strcmp(val1->func->name, val2->func->name);
 }
 
-const toy_function *predef_func_lookup_addr(predefined_func_addr func_addr)
+const toy_val *predef_func_lookup_name(const toy_str name)
 {
-    /* TODO: Use pointer array enumerator */
-    for (
-        const toy_function *function = &predefined_functions[0];
-        function < &predefined_functions[ELEMENTSOF(predefined_functions)];
-        function++)
-    {
-        if (function->predef == func_addr) {
-            return function;
-        }
-    }
-    return NULL;
-}
-
-/* TODO: Merge this with the array of predefined constants, and then unify predef const and func lookup too */
-const toy_val predef_func_vals[ELEMENTSOF(predefined_functions)] = {
-    { .type = VAL_FUNC, .func = (toy_function *) &predefined_functions[0] },
-    { .type = VAL_FUNC, .func = (toy_function *) &predefined_functions[1] },
-    { .type = VAL_FUNC, .func = (toy_function *) &predefined_functions[2] },
-    { .type = VAL_FUNC, .func = (toy_function *) &predefined_functions[3] },
-    { .type = VAL_FUNC, .func = (toy_function *) &predefined_functions[4] },
-    { .type = VAL_FUNC, .func = (toy_function *) &predefined_functions[5] },
-    { .type = VAL_FUNC, .func = (toy_function *) &predefined_functions[6] },
-    { .type = VAL_FUNC, .func = (toy_function *) &predefined_functions[7] },
-    { .type = VAL_FUNC, .func = (toy_function *) &predefined_functions[8] },
-    { .type = VAL_FUNC, .func = (toy_function *) &predefined_functions[9] },
-    { .type = VAL_FUNC, .func = (toy_function *) &predefined_functions[10] },
-    { .type = VAL_FUNC, .func = (toy_function *) &predefined_functions[11] },
-    { .type = VAL_FUNC, .func = (toy_function *) &predefined_functions[12] },
-    { .type = VAL_FUNC, .func = (toy_function *) &predefined_functions[13] },
-    { .type = VAL_FUNC, .func = (toy_function *) &predefined_functions[14] },
-    { .type = VAL_FUNC, .func = (toy_function *) &predefined_functions[15] },
-    { .type = VAL_FUNC, .func = (toy_function *) &predefined_functions[16] },
-    { .type = VAL_FUNC, .func = (toy_function *) &predefined_functions[17] }
-};
-
-const toy_val *predef_func_to_val(const toy_function *func)
-{
-    assert(FUNC_PREDEFINED == func->type);
-    size_t off = func - &predefined_functions[0];
-    assert(off < ELEMENTSOF(predef_func_vals));
-    return &predef_func_vals[off];
+    toy_function look_for_func = { .name = name };
+    toy_val look_for_val = { .func = &look_for_func };
+    return bsearch(&look_for_val, predef_functions, ELEMENTSOF(predef_functions), sizeof(predef_functions[0]), compare_function_names);
 }

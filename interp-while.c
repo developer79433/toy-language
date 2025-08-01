@@ -4,7 +4,7 @@
 
 static toy_bool while_stmt_condition_truthy(toy_interp *interp, const toy_while_stmt *while_stmt)
 {
-    return condition_truthy(interp, while_stmt->condition);
+    return interp_condition_truthy(interp, while_stmt->condition);
 }
 
 run_stmt_result while_stmt(toy_interp *interp, const toy_while_stmt *while_stmt)
@@ -17,7 +17,7 @@ run_stmt_result while_stmt(toy_interp *interp, const toy_while_stmt *while_stmt)
             interp_pop(interp);
             break;
         }
-        res = run_current_block(interp);
+        res = interp_run_current_block(interp);
         interp_pop(interp);
         toy_bool break_loop = TOY_FALSE;
         switch (res) {

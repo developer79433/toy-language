@@ -163,20 +163,25 @@ const char *resolved_name_ref_name(const resolved_name *resolved)
         return "null";
     case REF_FUNC_DECL:
         toy_func_decl_stmt *func_decl = resolved->func_decl;
-        return func_decl->func.name;
+        toy_function *func = &func_decl->func;
+        return func->name;
     case REF_FUNC_PARAM:
         const func_param_ref *param_ref = &resolved->func_param;
+        assert(param_ref);
         /* TODO */
-        return NULL;
+        return "function parameter";
     case REF_VAR_DECL:
         const toy_var_decl *var_decl = resolved->var_decl;
         return var_decl->name;
     case REF_PREDEF_CONST:
         const toy_val *predef_const = resolved->predef_const;
+        assert(predef_const);
         /* TODO */
-        return NULL;
+        return "predefined constant";
     case REF_PREDEF_FUNC:
-        const toy_function *predef_func = resolved->predef_func;
+        const toy_val *predef_func_val = resolved->predef_func;
+        assert(VAL_FUNC == predef_func_val->type);
+        const toy_function *predef_func = predef_func_val->func;
         return predef_func->name;
     default:
         assert(0);

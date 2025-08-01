@@ -56,7 +56,7 @@ void resolved_name_dump(FILE *f, const resolved_name *resolved)
         val_dump(f, resolved->predef_const);
         break;
     case REF_PREDEF_FUNC:
-        func_dump(f, resolved->predef_func);
+        val_dump(f, resolved->predef_func);
         break;
     case REF_UNDEFINED:
         fputs("Undefined reference", f);

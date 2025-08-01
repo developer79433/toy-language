@@ -5,7 +5,7 @@ static run_stmt_result run_if_stmt_block(toy_interp *interp, const toy_block *bl
     run_stmt_result res;
     if (block) {
         interp_push_if(interp, block);
-        res = run_current_block(interp);
+        res = interp_run_current_block(interp);
         interp_pop(interp);
     } else {
         res = EXECUTED_STATEMENT;
@@ -15,7 +15,7 @@ static run_stmt_result run_if_stmt_block(toy_interp *interp, const toy_block *bl
 
 static toy_bool if_arm_condition_truthy(toy_interp *interp, const toy_if_arm *arm)
 {
-    return condition_truthy(interp, arm->condition);
+    return interp_condition_truthy(interp, arm->condition);
 }
 
 run_stmt_result if_stmt(toy_interp *interp, const toy_if_stmt *if_stmt)

@@ -45,7 +45,7 @@ int main(int argc, char **argv)
     resolver_init(&resolver);
     resolve_names(&resolver, &toplevel_function);
     toy_interp *interp = interp_alloc(program_start);
-    run_current_block(interp);
+    interp_run_current_block(interp);
     interp_free(interp);
     return EXIT_SUCCESS;
 }

@@ -8,7 +8,7 @@
 
 typedef struct predefined_constant_struct {
     toy_str name;
-    const toy_val *value;
+    const toy_val value;
 } predefined_constant;
 
 extern const toy_val null_val;

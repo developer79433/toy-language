@@ -44,6 +44,14 @@ toy_val *val_list_index(toy_val_list *list, size_t index)
     return value;
 }
 
+const toy_val *val_list_index_const(const toy_val_list *list, size_t index)
+{
+    assert(offsetof(toy_val_list, val) == offsetof(toy_buf_list, c));
+    const toy_val *value = buf_list_index_const((const toy_buf_list *) list, index);
+    val_assert_valid(value);
+    return value;
+}
+
 toy_val_list *val_list_concat(toy_val_list *orig, toy_val_list *new_list)
 {
     assert(offsetof(toy_expr_list, next) == offsetof(toy_buf_list, next));
@@ -120,4 +128,14 @@ void val_list_set_payload(toy_val_list *list, const toy_val *value)
 {
     val_assert_valid(value);
     return buf_list_payload_set((toy_buf_list *) list, value, sizeof(*value));
+}
+
+toy_bool val_list_all_match(const toy_val_list *list, toy_val_list_filter_func filter, void *cookie)
+{
+    return buf_list_all_match((const toy_buf_list *) list, (buf_list_filter_func) filter, cookie);
+}
+
+toy_bool val_list_none_match(const toy_val_list *list, toy_val_list_filter_func filter, void *cookie)
+{
+    return buf_list_none_match((const toy_buf_list *) list, (buf_list_filter_func) filter, cookie);
 }

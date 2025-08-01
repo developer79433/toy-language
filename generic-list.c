@@ -141,9 +141,44 @@ generic_list *generic_list_find_first(generic_list *list, generic_list_filter_fu
     return args.found_item;
 }
 
-toy_bool generic_list_none_match(generic_list *list, generic_list_filter_func filter, void *cookie)
+typedef struct const_find_one_args_struct {
+    filter_args filtargs;
+    const generic_list *prev_item;
+    const generic_list *found_item;
+} const_find_one_args;
+
+static item_callback_result const_find_first_callback(void *cookie, size_t index, const generic_list *item)
 {
-    generic_list *found = generic_list_find_first(list, filter, cookie, NULL);
+    const_find_one_args *args = (const_find_one_args *) cookie;
+    if (args->filtargs.filter(args->filtargs.user_cookie, index, item)) {
+        /* Ignore user callback return value */
+        args->found_item = item;
+        return STOP_ENUMERATION;
+    }
+    args->prev_item = item;
+    return CONTINUE_ENUMERATION;
+}
+
+const generic_list *generic_list_find_first_const(const generic_list *list, generic_list_filter_func filter, void *cookie, const generic_list **prev)
+{
+    const_find_one_args args = { .prev_item = NULL, .found_item = NULL, .filtargs.filter = filter, .filtargs.user_callback = NULL, .filtargs.user_cookie = cookie };
+    enumeration_result res = generic_list_foreach_const(list, const_find_first_callback, &args);
+    assert(
+        (
+            (res == ENUMERATION_INTERRUPTED) && (args.found_item != NULL)
+        ) || (
+            (res == ENUMERATION_COMPLETE) && (args.found_item == NULL)
+        )
+    );
+    if (prev) {
+        *prev = args.prev_item;
+    }
+    return args.found_item;
+}
+
+toy_bool generic_list_none_match(const generic_list *list, generic_list_filter_func filter, void *cookie)
+{
+    const generic_list *found = generic_list_find_first_const(list, filter, cookie, NULL);
     return (found == NULL);
 }
 
@@ -172,9 +207,34 @@ generic_list *generic_list_find_first_not(generic_list *list, generic_list_filte
     return args.found_item;
 }
 
-toy_bool generic_list_all_match(generic_list *list, generic_list_filter_func filter, void *cookie)
+static item_callback_result find_first_not_const_callback(void *cookie, size_t index, const generic_list *item)
 {
-    generic_list *found = generic_list_find_first_not(list, filter, cookie);
+    const_find_one_args *args = (const_find_one_args *) cookie;
+    if (!args->filtargs.filter(args->filtargs.user_cookie, index, item)) {
+        /* Ignore user callback return value */
+        args->found_item = item;
+        return STOP_ENUMERATION;
+    }
+    return CONTINUE_ENUMERATION;
+}
+
+const generic_list *generic_list_find_first_not_const(const generic_list *list, generic_list_filter_func filter, void *cookie)
+{
+    find_one_args args = { .prev_item = NULL, .found_item = NULL, .filtargs.filter = filter, .filtargs.user_callback = NULL, .filtargs.user_cookie = cookie };
+    enumeration_result res = generic_list_foreach_const(list, find_first_not_const_callback, &args);
+    assert(
+        (
+            (res == ENUMERATION_INTERRUPTED) && (args.found_item != NULL)
+        ) || (
+            (res == ENUMERATION_COMPLETE) && (args.found_item == NULL)
+        )
+    );
+    return args.found_item;
+}
+
+toy_bool generic_list_all_match(const generic_list *list, generic_list_filter_func filter, void *cookie)
+{
+    const generic_list *found = generic_list_find_first_not_const(list, filter, cookie);
     return (found == NULL);
 }
 
@@ -187,6 +247,11 @@ static toy_bool is_desired_index(void *cookie, size_t index, const generic_list 
 generic_list *generic_list_index(generic_list *list, size_t index)
 {
     return generic_list_find_first(list, is_desired_index, &index, NULL);
+}
+
+const generic_list *generic_list_index_const(const generic_list *list, size_t index)
+{
+    return generic_list_find_first_const(list, is_desired_index, &index, NULL);
 }
 
 static item_callback_result increment_count_callback(void *cookie, size_t index, const generic_list *item)

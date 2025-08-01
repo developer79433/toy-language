@@ -1,5 +1,7 @@
+#include <stdlib.h>
 #include <string.h>
 
+#include "str.h"
 #include "constants.h"
 #include "util.h"
 #include "predef-function.h"
@@ -9,24 +11,23 @@ const toy_expr null_expr = { .type = EXPR_LITERAL, .val = null_val };
 const toy_val true_val = { .type = VAL_BOOL, .num = 1 };
 const toy_val false_val = { .type = VAL_BOOL, .num = 0 };
 
-static predefined_constant predefined_constants[] = {
-    { "null", &null_val },
-    { "true", &true_val },
-    { "false", &false_val }
+static const predefined_constant predefined_constants[] = {
+    { "null", null_val },
+    { "true", true_val },
+    { "false", false_val }
 };
 
+static int compare_constant_names(const void *p1, const void *p2)
+{
+    const char *name1 = p1, *name2 = p2;
+    return strcmp(name1, name2);
+}
+
+/* TODO: Return a predefined_constant * */
 const toy_val *lookup_predefined_constant(toy_str name)
 {
-    for (
-        const predefined_constant *constant = &predefined_constants[0];
-        constant < &predefined_constants[ELEMENTSOF(predefined_constants)];
-        constant++)
-    {
-        if (0 == strcasecmp(constant->name, name)) {
-            return constant->value;
-        }
-    }
-    return NULL;
+    predefined_constant look_for_const = { .name = name };
+    return bsearch(&look_for_const, predefined_constants, ELEMENTSOF(predefined_constants), sizeof(predefined_constants[0]), compare_constant_names);
 }
 
 toy_bool is_predefined(toy_str name)

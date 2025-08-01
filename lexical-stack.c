@@ -155,7 +155,7 @@ int is_resolved(const resolved_name *resolved)
         return 1;
     case REF_PREDEF_FUNC:
         assert(resolved->predef_func);
-        func_assert_valid(resolved->predef_func);
+        val_assert_valid(resolved->predef_func);
         return 1;
     default:
         assert(0);

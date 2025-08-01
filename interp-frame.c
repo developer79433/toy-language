@@ -7,6 +7,7 @@
 #include "function.h"
 #include "symbol-table.h"
 #include "debug.h"
+#include "val-list.h"
 
 static const char *frame_type_names[] = {
     "Loop body",
@@ -34,40 +35,30 @@ void interp_frame_dump(FILE *f, const interp_frame *frame)
         fprintf(f, "loop_body %p", frame->loop_body);
         break;
     case FRAME_PRE_DEF_FUNC:
-        fprintf(f, "Predefined function %s", frame->pre_def_func->name);
+        const function_invocation *predef_func_inv = &frame->pre_def_func;
+        const toy_function *predef_func = predef_func_inv->func;
+        fprintf(f, "Predefined function %s(", predef_func->name);
+        val_list_dump(f, predef_func_inv->args);
+        fprintf(f, ")");
         break;
     case FRAME_USER_DEF_FUNC:
-        fprintf(f, "User-defined function %s", frame->user_def_func->name);
+        const function_invocation *user_func_inv = &frame->user_def_func;
+        const toy_function *user_func = user_func_inv->func;
+        fprintf(f, "User-defined function %s(", user_func->name);
+        val_list_dump(f, user_func_inv->args);
+        fprintf(f, ")");
         break;
     default:
         assert(0);
         break;
     }
-    fprintf(stderr, ", symbols=");
-    symbol_table_dump(f, &frame->symbols);
-}
-
-get_result interp_frame_lookup_identifier(interp_frame *frame, toy_val *result, toy_str name)
-{
-    toy_val *existing_value = symbol_table_get(&frame->symbols, name);
-    if (existing_value) {
-        *result = *existing_value;
-        return GET_FOUND;
-    }
-    return GET_NOT_FOUND;
 }
 
 void interp_frame_assert_valid(const interp_frame *frame)
 {
-    if (valid_check_depth < VALID_CHECK_RECURSION_DEPTH) {
-        valid_check_depth++;
-        symbol_table_assert_valid(&frame->symbols);
-        valid_check_depth--;
-    }
 }
 
 void interp_frame_free(interp_frame *frame)
 {
-    symbol_table_free(&frame->symbols);
     free(frame);
 }

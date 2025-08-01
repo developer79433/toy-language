@@ -77,7 +77,7 @@ typedef struct resolved_name_struct {
         func_param_ref func_param;
         toy_var_decl *var_decl;
         const toy_val *predef_const;
-        const toy_function *predef_func;
+        const toy_val *predef_func;
     };
 } resolved_name;
 

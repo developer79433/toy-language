@@ -11,8 +11,8 @@ static void illegal_instruction_in_for_stmt_at_end(const toy_stmt *stmt)
 static void run_for_stmt_at_end(toy_interp *interp, const toy_for_stmt *for_stmt)
 {
     if (for_stmt->at_end) {
-        run_stmt_result res = run_one_stmt(interp, for_stmt->at_end);
-        if (is_control_result(res)) {
+        run_stmt_result res = interp_run_one_stmt(interp, for_stmt->at_end);
+        if (interp_is_control_result(res)) {
             illegal_instruction_in_for_stmt_at_end(for_stmt->at_end);
         }
     }
@@ -27,8 +27,8 @@ static void illegal_instruction_in_for_stmt_at_start(const toy_stmt *stmt)
 static void run_for_stmt_at_start(toy_interp *interp, const toy_for_stmt *for_stmt)
 {
     if (for_stmt->at_start) {
-        run_stmt_result res = run_one_stmt(interp, for_stmt->at_start);
-        if (is_control_result(res)) {
+        run_stmt_result res = interp_run_one_stmt(interp, for_stmt->at_start);
+        if (interp_is_control_result(res)) {
             illegal_instruction_in_for_stmt_at_start(for_stmt->at_start);
         }
     }
@@ -36,7 +36,7 @@ static void run_for_stmt_at_start(toy_interp *interp, const toy_for_stmt *for_st
 
 static toy_bool for_stmt_condition_truthy(toy_interp *interp, const toy_for_stmt *for_stmt)
 {
-    return condition_truthy(interp, for_stmt->condition);
+    return interp_condition_truthy(interp, for_stmt->condition);
 }
 
 run_stmt_result for_stmt(toy_interp *interp, const toy_for_stmt *for_stmt)
@@ -53,7 +53,7 @@ run_stmt_result for_stmt(toy_interp *interp, const toy_for_stmt *for_stmt)
             res = EXECUTED_STATEMENT;
             break;
         }
-        res = run_current_block(interp);
+        res = interp_run_current_block(interp);
         interp_pop(interp);
         toy_bool break_loop = TOY_FALSE;
         switch (res) {

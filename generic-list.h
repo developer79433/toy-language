@@ -14,13 +14,16 @@ enumeration_result generic_list_foreach(generic_list *list, generic_list_item_ca
 enumeration_result generic_list_foreach_const(const generic_list *list, const_generic_list_item_callback callback, void *cookie);
 void generic_list_free(generic_list *list);
 generic_list *generic_list_index(generic_list *list, size_t index);
+const generic_list *generic_list_index_const(const generic_list *list, size_t index);
 size_t generic_list_len(const generic_list *list);
 enumeration_result generic_list_filter(generic_list *list, generic_list_filter_func filter, void *filter_cookie, generic_list_item_callback callback, void *cookie);
 enumeration_result generic_list_flter_const(const generic_list *list, generic_list_filter_func filter, void *filter_cookie, const_generic_list_item_callback callback, void *cookie);
 generic_list *generic_list_find_first(generic_list *list, generic_list_filter_func filter, void *cookie, generic_list **prev);
+const generic_list *generic_list_find_first_const(const generic_list *list, generic_list_filter_func filter, void *cookie, const generic_list **prev);
 generic_list *generic_list_find_first_not(generic_list *list, generic_list_filter_func filter, void *cookie);
-toy_bool generic_list_none_match(generic_list *list, generic_list_filter_func filter, void *cookie);
-toy_bool generic_list_all_match(generic_list *list, generic_list_filter_func filter, void *cookie);
+const generic_list *generic_list_find_first_not_const(const generic_list *list, generic_list_filter_func filter, void *cookie);
+toy_bool generic_list_none_match(const generic_list *list, generic_list_filter_func filter, void *cookie);
+toy_bool generic_list_all_match(const generic_list *list, generic_list_filter_func filter, void *cookie);
 generic_list *generic_list_last(generic_list *list, generic_list **prev);
 
 #endif /* GENERIC_LIST_H */

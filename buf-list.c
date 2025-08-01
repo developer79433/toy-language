@@ -84,6 +84,15 @@ void *buf_list_index(toy_buf_list *list, size_t index)
     return NULL;
 }
 
+const void *buf_list_index_const(const toy_buf_list *list, size_t index)
+{
+    const toy_buf_list *found = (const toy_buf_list *) generic_list_index_const((const generic_list *) list, index);
+    if (found) {
+        return buf_list_payload_const(found);
+    }
+    return NULL;
+}
+
 enumeration_result buf_list_foreach(toy_buf_list *list, buf_list_item_callback callback, void *cookie)
 {
     return generic_list_foreach((generic_list *) list, (generic_list_item_callback) callback, cookie);
@@ -92,6 +101,16 @@ enumeration_result buf_list_foreach(toy_buf_list *list, buf_list_item_callback c
 enumeration_result buf_list_foreach_const(const toy_buf_list *list, const_buf_list_item_callback callback, void *cookie)
 {
     return generic_list_foreach_const((generic_list *) list, (const_generic_list_item_callback) callback, cookie);
+}
+
+toy_bool buf_list_none_match(const toy_buf_list *list, buf_list_filter_func filter, void *cookie)
+{
+    return generic_list_none_match((const generic_list *) list, (generic_list_filter_func) filter, cookie);
+}
+
+toy_bool buf_list_all_match(const toy_buf_list *list, buf_list_filter_func filter, void *cookie)
+{
+    return generic_list_all_match((const generic_list *) list, (generic_list_filter_func) filter, cookie);
 }
 
 void buf_list_free(toy_buf_list *list)

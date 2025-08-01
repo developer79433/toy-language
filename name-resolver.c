@@ -44,10 +44,13 @@ static void resolve_name(name_resolver *resolver, toy_str name, resolved_name *r
             resolved->predef_const = predef_const;
         } else {
             log_printf("Attempting resolution of predef func name '%s'\n", name);
-            const toy_function *predef_func = predef_func_lookup_name(name);
-            if (predef_func) {
+            const toy_val *val = predef_func_lookup_name(name);
+            if (val) {
+                assert(VAL_FUNC == val->type);
+                const toy_function *func = val->func;
+                assert(FUNC_PREDEFINED == func->type);
                 resolved->type = REF_PREDEF_FUNC;
-                resolved->predef_func = predef_func;
+                resolved->predef_func = val;
             } else {
                 assert(0);
                 undeclared_identifier(name);
