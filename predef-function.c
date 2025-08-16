@@ -249,15 +249,21 @@ static run_stmt_result predefined_list_all(toy_interp *interp, const toy_val_lis
 typedef struct val_list_foreach_args_struct {
     toy_interp *interp;
     toy_function *toy_func;
+    size_t num_seen;
 } val_list_foreach_args;
 
 static item_callback_result val_list_foreach_item_callback(void *cookie, size_t index, const toy_val_list *list)
 {
     val_list_foreach_args *args = (val_list_foreach_args *) cookie;
     const toy_val *value = val_list_payload_const(list);
-    run_stmt_result res = interp_run_func_single_arg(args->interp, args->toy_func, value);
-    (void) res; /* ignore reason for user function exit */
-    /* TODO: Use val_truthy to allow the user function to return a truthy value to terminate enumeration */
+    args->num_seen++;
+    run_stmt_result run_result = interp_run_func_single_arg(args->interp, args->toy_func, value);
+    if (run_result == REACHED_RETURN) {
+        toy_val *return_value = interp_get_return_value(args->interp);
+        if (val_falsey(return_value)) {
+            return STOP_ENUMERATION;
+        }
+    }
     return CONTINUE_ENUMERATION;
 }
 
@@ -270,16 +276,17 @@ static run_stmt_result predefined_list_foreach(toy_interp *interp, const toy_val
         toy_val_list *list = arg1->list;
         if (arg2->type == VAL_FUNC) {
             toy_function *func = arg2->func;
-            val_list_foreach_args cbargs = { .toy_func = func, .interp = interp };
+            val_list_foreach_args cbargs = { .toy_func = func, .interp = interp, .num_seen = 0 };
             enumeration_result res = val_list_foreach_const(list, val_list_foreach_item_callback, &cbargs);
-            assert(res == ENUMERATION_COMPLETE);
+            assert(res == ENUMERATION_COMPLETE || res == ENUMERATION_INTERRUPTED);
+            toy_val return_value = { .type = VAL_NUM, .num = cbargs.num_seen };
+            interp_set_return_value(interp, &return_value);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
         }
     } else {
         invalid_argument_type(VAL_LIST, arg1);
     }
-    /* TODO: Return count of items enumerated, or something else meaningful? */
     return REACHED_BLOCK_END;
 }
 
@@ -374,20 +381,26 @@ static run_stmt_result predefined_list_none(toy_interp *interp, const toy_val_li
 typedef struct map_foreach_args_struct {
     toy_interp *interp;
     toy_function *func;
+    size_t num_seen;
 } map_foreach_args;
 
 static item_callback_result map_foreach_callback(void *cookie, const map_val_entry *entry)
 {
     map_foreach_args *args = (map_foreach_args *) cookie;
+    args->num_seen++;
     const toy_val key_val = { .type = VAL_STR, .str = entry->key };
     const toy_val_list value_arg = { .val = entry->value, .next = NULL };
     const toy_val_list func_args = { .val = key_val, .next = (toy_val_list *) &value_arg };
-    interp_run_func_val_list(args->interp, args->func, &func_args);
-    /* TODO: Allow the user function to return a truthy value to terminate enumeration */
+    run_stmt_result run_result = interp_run_func_val_list(args->interp, args->func, &func_args);
+    if (run_result == REACHED_RETURN) {
+        toy_val *return_value = interp_get_return_value(args->interp);
+        if (val_falsey(return_value)) {
+            return STOP_ENUMERATION;
+        }
+    }
     return CONTINUE_ENUMERATION;
 }
 
-/* TODO: Early exit if user-defined callback returns true */
 static run_stmt_result predefined_map_foreach(toy_interp *interp, const toy_val_list *args)
 {
     assert(val_list_len(args) == 2);
@@ -397,16 +410,17 @@ static run_stmt_result predefined_map_foreach(toy_interp *interp, const toy_val_
         map_val *map = arg1->map;
         if (arg2->type == VAL_FUNC) {
             toy_function *func = arg2->func;
-            map_foreach_args cbargs = { .func = func, .interp = interp };
+            map_foreach_args cbargs = { .func = func, .interp = interp, .num_seen = 0 };
             enumeration_result res = map_val_foreach_const(map, map_foreach_callback, &cbargs);
             assert(res == ENUMERATION_COMPLETE);
+            toy_val return_value = { .type = VAL_NUM, .num = cbargs.num_seen };
+            interp_set_return_value(interp, &return_value);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
         }
     } else {
         invalid_argument_type(VAL_LIST, arg1);
     }
-    /* TODO: Return some kind of meaningful value, such as whether enumeration completed? */
     return REACHED_BLOCK_END;
 }
 
