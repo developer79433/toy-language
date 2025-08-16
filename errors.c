@@ -3,7 +3,6 @@
 #include <assert.h>
 
 #include "errors.h"
-#include "dump.h"
 #include "val-list.h"
 #include "expr-list.h"
 #include "str.h"
@@ -162,8 +161,8 @@ const char *resolved_name_ref_name(const resolved_name *resolved)
     case REF_UNDEFINED:
         return "null";
     case REF_FUNC_DECL:
-        toy_func_decl_stmt *func_decl = resolved->func_decl;
-        toy_function *func = &func_decl->func;
+        const toy_func_decl_stmt *func_decl = resolved->func_decl;
+        const toy_function *func = &func_decl->func;
         return func->name;
     case REF_FUNC_PARAM:
         const func_param_ref *param_ref = &resolved->func_param;
@@ -171,8 +170,11 @@ const char *resolved_name_ref_name(const resolved_name *resolved)
         /* TODO */
         return "function parameter";
     case REF_VAR_DECL:
-        const toy_var_decl *var_decl = resolved->var_decl;
-        return var_decl->name;
+        const block_var_ref *var_ref = &resolved->var_decl;
+        assert(var_ref->frames_up >= 0);
+        assert(var_ref->var_index >= 0);
+        /* TODO */
+        return "variable reference";
     case REF_PREDEF_CONST:
         const predefined_constant *predef_const = resolved->predef_const;
         assert(predef_const);

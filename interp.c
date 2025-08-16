@@ -8,7 +8,6 @@
 #include "mymalloc.h"
 #include "str.h"
 #include "log.h"
-#include "dump.h"
 #include "interp.h"
 #include "val.h"
 #include "val-list.h"
@@ -82,7 +81,6 @@ static void eval_expr_list(toy_interp *interp, toy_val *result, const toy_expr_l
         interp_eval(interp, &element, expr_list->expr);
         result->list = val_list_alloc(&element);
         append_cb_args append_args = { .interp = interp, .result = result };
-        /* TODO: Remove this ugly -> next, which is here so we distinguish between initial list alloc and append cases */
         enumeration_result res = expr_list_foreach(expr_list->next, append_val_list_callback, &append_args);
         assert(ENUMERATION_COMPLETE == res);
     } else {
@@ -94,7 +92,7 @@ static run_stmt_result run_predefined_func_val_list(toy_interp *interp, predefin
 {
     interp_frame *frame = interp_cur_frame(interp);
     assert(FRAME_PRE_DEF_FUNC == frame->type);
-    const function_invocation *func_inv = &frame->pre_def_func;
+    const func_call_frame *func_inv = &frame->func_call;
     const toy_val_list *args = func_inv->args;
     return predef(interp, args);
 }
@@ -253,16 +251,15 @@ static void collection_lookup(toy_interp *interp, toy_val *result, resolved_name
     }
 }
 
-static toy_val *interp_get_func_param(toy_interp *interp, func_param_ref *param_ref)
+static toy_val *interp_get_func_param(toy_interp *interp, const func_param_ref *param_ref)
 {
     /* TODO */
     return NULL;
 }
 
-static toy_val *interp_get_variable(toy_interp *interp, toy_var_decl *var_decl)
+static toy_val *interp_get_variable(toy_interp *interp, const block_var_ref *var_ref)
 {
-    /* TODO: Look up variable in frame by name. But better to use array indices. */
-    return NULL;
+    return interp_stack_get_variable(interp->stack, var_ref->frames_up, var_ref->var_index);
 }
 
 toy_val *interp_get_lvalue(toy_interp *interp, resolved_name *resolved)
@@ -270,19 +267,26 @@ toy_val *interp_get_lvalue(toy_interp *interp, resolved_name *resolved)
     toy_val *val;
 
     switch (resolved->type) {
+    case REF_FUNC_DECL:
+        invalid_lvalue(resolved);
+        break;
     case REF_FUNC_PARAM:
         func_param_ref *param_ref = &resolved->func_param;
         val = interp_get_func_param(interp, param_ref);
+        break;
+    case REF_PREDEF_CONST:
+    case REF_PREDEF_FUNC:
+        invalid_lvalue(resolved);
         break;
     case REF_UNDEFINED:
         assert(0);
         break;
     case REF_VAR_DECL:
-        toy_var_decl *var_decl = resolved->var_decl;
+        block_var_ref *var_decl = &resolved->var_decl;
         val = interp_get_variable(interp, var_decl);
         break;
     default:
-        invalid_lvalue(resolved);
+        assert(0);
         break;
     }
 
@@ -293,10 +297,10 @@ const toy_val *interp_get_rvalue(toy_interp *interp, resolved_name *resolved)
 {
     switch (resolved->type) {
     case REF_FUNC_DECL:
-        toy_func_decl_stmt *func_decl = resolved->func_decl;
+        const toy_func_decl_stmt *func_decl = resolved->func_decl;
         return &func_decl->val;
     case REF_FUNC_PARAM:
-        func_param_ref *param_ref = &resolved->func_param;
+        const func_param_ref *param_ref = &resolved->func_param;
         return interp_get_func_param(interp, param_ref);
     case REF_PREDEF_CONST:
         const predefined_constant *predef_const = resolved->predef_const;
@@ -307,10 +311,10 @@ const toy_val *interp_get_rvalue(toy_interp *interp, resolved_name *resolved)
         assert(0);
         break;
     case REF_VAR_DECL:
-        toy_var_decl *var_decl = resolved->var_decl;
-        return interp_get_variable(interp, var_decl);
+        const block_var_ref *var_ref = &resolved->var_decl;
+        return interp_get_variable(interp, var_ref);
     default:
-        invalid_lvalue(resolved);
+        assert(0);
         break;
     }
 

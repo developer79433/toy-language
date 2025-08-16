@@ -19,5 +19,8 @@ interp_stack *interp_stack_push_block(interp_stack *stack, const toy_block *bloc
 interp_stack *interp_stack_push_if(interp_stack *stack, const toy_block *block);
 interp_stack *interp_stack_push_loop(interp_stack *stack, const toy_block *block);
 interp_stack *interp_stack_pop(interp_stack *stack);
+toy_val *interp_stack_get_variable(interp_stack *stack, size_t frames_up, size_t var_index);
+interp_stack *interp_stack_index(interp_stack *stack, size_t index);
+const interp_stack *interp_stack_index_const(const interp_stack *stack, size_t index);
 
 #endif /* TOY_INTERP_STACK_H */

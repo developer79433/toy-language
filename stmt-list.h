@@ -4,9 +4,11 @@
 #include "stmt-types.h"
 #include "stmt-list-types.h"
 
+void stmt_list_dump(FILE *f, const toy_stmt_list *stmts);
 toy_stmt_list *stmt_list_alloc(toy_stmt *stmt);
 toy_stmt_list *stmt_list_append(toy_stmt_list *list, toy_stmt *stmt);
 toy_stmt_list *stmt_list_concat(toy_stmt_list *list, toy_stmt_list *new_list);
+void stmt_list_assert_valid(const toy_stmt_list *list);
 toy_stmt *stmt_list_payload(toy_stmt_list *list);
 const toy_stmt *stmt_list_payload_const(const toy_stmt_list *list);
 enumeration_result stmt_list_foreach(toy_stmt_list *list, stmt_list_item_callback callback, void *cookie);

@@ -5,8 +5,8 @@
 #include "mymalloc.h"
 #include "buf-list.h"
 #include "map-entry-list.h"
-#include "dump.h"
 #include "str.h"
+#include "expr.h"
 
 toy_map_entry *map_entry_list_payload(toy_map_entry_list *list)
 {

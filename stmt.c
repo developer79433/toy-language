@@ -2,13 +2,16 @@
 #include <string.h>
 
 #include "mymalloc.h"
-#include "dump.h"
 #include "expr.h"
 #include "stmt.h"
+#include "stmt-list.h"
 #include "str.h"
+#include "str-list.h"
 #include "generic-list.h"
 #include "buf-list.h"
 #include "var-decl.h"
+#include "var-decl-list.h"
+#include "errors.h"
 
 static const char *toy_stmt_type_names[] = {
     "block statement",
@@ -74,4 +77,117 @@ toy_stmt *var_decl_stmt_alloc(toy_var_decl_list *var_decl_list)
     /* TODO: Eliminate structure assign. Likely memory management bugs here. */
     stmt->var_decl_stmt = *var_decl_list;
     return stmt;
+}
+
+void stmt_assert_valid(const toy_stmt *stmt)
+{
+    /* TODO */
+}
+
+void stmt_dump(FILE *f, const toy_stmt *stmt, int append_semicolon)
+{
+    switch (stmt->type) {
+    case STMT_BLOCK:
+        fputs("{\n", f);
+        stmt_list_dump(f, stmt->block_stmt.block.stmts);
+        fputs("}\n", f);
+        break;
+    case STMT_BREAK:
+        fputs("break", f);
+        if (append_semicolon) {
+            fputc(';', f);
+        }
+        break;
+    case STMT_CONTINUE:
+        fputs("continue", f);
+        if (append_semicolon) {
+            fputc(';', f);
+        }
+        break;
+    case STMT_EXPR:
+        expr_dump(f, stmt->expr_stmt.expr);
+        if (append_semicolon) {
+            fputc(';', f);
+        }
+        break;
+    case STMT_FOR:
+        fputs("for (", f);
+        if (stmt->for_stmt.at_start) {
+            stmt_dump(f, stmt->for_stmt.at_start, 1);
+        }
+        fputc(' ', f);
+        if (stmt->for_stmt.condition) {
+            expr_dump(f, stmt->for_stmt.condition);
+        } else {
+            fputs("true", f);
+        }
+        fputs("; ", f);
+        if (stmt->for_stmt.at_end) {
+            stmt_dump(f, stmt->for_stmt.at_end, 0);
+        }
+        fputs(") {\n", f);
+        if (stmt->for_stmt.body.stmts) {
+            stmt_list_dump(f, stmt->for_stmt.body.stmts);
+        }
+        fputs("}", f);
+        break;
+    case STMT_FUNC_DECL:
+        fprintf(f, "fun %s(", stmt->func_decl_stmt.func.name);
+        str_list_dump(f, stmt->func_decl_stmt.func.param_names);
+        fputs(") {\n", f);
+        stmt_list_dump(f, stmt->func_decl_stmt.func.code.stmts);
+        fputs("}", f);
+        break;
+    case STMT_IF:
+        {
+            toy_if_arm_list *arm_list = stmt->if_stmt.arms;
+            fputs("if (", f);
+            expr_dump(f, arm_list->arm.condition);
+            fputs(") {\n", f);
+            stmt_list_dump(f, arm_list->arm.code.stmts);
+            fputs("}", f);
+            for (arm_list = arm_list->next; arm_list; arm_list = arm_list->next) {
+                fputs(" elseif (", f);
+                expr_dump(f, arm_list->arm.condition);
+                fputs(") {\n", f);
+                stmt_list_dump(f, arm_list->arm.code.stmts);
+                fputs("}", f);
+            }
+            if (stmt->if_stmt.elsepart.stmts) {
+                fputs(" else {\n", f);
+                stmt_list_dump(f, stmt->if_stmt.elsepart.stmts);
+                fputs("}", f);
+            }
+        }
+        break;
+    case STMT_NULL:
+        if (append_semicolon) {
+            fputc(';', f);
+        }
+        break;
+    case STMT_RETURN:
+        fputs("return ", f);
+        expr_dump(f, stmt->return_stmt.expr);
+        if (append_semicolon) {
+            fputc(';', f);
+        }
+        break;
+    case STMT_VAR_DECL:
+        fputs("var ", f);
+        var_decl_list_dump(f, &stmt->var_decl_stmt);
+        if (append_semicolon) {
+            fputc(';', f);
+        }
+        break;
+    case STMT_WHILE:
+        fputs("while (\n", f);
+        expr_dump(f, stmt->while_stmt.condition);
+        fputs(") {\n", f);
+        stmt_list_dump(f, stmt->while_stmt.body.stmts);
+        fputs("}", f);
+        break;
+    default:
+        invalid_stmt_type(stmt->type);
+        break;
+    }
 }

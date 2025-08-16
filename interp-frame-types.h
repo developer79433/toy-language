@@ -1,6 +1,7 @@
 #ifndef TOY_INTERP_FRAME_TYPES_H
 #define TOY_INTERP_FRAME_TYPES_H 1
 
+#include "val-types.h"
 #include "stmt-list-types.h"
 #include "map-val-types.h"
 #include "val-list-types.h"
@@ -14,22 +15,24 @@ enum frame_type_enum {
 };
 typedef enum frame_type_enum frame_type;
 
-typedef struct function_invocation_struct {
+typedef struct func_call_frame_struct {
     const toy_function *func;
     const toy_val_list *args;
-} function_invocation;
+} func_call_frame;
+
+typedef struct block_frame_struct {
+    const toy_block *block;
+} block_frame;
 
 typedef struct interp_frame_struct {
     frame_type type;
     union {
-        const toy_block *loop_body;
-        const toy_block *if_body;
-        /* TODO: These can be merged */
-        const function_invocation pre_def_func;
-        const function_invocation user_def_func;
-        const toy_block *block_stmt;
+        const block_frame block_stmt;
+        const func_call_frame func_call;
     };
     toy_stmt_list *cur_stmt;
+    size_t num_variables;
+    toy_val *variables;
 } interp_frame;
 
 #endif /* TOY_INTERP_FRAME_TYPES_H */

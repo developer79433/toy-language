@@ -4,12 +4,12 @@
 
 #include "str.h"
 #include "function.h"
-#include "dump.h"
 #include "errors.h"
 #include "str-list.h"
 #include "symbol-table.h"
 #include "val.h"
 #include "debug.h"
+#include "stmt-list.h"
 
 void func_dump(FILE *f, const toy_function *func)
 {
@@ -18,7 +18,7 @@ void func_dump(FILE *f, const toy_function *func)
     if (func->param_names == &INFINITE_PARAMS) {
         fputs("*", f);
     } else {
-        identifier_list_dump(f, func->param_names);
+        str_list_dump(f, func->param_names);
     }
     fputs(") {\n", f);
     if (func->type == FUNC_PREDEFINED) {

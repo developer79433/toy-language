@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "dump.h"
 #include "expr.h"
 #include "stmt.h"
+#include "stmt-list.h"
 #include "interp.h"
 #include "tests.h"
 #include "parser.tab.h"

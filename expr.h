@@ -1,11 +1,14 @@
 #ifndef TOY_EXPR_H
 #define TOY_EXPR_H 1
 
+#include <stdio.h>
+
 #include "bool-types.h"
 #include "expr-types.h"
 #include "stmt-types.h"
 #include "str-list-types.h"
 
+void expr_dump(FILE *f, const toy_expr *expr);
 toy_bool toy_expr_equal(const toy_expr *expr1, const toy_expr *expr2);
 toy_expr *alloc_unary_op_expr(toy_expr_type expr_type);
 toy_expr *alloc_binary_op_expr(toy_expr_type expr_type);

@@ -15,6 +15,12 @@ GENERATED_HEADERS=parser.tab.h
 SOURCES=$(sort $(wildcard *.c) $(GENERATED_SOURCES))
 OBJECTS=$(SOURCES:.c=.o)
 HEADERS=$(sort $(wildcard *.h) $(GENERATED_HEADERS))
+# Doesn't work, fails to build parser.tab.h in order
+# MAKEFLAGS+=-j24
+
+.PHONY: cleanall
+cleanall:
+	make clean && make all -j 24
 
 .PHONY: all
 all: test

@@ -71,12 +71,17 @@ typedef struct func_param_ref_struct {
     size_t param_index;
 } func_param_ref;
 
+typedef struct block_var_ref_struct {
+    size_t frames_up;
+    size_t var_index;
+} block_var_ref;
+
 typedef struct resolved_name_struct {
     reference_type type;
     union {
-        toy_func_decl_stmt *func_decl;
+        const toy_func_decl_stmt *func_decl;
         func_param_ref func_param;
-        toy_var_decl *var_decl;
+        block_var_ref var_decl;
         const predefined_constant *predef_const;
         const toy_val *predef_func;
     };

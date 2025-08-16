@@ -8,7 +8,6 @@
 #include "str.h"
 #include "generic-map.h"
 #include "mymalloc.h"
-#include "dump.h"
 #include "errors.h"
 #include "generic-map-entry-list.h"
 

@@ -9,8 +9,6 @@
 #include "debug.h"
 #include "buf-stack.h"
 
-/* TODO: Use buf_stack */
-
 typedef struct interp_frame_stack_struct {
     struct interp_frame_stack_struct *next;
     interp_frame frame;
@@ -99,4 +97,14 @@ interp_frame_stack *interp_frame_stack_pop(interp_frame_stack *stack, interp_fra
     stack = (interp_frame_stack *) buf_stack_pop((buf_stack *) stack, (void **) removed_frame);
     interp_frame_stack_dump(stderr, "after pop", stack);
     return stack;
+}
+
+interp_frame_stack *interp_frame_stack_index(interp_frame_stack *stack, size_t index)
+{
+    return (interp_frame_stack *) buf_stack_index((buf_stack *) stack, index);
+}
+
+const interp_frame_stack *interp_frame_stack_index_const(const interp_frame_stack *stack, size_t index)
+{
+    return (const interp_frame_stack *) buf_stack_index_const((const buf_stack *) stack, index);
 }

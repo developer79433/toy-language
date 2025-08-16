@@ -7,8 +7,10 @@
 #include "expr-types.h"
 #include "stmt-types.h"
 
+void stmt_dump(FILE *f, const toy_stmt *stmt, int append_semicolon);
 toy_stmt *stmt_alloc(toy_stmt_type type);
 toy_stmt *func_decl_stmt_alloc(toy_str name, toy_str_list *param_names, toy_block *block);
+void stmt_assert_valid(const toy_stmt *stmt);
 void func_decl_stmt_dump(FILE *f, const toy_func_decl_stmt *func_decl);
 toy_stmt *var_decl_stmt_alloc(toy_var_decl_list *var_decl_list);
 void var_decl_dump(FILE *f, const toy_var_decl *var_decl);

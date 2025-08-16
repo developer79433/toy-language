@@ -20,6 +20,8 @@
 #include "lexical-stack.h"
 #include "constants.h"
 #include "predef-function.h"
+#include "map-size-t.h"
+#include "resolved-name.h"
 
 void resolver_init(name_resolver *resolver)
 {
@@ -33,17 +35,19 @@ static void resolve_name(name_resolver *resolver, toy_str name, resolved_name *r
     assert(resolver);
     assert(name);
     assert(strlen(name));
-    log_printf("Resolving name %d, '%s'\n", strlen(name), name);
+    log_printf("Resolving name '%s'\n", name);
     resolved->type = REF_UNDEFINED;
     lexical_stack_resolve(resolver->lexical_scopes, name, resolved);
-    if (!is_resolved(resolved)) {
-        log_printf("Attempting resolution of predef constant name %d, '%s'\n", strlen(name), name);
+    if (is_resolved(resolved)) {
+        resolved_name_dump(stderr, resolved);
+    } else {
+        log_printf("Resolving predef constant '%s'\n", name);
         const predefined_constant *predef_const = lookup_predefined_constant(name);
         if (predef_const) {
             resolved->type = REF_PREDEF_CONST;
             resolved->predef_const = predef_const;
         } else {
-            log_printf("Attempting resolution of predef func name '%s'\n", name);
+            log_printf("Resolving predef func '%s'\n", name);
             const toy_val *val = predef_func_lookup_name(name);
             if (val) {
                 assert(VAL_FUNC == val->type);
@@ -52,7 +56,6 @@ static void resolve_name(name_resolver *resolver, toy_str name, resolved_name *r
                 resolved->type = REF_PREDEF_FUNC;
                 resolved->predef_func = val;
             } else {
-                assert(0);
                 undeclared_identifier(name);
             }
         }
@@ -315,7 +318,6 @@ static item_callback_result resolve_stmt_callback(void *cookie, size_t index, to
 static void resolve_names_stmt_list(name_resolver *resolver, toy_stmt_list *stmt_list)
 {
     log_debug("In resolve_names_stmt_list\n");
-    lexical_stack_dump(resolver->lexical_scopes);
     stmt_resolve_cb_args args = { .resolver = resolver };
     enumeration_result res = stmt_list_foreach(stmt_list, resolve_stmt_callback, &args);
     assert(ENUMERATION_COMPLETE == res);
@@ -323,7 +325,8 @@ static void resolve_names_stmt_list(name_resolver *resolver, toy_stmt_list *stmt
 
 static void resolve_names_block(name_resolver *resolver, toy_block *block)
 {
-    lexical_stack_entry stack_entry = { .block = block, .function = NULL };
+    lexical_frame stack_entry = { .type = LEXICAL_FRAME_BLOCK, .block_frame = { .block = block } };
+    map_size_t_init(&stack_entry.variables);
     resolver->lexical_scopes = lexical_stack_push(resolver->lexical_scopes, &stack_entry);
     resolve_names_stmt_list(resolver, block->stmts);
     resolver->lexical_scopes = lexical_stack_pop(resolver->lexical_scopes, NULL);
@@ -332,8 +335,9 @@ static void resolve_names_block(name_resolver *resolver, toy_block *block)
 static void resolve_names_func(name_resolver *resolver, toy_function *func)
 {
     log_debug("In resolve_names_func\n");
-    lexical_stack_dump(resolver->lexical_scopes);
-    lexical_stack_entry stack_entry = { .block = &func->code, .function = func };
+    lexical_frame stack_entry = { .type = LEXICAL_FRAME_FUNCTION, .function_frame = { .function = func } };
+    map_size_t_init(&stack_entry.variables);
+    map_size_t_init(&stack_entry.function_frame.arguments);
     resolver->lexical_scopes = lexical_stack_push(resolver->lexical_scopes, &stack_entry);
     resolve_names_stmt_list(resolver, func->code.stmts);
     resolver->lexical_scopes = lexical_stack_pop(resolver->lexical_scopes, NULL);

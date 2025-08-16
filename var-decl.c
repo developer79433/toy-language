@@ -4,7 +4,6 @@
 #include "str.h"
 #include "expr.h"
 #include "var-decl.h"
-#include "dump.h"
 
 toy_var_decl *var_decl_alloc(toy_str name, toy_expr *value)
 {

@@ -5,7 +5,7 @@
 #include "mymalloc.h"
 #include "ptr-list.h"
 #include "expr-list.h"
-#include "dump.h"
+#include "expr.h"
 
 toy_expr *expr_list_payload(toy_expr_list *list)
 {
