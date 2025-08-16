@@ -15,7 +15,7 @@ typedef struct my_filter_args_struct {
 static toy_bool test_map_entry(void *cookie, toy_str key, const toy_val *value)
 {
     my_filter_args *args = (my_filter_args *) cookie;
-    assert(toy_str_equal(key, args->intended_key));
+    assert(str_equal(key, args->intended_key));
     assert(value != NULL);
     assert(args->intended_value != NULL);
     assert_vals_equal(value, args->intended_value);
@@ -62,7 +62,7 @@ void test_map_ptrs(void)
     map_ptr_entry_list *bucket = ptr_array_get_not_null((void **) map1->buckets, ELEMENTSOF(map1->buckets));
     assert(bucket != NULL);
     assert(bucket->next == NULL);
-    assert(toy_str_equal(bucket->entry.key, "first key"));
+    assert(str_equal(bucket->entry.key, "first key"));
     assert(bucket->entry.ptr != NULL);
     assert(bucket->entry.ptr == &val1);
 
@@ -80,7 +80,7 @@ void test_map_ptrs(void)
     toy_val *get2 = map_ptr_get(map1, "second key");
     assert(get2 == &val2);
     assert(get2->type == VAL_STR);
-    assert(toy_str_equal(get2->str, "second value"));
+    assert(str_equal(get2->str, "second value"));
     toy_val *get3 = map_ptr_get(map1, "first key");
     assert(get3->type == VAL_NUM);
     assert(get3->num == 42);
@@ -94,7 +94,7 @@ void test_map_ptrs(void)
     toy_val *get5 = map_ptr_get(map1, "second key");
     assert(get5 == &val2);
     assert(get5->type == VAL_STR);
-    assert(toy_str_equal(get5->str, "second value"));
+    assert(str_equal(get5->str, "second value"));
 
     // Test overwrite
     toy_val val3 = { .type = VAL_STR, .str = "new value" };
@@ -104,7 +104,7 @@ void test_map_ptrs(void)
     toy_val *get6 = map_ptr_get(map1, "second key");
     assert(get6 == &val3);
     assert(get6->type == VAL_STR);
-    assert(toy_str_equal(get6->str, "new value"));
+    assert(str_equal(get6->str, "new value"));
 
     // Test enumerate
     my_filter_args args = { .intended_key = "second key", .intended_value = &val3};

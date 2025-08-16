@@ -75,7 +75,7 @@ static item_callback_result map_buf_set_entry_callback(void *cookie, size_t inde
 {
     map_buf_set_entry_cb_args *args = (map_buf_set_entry_cb_args *) cookie;
     map_buf_entry *entry = map_buf_entry_list_payload(list);
-    if (toy_str_equal(entry->key, args->desired_key)) {
+    if (str_equal(entry->key, args->desired_key)) {
         /* Overwrite existing entry */
         map_buf_entry_list_payload_set(list, args->new_value, args->new_value_size);
         return STOP_ENUMERATION;

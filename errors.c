@@ -96,7 +96,7 @@ void too_many_arguments(toy_num expected, const toy_expr_list *args)
 
 void invalid_string_index(const toy_str str, toy_num index)
 {
-    dump_str(str);
+    str_dump(str);
     log_putc('\n');
     fatal_error("Invalid string index %d", index);
 }

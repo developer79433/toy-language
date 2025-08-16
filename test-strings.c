@@ -6,8 +6,8 @@
 
 void test_strings(void)
 {
-    assert(toy_str_equal("same", "same") == TOY_TRUE);
-    assert(toy_str_equal("not", "same") == TOY_FALSE);
-    assert(toy_str_nequal("same", "same") == TOY_FALSE);
-    assert(toy_str_nequal("not", "same") == TOY_TRUE);
+    assert(str_equal("same", "same") == TOY_TRUE);
+    assert(str_equal("not", "same") == TOY_FALSE);
+    assert(str_nequal("same", "same") == TOY_FALSE);
+    assert(str_nequal("not", "same") == TOY_TRUE);
 }

@@ -162,14 +162,14 @@ static void dump_binary_op(const toy_expr *arg1, const toy_expr *arg2, const cha
 
 static void dump_assignment(const toy_str lhs, const toy_expr *rhs)
 {
-    dump_str(lhs);
+    str_dump(lhs);
     log_puts(" = ");
     expr_dump(rhs);
 }
 
 static void dump_collection_lookup(const toy_str lhs, const toy_expr *rhs)
 {
-    dump_str(lhs);
+    str_dump(lhs);
     log_putc('[');
     expr_dump(rhs);
     log_putc(']');
@@ -299,20 +299,20 @@ void expr_dump(const toy_expr *expr) {
             dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " + ");
             break;
         case EXPR_POSTFIX_DECREMENT:
-            dump_str(expr->postfix_decrement.id);
+            str_dump(expr->postfix_decrement.id);
             log_puts("--");
             break;
         case EXPR_POSTFIX_INCREMENT:
-            dump_str(expr->postfix_increment.id);
+            str_dump(expr->postfix_increment.id);
             log_puts("++");
             break;
         case EXPR_PREFIX_DECREMENT:
             log_puts("--");
-            dump_str(expr->prefix_decrement.id);
+            str_dump(expr->prefix_decrement.id);
             break;
         case EXPR_PREFIX_INCREMENT:
             log_puts("++");
-            dump_str(expr->prefix_increment.id);
+            str_dump(expr->prefix_increment.id);
             break;
         case EXPR_TERNARY:
             expr_dump(expr->ternary.condition);

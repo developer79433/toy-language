@@ -52,7 +52,7 @@ void val_dump(const toy_val *val)
             log_printf("%f", val->num);
             break;
         case VAL_STR:
-            dump_str(val->str);
+            str_dump(val->str);
             break;
         default:
             invalid_value_type(val->type);
@@ -165,7 +165,7 @@ toy_bool vals_equal(const toy_val *val1, const toy_val *val2)
             return (val1->num == val2->num);
             break;
         case VAL_STR:
-            return toy_str_equal(val1->str, val2->str);
+            return str_equal(val1->str, val2->str);
             break;
         default:
             invalid_operands(EXPR_EQUAL, val1, val2);

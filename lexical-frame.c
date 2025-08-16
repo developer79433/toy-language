@@ -81,7 +81,7 @@ static item_callback_result var_decl_list_lookup_callback(void *cookie, size_t i
 {
     var_decl_list_lookup_cb_args *args = (var_decl_list_lookup_cb_args *) cookie;
     const toy_var_decl *decl = var_decl_list_payload_const(item);
-    if (toy_str_equal(decl->name, args->desired_name)) {
+    if (str_equal(decl->name, args->desired_name)) {
         if (args->found_decl) {
             duplicate_identifier(decl->name);
         } else {
@@ -120,7 +120,7 @@ static item_callback_result stmt_list_lookup_decls_callback(void *cookie, size_t
     switch (stmt->type) {
     case STMT_FUNC_DECL:
         const toy_func_decl_stmt *func_decl_stmt = &stmt->func_decl_stmt;
-        if (toy_str_equal(func_decl_stmt->func.name, args->desired_name)) {
+        if (str_equal(func_decl_stmt->func.name, args->desired_name)) {
             if (is_resolved(args->resolved)) {
                 duplicate_identifier(func_decl_stmt->func.name);
             } else {

@@ -40,7 +40,7 @@ void map_val_entry_list_payload_set(map_val_entry_list *list, map_val_entry *ent
 
 void map_val_entry_dump(const map_val_entry *entry)
 {
-    dump_str(entry->key);
+    str_dump(entry->key);
     log_puts(": ");
     val_dump(&entry->value);
 }

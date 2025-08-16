@@ -111,7 +111,7 @@ typedef struct map_entry_has_name_args_struct {
 static toy_bool map_entry_has_desired_name(void *cookie, const generic_map_entry *entry)
 {
     map_entry_has_name_args *args = (map_entry_has_name_args *) cookie;
-    return toy_str_equal(entry->key, args->desired_key);
+    return str_equal(entry->key, args->desired_key);
 }
 
 typedef struct delete_cb_args_struct {
@@ -170,7 +170,7 @@ delete_result generic_map_delete(generic_map *map, const toy_str key)
 
 static void dump_map_entry(const generic_map_entry *entry)
 {
-    dump_str(entry->key);
+    str_dump(entry->key);
     log_printf(": %p", entry + 1);
 }
 
@@ -249,7 +249,7 @@ static item_callback_result dump_keys_cb(void *cookie, const generic_map_entry *
     } else {
         log_putc(' ');
     }
-    dump_str(entry->key);
+    str_dump(entry->key);
     args->output_anything = 1;
     return CONTINUE_ENUMERATION;
 }
@@ -307,7 +307,7 @@ static item_callback_result generic_map_get_listentry_cb(void *cookie, size_t in
 {
     listentry_cb_args *args = (listentry_cb_args *) cookie;
     generic_map_entry *map_entry = generic_map_entry_list_payload(list);
-    if (toy_str_equal(map_entry->key, args->desired_name)) {
+    if (str_equal(map_entry->key, args->desired_name)) {
         args->entry_to_find = map_entry;
         return STOP_ENUMERATION;
     }
@@ -332,7 +332,7 @@ generic_map_entry *generic_map_get_entry(generic_map *map, const toy_str key)
     if (*bucket) {
         generic_map_entry *existing_entry = generic_map_bucket_get_key(*bucket, key);
         if (existing_entry) {
-            assert(toy_str_equal(existing_entry->key, key));
+            assert(str_equal(existing_entry->key, key));
             return existing_entry;
         }
         return NULL;

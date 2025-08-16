@@ -27,7 +27,7 @@ void str_list_dump(const toy_str_list *list)
             if (output_something) {
                 log_puts(", ");
             }
-            dump_str(cur->str);
+            str_dump(cur->str);
             output_something = 1;
         }
     }

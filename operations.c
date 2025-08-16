@@ -272,7 +272,7 @@ void op_plus(toy_interp *interp, toy_val *result, toy_expr *expr1, toy_expr *exp
         interp_eval(interp, &val2, expr2);
         if (val2.type == VAL_STR) {
             result->type = VAL_STR;
-            result->str = toy_str_concat_alloc(val1.str, val2.str);
+            result->str = str_concat_alloc(val1.str, val2.str);
         } else {
             invalid_operand(EXPR_PLUS, &val2);
         }

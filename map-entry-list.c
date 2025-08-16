@@ -55,7 +55,7 @@ void map_entry_list_dump(const toy_map_entry_list *list)
             } else {
                 log_putc(' ');
             }
-            dump_str(cur->entry.key);
+            str_dump(cur->entry.key);
             log_puts(": ");
             expr_dump(cur->entry.value);
             printed_anything = 1;
