@@ -9,24 +9,32 @@
 #include "errors.h"
 #include "log.h"
 
+typedef struct val_dump_cb_args_struct {
+    toy_bool printed_anything;
+} val_dump_cb_args;
+
+static item_callback_result val_dump_callback(void *cookie, size_t index, const toy_val_list *item)
+{
+    val_dump_cb_args *args = (val_dump_cb_args *) cookie;
+    const toy_val *val = val_list_payload_const(item);
+    if (args->printed_anything) {
+        log_puts(", ");
+    } else {
+        log_putc(' ');
+    }
+    val_dump(val);
+    args->printed_anything = TOY_TRUE;
+    return CONTINUE_ENUMERATION;
+}
+
 void val_list_dump(const toy_val_list *list)
 {
-    int printed_anything = 0;
     log_putc('[');
-    if (list) {
-        /* TODO: Use val_list_foreach_const */
-        for (const toy_val_list *cur = list; cur; cur = cur->next) {
-            if (printed_anything) {
-                log_puts(", ");
-            } else {
-                log_putc(' ');
-            }
-            val_dump(&cur->val);
-            printed_anything = 1;
-        }
-        if (printed_anything) {
-            log_putc(' ');
-        }
+    val_dump_cb_args args = { .printed_anything = TOY_FALSE };
+    enumeration_result res = val_list_foreach_const(list, val_dump_callback, NULL);
+    assert(ENUMERATION_COMPLETE == res);
+    if (args.printed_anything) {
+        log_putc(' ');
     }
     log_putc(']');
 }

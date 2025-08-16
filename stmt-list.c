@@ -53,11 +53,16 @@ void stmt_list_assert_valid(const toy_stmt_list *list)
     assert(res == ENUMERATION_COMPLETE);
 }
 
+static item_callback_result stmt_dump_callback(void *cookie, size_t index, const toy_stmt_list *item)
+{
+    const toy_stmt *stmt = stmt_list_payload_const(item);
+    stmt_dump(stmt, 1);
+    log_putc('\n');
+    return CONTINUE_ENUMERATION;
+}
+
 void stmt_list_dump(const toy_stmt_list *stmts)
 {
-    /* TODO: Use stmt_list_foreach */
-    for (const toy_stmt_list *s = stmts; s; s = s->next) {
-        stmt_dump(&s->stmt, 1);
-        log_putc('\n');
-    }
+    enumeration_result res = stmt_list_foreach_const(stmts, stmt_dump_callback, NULL);
+    assert(ENUMERATION_COMPLETE == res);
 }

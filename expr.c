@@ -203,15 +203,7 @@ static void dump_function_call(const toy_str func_name, const toy_expr_list *fun
 static void dump_method_call(const toy_method_call *method_call)
 {
     log_printf("%s.%s(", method_call->lhs, method_call->method_name);
-    unsigned int output_something = 0;
-    /* TODO: Use expr_list_dump */
-    for (toy_expr_list *arg = method_call->args; arg; arg = arg->next) {
-        if (output_something) {
-            log_puts(", ");
-        }
-        expr_dump(arg->expr);
-        output_something = 1;
-    }
+    expr_list_dump(method_call->args);
     log_putc(')');
 }
 

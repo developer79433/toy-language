@@ -42,24 +42,34 @@ toy_expr_list *expr_list_append(toy_expr_list *list, toy_expr *new_expr)
     return (toy_expr_list *) ptr_list_append((toy_ptr_list *) list, new_expr);
 }
 
+typedef struct expr_dump_cb_args_struct {
+    toy_bool printed_anything;
+} expr_dump_cb_args;
+
+static item_callback_result expr_dump_callback(void *cookie, size_t index, const toy_expr_list *item)
+{
+    expr_dump_cb_args *args = (expr_dump_cb_args *) cookie;
+    const toy_expr *expr = expr_list_payload_const(item);
+    if (args->printed_anything) {
+        log_puts(", ");
+    } else {
+        log_putc(' ');
+    }
+    expr_dump(expr);
+    args->printed_anything = TOY_TRUE;
+    return CONTINUE_ENUMERATION;
+}
+
 void expr_list_dump(const toy_expr_list *list)
 {
-    int printed_anything = 0;
     log_putc('[');
-    if (list) {
-        /* TODO: Use expr_list_foreach_const */
-        for (const toy_expr_list *cur = list; cur; cur = cur->next) {
-            if (printed_anything) {
-                log_puts(", ");
-            } else {
-                log_putc(' ');
-            }
-            expr_dump(cur->expr);
-            printed_anything = 1;
-        }
-        if (printed_anything) {
-            log_putc(' ');
-        }
+    expr_dump_cb_args args = { .printed_anything = TOY_FALSE };
+    enumeration_result res = expr_list_foreach_const(list, expr_dump_callback, &args);
+    assert(ENUMERATION_COMPLETE == res);
+    for (const toy_expr_list *cur = list; cur; cur = cur->next) {
+    }
+    if (args.printed_anything) {
+        log_putc(' ');
     }
     log_putc(']');
 }

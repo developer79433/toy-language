@@ -1,4 +1,7 @@
+#include <assert.h>
+
 #include "interp.h"
+#include "if-arm-list.h"
 
 static run_stmt_result run_if_stmt_block(toy_interp *interp, const toy_block *block)
 {
@@ -18,24 +21,39 @@ static toy_bool if_arm_condition_truthy(toy_interp *interp, const toy_if_arm *ar
     return interp_condition_truthy(interp, arm->condition);
 }
 
+typedef struct if_arm_run_cb_args_struct {
+    toy_interp *interp;
+    const toy_if_arm *found_arm;
+} if_arm_run_cb_args;
+
+static item_callback_result if_arm_run_callback(void *cookie, size_t index, const toy_if_arm_list *item)
+{
+    if_arm_run_cb_args *args = (if_arm_run_cb_args *) cookie;
+    const toy_if_arm *arm = if_arm_list_payload_const(item);
+    if (if_arm_condition_truthy(args->interp, arm)) {
+        args->found_arm = arm;
+        return STOP_ENUMERATION;
+    }
+    return CONTINUE_ENUMERATION;
+}
+
 run_stmt_result if_stmt(toy_interp *interp, const toy_if_stmt *if_stmt)
 {
-    const toy_if_arm *found_arm = NULL;
-    /* TODO: Use if_arm_list_foreach */
-    for (toy_if_arm_list *arm_list = if_stmt->arms; arm_list; arm_list = arm_list->next) {
-        if (if_arm_condition_truthy(interp, &arm_list->arm)) {
-            found_arm = &arm_list->arm;
-            break;
-        }
-    }
-    run_stmt_result res;
-    if (found_arm) {
-        res = run_if_stmt_block(interp, &found_arm->code);
+    if_arm_run_cb_args args = { .interp = interp, .found_arm = NULL };
+    enumeration_result enum_res = if_arm_list_foreach_const(if_stmt->arms, if_arm_run_callback, &args);
+    assert(
+        (ENUMERATION_COMPLETE == enum_res && NULL == args.found_arm)
+        ||
+        (ENUMERATION_INTERRUPTED == enum_res && NULL != args.found_arm)
+    );
+    run_stmt_result run_result;
+    if (args.found_arm) {
+        run_result = run_if_stmt_block(interp, &args.found_arm->code);
     } else {
-        res = run_if_stmt_block(interp, &if_stmt->elsepart);
+        run_result = run_if_stmt_block(interp, &if_stmt->elsepart);
     }
-    if (res == REACHED_BLOCK_END) {
-        res = EXECUTED_STATEMENT;
+    if (run_result == REACHED_BLOCK_END) {
+        run_result = EXECUTED_STATEMENT;
     }
-    return res;
+    return run_result;
 }
