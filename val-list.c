@@ -31,7 +31,7 @@ void val_list_dump(const toy_val_list *list)
 {
     log_putc('[');
     val_dump_cb_args args = { .printed_anything = TOY_FALSE };
-    enumeration_result res = val_list_foreach_const(list, val_dump_callback, NULL);
+    enumeration_result res = val_list_foreach_const(list, val_dump_callback, &args);
     assert(ENUMERATION_COMPLETE == res);
     if (args.printed_anything) {
         log_putc(' ');

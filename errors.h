@@ -28,5 +28,7 @@ void divide_by_zero(void);
 void invalid_function_type(enum toy_func_type func_type);
 void return_outside_function(frame_type ftype);
 void invalid_lvalue(resolved_name *resolved);
+void illegal_instruction_in_for_stmt_at_start(const toy_stmt *stmt);
+void illegal_instruction_in_for_stmt_at_end(const toy_stmt *stmt);
 
 #endif /* TOY_ERRORS_H */

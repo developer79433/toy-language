@@ -194,3 +194,13 @@ void invalid_lvalue(resolved_name *resolved)
 {
     fatal_error("Cannot assign to %s", resolved_name_type_name(resolved->type), resolved_name_ref_name(resolved));
 }
+
+void illegal_instruction_in_for_stmt_at_start(const toy_stmt *stmt)
+{
+    fatal_error("Illegal statement type %s in for statement loop start", stmt_type_name(stmt->type));
+}
+
+void illegal_instruction_in_for_stmt_at_end(const toy_stmt *stmt)
+{
+    fatal_error("Illegal statement type %s in for statement loop end", stmt_type_name(stmt->type));
+}

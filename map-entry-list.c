@@ -43,26 +43,34 @@ toy_map_entry_list *map_entry_list_concat(toy_map_entry_list *orig, toy_map_entr
     return (toy_map_entry_list *) buf_list_concat((toy_buf_list *) orig, (toy_buf_list *) new_list);
 }
 
+typedef struct map_entry_dump_cb_args_struct {
+    toy_bool printed_anything;
+} map_entry_dump_cb_args;
+
+static item_callback_result map_entry_dump_callback(void *cookie, size_t index, const toy_map_entry_list *item)
+{
+    map_entry_dump_cb_args *args = (map_entry_dump_cb_args *) cookie;
+    const toy_map_entry *entry = map_entry_list_payload_const(item);
+    if (args->printed_anything) {
+        log_puts(", ");
+    } else {
+        log_putc(' ');
+    }
+    str_dump(entry->key);
+    log_puts(": ");
+    expr_dump(entry->value);
+    args->printed_anything = TOY_TRUE;
+    return CONTINUE_ENUMERATION;
+}
+
 void map_entry_list_dump(const toy_map_entry_list *list)
 {
-    int printed_anything = 0;
     log_putc('{');
-    if (list) {
-        /* TODO: Use map_entry_list_foreach_const */
-        for (const toy_map_entry_list *cur = list; cur; cur = cur->next) {
-            if (printed_anything) {
-                log_puts(", ");
-            } else {
-                log_putc(' ');
-            }
-            str_dump(cur->entry.key);
-            log_puts(": ");
-            expr_dump(cur->entry.value);
-            printed_anything = 1;
-        }
-        if (printed_anything) {
-            log_putc(' ');
-        }
+    map_entry_dump_cb_args args = { .printed_anything = TOY_FALSE };
+    enumeration_result res = map_entry_list_foreach_const(list, map_entry_dump_callback, &args);
+    assert(ENUMERATION_COMPLETE == res);
+    if (args.printed_anything) {
+        log_putc(' ');
     }
     log_putc('}');
 }

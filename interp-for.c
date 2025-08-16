@@ -1,12 +1,7 @@
 #include <assert.h>
 
 #include "interp.h"
-
-static void illegal_instruction_in_for_stmt_at_end(const toy_stmt *stmt)
-{
-    /* TODO */
-    assert(0);
-}
+#include "errors.h"
 
 static void run_for_stmt_at_end(toy_interp *interp, const toy_for_stmt *for_stmt)
 {
@@ -16,12 +11,6 @@ static void run_for_stmt_at_end(toy_interp *interp, const toy_for_stmt *for_stmt
             illegal_instruction_in_for_stmt_at_end(for_stmt->at_end);
         }
     }
-}
-
-static void illegal_instruction_in_for_stmt_at_start(const toy_stmt *stmt)
-{
-    /* TODO */
-    assert(0);
 }
 
 static void run_for_stmt_at_start(toy_interp *interp, const toy_for_stmt *for_stmt)

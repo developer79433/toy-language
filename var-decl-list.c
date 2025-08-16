@@ -41,17 +41,27 @@ enumeration_result var_decl_list_foreach_const(const toy_var_decl_list *list, co
     return buf_list_foreach_const((const toy_buf_list *) list, (const_buf_list_item_callback) callback, cookie);
 }
 
+typedef struct var_decl_dump_cb_args_struct {
+    toy_bool output_something;
+} var_decl_dump_cb_args;
+
+static item_callback_result var_decl_dump_callback(void *cookie, size_t index, const toy_var_decl_list *item)
+{
+    var_decl_dump_cb_args *args = (var_decl_dump_cb_args *) cookie;
+    const toy_var_decl *var_decl = var_decl_list_payload_const(item);
+    if (args->output_something) {
+        log_puts(", ");
+    }
+    var_decl_dump(var_decl);
+    args->output_something = TOY_TRUE;
+    return CONTINUE_ENUMERATION;
+}
+
 void var_decl_list_dump(const toy_var_decl_list *list)
 {
-    int output_something = 0;
-    /* TODO: Use var_decl_list_foreach_const */
-    for (const toy_var_decl_list *decl = list; decl; decl = decl->next) {
-        if (output_something) {
-            log_puts(", ");
-        }
-        var_decl_dump(&decl->decl);
-        output_something = 1;
-    }
+    var_decl_dump_cb_args args = { .output_something = TOY_FALSE };
+    enumeration_result res = var_decl_list_foreach_const(list, var_decl_dump_callback, &args);
+    assert(ENUMERATION_COMPLETE == res);
 }
 
 void var_decl_list_free(toy_var_decl_list *list)
