@@ -39,7 +39,7 @@ static void resolve_name(name_resolver *resolver, toy_str name, resolved_name *r
     resolved->type = REF_UNDEFINED;
     lexical_stack_resolve(resolver->lexical_scopes, name, resolved);
     if (is_resolved(resolved)) {
-        resolved_name_dump(stderr, resolved);
+        resolved_name_dump(resolved);
     } else {
         log_printf("Resolving predef constant '%s'\n", name);
         const predefined_constant *predef_const = lookup_predefined_constant(name);

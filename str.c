@@ -1,25 +1,26 @@
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <stdio.h>
 
 #include "str.h"
+#include "log.h"
 
-void print_str(FILE *f, const toy_str str)
+void print_str(const toy_str str)
 {
     for (const char *p = str; *p; p++) {
         if (*p == '\'' || *p == '"' || *p == '\\') {
-            fputc('\\', f);
+            log_putc('\\');
         }
-        fputc(*p, f);
+        log_putc(*p);
     }
 }
 
-void dump_str(FILE *f, const toy_str str)
+void dump_str(const toy_str str)
 {
-    fputc('"', f);
-    print_str(f, str);
-    fputc('"', f);
+    log_putc('"');
+    print_str(str);
+    log_putc('"');
 }
 
 toy_bool toy_str_equal(const toy_str s1, const toy_str s2)
@@ -48,6 +49,13 @@ void str_assert_valid(toy_str str)
 {
     assert(str);
     assert(strlen(str) < ONE_MILLION);
+}
+
+toy_str toy_str_concat_alloc(toy_str str1, toy_str str2)
+{
+    toy_str ret = (toy_str) malloc(strlen(str1) + strlen(str2) + 1);
+    sprintf(ret, "%s%s", str1, str2);
+    return ret;
 }
 
 void str_free(toy_str str)

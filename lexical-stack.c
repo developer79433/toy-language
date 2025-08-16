@@ -46,23 +46,17 @@ void lexical_stack_init(lexical_stack *stack)
     buf_stack_init((buf_stack *) stack);
 }
 
-typedef struct lexical_stack_entry_dump_cb_args_struct {
-    FILE *f;
-} lexical_stack_entry_dump_cb_args;
-
 static item_callback_result lexical_stack_entry_dump_cb(void *cookie, size_t index, const lexical_stack *item)
 {
-    lexical_stack_entry_dump_cb_args *args = (lexical_stack_entry_dump_cb_args *) cookie;
     const lexical_frame *entry = lexical_stack_payload_const(item);
-    lexical_frame_dump(args->f, entry);
+    lexical_frame_dump(entry);
     return CONTINUE_ENUMERATION;
 }
 
-void lexical_stack_dump(FILE *f, const lexical_stack *stack)
+void lexical_stack_dump(const lexical_stack *stack)
 {
     log_printf("Lexical stack {\n");
-    lexical_stack_entry_dump_cb_args args = { .f = f };
-    enumeration_result res = lexical_stack_foreach_const(stack, lexical_stack_entry_dump_cb, &args);
+    enumeration_result res = lexical_stack_foreach_const(stack, lexical_stack_entry_dump_cb, NULL);
     assert(res == ENUMERATION_COMPLETE);
     log_printf("} End lexical stack\n");
 }
@@ -71,20 +65,20 @@ lexical_stack *lexical_stack_push(lexical_stack *stack, lexical_frame *entry)
 {
     lexical_frame_assert_valid(entry);
     log_debug("Stack before push:\n");
-    lexical_stack_dump(stderr, stack);
+    lexical_stack_dump(stack);
     lexical_stack *ret = (lexical_stack *) buf_stack_push((buf_stack *) stack, entry, sizeof(*entry));
     log_debug("Stack after push:\n");
-    lexical_stack_dump(stderr, ret);
+    lexical_stack_dump(ret);
     return ret;
 }
 
 lexical_stack *lexical_stack_pop(lexical_stack *stack, lexical_frame **removed_entry)
 {
     log_debug("Stack before pop:\n");
-    lexical_stack_dump(stderr, stack);
+    lexical_stack_dump(stack);
     lexical_stack *ret = (lexical_stack *) buf_stack_pop((buf_stack *) stack, (void **) removed_entry);
     log_debug("Stack after pop:\n");
-    lexical_stack_dump(stderr, ret);
+    lexical_stack_dump(ret);
     if (removed_entry) {
         lexical_frame *entry = *removed_entry;
         lexical_frame_assert_valid(entry);
@@ -160,7 +154,7 @@ void lexical_stack_resolve(const lexical_stack *stack, toy_str name, resolved_na
 {
     assert(stack);
     log_printf("In lexical_stack_resolve\n");
-    lexical_stack_dump(stderr, stack);
+    lexical_stack_dump(stack);
     stack_frame_resolve_cb_args args = { .wanted_name = name, .resolved = resolved };
     enumeration_result res = lexical_stack_foreach_const(stack, stack_frame_resolve_cb, &args);
     assert(

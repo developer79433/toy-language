@@ -5,6 +5,7 @@
 #include "map-buf.h"
 #include "map-buf-entry-list.h"
 #include "val.h"
+#include "log.h"
 
 map_val_entry_list *map_val_entry_list_alloc(toy_str key, toy_val *value)
 {
@@ -37,9 +38,9 @@ void map_val_entry_list_payload_set(map_val_entry_list *list, map_val_entry *ent
     memcpy(map_val_entry_list_payload(list), entry, sizeof(*entry));
 }
 
-void map_val_entry_dump(const map_val_entry *entry, FILE *f)
+void map_val_entry_dump(const map_val_entry *entry)
 {
-    dump_str(f, entry->key);
-    fputs(": ", f);
-    val_dump(f, &entry->value);
+    dump_str(entry->key);
+    log_puts(": ");
+    val_dump(&entry->value);
 }

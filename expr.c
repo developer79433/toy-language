@@ -16,6 +16,7 @@
 #include "var-decl-list.h"
 #include "if-arm-list.h"
 #include "expr-list.h"
+#include "log.h"
 
 static const char *toy_expr_type_names[] = {
     "logical and",
@@ -150,32 +151,31 @@ void expr_assert_valid(const toy_expr *expr)
 
 #endif /* NDEBUG */
 
-static void dump_binary_op(FILE *f, const toy_expr *arg1, const toy_expr *arg2, const char *op)
+static void dump_binary_op(const toy_expr *arg1, const toy_expr *arg2, const char *op)
 {
-    fputc('(', f);
-    expr_dump(f, arg1);
-    fputs(op, f);
-    expr_dump(f, arg2);
-    fputc(')', f);
+    log_putc('(');
+    expr_dump(arg1);
+    log_puts(op);
+    expr_dump(arg2);
+    log_putc(')');
 }
 
-static void dump_assignment(FILE *f, const toy_str lhs, const toy_expr *rhs)
+static void dump_assignment(const toy_str lhs, const toy_expr *rhs)
 {
-    dump_str(f, lhs);
-    fputs(" = ", f);
-    expr_dump(f, rhs);
+    dump_str(lhs);
+    log_puts(" = ");
+    expr_dump(rhs);
 }
 
-static void dump_collection_lookup(FILE *f, const toy_str lhs, const toy_expr *rhs)
+static void dump_collection_lookup(const toy_str lhs, const toy_expr *rhs)
 {
-    dump_str(f, lhs);
-    fputc('[', f);
-    expr_dump(f, rhs);
-    fputc(']', f);
+    dump_str(lhs);
+    log_putc('[');
+    expr_dump(rhs);
+    log_putc(']');
 }
 
 typedef struct expr_dump_cb_args_struct {
-    FILE *f;
     unsigned int output_something;
 } expr_dump_cb_args;
 
@@ -184,145 +184,146 @@ static item_callback_result expr_dump_callback(void *cookie, size_t index, const
     expr_dump_cb_args *args = (expr_dump_cb_args *) cookie;
     const toy_expr *expr = expr_list_payload_const(item);
     if (args->output_something) {
-        fputs(", ", args->f);
+        log_puts(", ");
     }
-    expr_dump(args->f, expr);
+    expr_dump(expr);
     args->output_something = 1;
     return CONTINUE_ENUMERATION;
 }
 
-static void dump_function_call(FILE *f, const toy_str func_name, const toy_expr_list *func_args)
+static void dump_function_call(const toy_str func_name, const toy_expr_list *func_args)
 {
-    fprintf(f, "%s(", func_name);
-    expr_dump_cb_args cb_args = { .f = f, .output_something = 0 };
+    log_printf("%s(", func_name);
+    expr_dump_cb_args cb_args = { .output_something = 0 };
     enumeration_result res = expr_list_foreach_const(func_args, expr_dump_callback, &cb_args);
     assert(ENUMERATION_COMPLETE == res);
-    fputc(')', f);
+    log_putc(')');
 }
 
-static void dump_method_call(FILE *f, const toy_method_call *method_call)
+static void dump_method_call(const toy_method_call *method_call)
 {
-    fprintf(f, "%s.%s(", method_call->lhs, method_call->method_name);
+    log_printf("%s.%s(", method_call->lhs, method_call->method_name);
     unsigned int output_something = 0;
+    /* TODO: Use expr_list_dump */
     for (toy_expr_list *arg = method_call->args; arg; arg = arg->next) {
         if (output_something) {
-            fputs(", ", f);
+            log_puts(", ");
         }
-        expr_dump(f, arg->expr);
+        expr_dump(arg->expr);
         output_something = 1;
     }
-    fputc(')', f);
+    log_putc(')');
 }
 
-void expr_dump(FILE *f, const toy_expr *expr) {
+void expr_dump(const toy_expr *expr) {
     if (expr) {
         switch (expr->type) {
         case EXPR_AND:
-            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " and ");
+            dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " and ");
             break;
         case EXPR_ASSIGN:
-            dump_assignment(f, expr->assignment.lhs, expr->assignment.rhs);
+            dump_assignment(expr->assignment.lhs, expr->assignment.rhs);
             break;
         case EXPR_COLLECTION_LOOKUP:
-            dump_collection_lookup(f, expr->collection_lookup.lhs, expr->collection_lookup.rhs);
+            dump_collection_lookup(expr->collection_lookup.lhs, expr->collection_lookup.rhs);
             break;
         case EXPR_COMMA:
-            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, ", ");
+            dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, ", ");
             break;
         case EXPR_DIV:
-            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " / ");
+            dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " / ");
             break;
         case EXPR_EQUAL:
-            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " == ");
+            dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " == ");
             break;
         case EXPR_EXPONENT:
-            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " ** ");
+            dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " ** ");
             break;
         case EXPR_FIELD_REF:
             /* TODO */
             break;
         case EXPR_FUNC_CALL:
-            dump_function_call(f, expr->func_call.id, expr->func_call.args);
+            dump_function_call(expr->func_call.id, expr->func_call.args);
             break;
         case EXPR_GT:
-            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " > ");
+            dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " > ");
             break;
         case EXPR_GTE:
-            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " >= ");
+            dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " >= ");
             break;
         case EXPR_IDENTIFIER:
-            fprintf(f, "%s", expr->id.id);
+            log_printf("%s", expr->id.id);
             break;
         case EXPR_IN:
-            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " in ");
+            dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " in ");
             break;
         case EXPR_LIST:
-            expr_list_dump(f, expr->list);
+            expr_list_dump(expr->list);
             break;
         case EXPR_LITERAL:
-            val_dump(f, &expr->val);
+            val_dump(&expr->val);
             break;
         case EXPR_LT:
-            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " < ");
+            dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " < ");
             break;
         case EXPR_LTE:
-            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " <= ");
+            dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " <= ");
             break;
         case EXPR_MAP:
-            map_entry_list_dump(f, expr->map);
+            map_entry_list_dump(expr->map);
             break;
         case EXPR_METHOD_CALL:
-            dump_method_call(f, &expr->method_call);
+            dump_method_call(&expr->method_call);
             break;
         case EXPR_MINUS:
-            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " - ");
+            dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " - ");
             break;
         case EXPR_MODULUS:
-            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " % ");
+            dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " % ");
             break;
         case EXPR_MUL:
-            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " * ");
+            dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " * ");
             break;
         case EXPR_NEQUAL:
-            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " != ");
+            dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " != ");
             break;
         case EXPR_NOT:
-            fputs("not (", f);
-            expr_dump(f, expr->unary_op.arg);
-            fputs(")", f);
+            log_puts("not (");
+            expr_dump(expr->unary_op.arg);
+            log_puts(")");
             break;
         case EXPR_OR:
-            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " or ");
+            dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " or ");
             break;
         case EXPR_PLUS:
-            dump_binary_op(f, expr->binary_op.arg1, expr->binary_op.arg2, " + ");
+            dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " + ");
             break;
         case EXPR_POSTFIX_DECREMENT:
-            dump_str(f, expr->postfix_decrement.id);
-            fputs("--", f);
+            dump_str(expr->postfix_decrement.id);
+            log_puts("--");
             break;
         case EXPR_POSTFIX_INCREMENT:
-            dump_str(f, expr->postfix_increment.id);
-            fputs("++", f);
+            dump_str(expr->postfix_increment.id);
+            log_puts("++");
             break;
         case EXPR_PREFIX_DECREMENT:
-            fputs("--", f);
-            dump_str(f, expr->prefix_decrement.id);
+            log_puts("--");
+            dump_str(expr->prefix_decrement.id);
             break;
         case EXPR_PREFIX_INCREMENT:
-            fputs("++", f);
-            dump_str(f, expr->prefix_increment.id);
+            log_puts("++");
+            dump_str(expr->prefix_increment.id);
             break;
         case EXPR_TERNARY:
-            expr_dump(f, expr->ternary.condition);
-            fputs(" ? ", f);
-            expr_dump(f, expr->ternary.if_true);
-            fputs(" : ", f);
-            expr_dump(f, expr->ternary.if_false);
+            expr_dump(expr->ternary.condition);
+            log_puts(" ? ");
+            expr_dump(expr->ternary.if_true);
+            log_puts(" : ");
+            expr_dump(expr->ternary.if_false);
             break;
         case EXPR_UNEG:
-            fputs("-", f);
-            expr_dump(f, expr->unary_op.arg);
+            log_puts("-");
+            expr_dump(expr->unary_op.arg);
             break;
         default:
             invalid_expr_type(expr->type);
@@ -330,6 +331,6 @@ void expr_dump(FILE *f, const toy_expr *expr) {
         }
     } else {
         /* TODO: Use null_expr */
-        fputs("null", f);
+        log_puts("null");
     }
 }

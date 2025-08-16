@@ -233,7 +233,7 @@ vardecllist :
         } else {
             $$ = var_decl_list_alloc($3);
         }
-        var_decl_list_dump(stderr, $$);
+        var_decl_list_dump($$);
     }
 ;
 

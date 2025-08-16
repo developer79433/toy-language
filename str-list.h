@@ -1,7 +1,6 @@
 #ifndef TOY_STR_LIST_H
 #define TOY_STR_LIST_H 1
 
-#include <stdio.h>
 #include <stddef.h>
 
 #include "str-list-types.h"
@@ -15,7 +14,7 @@ toy_str_list *str_list_concat(toy_str_list *orig, toy_str_list *new);
 void str_list_assert_valid(const toy_str_list *list);
 #endif /* ndef NDEBUG */
 void str_list_free(toy_str_list *str_list);
-void str_list_dump(FILE *f, const toy_str_list *list);
+void str_list_dump(const toy_str_list *list);
 toy_str str_list_index(toy_str_list *list, size_t index);
 size_t str_list_len(const toy_str_list *list);
 toy_str str_list_payload(toy_str_list *list);

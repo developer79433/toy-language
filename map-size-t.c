@@ -2,6 +2,7 @@
 
 #include "map-size-t.h"
 #include "map-buf.h"
+#include "log.h"
 
 void map_size_t_init(map_size_t *map) {
     map_buf_init((map_buf *) map);
@@ -43,20 +44,14 @@ size_t map_size_t_size(const map_size_t *map) {
     return map_buf_size((const map_buf *) map);
 }
 
-typedef struct map_size_t_entry_dump_cb_args_struct {
-    FILE *f;
-} map_size_t_entry_dump_cb_args;
-
 static item_callback_result map_size_t_entry_dump_cb(void *cookie, const map_size_t_entry *item)
 {
-    map_size_t_entry_dump_cb_args *args = (map_size_t_entry_dump_cb_args *) cookie;
-    fprintf(args->f, "%s => %zu", item->key, item->s);
+    log_printf("%s => %zu", item->key, item->s);
     return CONTINUE_ENUMERATION;
 }
 
-void map_size_t_dump(FILE *f, const map_size_t *map) {
-    map_size_t_entry_dump_cb_args args = { .f = f };
-    enumeration_result res = map_size_t_foreach_const(map, map_size_t_entry_dump_cb, &args);
+void map_size_t_dump(const map_size_t *map) {
+    enumeration_result res = map_size_t_foreach_const(map, map_size_t_entry_dump_cb, NULL);
     assert(res == ENUMERATION_COMPLETE);
 }
 

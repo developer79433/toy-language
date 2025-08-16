@@ -42,10 +42,10 @@ toy_bool is_predefined(toy_str name)
     return TOY_FALSE;
 }
 
-void predef_const_dump(FILE *f, const predefined_constant *predef_const)
+void predef_const_dump(const predefined_constant *predef_const)
 {
-    dump_str(f, predef_const->name);
-    val_dump(f, &predef_const->value);
+    dump_str(predef_const->name);
+    val_dump(&predef_const->value);
 }
 
 void predef_const_assert_valid(const predefined_constant *predef_const)

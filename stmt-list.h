@@ -4,7 +4,7 @@
 #include "stmt-types.h"
 #include "stmt-list-types.h"
 
-void stmt_list_dump(FILE *f, const toy_stmt_list *stmts);
+void stmt_list_dump(const toy_stmt_list *stmts);
 toy_stmt_list *stmt_list_alloc(toy_stmt *stmt);
 toy_stmt_list *stmt_list_append(toy_stmt_list *list, toy_stmt *stmt);
 toy_stmt_list *stmt_list_concat(toy_stmt_list *list, toy_stmt_list *new_list);

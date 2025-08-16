@@ -10,6 +10,7 @@
 #include "var-decl-list.h"
 #include "block.h"
 #include "function.h"
+#include "log.h"
 
 void lexical_frame_assert_valid(const lexical_frame *entry)
 {
@@ -29,21 +30,21 @@ void lexical_frame_assert_valid(const lexical_frame *entry)
     map_size_t_assert_valid(&entry->variables);
 }
 
-void lexical_frame_dump(FILE *f, const lexical_frame *entry)
+void lexical_frame_dump(const lexical_frame *entry)
 {
     switch (entry->type) {
     case LEXICAL_FRAME_BLOCK:
         const lexical_frame_block *block_frame = &entry->block_frame;
         /* block_dump(f, block_frame->block); */
-        fprintf(f, "Block %p\n", block_frame->block);
+        log_printf("Block %p\n", block_frame->block);
         break;
     case LEXICAL_FRAME_FUNCTION:
         const lexical_frame_function *func_frame = &entry->function_frame;
         toy_function *func = func_frame->function;
-        fprintf(f, "Function call %s(", func->name);
+        log_printf("Function call %s(", func->name);
         /* func_dump(f, func); */
-        map_size_t_dump(f, &func_frame->arguments);
-        fprintf(f, ")\n");
+        map_size_t_dump(&func_frame->arguments);
+        log_printf(")\n");
         break;
     default:
         assert(0);

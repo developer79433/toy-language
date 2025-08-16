@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <assert.h>
 #include <string.h>
 
@@ -13,6 +12,7 @@
 #include "constants.h"
 #include "map-val.h"
 #include "debug.h"
+#include "log.h"
 
 static const char *toy_val_type_names[] = {
     "boolean",
@@ -29,38 +29,37 @@ const char *val_type_name(toy_val_type val_type)
     return toy_val_type_names[val_type];
 }
 
-/* TODO: Remove first arg, and use debug_printf etc instead */
-void val_dump(FILE *f, const toy_val *val)
+void val_dump(const toy_val *val)
 {
     if (val) {
         switch(val->type) {
         case VAL_BOOL:
-            dump_bool(f, val->boolean);
+            dump_bool(val->boolean);
             break;
         case VAL_FUNC:
-            func_dump(f, val->func);
+            func_dump(val->func);
             break;
         case VAL_LIST:
-            val_list_dump(f, val->list);
+            val_list_dump(val->list);
             break;
         case VAL_MAP:
-            map_val_dump(f, val->map);
+            map_val_dump(val->map);
             break;
         case VAL_NULL:
-            fputs("null", f);
+            log_puts("null");
             break;
         case VAL_NUM:
-            fprintf(f, "%f", val->num);
+            log_printf("%f", val->num);
             break;
         case VAL_STR:
-            dump_str(f, val->str);
+            dump_str(val->str);
             break;
         default:
             invalid_value_type(val->type);
             break;
         }
     } else {
-        val_dump(f, &null_val);
+        val_dump(&null_val);
     }
 }
 
@@ -338,8 +337,8 @@ void assert_vals_equal(const toy_val *val1, const toy_val *val2)
     if (compare_res == TOY_TRUE) {
         return;
     }
-    val_dump(stderr, val1);
-    val_dump(stderr, val2);
+    val_dump(val1);
+    val_dump(val2);
     assert(0);
 }
 

@@ -2,12 +2,11 @@
 #define TOY_EXPR_LIST_H 1
 
 #include <stddef.h>
-#include <stdio.h>
 
 #include "generic-list-types.h"
 #include "expr-list-types.h"
 
-void expr_list_dump(FILE *f, const toy_expr_list *list);
+void expr_list_dump(const toy_expr_list *list);
 toy_expr_list *expr_list_alloc(toy_expr *first_elem);
 size_t expr_list_len(const toy_expr_list *args);
 toy_expr *expr_list_payload(toy_expr_list *list);

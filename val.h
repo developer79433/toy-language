@@ -1,14 +1,12 @@
 #ifndef TOY_VAL_H
 #define TOY_VAL_H 1
 
-#include <stdio.h>
-
 #include "bool-types.h"
 #include "val-types.h"
 #include "str-list-types.h"
 #include "function-types.h"
 
-void val_dump(FILE *f, const toy_val *val);
+void val_dump(const toy_val *val);
 toy_bool vals_equal(const toy_val *val1, const toy_val *val2);
 toy_bool vals_nequal(const toy_val *val1, const toy_val *val2);
 toy_bool num_gt(toy_num num1, toy_num num2);

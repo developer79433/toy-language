@@ -8,6 +8,7 @@
 #include "map-buf.h"
 #include "generic-map.h"
 #include "debug.h"
+#include "log.h"
 
 void map_val_init(map_val *map)
 {
@@ -69,32 +70,31 @@ void map_val_reset(map_val *map)
 
 typedef struct dump_item_cb_args_struct {
     int output_anything;
-    FILE *f;
 } dump_item_cb_args;
 
 static item_callback_result dump_item_callback(void *cookie, const map_val_entry *entry)
 {
     dump_item_cb_args *args = (dump_item_cb_args *) cookie;
     if (args->output_anything) {
-        fputs(", ", args->f);
+        log_puts(", ");
     } else {
-        fputc(' ', args->f);
+        log_putc(' ');
     }
-    map_val_entry_dump(entry, args->f);
+    map_val_entry_dump(entry);
     args->output_anything = 1;
     return CONTINUE_ENUMERATION;
 }
 
-void map_val_dump(FILE *f, const map_val *map)
+void map_val_dump(const map_val *map)
 {
-    dump_item_cb_args cbargs = { .f = f, .output_anything = 0 };
-    fputc('{', f);
+    dump_item_cb_args cbargs = { .output_anything = 0 };
+    log_putc('{');
     enumeration_result res = map_val_foreach_const(map, dump_item_callback, &cbargs);
     assert(res == ENUMERATION_COMPLETE);
     if (cbargs.output_anything) {
-        fputc(' ', f);
+        log_putc(' ');
     }
-    fputc('}', f);
+    log_putc('}');
 }
 
 #ifndef NDEBUG

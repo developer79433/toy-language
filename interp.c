@@ -660,7 +660,7 @@ toy_interp *interp_alloc(const toy_stmt_list *program)
     interp->main_program.param_names = NULL;
     interp->stack = NULL;
     interp_stack_push_user_func(interp->stack, &interp->main_program, NULL);
-    interp_stack_dump(stderr, "at program start", interp->stack);
+    interp_stack_dump("at program start", interp->stack);
     return interp;
 }
 

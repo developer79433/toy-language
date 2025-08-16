@@ -61,7 +61,6 @@ void interp_frame_stack_assert_valid(const interp_frame_stack *stack)
 }
 
 typedef struct frame_dump_cb_args_struct {
-    FILE *f;
     size_t *frame_num;
 } frame_dump_cb_args;
 
@@ -70,17 +69,17 @@ static item_callback_result frame_dump_callback(void *cookie, size_t index, cons
     frame_dump_cb_args *args = (frame_dump_cb_args *) cookie;
     const interp_frame *frame = interp_frame_stack_payload_const(item);
     fprintf(stderr, "  Frame %02zu: ", *args->frame_num);
-    interp_frame_dump(args->f, frame);
+    interp_frame_dump(frame);
     fprintf(stderr, "\n");
     *args->frame_num = *args->frame_num + 1;
     return CONTINUE_ENUMERATION;
 }
 
-void interp_frame_stack_dump(FILE *f, const char *context, const interp_frame_stack *stack)
+void interp_frame_stack_dump(const char *context, const interp_frame_stack *stack)
 {
     fprintf(stderr, "STACK %s:\n", context);
     size_t frame_num = 0;
-    frame_dump_cb_args args = { .f = f, .frame_num = &frame_num };
+    frame_dump_cb_args args = { .frame_num = &frame_num };
     enumeration_result res = interp_frame_stack_foreach_const(stack, frame_dump_callback, &args);
     assert(res == ENUMERATION_COMPLETE);
 }
@@ -88,14 +87,14 @@ void interp_frame_stack_dump(FILE *f, const char *context, const interp_frame_st
 interp_frame_stack *interp_frame_stack_push(interp_frame_stack *stack, interp_frame *frame)
 {
     stack = (interp_frame_stack *) buf_stack_push((buf_stack *) stack, frame, sizeof(*frame));
-    interp_frame_stack_dump(stderr, "after push", stack);
+    interp_frame_stack_dump("after push", stack);
     return stack;
 }
 
 interp_frame_stack *interp_frame_stack_pop(interp_frame_stack *stack, interp_frame **removed_frame)
 {
     stack = (interp_frame_stack *) buf_stack_pop((buf_stack *) stack, (void **) removed_frame);
-    interp_frame_stack_dump(stderr, "after pop", stack);
+    interp_frame_stack_dump("after pop", stack);
     return stack;
 }
 

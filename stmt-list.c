@@ -3,6 +3,7 @@
 #include "stmt.h"
 #include "stmt-list.h"
 #include "buf-list.h"
+#include "log.h"
 
 toy_stmt_list *stmt_list_alloc(toy_stmt *stmt)
 {
@@ -52,11 +53,11 @@ void stmt_list_assert_valid(const toy_stmt_list *list)
     assert(res == ENUMERATION_COMPLETE);
 }
 
-void stmt_list_dump(FILE *f, const toy_stmt_list *stmts)
+void stmt_list_dump(const toy_stmt_list *stmts)
 {
     /* TODO: Use stmt_list_foreach */
     for (const toy_stmt_list *s = stmts; s; s = s->next) {
-        stmt_dump(f, &s->stmt, 1);
-        fputc('\n', f);
+        stmt_dump(&s->stmt, 1);
+        log_putc('\n');
     }
 }

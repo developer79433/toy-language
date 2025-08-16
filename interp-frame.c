@@ -8,6 +8,7 @@
 #include "symbol-table.h"
 #include "debug.h"
 #include "val-list.h"
+#include "log.h"
 
 static const char *frame_type_names[] = {
     "Loop body",
@@ -22,31 +23,31 @@ const char *interp_frame_type_name(frame_type type)
     return frame_type_names[type];
 }
 
-void interp_frame_dump(FILE *f, const interp_frame *frame)
+void interp_frame_dump(const interp_frame *frame)
 {
     switch (frame->type) {
     case FRAME_BLOCK_STMT:
-        fprintf(f, "block_stmt %p", frame->block_stmt.block);
+        log_printf("block_stmt %p", frame->block_stmt.block);
         break;
     case FRAME_IF_BODY:
-        fprintf(f, "if_body %p", frame->block_stmt.block);
+        log_printf("if_body %p", frame->block_stmt.block);
         break;
     case FRAME_LOOP_BODY:
-        fprintf(f, "loop_body %p", frame->block_stmt.block);
+        log_printf("loop_body %p", frame->block_stmt.block);
         break;
     case FRAME_PRE_DEF_FUNC:
         const func_call_frame *predef_func_inv = &frame->func_call;
         const toy_function *predef_func = predef_func_inv->func;
-        fprintf(f, "Predefined function %s(", predef_func->name);
-        val_list_dump(f, predef_func_inv->args);
-        fprintf(f, ")");
+        log_printf("Predefined function %s(", predef_func->name);
+        val_list_dump(predef_func_inv->args);
+        log_printf(")");
         break;
     case FRAME_USER_DEF_FUNC:
         const func_call_frame *user_func_inv = &frame->func_call;
         const toy_function *user_func = user_func_inv->func;
-        fprintf(f, "User-defined function %s(", user_func->name);
-        val_list_dump(f, user_func_inv->args);
-        fprintf(f, ")");
+        log_printf("User-defined function %s(", user_func->name);
+        val_list_dump(user_func_inv->args);
+        log_printf(")");
         break;
     default:
         assert(0);

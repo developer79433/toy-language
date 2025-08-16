@@ -7,27 +7,28 @@
 #include "val.h"
 #include "val-list.h"
 #include "errors.h"
+#include "log.h"
 
-void val_list_dump(FILE *f, const toy_val_list *list)
+void val_list_dump(const toy_val_list *list)
 {
     int printed_anything = 0;
-    fputc('[', f);
+    log_putc('[');
     if (list) {
         /* TODO: Use val_list_foreach_const */
         for (const toy_val_list *cur = list; cur; cur = cur->next) {
             if (printed_anything) {
-                fputs(", ", f);
+                log_puts(", ");
             } else {
-                fputc(' ', f);
+                log_putc(' ');
             }
-            val_dump(f, &cur->val);
+            val_dump(&cur->val);
             printed_anything = 1;
         }
         if (printed_anything) {
-            fputc(' ', f);
+            log_putc(' ');
         }
     }
-    fputc(']', f);
+    log_putc(']');
 }
 
 size_t val_list_len(const toy_val_list *list)

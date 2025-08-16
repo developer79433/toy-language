@@ -4,6 +4,7 @@
 #include "str.h"
 #include "expr.h"
 #include "var-decl.h"
+#include "log.h"
 
 toy_var_decl *var_decl_alloc(toy_str name, toy_expr *value)
 {
@@ -13,12 +14,12 @@ toy_var_decl *var_decl_alloc(toy_str name, toy_expr *value)
     return decl;
 }
 
-void var_decl_dump(FILE *f, const toy_var_decl *decl)
+void var_decl_dump(const toy_var_decl *decl)
 {
-    fputs(decl->name, f);
+    log_puts(decl->name);
     if (decl->value) {
-        fputs(" = ", f);
-        expr_dump(f, decl->value);
+        log_puts(" = ");
+        expr_dump(decl->value);
     }
 }
 

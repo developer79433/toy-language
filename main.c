@@ -38,7 +38,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
     toy_stmt_list *program_start = get_program_start();
-    stmt_list_dump(stderr, program_start);
+    stmt_list_dump(program_start);
     toplevel_function.code.stmts = program_start;
     add_parent_links_to_stmt_list(&toplevel_function, program_start);
     name_resolver resolver;

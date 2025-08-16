@@ -19,9 +19,9 @@ const interp_frame *interp_stack_payload_const(const interp_stack *stack)
     return interp_frame_stack_payload_const(stack);
 }
 
-void interp_stack_dump(FILE *f, const char *context, const interp_stack *stack)
+void interp_stack_dump(const char *context, const interp_stack *stack)
 {
-    return interp_frame_stack_dump(f, context, stack);
+    return interp_frame_stack_dump(context, stack);
 }
 
 void interp_stack_free(interp_stack *stack)
@@ -34,7 +34,7 @@ interp_stack *interp_stack_push_if(interp_stack *stack, const toy_block *block)
     toy_val *variables = NULL; /* TODO */
     interp_frame frame = { .type = FRAME_IF_BODY, .block_stmt.block = block, .variables = variables, .cur_stmt = block->stmts };
     stack = interp_frame_stack_push(stack, &frame);
-    interp_frame_stack_dump(stderr, "after push if body", stack);
+    interp_frame_stack_dump("after push if body", stack);
     return stack;
 }
 
@@ -43,7 +43,7 @@ interp_stack *interp_stack_push_loop(interp_stack *stack, const toy_block *block
     toy_val *variables = NULL; /* TODO */
     interp_frame frame = { .type = FRAME_LOOP_BODY, .block_stmt.block = block, .variables = variables, .cur_stmt = block->stmts };
     stack = interp_frame_stack_push(stack, &frame);
-    interp_frame_stack_dump(stderr, "after push loop body", stack);
+    interp_frame_stack_dump("after push loop body", stack);
     return stack;
 }
 
@@ -52,7 +52,7 @@ interp_stack *interp_stack_push_predef_func(interp_stack *stack, const toy_funct
     assert(FUNC_PREDEFINED == func->type);
     interp_frame frame = { .type = FRAME_PRE_DEF_FUNC, .func_call.func = func, .func_call.args = args, .cur_stmt = func->code.stmts };
     stack = interp_frame_stack_push(stack, &frame);
-    interp_frame_stack_dump(stderr, "after push predef func", stack);
+    interp_frame_stack_dump("after push predef func", stack);
     return stack;
 }
 
@@ -61,7 +61,7 @@ interp_stack *interp_stack_push_user_func(interp_stack *stack, const toy_functio
     assert(FUNC_USER_DECLARED == func->type);
     interp_frame frame = {.type = FRAME_USER_DEF_FUNC, .func_call.func = func, .func_call.args = args, .cur_stmt = func->code.stmts };
     stack = interp_frame_stack_push(stack, &frame);
-    interp_frame_stack_dump(stderr, "after push user func", stack);
+    interp_frame_stack_dump("after push user func", stack);
     return stack;
 }
 
@@ -70,7 +70,7 @@ interp_stack *interp_stack_push_block(interp_stack *stack, const toy_block *bloc
     toy_val *variables = NULL; /* TODO */
     interp_frame frame = { .type = FRAME_BLOCK_STMT, .block_stmt.block = block, .variables = variables, .cur_stmt = block->stmts };
     stack = interp_frame_stack_push(stack, &frame);
-    interp_frame_stack_dump(stderr, "after push block stmt", stack);
+    interp_frame_stack_dump("after push block stmt", stack);
     return stack;
 }
 

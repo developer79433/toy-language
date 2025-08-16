@@ -5,6 +5,7 @@
 #include "buf-list.h"
 #include "var-decl.h"
 #include "var-decl-list.h"
+#include "log.h"
 
 toy_var_decl *var_decl_list_payload(toy_var_decl_list *list)
 {
@@ -40,14 +41,15 @@ enumeration_result var_decl_list_foreach_const(const toy_var_decl_list *list, co
     return buf_list_foreach_const((const toy_buf_list *) list, (const_buf_list_item_callback) callback, cookie);
 }
 
-void var_decl_list_dump(FILE *f, const toy_var_decl_list *list)
+void var_decl_list_dump(const toy_var_decl_list *list)
 {
     int output_something = 0;
+    /* TODO: Use var_decl_list_foreach_const */
     for (const toy_var_decl_list *decl = list; decl; decl = decl->next) {
         if (output_something) {
-            fputs(", ", f);
+            log_puts(", ");
         }
-        var_decl_dump(f, &decl->decl);
+        var_decl_dump(&decl->decl);
         output_something = 1;
     }
 }

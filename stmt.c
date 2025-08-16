@@ -12,6 +12,7 @@
 #include "var-decl.h"
 #include "var-decl-list.h"
 #include "errors.h"
+#include "log.h"
 
 static const char *toy_stmt_type_names[] = {
     "block statement",
@@ -66,7 +67,7 @@ toy_stmt *func_decl_stmt_alloc(toy_str name, toy_str_list *param_names, toy_bloc
     return stmt;
 }
 
-void func_decl_stmt_dump(FILE *f, const toy_func_decl_stmt *func_decl)
+void func_decl_stmt_dump(const toy_func_decl_stmt *func_decl)
 {
     /* TODO */
 }
@@ -84,107 +85,107 @@ void stmt_assert_valid(const toy_stmt *stmt)
     /* TODO */
 }
 
-void stmt_dump(FILE *f, const toy_stmt *stmt, int append_semicolon)
+void stmt_dump(const toy_stmt *stmt, int append_semicolon)
 {
     switch (stmt->type) {
     case STMT_BLOCK:
-        fputs("{\n", f);
-        stmt_list_dump(f, stmt->block_stmt.block.stmts);
-        fputs("}\n", f);
+        log_puts("{\n");
+        stmt_list_dump(stmt->block_stmt.block.stmts);
+        log_puts("}\n");
         break;
     case STMT_BREAK:
-        fputs("break", f);
+        log_puts("break");
         if (append_semicolon) {
-            fputc(';', f);
+            log_putc(';');
         }
         break;
     case STMT_CONTINUE:
-        fputs("continue", f);
+        log_puts("continue");
         if (append_semicolon) {
-            fputc(';', f);
+            log_putc(';');
         }
         break;
     case STMT_EXPR:
-        expr_dump(f, stmt->expr_stmt.expr);
+        expr_dump(stmt->expr_stmt.expr);
         if (append_semicolon) {
-            fputc(';', f);
+            log_putc(';');
         }
         break;
     case STMT_FOR:
-        fputs("for (", f);
+        log_puts("for (");
         if (stmt->for_stmt.at_start) {
-            stmt_dump(f, stmt->for_stmt.at_start, 1);
+            stmt_dump(stmt->for_stmt.at_start, 1);
         }
-        fputc(' ', f);
+        log_putc(' ');
         if (stmt->for_stmt.condition) {
-            expr_dump(f, stmt->for_stmt.condition);
+            expr_dump(stmt->for_stmt.condition);
         } else {
-            fputs("true", f);
+            log_puts("true");
         }
-        fputs("; ", f);
+        log_puts("; ");
         if (stmt->for_stmt.at_end) {
-            stmt_dump(f, stmt->for_stmt.at_end, 0);
+            stmt_dump(stmt->for_stmt.at_end, 0);
         }
-        fputs(") {\n", f);
+        log_puts(") {\n");
         if (stmt->for_stmt.body.stmts) {
-            stmt_list_dump(f, stmt->for_stmt.body.stmts);
+            stmt_list_dump(stmt->for_stmt.body.stmts);
         }
-        fputs("}", f);
+        log_puts("}");
         break;
     case STMT_FUNC_DECL:
-        fprintf(f, "fun %s(", stmt->func_decl_stmt.func.name);
-        str_list_dump(f, stmt->func_decl_stmt.func.param_names);
-        fputs(") {\n", f);
-        stmt_list_dump(f, stmt->func_decl_stmt.func.code.stmts);
-        fputs("}", f);
+        log_printf("fun %s(", stmt->func_decl_stmt.func.name);
+        str_list_dump(stmt->func_decl_stmt.func.param_names);
+        log_puts(") {\n");
+        stmt_list_dump(stmt->func_decl_stmt.func.code.stmts);
+        log_puts("}");
         break;
     case STMT_IF:
         {
             toy_if_arm_list *arm_list = stmt->if_stmt.arms;
-            fputs("if (", f);
-            expr_dump(f, arm_list->arm.condition);
-            fputs(") {\n", f);
-            stmt_list_dump(f, arm_list->arm.code.stmts);
-            fputs("}", f);
+            log_puts("if (");
+            expr_dump(arm_list->arm.condition);
+            log_puts(") {\n");
+            stmt_list_dump(arm_list->arm.code.stmts);
+            log_puts("}");
             for (arm_list = arm_list->next; arm_list; arm_list = arm_list->next) {
-                fputs(" elseif (", f);
-                expr_dump(f, arm_list->arm.condition);
-                fputs(") {\n", f);
-                stmt_list_dump(f, arm_list->arm.code.stmts);
-                fputs("}", f);
+                log_puts(" elseif (");
+                expr_dump(arm_list->arm.condition);
+                log_puts(") {\n");
+                stmt_list_dump(arm_list->arm.code.stmts);
+                log_puts("}");
             }
             if (stmt->if_stmt.elsepart.stmts) {
-                fputs(" else {\n", f);
-                stmt_list_dump(f, stmt->if_stmt.elsepart.stmts);
-                fputs("}", f);
+                log_puts(" else {\n");
+                stmt_list_dump(stmt->if_stmt.elsepart.stmts);
+                log_puts("}");
             }
         }
         break;
     case STMT_NULL:
         if (append_semicolon) {
-            fputc(';', f);
+            log_putc(';');
         }
         break;
     case STMT_RETURN:
-        fputs("return ", f);
-        expr_dump(f, stmt->return_stmt.expr);
+        log_puts("return ");
+        expr_dump(stmt->return_stmt.expr);
         if (append_semicolon) {
-            fputc(';', f);
+            log_putc(';');
         }
         break;
     case STMT_VAR_DECL:
-        fputs("var ", f);
-        var_decl_list_dump(f, &stmt->var_decl_stmt);
+        log_puts("var ");
+        var_decl_list_dump(&stmt->var_decl_stmt);
         if (append_semicolon) {
-            fputc(';', f);
+            log_putc(';');
         }
         break;
     case STMT_WHILE:
-        fputs("while (\n", f);
-        expr_dump(f, stmt->while_stmt.condition);
-        fputs(") {\n", f);
-        stmt_list_dump(f, stmt->while_stmt.body.stmts);
-        fputs("}", f);
+        log_puts("while (\n");
+        expr_dump(stmt->while_stmt.condition);
+        log_puts(") {\n");
+        stmt_list_dump(stmt->while_stmt.body.stmts);
+        log_puts("}");
         break;
     default:
         invalid_stmt_type(stmt->type);

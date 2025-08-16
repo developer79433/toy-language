@@ -7,6 +7,7 @@
 #include "map-entry-list.h"
 #include "str.h"
 #include "expr.h"
+#include "log.h"
 
 toy_map_entry *map_entry_list_payload(toy_map_entry_list *list)
 {
@@ -42,25 +43,26 @@ toy_map_entry_list *map_entry_list_concat(toy_map_entry_list *orig, toy_map_entr
     return (toy_map_entry_list *) buf_list_concat((toy_buf_list *) orig, (toy_buf_list *) new_list);
 }
 
-void map_entry_list_dump(FILE *f, const toy_map_entry_list *list)
+void map_entry_list_dump(const toy_map_entry_list *list)
 {
     int printed_anything = 0;
-    fputc('{', f);
+    log_putc('{');
     if (list) {
+        /* TODO: Use map_entry_list_foreach_const */
         for (const toy_map_entry_list *cur = list; cur; cur = cur->next) {
             if (printed_anything) {
-                fputs(", ", f);
+                log_puts(", ");
             } else {
-                fputc(' ', f);
+                log_putc(' ');
             }
-            dump_str(f, cur->entry.key);
-            fputs(": ", f);
-            expr_dump(f, cur->entry.value);
+            dump_str(cur->entry.key);
+            log_puts(": ");
+            expr_dump(cur->entry.value);
             printed_anything = 1;
         }
         if (printed_anything) {
-            fputc(' ', f);
+            log_putc(' ');
         }
     }
-    fputc('}', f);
+    log_putc('}');
 }

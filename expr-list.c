@@ -6,6 +6,7 @@
 #include "ptr-list.h"
 #include "expr-list.h"
 #include "expr.h"
+#include "log.h"
 
 toy_expr *expr_list_payload(toy_expr_list *list)
 {
@@ -41,26 +42,26 @@ toy_expr_list *expr_list_append(toy_expr_list *list, toy_expr *new_expr)
     return (toy_expr_list *) ptr_list_append((toy_ptr_list *) list, new_expr);
 }
 
-void expr_list_dump(FILE *f, const toy_expr_list *list)
+void expr_list_dump(const toy_expr_list *list)
 {
     int printed_anything = 0;
-    fputc('[', f);
+    log_putc('[');
     if (list) {
         /* TODO: Use expr_list_foreach_const */
         for (const toy_expr_list *cur = list; cur; cur = cur->next) {
             if (printed_anything) {
-                fputs(", ", f);
+                log_puts(", ");
             } else {
-                fputc(' ', f);
+                log_putc(' ');
             }
-            expr_dump(f, cur->expr);
+            expr_dump(cur->expr);
             printed_anything = 1;
         }
         if (printed_anything) {
-            fputc(' ', f);
+            log_putc(' ');
         }
     }
-    fputc(']', f);
+    log_putc(']');
 }
 
 toy_expr_list *expr_list_concat(toy_expr_list *orig, toy_expr_list *new_list)

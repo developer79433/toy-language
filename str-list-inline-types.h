@@ -1,6 +1,8 @@
 #ifndef TOY_STR_LIST_INLINE_TYPES_H
 #define TOY_STR_LIST_INLINE_TYPES_H 1
 
+#include <stddef.h>
+
 #include "str-types.h"
 #include "iter-types.h"
 

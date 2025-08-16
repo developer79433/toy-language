@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 
@@ -12,14 +11,15 @@
 #include "function.h"
 #include "interp.h"
 #include "interp-frame.h"
+#include "log.h"
 
 void fatal_error(const char *fmt, ...)
 {
     va_list argptr;
     va_start(argptr, fmt);
-    vfprintf(stderr, fmt, argptr);
+    log_vprintf(fmt, argptr);
     va_end(argptr);
-    fputc('\n', stderr);
+    log_putc('\n');
     abort();
 }
 
@@ -27,17 +27,17 @@ void fatal_error(const char *fmt, ...)
 
 void invalid_operand(toy_expr_type expr_type, const toy_val *operand)
 {
-    val_dump(stderr, operand);
-    fputc('\n', stderr);
+    val_dump(operand);
+    log_putc('\n');
     fatal_error("Invalid operand for %s", toy_expr_type_name(expr_type));
 }
 
 void invalid_operands(toy_expr_type expr_type, const toy_val *operand1, const toy_val *operand2)
 {
-    val_dump(stderr, operand1);
-    fputc('\n', stderr);
-    val_dump(stderr, operand2);
-    fputc('\n', stderr);
+    val_dump(operand1);
+    log_putc('\n');
+    val_dump(operand2);
+    log_putc('\n');
     fatal_error("Invalid operands for %s", toy_expr_type_name(expr_type));
 }
 
@@ -53,8 +53,8 @@ void invalid_stmt_type(toy_stmt_type stmt_type)
 /* TODO: Delete me */
 void invalid_cast(toy_val_type val_type, const toy_val *val)
 {
-    val_dump(stderr, val);
-    fputc('\n', stderr);
+    val_dump(val);
+    log_putc('\n');
     fatal_error("Cannot convert to %s", val_type_name(val_type));
 }
 
@@ -75,36 +75,36 @@ void readonly_identifier(const toy_str name)
 
 void invalid_val_list_index(const toy_val_list *list, toy_num index)
 {
-    val_list_dump(stderr, list);
-    fputc('\n', stderr);
+    val_list_dump(list);
+    log_putc('\n');
     fatal_error("Invalid val list index %d", index);
 }
 
 void too_few_arguments(toy_num expected, const toy_expr_list *args)
 {
-    expr_list_dump(stderr, args);
-    fputc('\n', stderr);
+    expr_list_dump(args);
+    log_putc('\n');
     fatal_error("Too few arguments: expected %d, received %d", expected, expr_list_len(args));
 }
 
 void too_many_arguments(toy_num expected, const toy_expr_list *args)
 {
-    expr_list_dump(stderr, args);
-    fputc('\n', stderr);
+    expr_list_dump(args);
+    log_putc('\n');
     fatal_error("Too many arguments: expected %d, received %d", expected, expr_list_len(args));
 }
 
 void invalid_string_index(const toy_str str, toy_num index)
 {
-    dump_str(stderr, str);
-    fputc('\n', stderr);
+    dump_str(str);
+    log_putc('\n');
     fatal_error("Invalid string index %d", index);
 }
 
 void invalid_argument_type(toy_val_type expected_type, const toy_val *actual_arg)
 {
-    val_dump(stderr, actual_arg);
-    fputc('\n', stderr);
+    val_dump(actual_arg);
+    log_putc('\n');
     fatal_error("Invalid argument type: expected %s", val_type_name(expected_type));
 }
 

@@ -2,7 +2,6 @@
 #define TOY_GENERIC_MAP_H 1
 
 #include <stddef.h>
-#include <stdio.h>
 
 #include "generic-map-types.h"
 #include "str-types.h"
@@ -21,8 +20,8 @@ generic_map_entry *generic_map_find(generic_map *map, generic_map_filter_func fi
 generic_map_entry *generic_map_find_not(generic_map *map, generic_map_filter_func filter, void *cookie);
 toy_bool generic_map_none_match(generic_map *map, generic_map_filter_func filter, void *cookie);
 toy_bool generic_map_all_match(generic_map *map, generic_map_filter_func filter, void *cookie);
-void generic_map_dump(FILE *f, const generic_map *map);
-void generic_map_dump_keys(FILE *f, const generic_map *map);
+void generic_map_dump(const generic_map *map);
+void generic_map_dump_keys(const generic_map *map);
 size_t generic_map_size(const generic_map *map);
 void generic_map_reset(generic_map *map);
 void generic_map_assert_valid(const generic_map *map);

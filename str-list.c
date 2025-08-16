@@ -6,6 +6,7 @@
 #include "ptr-list.h"
 #include "str.h"
 #include "str-list.h"
+#include "log.h"
 
 toy_str str_list_payload(toy_str_list *list)
 {
@@ -17,16 +18,16 @@ const toy_str str_list_payload_const(const toy_str_list *list)
     return list->str;
 }
 
-void str_list_dump(FILE *f, const toy_str_list *list)
+void str_list_dump(const toy_str_list *list)
 {
     const toy_str_list *cur;
     if (list) {
         int output_something = 0;
         for (cur = list; cur; cur = cur->next) {
             if (output_something) {
-                fputs(", ", f);
+                log_puts(", ");
             }
-            dump_str(f, cur->str);
+            dump_str(cur->str);
             output_something = 1;
         }
     }

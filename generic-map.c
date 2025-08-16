@@ -168,39 +168,38 @@ delete_result generic_map_delete(generic_map *map, const toy_str key)
     return NOT_PRESENT; /* No bucket, so no entry */
 }
 
-static void dump_map_entry(const generic_map_entry *entry, FILE *f)
+static void dump_map_entry(const generic_map_entry *entry)
 {
-    dump_str(f, entry->key);
-    fprintf(f, ": %p", entry + 1);
+    dump_str(entry->key);
+    log_printf(": %p", entry + 1);
 }
 
 typedef struct dump_item_cb_args_struct {
     int output_anything;
-    FILE *f;
 } dump_item_cb_args;
 
 static item_callback_result dump_item_callback(void *cookie, const generic_map_entry *entry)
 {
     dump_item_cb_args *args = (dump_item_cb_args *) cookie;
     if (args->output_anything) {
-        fputs(", ", args->f);
+        log_puts(", ");
     } else {
-        fputc(' ', args->f);
+        log_putc(' ');
     }
-    dump_map_entry(entry, args->f);
+    dump_map_entry(entry);
     args->output_anything = 1;
     return CONTINUE_ENUMERATION;
 }
 
-void generic_map_dump(FILE *f, const generic_map *map)
+void generic_map_dump(const generic_map *map)
 {
-    dump_item_cb_args cbargs = { .f = f, .output_anything = 0 };
-    fputc('{', f);
+    dump_item_cb_args cbargs = { .output_anything = 0 };
+    log_putc('{');
     generic_map_foreach_const(map, dump_item_callback, &cbargs);
     if (cbargs.output_anything) {
-        fputc(' ', f);
+        log_putc(' ');
     }
-    fputc('}', f);
+    log_putc('}');
 }
 
 typedef struct buflist_item_cb_args_struct {
@@ -239,7 +238,6 @@ enumeration_result generic_map_foreach(generic_map *map, generic_map_entry_callb
 }
 
 typedef struct dump_keys_cb_args_struct {
-    FILE *f;
     int output_anything;
 } dump_keys_cb_args;
 
@@ -247,24 +245,24 @@ static item_callback_result dump_keys_cb(void *cookie, const generic_map_entry *
 {
     dump_keys_cb_args *args = (dump_keys_cb_args *) cookie;
     if (args->output_anything) {
-        fputs(", ", args->f);
+        log_puts(", ");
     } else {
-        fputc(' ', args->f);
+        log_putc(' ');
     }
-    dump_str(args->f, entry->key);
+    dump_str(entry->key);
     args->output_anything = 1;
     return CONTINUE_ENUMERATION;
 }
 
-void generic_map_dump_keys(FILE *f, const generic_map *map)
+void generic_map_dump_keys(const generic_map *map)
 {
-    dump_keys_cb_args cbargs = { .f = f, .output_anything = 0 };
-    fputc('[', f);
+    dump_keys_cb_args cbargs = { .output_anything = 0 };
+    log_putc('[');
     generic_map_foreach_const(map, dump_keys_cb, &cbargs);
     if (cbargs.output_anything) {
-        fputc(' ', f);
+        log_putc(' ');
     }
-    fputc(']', f);
+    log_putc(']');
 }
 
 typedef struct const_buflist_item_cb_args_struct {

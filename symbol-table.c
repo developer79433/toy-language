@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <stdio.h>
 
 #include "symbol-table.h"
 #include "str.h"
@@ -84,11 +83,11 @@ void symbol_table_assert_valid(const symbol_table *table)
 
 #endif /* ndef NDEBUG */
 
-void symbol_table_dump(FILE *f, const symbol_table *table)
+void symbol_table_dump(const symbol_table *table)
 {
     symbol_table_assert_valid(table);
     if (table->symbols) {
         map_val_assert_valid(table->symbols);
-        map_val_dump(f, table->symbols);
+        map_val_dump(table->symbols);
     }
 }

@@ -11,6 +11,7 @@
 #include "val.h"
 #include "str.h"
 #include "constants.h"
+#include "log.h"
 
 static run_stmt_result predefined_list_len(toy_interp *interp, const toy_val_list *args)
 {
@@ -46,11 +47,11 @@ static run_stmt_result predefined_print(toy_interp *interp, const toy_val_list *
 {
     for (; args; args = args->next) {
         if (args->val.type == VAL_STR) {
-            print_str(stderr, args->val.str);
+            print_str(args->val.str);
         } else {
-            val_dump(stderr, &args->val);
+            val_dump(&args->val);
         }
-        fputc('\n', stderr);
+        log_putc('\n');
     }
     return REACHED_BLOCK_END;
 }
@@ -61,8 +62,8 @@ static void toy_assert_fail(const char * msg, size_t num_vals, ...)
     va_start(argptr, num_vals);
     while (num_vals--) {
         const toy_val *val = va_arg(argptr, const toy_val *);
-        val_dump(stderr, val);
-        fputc('\n', stderr);
+        val_dump(val);
+        log_putc('\n');
     }
     va_end(argptr);
     fatal_error("Assertion failed: %s", msg);

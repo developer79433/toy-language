@@ -10,25 +10,26 @@
 #include "val.h"
 #include "debug.h"
 #include "stmt-list.h"
+#include "log.h"
 
-void func_dump(FILE *f, const toy_function *func)
+void func_dump(const toy_function *func)
 {
     func_assert_valid(func);
-    fprintf(f, "fun %s(", func->name);
+    log_printf("fun %s(", func->name);
     if (func->param_names == &INFINITE_PARAMS) {
-        fputs("*", f);
+        log_puts("*");
     } else {
-        str_list_dump(f, func->param_names);
+        str_list_dump(func->param_names);
     }
-    fputs(") {\n", f);
+    log_puts(") {\n");
     if (func->type == FUNC_PREDEFINED) {
-        fprintf(f, "/* Pre-defined function code at %p */\n", func->predef);
+        log_printf("/* Pre-defined function code at %p */\n", func->predef);
     } else if (func->type == FUNC_USER_DECLARED) {
-        stmt_list_dump(f, func->code.stmts);
+        stmt_list_dump(func->code.stmts);
     } else {
         invalid_function_type(func->type);
     }
-    fputs("}\n", f);
+    log_puts("}\n");
 }
 
 #ifndef NDEBUG

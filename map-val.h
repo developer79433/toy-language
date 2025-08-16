@@ -1,8 +1,6 @@
 #ifndef TOY_MAP_VAL_H
 #define TOY_MAP_VAL_H 1
 
-#include <stdio.h>
-
 #include "map-val-types.h"
 #include "val-types.h"
 #include "map-val-entry-list-types.h"
@@ -22,7 +20,7 @@ size_t map_val_size(const map_val *map);
 #else /* ndef NDEBUG */
 void map_val_assert_valid(const map_val *map);
 #endif /* ndef NDEBUG */
-void map_val_dump(FILE *f, const map_val *map);
+void map_val_dump(const map_val *map);
 void map_val_reset(map_val *map);
 void map_val_free(map_val *map);
 

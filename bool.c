@@ -1,11 +1,11 @@
 #include <assert.h>
-#include <stdio.h>
 
 #include "bool.h"
+#include "log.h"
 
-void dump_bool(FILE *f, toy_bool b)
+void dump_bool(toy_bool b)
 {
-    fputs(b ? "True" : "False", f);
+    log_puts(b ? "True" : "False");
 }
 
 void bool_assert_valid(toy_bool b)
