@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "val-list.h"
 #include "log.h"
+#include "val.h"
 
 static const char *frame_type_names[] = {
     "Loop body",
@@ -39,14 +40,14 @@ void interp_frame_dump(const interp_frame *frame)
         const func_call_frame *predef_func_inv = &frame->func_call;
         const toy_function *predef_func = predef_func_inv->func;
         log_printf("Predefined function %s(", predef_func->name);
-        val_list_dump(predef_func_inv->args);
+        val_array_dump(predef_func_inv->arguments, predef_func_inv->num_arguments);
         log_printf(")");
         break;
     case FRAME_USER_DEF_FUNC:
         const func_call_frame *user_func_inv = &frame->func_call;
         const toy_function *user_func = user_func_inv->func;
         log_printf("User-defined function %s(", user_func->name);
-        val_list_dump(user_func_inv->args);
+        val_array_dump(user_func_inv->arguments, user_func_inv->num_arguments);
         log_printf(")");
         break;
     default:
@@ -67,4 +68,12 @@ void interp_frame_free(interp_frame *frame)
 toy_val *interp_frame_get_var(interp_frame *frame, size_t var_index)
 {
     return &frame->variables[var_index];
+}
+
+toy_val *interp_frame_get_func_param(interp_frame *frame, size_t var_index)
+{
+    assert(FRAME_PRE_DEF_FUNC == frame->type || FRAME_USER_DEF_FUNC == frame->type);
+    const func_call_frame *call_frame = &frame->func_call;
+    assert(var_index < call_frame->num_arguments);
+    return &call_frame->arguments[var_index];
 }

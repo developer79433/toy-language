@@ -5,6 +5,7 @@
 #include <malloc.h>
 
 #define mymalloc(the_type) ((the_type *) malloc(sizeof(the_type)))
+#define mymalloc_array(the_type, size) ((the_type *) malloc((size) * sizeof(the_type)))
 void *memcpy_2(void *dst, const void *src1, size_t src1_size, const void *src2, size_t src2_size);
 void *malloc_init_2(const void *src1, size_t src1_size, const void *src2, size_t src2_size);
 

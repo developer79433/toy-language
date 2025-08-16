@@ -17,7 +17,8 @@ typedef enum frame_type_enum frame_type;
 
 typedef struct func_call_frame_struct {
     const toy_function *func;
-    const toy_val_list *args;
+    size_t num_arguments;
+    toy_val *arguments;
 } func_call_frame;
 
 typedef struct block_frame_struct {

@@ -93,8 +93,7 @@ static run_stmt_result run_predefined_func_val_list(toy_interp *interp, predefin
     interp_frame *frame = interp_cur_frame(interp);
     assert(FRAME_PRE_DEF_FUNC == frame->type);
     const func_call_frame *func_inv = &frame->func_call;
-    const toy_val_list *args = func_inv->args;
-    return predef(interp, args);
+    return predef(interp, func_inv->arguments, func_inv->num_arguments);
 }
 
 run_stmt_result interp_run_func_expr_list(toy_interp *interp, const toy_function *func, const toy_expr_list *args)
@@ -253,8 +252,8 @@ static void collection_lookup(toy_interp *interp, toy_val *result, resolved_name
 
 static toy_val *interp_get_func_param(toy_interp *interp, const func_param_ref *param_ref)
 {
-    /* TODO */
-    return NULL;
+    interp_stack *stack = interp_get_stack(interp);
+    return interp_stack_get_func_param(stack, param_ref->frames_up, param_ref->param_index);
 }
 
 static toy_val *interp_get_variable(toy_interp *interp, const block_var_ref *var_ref)
