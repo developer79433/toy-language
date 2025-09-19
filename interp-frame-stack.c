@@ -77,7 +77,7 @@ static item_callback_result frame_dump_callback(void *cookie, size_t index, cons
 
 void interp_frame_stack_dump(const char *context, const interp_frame_stack *stack)
 {
-    fprintf(stderr, "STACK %s:\n", context);
+    fprintf(stderr, "Interpreter stack %s:\n", context);
     size_t frame_num = 0;
     frame_dump_cb_args args = { .frame_num = &frame_num };
     enumeration_result res = interp_frame_stack_foreach_const(stack, frame_dump_callback, &args);
@@ -98,12 +98,12 @@ interp_frame_stack *interp_frame_stack_pop(interp_frame_stack *stack, interp_fra
     return stack;
 }
 
-interp_frame_stack *interp_frame_stack_index(interp_frame_stack *stack, size_t index)
+interp_frame *interp_frame_stack_index(interp_frame_stack *stack, size_t index)
 {
-    return (interp_frame_stack *) buf_stack_index((buf_stack *) stack, index);
+    return (interp_frame *) buf_stack_index((buf_stack *) stack, index);
 }
 
-const interp_frame_stack *interp_frame_stack_index_const(const interp_frame_stack *stack, size_t index)
+const interp_frame *interp_frame_stack_index_const(const interp_frame_stack *stack, size_t index)
 {
-    return (const interp_frame_stack *) buf_stack_index_const((const buf_stack *) stack, index);
+    return (const interp_frame *) buf_stack_index_const((const buf_stack *) stack, index);
 }

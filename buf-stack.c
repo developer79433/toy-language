@@ -66,12 +66,12 @@ enumeration_result buf_stack_foreach_const(const buf_stack *stack, const_buf_sta
     return buf_list_foreach_const((const toy_buf_list *) stack, (const_buf_list_item_callback) callback, cookie);
 }
 
-buf_stack *buf_stack_index(buf_stack *stack, size_t index)
+void *buf_stack_index(buf_stack *stack, size_t index)
 {
     return buf_list_index((toy_buf_list *) stack, index);
 }
 
-const buf_stack *buf_stack_index_const(const buf_stack *stack, size_t index)
+const void *buf_stack_index_const(const buf_stack *stack, size_t index)
 {
     return buf_list_index_const((const toy_buf_list *) stack, index);
 }

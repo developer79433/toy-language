@@ -34,10 +34,6 @@
 #define DEBUG_STACK 1
 #endif
 
-#if 1
-#define DEBUG_VARIABLES 1
-#endif
-
 typedef struct toy_interp_struct {
     toy_function main_program;
     interp_stack *stack;
@@ -48,6 +44,7 @@ static run_stmt_result block_stmt(toy_interp *interp, const toy_block *block);
 
 interp_stack *interp_get_stack(toy_interp *interp)
 {
+    assert(interp->stack != NULL);
     return interp->stack;
 }
 
@@ -103,17 +100,17 @@ run_stmt_result interp_run_func_expr_list(toy_interp *interp, const toy_function
     assert(VAL_LIST == actual_args.type);
     switch (func->type) {
     case FUNC_PREDEFINED:
-        interp_stack_push_predef_func(interp->stack, func, actual_args.list);
+        interp->stack = interp_stack_push_predef_func(interp->stack, func, actual_args.list);
         run_stmt_result res1 = run_predefined_func_val_list(interp, func->predef);
-        interp_stack_pop(interp->stack);
+        interp->stack = interp_stack_pop(interp->stack);
         if (res1 == REACHED_RETURN) {
             val_assert_valid(&interp->return_val);
         }
         return res1;
     case FUNC_USER_DECLARED:
-        interp_stack_push_user_func(interp->stack, func, actual_args.list);
+        interp->stack = interp_stack_push_user_func(interp->stack, func, actual_args.list);
         run_stmt_result res2 = interp_run_current_block(interp);
-        interp_stack_pop(interp->stack);
+        interp->stack = interp_stack_pop(interp->stack);
         if (res2 == REACHED_RETURN) {
             val_assert_valid(&interp->return_val);
         }
@@ -143,14 +140,14 @@ run_stmt_result interp_run_func_val_list(toy_interp *interp, toy_function *def, 
     val_list_assert_valid(args);
     switch (def->type) {
     case FUNC_PREDEFINED:
-        interp_stack_push_predef_func(interp->stack, def, args);
+        interp->stack = interp_stack_push_predef_func(interp->stack, def, args);
         run_stmt_result res1 = run_predefined_func_val_list(interp, def->predef);
-        interp_stack_pop(interp->stack);
+        interp->stack = interp_stack_pop(interp->stack);
         return res1;
     case FUNC_USER_DECLARED:
-        interp_stack_push_user_func(interp->stack, def, args);
+        interp->stack = interp_stack_push_user_func(interp->stack, def, args);
         run_stmt_result res2 = interp_run_current_block(interp);
-        interp_stack_pop(interp->stack);
+        interp->stack = interp_stack_pop(interp->stack);
         return res2;
     default:
         invalid_function_type(def->type);
@@ -281,8 +278,8 @@ toy_val *interp_get_lvalue(toy_interp *interp, resolved_name *resolved)
         assert(0);
         break;
     case REF_VAR_DECL:
-        block_var_ref *var_decl = &resolved->var_decl;
-        val = interp_get_variable(interp, var_decl);
+        block_var_ref *var_ref = &resolved->var_decl;
+        val = interp_get_variable(interp, var_ref);
         break;
     default:
         assert(0);
@@ -640,9 +637,9 @@ run_stmt_result interp_run_current_block(toy_interp *interp)
 
 static run_stmt_result block_stmt(toy_interp *interp, const toy_block *block)
 {
-    interp_stack_push_block(interp->stack, block);
+    interp->stack = interp_stack_push_block(interp->stack, block);
     run_stmt_result res = interp_run_current_block(interp);
-    interp_stack_pop(interp->stack);
+    interp->stack = interp_stack_pop(interp->stack);
     if (res == REACHED_BLOCK_END) {
         res = EXECUTED_STATEMENT;
     }
@@ -655,17 +652,17 @@ toy_interp *interp_alloc(const toy_stmt_list *program)
     interp = mymalloc(toy_interp);
     interp->main_program.type = FUNC_USER_DECLARED;
     interp->main_program.code.stmts = (toy_stmt_list *) program;
-    interp->main_program.name = "Top-level";
+    interp->main_program.name = "global";
     interp->main_program.param_names = NULL;
     interp->stack = NULL;
-    interp_stack_push_user_func(interp->stack, &interp->main_program, NULL);
+    interp->stack = interp_stack_push_user_func(interp->stack, &interp->main_program, NULL);
     interp_stack_dump("at program start", interp->stack);
     return interp;
 }
 
 void interp_free(toy_interp *interp)
 {
-    interp_stack_pop(interp->stack);
+    interp->stack = interp_stack_pop(interp->stack);
     interp_stack_free(interp->stack);
     free(interp);
 }

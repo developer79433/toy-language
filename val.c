@@ -320,7 +320,12 @@ toy_val *val_alloc_func_decl(toy_str_list *formalparams, toy_block *body)
 
 void val_array_dump(const toy_val *vals, size_t size)
 {
+    toy_bool printed_anything = TOY_FALSE;
     for (const toy_val *val = vals; val < &vals[size]; val++) {
+        if (printed_anything) {
+            log_puts(", ");
+        }
         val_dump(val);
+        printed_anything = TOY_TRUE;
     }
 }

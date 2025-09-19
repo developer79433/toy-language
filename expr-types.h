@@ -81,6 +81,7 @@ typedef struct resolved_name_struct {
     union {
         const toy_func_decl_stmt *func_decl;
         func_param_ref func_param;
+        /* TODO: Should be named var_ref */
         block_var_ref var_decl;
         const predefined_constant *predef_const;
         const toy_val *predef_func;
