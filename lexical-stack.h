@@ -8,6 +8,8 @@
 #include "expr-types.h"
 
 void lexical_stack_init(lexical_stack *stack);
+lexical_frame *lexical_stack_payload(lexical_stack *stack);
+const lexical_frame *lexical_stack_payload_const(const lexical_stack *stack);
 lexical_stack *lexical_stack_push(lexical_stack *stack, lexical_frame *entry);
 lexical_stack *lexical_stack_pop(lexical_stack *stack, lexical_frame **removed_entry);
 void lexical_stack_dump(const lexical_stack *stack);

@@ -1,6 +1,7 @@
 #ifndef TOY_MAP_SIZE_T_TYPES_H
 #define TOY_MAP_SIZE_T_TYPES_H 1
 
+#include "iter-types.h"
 #include "map-size-t-entry-list-types.h"
 
 /* TODO: dynamic resizing */

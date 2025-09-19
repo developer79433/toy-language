@@ -3,7 +3,7 @@
 
 #include "block-types.h"
 #include "function-types.h"
-#include "map-size-t-types.h"
+#include "symbol-table-types.h"
 
 typedef enum lexical_frame_type_enum {
     LEXICAL_FRAME_FUNCTION = 0,
@@ -12,7 +12,7 @@ typedef enum lexical_frame_type_enum {
 
 typedef struct lexical_frame_function_struct {
     toy_function *function;
-    map_size_t arguments;
+    symbol_table arguments;
 } lexical_frame_function;
 
 typedef struct lexical_frame_block_struct {
@@ -25,7 +25,7 @@ typedef struct lexical_frame_struct {
         lexical_frame_function function_frame;
         lexical_frame_block block_frame;
     };
-    map_size_t variables;
+    symbol_table variables;
 } lexical_frame;
 
 #endif /* TOY_LEXICAL_FRAME_TYPES_H */

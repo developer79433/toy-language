@@ -1,5 +1,6 @@
 #include <assert.h>
 
+#include "bool.h"
 #include "map-size-t.h"
 #include "map-buf.h"
 #include "log.h"
@@ -46,12 +47,18 @@ size_t map_size_t_size(const map_size_t *map) {
 
 static item_callback_result map_size_t_entry_dump_cb(void *cookie, const map_size_t_entry *item)
 {
+    toy_bool *printed_anything = (toy_bool *) cookie;
+    if (*printed_anything) {
+        log_printf(", ");
+    }
     log_printf("%s => %zu", item->key, item->s);
+    *printed_anything = TOY_TRUE;
     return CONTINUE_ENUMERATION;
 }
 
 void map_size_t_dump(const map_size_t *map) {
-    enumeration_result res = map_size_t_foreach_const(map, map_size_t_entry_dump_cb, NULL);
+    toy_bool printed_anything = TOY_FALSE;
+    enumeration_result res = map_size_t_foreach_const(map, map_size_t_entry_dump_cb, &printed_anything);
     assert(res == ENUMERATION_COMPLETE);
 }
 

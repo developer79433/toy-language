@@ -20,7 +20,7 @@
 #include "lexical-stack.h"
 #include "constants.h"
 #include "predef-function.h"
-#include "map-size-t.h"
+#include "symbol-table.h"
 #include "resolved-name.h"
 
 void resolver_init(name_resolver *resolver)
@@ -326,18 +326,36 @@ static void resolve_names_stmt_list(name_resolver *resolver, toy_stmt_list *stmt
 static void resolve_names_block(name_resolver *resolver, toy_block *block)
 {
     lexical_frame stack_entry = { .type = LEXICAL_FRAME_BLOCK, .block_frame = { .block = block } };
-    map_size_t_init(&stack_entry.variables);
+    symbol_table_init(&stack_entry.variables);
     resolver->lexical_scopes = lexical_stack_push(resolver->lexical_scopes, &stack_entry);
     resolve_names_stmt_list(resolver, block->stmts);
     resolver->lexical_scopes = lexical_stack_pop(resolver->lexical_scopes, NULL);
+}
+
+static item_callback_result populate_param_name_callback(void *cookie, size_t index, const toy_str_list *item)
+{
+    symbol_table *map = (symbol_table *) cookie;
+    toy_str param_name = str_list_payload_const(item);
+    size_t added_index = symbol_table_set(map, param_name);
+    assert(added_index == index);
+    return CONTINUE_ENUMERATION;
+}
+
+static void populate_param_names(symbol_table *map, const toy_str_list *param_names)
+{
+    symbol_table_init(map);
+    enumeration_result res = str_list_foreach_const(param_names, populate_param_name_callback, map);
+    assert(ENUMERATION_COMPLETE == res);
 }
 
 static void resolve_names_func(name_resolver *resolver, toy_function *func)
 {
     log_debug("In resolve_names_func\n");
     lexical_frame stack_entry = { .type = LEXICAL_FRAME_FUNCTION, .function_frame = { .function = func } };
-    map_size_t_init(&stack_entry.variables);
-    map_size_t_init(&stack_entry.function_frame.arguments);
+    symbol_table_init(&stack_entry.variables);
+    populate_param_names(&stack_entry.function_frame.arguments, func->param_names);
+    log_debug("Param name symbol table:\n");
+    symbol_table_dump(&stack_entry.function_frame.arguments);
     resolver->lexical_scopes = lexical_stack_push(resolver->lexical_scopes, &stack_entry);
     resolve_names_stmt_list(resolver, func->code.stmts);
     resolver->lexical_scopes = lexical_stack_pop(resolver->lexical_scopes, NULL);
@@ -372,6 +390,10 @@ static item_callback_result resolve_var_decl_callback(void *cookie, size_t index
     var_decl_cb_args *args = (var_decl_cb_args *) cookie;
     toy_var_decl *decl = var_decl_list_payload(entry);
     resolve_names_expr(args->resolver, decl->value);
+    lexical_stack *stack = args->resolver->lexical_scopes;
+    lexical_frame *frame = lexical_stack_payload(stack);
+    symbol_table *table = &frame->variables;
+    symbol_table_set(table, decl->name);
     return CONTINUE_ENUMERATION;
 }
 
@@ -405,6 +427,11 @@ static void resolve_names_stmt(name_resolver *resolver, toy_stmt *stmt)
         break;
     case STMT_FUNC_DECL:
         toy_func_decl_stmt *fdecl = &stmt->func_decl_stmt;
+        toy_function *func = &fdecl->func;
+        lexical_stack *stack = resolver->lexical_scopes;
+        lexical_frame *frame = lexical_stack_payload(stack);
+        symbol_table *table = &frame->variables;
+        symbol_table_set(table, func->name);
         resolve_names_func(resolver, &fdecl->func);
         break;
     case STMT_IF:

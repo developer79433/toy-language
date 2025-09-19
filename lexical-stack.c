@@ -18,12 +18,12 @@
 #include "block.h"
 #include "resolved-name.h"
 
-static lexical_frame *lexical_stack_payload(lexical_stack *stack)
+lexical_frame *lexical_stack_payload(lexical_stack *stack)
 {
     return &stack->entry;
 }
 
-static const lexical_frame *lexical_stack_payload_const(const lexical_stack *stack)
+const lexical_frame *lexical_stack_payload_const(const lexical_stack *stack)
 {
     return &stack->entry;
 }
@@ -153,7 +153,7 @@ static item_callback_result stack_frame_resolve_cb(void *cookie, size_t index, c
 void lexical_stack_resolve(const lexical_stack *stack, toy_str name, resolved_name *resolved)
 {
     assert(stack);
-    log_printf("In lexical_stack_resolve\n");
+    log_printf("In lexical_stack_resolve, resolving '%s'\n", name);
     lexical_stack_dump(stack);
     stack_frame_resolve_cb_args args = { .wanted_name = name, .resolved = resolved };
     enumeration_result res = lexical_stack_foreach_const(stack, stack_frame_resolve_cb, &args);

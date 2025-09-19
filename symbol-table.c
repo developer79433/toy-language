@@ -3,19 +3,12 @@
 #include "symbol-table.h"
 #include "str.h"
 #include "mymalloc.h"
-#include "val.h"
-#include "map-val.h"
+#include "map-size-t.h"
 #include "debug.h"
 
 void symbol_table_init(symbol_table *table)
 {
-    table->symbols = NULL;
     symbol_table_assert_valid(table);
-}
-
-void symbol_table_init_ref(symbol_table *table, symbol_table *existing)
-{
-    table->symbols = existing->symbols;
 }
 
 symbol_table *symbol_table_alloc(void)
@@ -26,45 +19,34 @@ symbol_table *symbol_table_alloc(void)
     return table;
 }
 
-toy_val *symbol_table_get(symbol_table *table, const toy_str name)
+size_t *symbol_table_get(symbol_table *table, const toy_str name)
 {
     symbol_table_assert_valid(table);
     str_assert_valid(name);
-    if (table->symbols) {
-        return map_val_get(table->symbols, name);
-    }
-    return NULL;
+    return map_size_t_get(table, name);
 }
 
-set_result symbol_table_set(symbol_table *table, const toy_str name, const toy_val *value)
+const size_t *symbol_table_get_const(const symbol_table *table, const toy_str name)
 {
     symbol_table_assert_valid(table);
     str_assert_valid(name);
-    val_assert_valid(value);
-    if (!table->symbols) {
-        table->symbols = map_val_alloc();
-    }
-    assert(table->symbols);
-    set_result res = map_val_set(table->symbols, name, (toy_val *) value);
-    return res;
+    return map_size_t_get_const(table, name);
 }
 
-symbol_table *symbol_table_ref(symbol_table *table)
+size_t symbol_table_set(symbol_table *table, const toy_str name)
 {
     symbol_table_assert_valid(table);
-    return table;
+    str_assert_valid(name);
+    size_t num_variables = map_size_t_size(table);
+    set_result set_res = map_size_t_set(table, name, num_variables);
+    assert(SET_NEW == set_res);
+    return num_variables;
 }
 
 void symbol_table_free(symbol_table *table)
 {
     symbol_table_assert_valid(table);
-    if (table->symbols) {
-        map_val_assert_valid(table->symbols);
-        map_val_free(table->symbols);
-        table->symbols = NULL;
-    }
-    // This is no longer separately allocated
-    // free(table);
+    map_size_t_free(table);
 }
 
 #ifndef NDEBUG
@@ -72,13 +54,7 @@ void symbol_table_free(symbol_table *table)
 void symbol_table_assert_valid(const symbol_table *table)
 {
     assert(table);
-    if (table->symbols) {
-        if (valid_check_depth < VALID_CHECK_RECURSION_DEPTH) {
-            valid_check_depth++;
-            map_val_assert_valid(table->symbols);
-            valid_check_depth--;
-        }
-    }
+    map_size_t_assert_valid(table);
 }
 
 #endif /* ndef NDEBUG */
@@ -86,8 +62,5 @@ void symbol_table_assert_valid(const symbol_table *table)
 void symbol_table_dump(const symbol_table *table)
 {
     symbol_table_assert_valid(table);
-    if (table->symbols) {
-        map_val_assert_valid(table->symbols);
-        map_val_dump(table->symbols);
-    }
+    map_size_t_dump(table);
 }

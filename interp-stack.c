@@ -69,7 +69,12 @@ interp_stack *interp_stack_push_predef_func(interp_stack *stack, const toy_funct
     assert(FUNC_PREDEFINED == func->type);
     size_t args_len = val_list_len(actual_arguments);
     assert(args_len == str_list_len(func->param_names));
-    toy_val *arguments = mymalloc_array(toy_val, args_len);
+    toy_val *arguments;
+    if (args_len) {
+        arguments = mymalloc_array(toy_val, args_len);
+    } else {
+        arguments = NULL;
+    }
     copy_args_into_frame(arguments, actual_arguments);
     interp_frame frame = { .type = FRAME_PRE_DEF_FUNC, .func_call.func = func, .func_call.arguments = arguments, .func_call.num_arguments = args_len, .cur_stmt = func->code.stmts };
     stack = interp_frame_stack_push(stack, &frame);
@@ -82,7 +87,12 @@ interp_stack *interp_stack_push_user_func(interp_stack *stack, const toy_functio
     assert(FUNC_USER_DECLARED == func->type);
     size_t args_len = val_list_len(actual_arguments);
     assert(args_len == str_list_len(func->param_names));
-    toy_val *arguments = mymalloc_array(toy_val, args_len);
+    toy_val *arguments;
+    if (args_len) {
+        arguments = mymalloc_array(toy_val, args_len);
+    } else {
+        arguments = NULL;
+    }
     copy_args_into_frame(arguments, actual_arguments);
     interp_frame frame = {.type = FRAME_USER_DEF_FUNC, .func_call.func = func, .func_call.arguments = arguments, .func_call.num_arguments = args_len, .cur_stmt = func->code.stmts };
     stack = interp_frame_stack_push(stack, &frame);

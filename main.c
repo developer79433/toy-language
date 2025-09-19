@@ -15,7 +15,7 @@ extern toy_stmt_list *get_program_start(void);
 extern void init_lexer(FILE *f);
 extern void init_parser(void);
 
-static toy_function toplevel_function = { .code = { .stmts = NULL }, .doc = "Global environment", .name = "global", .param_names = NULL, .parent = NULL, .type = FUNC_USER_DECLARED };
+static toy_function toplevel_function = { .code = { .stmts = NULL }, .doc = "Global top-level function", .name = "global", .param_names = NULL, .parent = NULL, .type = FUNC_USER_DECLARED };
 
 int main(int argc, char **argv)
 {
