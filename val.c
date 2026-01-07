@@ -29,7 +29,7 @@ const char *val_type_name(toy_val_type val_type)
     return toy_val_type_names[val_type];
 }
 
-void val_dump(const toy_val *val)
+void val_dump(const toy_val *val, toy_bool verbose)
 {
     if (val) {
         switch(val->type) {
@@ -37,7 +37,7 @@ void val_dump(const toy_val *val)
             dump_bool(val->boolean);
             break;
         case VAL_FUNC:
-            func_dump(val->func);
+            func_dump(val->func, verbose);
             break;
         case VAL_LIST:
             val_list_dump(val->list);
@@ -59,7 +59,7 @@ void val_dump(const toy_val *val)
             break;
         }
     } else {
-        val_dump(&null_val);
+        val_dump(&null_val, verbose);
     }
 }
 
@@ -300,8 +300,8 @@ void assert_vals_equal(const toy_val *val1, const toy_val *val2)
     if (compare_res == TOY_TRUE) {
         return;
     }
-    val_dump(val1);
-    val_dump(val2);
+    val_dump(val1, 1);
+    val_dump(val2, 1);
     assert(0);
 }
 
@@ -325,7 +325,7 @@ void val_array_dump(const toy_val *vals, size_t size)
         if (printed_anything) {
             log_puts(", ");
         }
-        val_dump(val);
+        val_dump(val, 1);
         printed_anything = TOY_TRUE;
     }
 }

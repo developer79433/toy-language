@@ -30,7 +30,7 @@ run_stmt_result interp_run_func_single_arg(toy_interp *interp, toy_function *def
 run_stmt_result interp_run_func_val_list(toy_interp *interp, toy_function *def, const toy_val_list *args);
 toy_val *interp_get_return_value(toy_interp *interp);
 void interp_set_return_value(toy_interp *interp, toy_val *val);
-toy_val *interp_get_lvalue(toy_interp *interp, resolved_name *resolved);
-const toy_val *interp_get_rvalue(toy_interp *interp, resolved_name *resolved);
+toy_val *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier);
+const toy_val *interp_get_rvalue(toy_interp *interp, toy_identifier *identifier);
 
 #endif /* TOY_INTERP_H */

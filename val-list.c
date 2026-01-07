@@ -22,7 +22,7 @@ static item_callback_result val_dump_callback(void *cookie, size_t index, const 
     } else {
         log_putc(' ');
     }
-    val_dump(val);
+    val_dump(val, 1);
     args->printed_anything = TOY_TRUE;
     return CONTINUE_ENUMERATION;
 }

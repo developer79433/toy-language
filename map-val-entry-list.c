@@ -42,5 +42,5 @@ void map_val_entry_dump(const map_val_entry *entry)
 {
     str_dump(entry->key);
     log_puts(": ");
-    val_dump(&entry->value);
+    val_dump(&entry->value, 1);
 }

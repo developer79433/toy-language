@@ -7,6 +7,7 @@
 toy_var_decl_list *var_decl_list_alloc(toy_var_decl *decl);
 void var_decl_list_dump(const toy_var_decl_list *list);
 void var_decl_list_free(toy_var_decl_list *list);
+size_t var_decl_list_len(const toy_var_decl_list *list);
 toy_var_decl *var_decl_list_payload(toy_var_decl_list *list);
 const toy_var_decl *var_decl_list_payload_const(const toy_var_decl_list *list);
 enumeration_result var_decl_list_foreach(toy_var_decl_list *list, toy_var_decl_list_item_callback callback, void *cookie);

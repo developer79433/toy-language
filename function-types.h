@@ -26,7 +26,6 @@ enum toy_func_type {
 struct toy_function_struct;
 typedef struct toy_function_struct toy_function;
 struct toy_function_struct {
-    struct toy_function_struct *parent;
     toy_str name;
     toy_str_list *param_names;
     toy_str doc;

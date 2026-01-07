@@ -5,12 +5,12 @@
 #include "interp.h"
 
 void op_and(toy_interp *interp, toy_val *result, toy_expr *arg1, toy_expr *arg2);
-void op_assign(toy_interp *interp, toy_val *result, resolved_name *lhs, toy_expr *rhs);
+void op_assign(toy_interp *interp, toy_val *result, toy_identifier *identifier, toy_expr *rhs);
 void op_comma(toy_interp *interp, toy_val *result, toy_expr *arg1, toy_expr *arg2);
 void op_div(toy_interp *interp, toy_val *result, toy_expr *arg1, toy_expr *arg2);
 void op_equal(toy_interp *interp, toy_val *result, toy_expr *arg1, toy_expr *arg2);
 void op_exponent(toy_interp *interp, toy_val *result, toy_expr *base, toy_expr *power);
-void op_field_ref(toy_interp *interp, toy_val *result, resolved_name *resolved, toy_str field_name);
+void op_field_ref(toy_interp *interp, toy_val *result, toy_identifier *identifier, toy_str field_name);
 void op_gt(toy_interp *interp, toy_val *result, toy_expr *arg1, toy_expr *arg2);
 void op_gte(toy_interp *interp, toy_val *result, toy_expr *arg1, toy_expr *arg2);
 void op_in(toy_interp *interp, toy_val *result, toy_expr *arg1, toy_expr *arg2);

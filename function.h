@@ -8,7 +8,7 @@
 
 extern const toy_str_list INFINITE_PARAMS;
 
-void func_dump(const toy_function *func);
+void func_dump(const toy_function *func, toy_bool verbose);
 #ifdef NDEBUG
 #define func_assert_valid(func) do {} while (0)
 #else /* ndef NDEBUG */

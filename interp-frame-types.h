@@ -29,11 +29,12 @@ typedef struct interp_frame_struct {
     frame_type type;
     union {
         const block_frame block_stmt;
-        const func_call_frame func_call;
+        func_call_frame func_call;
     };
     toy_stmt_list *cur_stmt;
     size_t num_variables;
     toy_val *variables;
+    toy_val *cur_val;
 } interp_frame;
 
 #endif /* TOY_INTERP_FRAME_TYPES_H */

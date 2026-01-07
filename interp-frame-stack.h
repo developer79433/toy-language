@@ -5,6 +5,7 @@
 #include "interp-frame-stack-types.h"
 
 interp_frame *interp_frame_stack_payload(interp_frame_stack *stack);
+size_t interp_frame_stack_len(const interp_frame_stack *stack);
 const interp_frame *interp_frame_stack_payload_const(const interp_frame_stack *stack);
 interp_frame_stack *interp_frame_stack_push(interp_frame_stack *stack, interp_frame *frame);
 interp_frame_stack *interp_frame_stack_pop(interp_frame_stack *stack, interp_frame **removed_frame);

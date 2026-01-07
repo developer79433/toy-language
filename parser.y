@@ -17,11 +17,10 @@
 #include "var-decl-list.h"
 #include "stmt-list.h"
 #include "if-arm-list.h"
+#include "toy-parser.h"
 
-extern int yylex (void);
+extern int yylex(void);
 void yyerror(const char *s);
-
-static toy_stmt_list *program_start;
 
 %}
 
@@ -78,7 +77,8 @@ static toy_stmt_list *program_start;
 
 program :
     stmts {
-        program_start = $1;
+        toy_parser *parser = parser_global_get();
+        parser_set_program_start(parser, $1);
     }
 ;
 
@@ -394,16 +394,14 @@ literal:
     /* TODO: identifier is not a literal - this needs breaking up */
     | T_IDENTIFIER {
         $$ = alloc_expr(EXPR_IDENTIFIER);
-        $$->id.id = $1;
+        $$->id.name = $1;
     }
     /* TODO: list and map are literals too */
 ;
 
 /* TODO: Compound assignments: +=, -=, /=, *= */
-
 /* TODO: bit-shift expressions << and >> */
 /* TODO: Bitwise operators |, ~, ^ and & */
-/* TODO: [] operator */
 
 exponent_expr: expr_no_comma T_ASTERISK_ASTERISK expr_no_comma {
         $$ = alloc_binary_op_expr(EXPR_EXPONENT);
@@ -414,7 +412,7 @@ exponent_expr: expr_no_comma T_ASTERISK_ASTERISK expr_no_comma {
 /* FIXME: Should allow comma expressions */
 assignment_expr: T_IDENTIFIER T_ASSIGN expr_no_comma {
         $$ = alloc_expr(EXPR_ASSIGN);
-        $$->assignment.lhs = $1;
+        $$->assignment.id.name = $1;
         $$->assignment.rhs = $3;
     }
 ;
@@ -422,8 +420,8 @@ assignment_expr: T_IDENTIFIER T_ASSIGN expr_no_comma {
 field_ref_expr:
     T_IDENTIFIER T_DOT T_IDENTIFIER {
         $$ = alloc_expr(EXPR_FIELD_REF);
-        $$->field_ref.lhs = $1;
-        $$->field_ref.rhs = $3;
+        $$->field_ref.id.name = $1;
+        $$->field_ref.field_name = $3;
     }
 ;
 
@@ -431,7 +429,7 @@ field_ref_expr:
 collection_lookup_expr:
     T_IDENTIFIER T_LBRACKET expr_no_comma T_RBRACKET {
         $$ = alloc_expr(EXPR_COLLECTION_LOOKUP);
-        $$->collection_lookup.lhs = $1;
+        $$->collection_lookup.id.name = $1;
         $$->collection_lookup.rhs = $3;
     }
 ;
@@ -608,25 +606,25 @@ bracketed_subexpr: T_LPAREN expr T_RPAREN {
 
 postfix_decrement: T_IDENTIFIER T_MINUS_MINUS {
         $$ = alloc_expr(EXPR_POSTFIX_DECREMENT);
-        $$->postfix_decrement.id = $1;
+        $$->postfix_decrement.id.name = $1;
     }
 ;
 
 postfix_increment: T_IDENTIFIER T_PLUS_PLUS {
         $$ = alloc_expr(EXPR_POSTFIX_INCREMENT);
-        $$->postfix_increment.id = $1;
+        $$->postfix_increment.id.name = $1;
     }
 ;
 
 prefix_decrement: T_MINUS_MINUS T_IDENTIFIER {
         $$ = alloc_expr(EXPR_PREFIX_DECREMENT);
-        $$->prefix_decrement.id = $2;
+        $$->prefix_decrement.id.name = $2;
     }
 ;
 
 prefix_increment: T_PLUS_PLUS T_IDENTIFIER {
         $$ = alloc_expr(EXPR_PREFIX_INCREMENT);
-        $$->prefix_increment.id = $2;
+        $$->prefix_increment.id.name = $2;
     }
 ;
 
@@ -727,21 +725,3 @@ block :
 ;
 
 %%
-
-void yyerror(const char *s)
-{  
-    printf("\nError: %s\n", s);  
-}
-
-void init_parser(void)
-{
-#if YYDEBUG
-#define YYERROR_VERBOSE
-    yydebug = 1;
-#endif /* YYDEBUG */
-}
-
-toy_stmt_list *get_program_start(void)
-{
-    return program_start;
-}

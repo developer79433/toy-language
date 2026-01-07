@@ -1,9 +1,10 @@
 fun make_counter() {
-    var counter = 0;
-    fun get_counter_incr() {
-        return counter++;
+    var count = 0;
+    fun get_next_count() {
+        count++;
+        return count;
     }
-    return get_counter_incr;
+    return get_next_count;
 }
 var my_counter = make_counter();
 assert(my_counter() == 0);

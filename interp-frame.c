@@ -27,13 +27,14 @@ const char *interp_frame_type_name(frame_type type)
 
 static void frame_dump_variables(const interp_frame *frame)
 {
+    interp_frame_assert_valid(frame);
     log_puts("variables [");
     toy_bool printed_anything = TOY_FALSE;
     for (toy_val *val = &frame->variables[0]; val < &frame->variables[frame->num_variables]; val++) {
         if (printed_anything) {
             log_puts(", ");
         }
-        val_dump(val);
+        val_dump(val, 0);
         printed_anything = TOY_TRUE;
     }
     log_puts("]");
@@ -41,6 +42,7 @@ static void frame_dump_variables(const interp_frame *frame)
 
 void interp_frame_dump(const interp_frame *frame)
 {
+    interp_frame_assert_valid(frame);
     switch (frame->type) {
     case FRAME_BLOCK_STMT:
         log_printf("block_stmt %p", frame->block_stmt.block);
@@ -73,6 +75,31 @@ void interp_frame_dump(const interp_frame *frame)
     }
 }
 
+toy_block *interp_frame_get_block(interp_frame *frame)
+{
+    switch (frame->type) {
+    case FRAME_BLOCK_STMT:
+    case FRAME_IF_BODY:
+    case FRAME_LOOP_BODY:
+        return (toy_block *) frame->block_stmt.block;
+    case FRAME_PRE_DEF_FUNC:
+        assert(0);
+        return NULL;
+    case FRAME_USER_DEF_FUNC:
+        func_call_frame *user_func_inv = &frame->func_call;
+        const toy_function *user_func = user_func_inv->func;
+        return (toy_block *) &user_func->code;
+    default:
+        assert(0);
+        break;
+    }
+}
+
+const toy_block *interp_frame_get_block_const(const interp_frame *frame)
+{
+    return interp_frame_get_block((interp_frame *) frame);
+}
+
 static void func_call_frame_assert_valid(const func_call_frame *call_frame)
 {
     assert(
@@ -86,6 +113,17 @@ static void func_call_frame_assert_valid(const func_call_frame *call_frame)
 void interp_frame_assert_valid(const interp_frame *frame)
 {
     assert(frame);
+    assert(
+        (0 == frame->num_variables && NULL == frame->variables)
+        ||
+        (0 != frame->num_variables && NULL != frame->variables)
+    );
+    assert(
+        (NULL == frame->variables && NULL == frame->cur_val)
+        ||
+        /* Allow indexing off the end by one, as we should not be dereferencing it */
+        (frame->cur_val >= &frame->variables[0] && frame->cur_val <= &frame->variables[frame->num_variables])
+    );
     switch (frame->type) {
     case FRAME_BLOCK_STMT:
         block_assert_valid(frame->block_stmt.block);

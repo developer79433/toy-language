@@ -7,6 +7,11 @@
 #include "var-decl-list.h"
 #include "log.h"
 
+size_t var_decl_list_len(const toy_var_decl_list *list)
+{
+    return buf_list_len((const toy_buf_list *) list);
+}
+
 toy_var_decl *var_decl_list_payload(toy_var_decl_list *list)
 {
     assert(&list->decl == buf_list_payload_typed((toy_buf_list *) list, toy_var_decl));

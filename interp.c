@@ -29,12 +29,20 @@
 #include "interp-frame.h"
 #include "predef-function.h"
 #include "interp-stack.h"
+#include "interp-frame.h"
+#include "resolved-name.h"
+#include "block.h"
 
 #if 0
 #define DEBUG_STACK 1
 #endif
 
+#if 0
+#define DEBUG_INTERP_LOOKUPS
+#endif
+
 typedef struct toy_interp_struct {
+    /* TODO: Delete me */
     toy_function main_program;
     interp_stack *stack;
     toy_val return_val;
@@ -132,6 +140,7 @@ toy_val *interp_get_return_value(toy_interp *interp)
 
 void interp_set_return_value(toy_interp *interp, toy_val *val)
 {
+    val_assert_valid(val);
     interp->return_val = *val;
 }
 
@@ -231,11 +240,11 @@ static void str_lookup(toy_interp *interp, toy_val *result, toy_str str, toy_val
     }
 }
 
-static void collection_lookup(toy_interp *interp, toy_val *result, resolved_name *resolved, toy_expr *index)
+static void collection_lookup(toy_interp *interp, toy_val *result, toy_identifier *identifier, toy_expr *index)
 {
     toy_val index_result;
     interp_eval(interp, &index_result, index);
-    toy_val *val = interp_get_lvalue(interp, resolved);
+    toy_val *val = interp_get_lvalue(interp, identifier);
     if (val->type == VAL_LIST) {
         list_lookup(interp, result, val->list, &index_result);
     } else if (val->type == VAL_MAP) {
@@ -253,32 +262,76 @@ static toy_val *interp_get_func_param(toy_interp *interp, const func_param_ref *
     return interp_stack_get_func_param(stack, param_ref->frames_up, param_ref->param_index);
 }
 
-static toy_val *interp_get_variable(toy_interp *interp, const block_var_ref *var_ref)
+/* TODO: Belongs elsewhere */
+static const toy_block *block_lookup_parents_const(const toy_block *cur_block, size_t num_parents)
 {
-    return interp_stack_get_variable(interp->stack, var_ref->frames_up, var_ref->var_index);
+    while (num_parents--) {
+        const toy_block *new_block = block_parent_const(cur_block);
+        assert(new_block != NULL);
+        assert(new_block != cur_block);
+        cur_block = new_block;
+    }
+    return cur_block;
 }
 
-toy_val *interp_get_lvalue(toy_interp *interp, resolved_name *resolved)
+static toy_val *interp_frame_get_variable(interp_frame *frame, size_t frames_up, size_t var_index)
+{
+    const toy_block *block = interp_frame_get_block_const(frame);
+    /*
+    log_debug("interp: current block");
+    block_dump(block);
+    */
+    block = block_lookup_parents_const(block, frames_up);
+#ifdef DEBUG_INTERP_LOOKUPS
+    log_printf("interp: var_index is %zu and frame is:\n", var_index);
+    block_dump(block);
+#endif /* DEBUG_INTERP_LOOKUPS */
+    toy_val *val = interp_frame_get_var(frame, var_index);
+#ifdef DEBUG_INTERP_LOOKUPS
+    log_printf("interp: val retrieved:\n");
+    val_dump(val, TOY_FALSE);
+    log_putc('\n');
+#endif /* DEBUG_INTERP_LOOKUPS */
+    return val;
+}
+
+static toy_val *interp_get_variable(toy_interp *interp, const var_ref *var_ref)
+{
+    interp_frame *cur_frame = interp_cur_frame(interp);
+    /* FIXME: This is indexing into the lexical scope, but then into the runtime variables' values */
+    return interp_frame_get_variable(cur_frame, var_ref->frames_up, var_ref->var_index);
+}
+
+toy_val *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier)
 {
     toy_val *val;
 
-    switch (resolved->type) {
+#ifdef DEBUG_INTERP_LOOKUPS
+    log_debug("interp: retrieving lvalue");
+    resolved_name_dump(&identifier->resolved);
+#endif /* DEBUG_INTERP_LOOKUPS */
+
+    switch (identifier->resolved.type) {
     case REF_FUNC_DECL:
-        invalid_lvalue(resolved);
+        log_debug("interp: lvalue is func decl");
+        invalid_lvalue(&identifier->resolved);
         break;
     case REF_FUNC_PARAM:
-        func_param_ref *param_ref = &resolved->func_param;
+        func_param_ref *param_ref = &identifier->resolved.func_param;
+        log_debug("interp: lvalue is func param");
         val = interp_get_func_param(interp, param_ref);
         break;
     case REF_PREDEF_CONST:
     case REF_PREDEF_FUNC:
-        invalid_lvalue(resolved);
+        log_debug("interp: lvalue is predef const or func");
+        invalid_lvalue(&identifier->resolved);
         break;
     case REF_UNDEFINED:
+        log_printf("\nUndefined reference to name '%s'\n", identifier->name);
         assert(0);
         break;
     case REF_VAR_DECL:
-        block_var_ref *var_ref = &resolved->var_decl;
+        var_ref *var_ref = &identifier->resolved.var_decl;
         val = interp_get_variable(interp, var_ref);
         break;
     default:
@@ -289,25 +342,25 @@ toy_val *interp_get_lvalue(toy_interp *interp, resolved_name *resolved)
     return val;
 }
 
-const toy_val *interp_get_rvalue(toy_interp *interp, resolved_name *resolved)
+const toy_val *interp_get_rvalue(toy_interp *interp, toy_identifier *identifier)
 {
-    switch (resolved->type) {
+    switch (identifier->resolved.type) {
     case REF_FUNC_DECL:
-        const toy_func_decl_stmt *func_decl = resolved->func_decl;
+        const toy_func_decl_stmt *func_decl = identifier->resolved.func_decl;
         return &func_decl->val;
     case REF_FUNC_PARAM:
-        const func_param_ref *param_ref = &resolved->func_param;
+        const func_param_ref *param_ref = &identifier->resolved.func_param;
         return interp_get_func_param(interp, param_ref);
     case REF_PREDEF_CONST:
-        const predefined_constant *predef_const = resolved->predef_const;
+        const predefined_constant *predef_const = identifier->resolved.predef_const;
         return &predef_const->value;
     case REF_PREDEF_FUNC:
-        return resolved->predef_func;
+        return identifier->resolved.predef_func;
     case REF_UNDEFINED:
         assert(0);
         break;
     case REF_VAR_DECL:
-        const block_var_ref *var_ref = &resolved->var_decl;
+        const var_ref *var_ref = &identifier->resolved.var_decl;
         return interp_get_variable(interp, var_ref);
     default:
         assert(0);
@@ -317,9 +370,9 @@ const toy_val *interp_get_rvalue(toy_interp *interp, resolved_name *resolved)
     return NULL;
 }
 
-static void op_postfix_decrement(toy_interp *interp, toy_val *result, resolved_name *resolved)
+static void op_postfix_decrement(toy_interp *interp, toy_val *result, toy_identifier *identifier)
 {
-    toy_val *val = interp_get_lvalue(interp, resolved);
+    toy_val *val = interp_get_lvalue(interp, identifier);
     if (val->type == VAL_NUM) {
         *result = *val;
         val->num--;
@@ -328,20 +381,20 @@ static void op_postfix_decrement(toy_interp *interp, toy_val *result, resolved_n
     }
 }
 
-static void op_postfix_increment(toy_interp *interp, toy_val *result, resolved_name *resolved)
+static void op_postfix_increment(toy_interp *interp, toy_val *result, toy_identifier *identifier)
 {
-    toy_val *val = interp_get_lvalue(interp, resolved);
+    toy_val *val = interp_get_lvalue(interp, identifier);
     if (val->type == VAL_NUM) {
         *result = *val;
         val->num++;
     } else {
-        invalid_operand(EXPR_POSTFIX_DECREMENT, val);
+        invalid_operand(EXPR_POSTFIX_INCREMENT, val);
     }
 }
 
-static void op_prefix_decrement(toy_interp *interp, toy_val *result, resolved_name *resolved)
+static void op_prefix_decrement(toy_interp *interp, toy_val *result, toy_identifier *identifier)
 {
-    toy_val *val = interp_get_lvalue(interp, resolved);
+    toy_val *val = interp_get_lvalue(interp, identifier);
     if (val->type == VAL_NUM) {
         val->num--;
         *result = *val;
@@ -350,14 +403,14 @@ static void op_prefix_decrement(toy_interp *interp, toy_val *result, resolved_na
     }
 }
 
-static void op_prefix_increment(toy_interp *interp, toy_val *result, resolved_name *resolved)
+static void op_prefix_increment(toy_interp *interp, toy_val *result, toy_identifier *identifier)
 {
-    toy_val *val = interp_get_lvalue(interp, resolved);
+    toy_val *val = interp_get_lvalue(interp, identifier);
     if (val->type == VAL_NUM) {
         val->num++;
         *result = *val;
     } else {
-        invalid_operand(EXPR_POSTFIX_DECREMENT, val);
+        invalid_operand(EXPR_POSTFIX_INCREMENT, val);
     }
 }
 
@@ -387,7 +440,7 @@ static void eval_map(toy_interp *interp, toy_val *result, const toy_map_entry_li
 
 static void op_func_call(toy_interp *interp, toy_val *result, toy_func_call *call)
 {
-    const toy_val *val = interp_get_rvalue(interp, &call->resolved);
+    const toy_val *val = interp_get_rvalue(interp, &call->id);
     if (VAL_FUNC == val->type) {
         const toy_function *func = val->func;
         run_stmt_result res = interp_call_func(interp, func, call->args);
@@ -413,10 +466,10 @@ void interp_eval(toy_interp *interp, toy_val *result, toy_expr *expr)
         op_and(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_ASSIGN:
-        op_assign(interp, result, &expr->assignment.resolved, expr->assignment.rhs);
+        op_assign(interp, result, &expr->assignment.id, expr->assignment.rhs);
         break;
     case EXPR_COLLECTION_LOOKUP:
-        collection_lookup(interp, result, &expr->collection_lookup.resolved, expr->collection_lookup.rhs);
+        collection_lookup(interp, result, &expr->collection_lookup.id, expr->collection_lookup.rhs);
         break;
     case EXPR_COMMA:
         op_comma(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
@@ -431,7 +484,7 @@ void interp_eval(toy_interp *interp, toy_val *result, toy_expr *expr)
         op_exponent(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_FIELD_REF:
-        op_field_ref(interp, result, &expr->field_ref.resolved, expr->field_ref.rhs);
+        op_field_ref(interp, result, &expr->field_ref.id, expr->field_ref.field_name);
         break;
     case EXPR_FUNC_CALL:
         op_func_call(interp, result, &expr->func_call);
@@ -443,8 +496,8 @@ void interp_eval(toy_interp *interp, toy_val *result, toy_expr *expr)
         op_gte(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_IDENTIFIER:
-        toy_id_expr *id_expr = &expr->id;
-        toy_val *val = interp_get_lvalue(interp, &id_expr->resolved);
+        toy_identifier *identifier = &expr->id;
+        toy_val *val = interp_get_lvalue(interp, identifier);
         *result = *val;
         break;
     case EXPR_IN:
@@ -491,16 +544,16 @@ void interp_eval(toy_interp *interp, toy_val *result, toy_expr *expr)
         op_plus(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_POSTFIX_DECREMENT:
-        op_postfix_decrement(interp, result, &expr->postfix_decrement.resolved);
+        op_postfix_decrement(interp, result, &expr->postfix_decrement.id);
         break;
     case EXPR_POSTFIX_INCREMENT:
-        op_postfix_increment(interp, result, &expr->postfix_increment.resolved);
+        op_postfix_increment(interp, result, &expr->postfix_increment.id);
         break;
     case EXPR_PREFIX_DECREMENT:
-        op_prefix_decrement(interp, result, &expr->prefix_decrement.resolved);
+        op_prefix_decrement(interp, result, &expr->prefix_decrement.id);
         break;
     case EXPR_PREFIX_INCREMENT:
-        op_prefix_increment(interp, result, &expr->prefix_increment.resolved);
+        op_prefix_increment(interp, result, &expr->prefix_increment.id);
         break;
     case EXPR_TERNARY:
         op_ternary(interp, result, expr->ternary.condition, expr->ternary.if_true, expr->ternary.if_false);
@@ -552,7 +605,27 @@ toy_bool interp_condition_truthy(toy_interp *interp, toy_expr *expr)
         interp_eval(interp, &cond_result, expr);
         return val_truthy(&cond_result);
     }
+    /* An empty condition is treated as true, so we can do eg for(;;) {...} */
     return TOY_TRUE;
+}
+
+typedef struct set_var_cb_args_struct {
+    toy_interp *interp;
+} set_var_cb_args;
+
+static item_callback_result set_var_callback(void *cookie, size_t index, const toy_var_decl_list *item)
+{
+    set_var_cb_args *args = (set_var_cb_args *) cookie;
+    const toy_var_decl *var_decl = var_decl_list_payload_const(item);
+    interp_stack *stack = args->interp->stack;
+    interp_frame *cur_frame = interp_stack_payload(stack);
+    size_t var_index = cur_frame->cur_val - cur_frame->variables;
+    interp_eval(args->interp, cur_frame->cur_val, var_decl->value);
+    log_printf("Setting var %d to val ", var_index);
+    val_dump(cur_frame->cur_val, 0);
+    log_printf("\n");
+    cur_frame->cur_val++;
+    return CONTINUE_ENUMERATION;
 }
 
 run_stmt_result interp_run_stmt(toy_interp *interp, const toy_stmt *stmt)
@@ -572,7 +645,17 @@ run_stmt_result interp_run_stmt(toy_interp *interp, const toy_stmt *stmt)
     case STMT_FOR:
         return for_stmt(interp, &stmt->for_stmt);
     case STMT_FUNC_DECL:
-        /* Nothing to do right now */
+        {
+            const toy_func_decl_stmt *func_decl = &stmt->func_decl_stmt;
+            interp_stack *stack = interp->stack;
+            interp_frame *cur_frame = interp_stack_payload(stack);
+            size_t var_index = cur_frame->cur_val - cur_frame->variables;
+            *cur_frame->cur_val = func_decl->val;
+            log_printf("Setting var %d to function ", var_index);
+            val_dump(cur_frame->cur_val, 0);
+            log_printf("\n");
+            cur_frame->cur_val++;
+        }
         return EXECUTED_STATEMENT;
     case STMT_IF:
         return if_stmt(interp, &stmt->if_stmt);
@@ -581,7 +664,12 @@ run_stmt_result interp_run_stmt(toy_interp *interp, const toy_stmt *stmt)
     case STMT_RETURN:
         return return_stmt(interp, &stmt->return_stmt);
     case STMT_VAR_DECL:
-        /* Nothing to do right now */
+        {
+            const toy_var_decl_list *var_decl_list = &stmt->var_decl_stmt;
+            set_var_cb_args args = { .interp = interp };
+            enumeration_result res = var_decl_list_foreach_const(var_decl_list, set_var_callback, &args);
+            assert(ENUMERATION_COMPLETE == res);
+        }
         return EXECUTED_STATEMENT;
     case STMT_WHILE:
         return while_stmt(interp, &stmt->while_stmt);
@@ -656,7 +744,7 @@ toy_interp *interp_alloc(const toy_stmt_list *program)
     interp->main_program.param_names = NULL;
     interp->stack = NULL;
     interp->stack = interp_stack_push_user_func(interp->stack, &interp->main_program, NULL);
-    interp_stack_dump("at program start", interp->stack);
+    /* interp_stack_dump("at program start", interp->stack); */
     return interp;
 }
 
@@ -673,9 +761,9 @@ void interp_push_if(toy_interp *interp, const toy_block *block)
     interp->stack = interp_stack_push_if(interp->stack, block);
 }
 
-void interp_push_loop(toy_interp *interp, const toy_block *body)
+void interp_push_loop(toy_interp *interp, const toy_block *block)
 {
-    interp->stack = interp_stack_push_loop(interp->stack, body);
+    interp->stack = interp_stack_push_loop(interp->stack, block);
 }
 
 void interp_pop(toy_interp *interp)

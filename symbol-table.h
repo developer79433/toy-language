@@ -9,9 +9,13 @@
 
 void symbol_table_init(symbol_table *table);
 symbol_table *symbol_table_alloc(void);
-size_t *symbol_table_get(symbol_table *table, const toy_str name);
-const size_t *symbol_table_get_const(const symbol_table *table, const toy_str name);
-size_t symbol_table_set(symbol_table *table, const toy_str name);
+size_t symbol_table_size(const symbol_table *table);
+symbol_table_entry *symbol_table_get(symbol_table *table, const toy_str name);
+const symbol_table_entry *symbol_table_get_const(const symbol_table *table, const toy_str name);
+set_result symbol_table_set(symbol_table *table, const toy_str name, symbol_table_entry *entry);
+enumeration_result symbol_table_foreach(symbol_table *table, symbol_table_entry_callback callback, void *cookie);
+enumeration_result symbol_table_foreach_const(const symbol_table *table, const_symbol_table_entry_callback callback, void *cookie);
+size_t symbol_table_add(symbol_table *table, const toy_str name);
 void symbol_table_dump(const symbol_table *table);
 #ifdef NDEBUG
 #define symbol_table_assert_valid(table) do {} while (0)

@@ -24,6 +24,11 @@ const interp_frame *interp_frame_stack_payload_const(const interp_frame_stack *s
     return &stack->frame;
 }
 
+size_t interp_frame_stack_len(const interp_frame_stack *stack)
+{
+    return buf_stack_len((const buf_stack *) stack);
+}
+
 enumeration_result interp_frame_stack_foreach(interp_frame_stack *stack, interp_frame_stack_item_callback callback, void *cookie)
 {
     return buf_stack_foreach((buf_stack *) stack, (buf_stack_item_callback) callback, cookie);
@@ -87,14 +92,12 @@ void interp_frame_stack_dump(const char *context, const interp_frame_stack *stac
 interp_frame_stack *interp_frame_stack_push(interp_frame_stack *stack, interp_frame *frame)
 {
     stack = (interp_frame_stack *) buf_stack_push((buf_stack *) stack, frame, sizeof(*frame));
-    interp_frame_stack_dump("after push", stack);
     return stack;
 }
 
 interp_frame_stack *interp_frame_stack_pop(interp_frame_stack *stack, interp_frame **removed_frame)
 {
     stack = (interp_frame_stack *) buf_stack_pop((buf_stack *) stack, (void **) removed_frame);
-    interp_frame_stack_dump("after pop", stack);
     return stack;
 }
 

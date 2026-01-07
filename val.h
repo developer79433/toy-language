@@ -6,7 +6,7 @@
 #include "str-list-types.h"
 #include "function-types.h"
 
-void val_dump(const toy_val *val);
+void val_dump(const toy_val *val, toy_bool verbose);
 void val_array_dump(const toy_val *vals, size_t size);
 toy_bool vals_equal(const toy_val *val1, const toy_val *val2);
 toy_bool vals_nequal(const toy_val *val1, const toy_val *val2);

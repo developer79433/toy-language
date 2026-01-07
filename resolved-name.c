@@ -45,19 +45,19 @@ void resolved_name_dump(const resolved_name *resolved)
         break;
     case REF_FUNC_PARAM:
         const func_param_ref *param_ref = &resolved->func_param;
-        log_printf("Function parameter #%zd, %zd frames up", param_ref->param_index, param_ref->frames_up);
+        log_printf("Function parameter #%zd, %zd frames up\n", param_ref->param_index, param_ref->frames_up);
         break;
     case REF_PREDEF_CONST:
         predef_const_dump(resolved->predef_const);
         break;
     case REF_PREDEF_FUNC:
-        val_dump(resolved->predef_func);
+        val_dump(resolved->predef_func, 0);
         break;
     case REF_UNDEFINED:
-        log_puts("Undefined reference");
+        log_puts("Undefined reference\n");
         break;
     case REF_VAR_DECL:
-        log_printf("Variable declaration #%zd, %zd frames up", resolved->var_decl.var_index, resolved->var_decl.frames_up);
+        log_printf("Variable declaration #%zd, %zd frames up\n", resolved->var_decl.var_index, resolved->var_decl.frames_up);
         break;
     default:
         assert(0);

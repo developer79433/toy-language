@@ -12,6 +12,7 @@
 #include "expr-types.h"
 #include "stmt-types.h"
 #include "parser.tab.h"
+#include "toy-lexer.h"
 
 %}
 

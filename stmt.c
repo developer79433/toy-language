@@ -13,6 +13,10 @@
 #include "var-decl-list.h"
 #include "errors.h"
 #include "log.h"
+#include "function.h"
+#include "val.h"
+#include "block.h"
+#include "toy-parser.h"
 
 static const char *toy_stmt_type_names[] = {
     "block statement",
@@ -57,7 +61,6 @@ toy_stmt *func_decl_stmt_alloc(toy_str name, toy_str_list *param_names, toy_bloc
 {
     toy_stmt *stmt = stmt_alloc(STMT_FUNC_DECL);
     stmt->func_decl_stmt.func.type = FUNC_USER_DECLARED;
-    stmt->func_decl_stmt.func.parent = NULL;
     stmt->func_decl_stmt.func.name = name;
     stmt->func_decl_stmt.func.param_names = param_names;
     stmt->func_decl_stmt.val.type = VAL_FUNC;
@@ -69,7 +72,8 @@ toy_stmt *func_decl_stmt_alloc(toy_str name, toy_str_list *param_names, toy_bloc
 
 void func_decl_stmt_dump(const toy_func_decl_stmt *func_decl)
 {
-    /* TODO */
+    func_assert_valid(&func_decl->func);
+    val_assert_valid(&func_decl->val);
 }
 
 toy_stmt *var_decl_stmt_alloc(toy_var_decl_list *var_decl_list)
@@ -90,7 +94,8 @@ void stmt_dump(const toy_stmt *stmt, int append_semicolon)
     switch (stmt->type) {
     case STMT_BLOCK:
         log_puts("{\n");
-        stmt_list_dump(stmt->block_stmt.block.stmts);
+        const toy_block_stmt *block_stmt = &stmt->block_stmt;
+        stmt_list_dump(block_stmt->block.stmts);
         log_puts("}\n");
         break;
     case STMT_BREAK:
@@ -106,59 +111,59 @@ void stmt_dump(const toy_stmt *stmt, int append_semicolon)
         }
         break;
     case STMT_EXPR:
-        expr_dump(stmt->expr_stmt.expr);
+        const toy_expr_stmt *expr_stmt = &stmt->expr_stmt;
+        expr_dump(expr_stmt->expr);
         if (append_semicolon) {
             log_putc(';');
         }
         break;
     case STMT_FOR:
         log_puts("for (");
-        if (stmt->for_stmt.at_start) {
-            stmt_dump(stmt->for_stmt.at_start, 1);
+        const toy_for_stmt *for_stmt = &stmt->for_stmt;
+        if (for_stmt->at_start) {
+            stmt_dump(for_stmt->at_start, 1);
         }
         log_putc(' ');
-        if (stmt->for_stmt.condition) {
-            expr_dump(stmt->for_stmt.condition);
+        if (for_stmt->condition) {
+            expr_dump(for_stmt->condition);
         } else {
             log_puts("true");
         }
         log_puts("; ");
-        if (stmt->for_stmt.at_end) {
-            stmt_dump(stmt->for_stmt.at_end, 0);
+        if (for_stmt->at_end) {
+            stmt_dump(for_stmt->at_end, 0);
         }
         log_puts(") {\n");
-        if (stmt->for_stmt.body.stmts) {
-            stmt_list_dump(stmt->for_stmt.body.stmts);
+        if (for_stmt->body.stmts) {
+            stmt_list_dump(for_stmt->body.stmts);
         }
         log_puts("}");
         break;
     case STMT_FUNC_DECL:
-        log_printf("fun %s(", stmt->func_decl_stmt.func.name);
-        str_list_dump(stmt->func_decl_stmt.func.param_names);
+        const toy_func_decl_stmt *func_decl_stmt = &stmt->func_decl_stmt;
+        log_printf("fun %s(", func_decl_stmt->func.name);
+        str_list_dump(func_decl_stmt->func.param_names);
         log_puts(") {\n");
-        stmt_list_dump(stmt->func_decl_stmt.func.code.stmts);
+        stmt_list_dump(func_decl_stmt->func.code.stmts);
         log_puts("}");
         break;
     case STMT_IF:
-        {
-            toy_if_arm_list *arm_list = stmt->if_stmt.arms;
-            log_puts("if (");
+        const toy_if_stmt *if_stmt = &stmt->if_stmt;
+        for (toy_if_arm_list *arm_list = if_stmt->arms; arm_list; arm_list = arm_list->next) {
+            if (arm_list == if_stmt->arms) {
+                log_puts("if (");
+            } else {
+                log_puts(" elseif (");
+            }
             expr_dump(arm_list->arm.condition);
             log_puts(") {\n");
             stmt_list_dump(arm_list->arm.code.stmts);
             log_puts("}");
-            for (arm_list = arm_list->next; arm_list; arm_list = arm_list->next) {
-                log_puts(" elseif (");
-                expr_dump(arm_list->arm.condition);
-                log_puts(") {\n");
-                stmt_list_dump(arm_list->arm.code.stmts);
-                log_puts("}");
-            }
-            if (stmt->if_stmt.elsepart.stmts) {
-                log_puts(" else {\n");
-                stmt_list_dump(stmt->if_stmt.elsepart.stmts);
-                log_puts("}");
-            }
+        }
+        if (if_stmt->elsepart.stmts) {
+            log_puts(" else {\n");
+            stmt_list_dump(if_stmt->elsepart.stmts);
+            log_puts("}");
         }
         break;
     case STMT_NULL:
@@ -181,10 +186,12 @@ void stmt_dump(const toy_stmt *stmt, int append_semicolon)
         }
         break;
     case STMT_WHILE:
+        const toy_while_stmt *while_stmt = &stmt->while_stmt;
         log_puts("while (\n");
-        expr_dump(stmt->while_stmt.condition);
+        expr_dump(while_stmt->condition);
         log_puts(") {\n");
-        stmt_list_dump(stmt->while_stmt.body.stmts);
+        stmt_list_dump(while_stmt->body.stmts);
+        /* TODO: block_dump(while_stmt->body.parent); */
         log_puts("}");
         break;
     default:

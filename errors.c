@@ -27,16 +27,18 @@ void fatal_error(const char *fmt, ...)
 
 void invalid_operand(toy_expr_type expr_type, const toy_val *operand)
 {
-    val_dump(operand);
+    log_debug("Operand was:\n");
+    val_dump(operand, 1);
     log_putc('\n');
     fatal_error("Invalid operand for %s", toy_expr_type_name(expr_type));
 }
 
 void invalid_operands(toy_expr_type expr_type, const toy_val *operand1, const toy_val *operand2)
 {
-    val_dump(operand1);
+    log_debug("Operands were:\n");
+    val_dump(operand1, 1);
     log_putc('\n');
-    val_dump(operand2);
+    val_dump(operand2, 1);
     log_putc('\n');
     fatal_error("Invalid operands for %s", toy_expr_type_name(expr_type));
 }
@@ -53,7 +55,7 @@ void invalid_stmt_type(toy_stmt_type stmt_type)
 /* TODO: Delete me */
 void invalid_cast(toy_val_type val_type, const toy_val *val)
 {
-    val_dump(val);
+    val_dump(val, 1);
     log_putc('\n');
     fatal_error("Cannot convert to %s", val_type_name(val_type));
 }
@@ -103,7 +105,7 @@ void invalid_string_index(const toy_str str, toy_num index)
 
 void invalid_argument_type(toy_val_type expected_type, const toy_val *actual_arg)
 {
-    val_dump(actual_arg);
+    val_dump(actual_arg, 1);
     log_putc('\n');
     fatal_error("Invalid argument type: expected %s", val_type_name(expected_type));
 }
@@ -170,10 +172,9 @@ const char *resolved_name_ref_name(const resolved_name *resolved)
         /* TODO */
         return "function parameter";
     case REF_VAR_DECL:
-        const block_var_ref *var_ref = &resolved->var_decl;
-        assert(var_ref->frames_up >= 0);
-        assert(var_ref->var_index >= 0);
-        /* TODO */
+        const var_ref *var_ref = &resolved->var_decl;
+        assert(var_ref->frames_up);
+        assert(var_ref->var_index);
         return "variable reference";
     case REF_PREDEF_CONST:
         const predefined_constant *predef_const = resolved->predef_const;

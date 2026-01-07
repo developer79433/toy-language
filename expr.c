@@ -103,7 +103,6 @@ toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_block *block)
     expr->val.func = (toy_function *) (expr + 1);
     expr->val.func->type = FUNC_USER_DECLARED;
     expr->val.func->name = ""; /* TODO: generated unique name */
-    expr->val.func->parent = NULL;
     expr->val.func->code.stmts = block->stmts;
     expr->val.func->param_names = formalparams;
     return expr;
@@ -114,7 +113,7 @@ toy_expr *alloc_expr_func_call(toy_str id, toy_expr_list *args)
     toy_expr *expr;
     expr = mymalloc(toy_expr);
     expr->type = EXPR_FUNC_CALL;
-    expr->func_call.id = id;
+    expr->func_call.id.name = id;
     expr->func_call.args = args;
     return expr;
 }
@@ -124,7 +123,7 @@ toy_expr *alloc_expr_method_call(toy_str lhs, toy_str method_name, toy_expr_list
     toy_expr *expr;
     expr = mymalloc(toy_expr);
     expr->type = EXPR_METHOD_CALL;
-    expr->method_call.lhs = lhs;
+    expr->method_call.id.name = lhs;
     expr->method_call.method_name = method_name;
     expr->method_call.args = args;
     return expr;
@@ -202,9 +201,14 @@ static void dump_function_call(const toy_str func_name, const toy_expr_list *fun
 
 static void dump_method_call(const toy_method_call *method_call)
 {
-    log_printf("%s.%s(", method_call->lhs, method_call->method_name);
+    log_printf("%s.%s(", method_call->id.name, method_call->method_name);
     expr_list_dump(method_call->args);
     log_putc(')');
+}
+
+static void dump_identifier(const toy_str id)
+{
+    print_str(id);
 }
 
 void expr_dump(const toy_expr *expr) {
@@ -214,10 +218,10 @@ void expr_dump(const toy_expr *expr) {
             dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " and ");
             break;
         case EXPR_ASSIGN:
-            dump_assignment(expr->assignment.lhs, expr->assignment.rhs);
+            dump_assignment(expr->assignment.id.name, expr->assignment.rhs);
             break;
         case EXPR_COLLECTION_LOOKUP:
-            dump_collection_lookup(expr->collection_lookup.lhs, expr->collection_lookup.rhs);
+            dump_collection_lookup(expr->collection_lookup.id.name, expr->collection_lookup.rhs);
             break;
         case EXPR_COMMA:
             dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, ", ");
@@ -235,7 +239,7 @@ void expr_dump(const toy_expr *expr) {
             /* TODO */
             break;
         case EXPR_FUNC_CALL:
-            dump_function_call(expr->func_call.id, expr->func_call.args);
+            dump_function_call(expr->func_call.id.name, expr->func_call.args);
             break;
         case EXPR_GT:
             dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " > ");
@@ -244,7 +248,7 @@ void expr_dump(const toy_expr *expr) {
             dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " >= ");
             break;
         case EXPR_IDENTIFIER:
-            log_printf("%s", expr->id.id);
+            log_printf("%s", expr->id.name);
             break;
         case EXPR_IN:
             dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " in ");
@@ -253,7 +257,7 @@ void expr_dump(const toy_expr *expr) {
             expr_list_dump(expr->list);
             break;
         case EXPR_LITERAL:
-            val_dump(&expr->val);
+            val_dump(&expr->val, 1);
             break;
         case EXPR_LT:
             dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " < ");
@@ -291,20 +295,20 @@ void expr_dump(const toy_expr *expr) {
             dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " + ");
             break;
         case EXPR_POSTFIX_DECREMENT:
-            str_dump(expr->postfix_decrement.id);
+            dump_identifier(expr->postfix_decrement.id.name);
             log_puts("--");
             break;
         case EXPR_POSTFIX_INCREMENT:
-            str_dump(expr->postfix_increment.id);
+            dump_identifier(expr->postfix_increment.id.name);
             log_puts("++");
             break;
         case EXPR_PREFIX_DECREMENT:
             log_puts("--");
-            str_dump(expr->prefix_decrement.id);
+            dump_identifier(expr->prefix_decrement.id.name);
             break;
         case EXPR_PREFIX_INCREMENT:
             log_puts("++");
-            str_dump(expr->prefix_increment.id);
+            dump_identifier(expr->prefix_increment.id.name);
             break;
         case EXPR_TERNARY:
             expr_dump(expr->ternary.condition);

@@ -4,6 +4,7 @@
 #include "str-types.h"
 #include "expr-types.h"
 #include "stmt-types.h"
+#include "toy-parser-types.h"
 
 void stmt_dump(const toy_stmt *stmt, int append_semicolon);
 toy_stmt *stmt_alloc(toy_stmt_type type);

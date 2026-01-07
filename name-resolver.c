@@ -17,451 +17,190 @@
 #include "map-val.h"
 #include "val-list.h"
 #include "log.h"
-#include "lexical-stack.h"
 #include "constants.h"
 #include "predef-function.h"
 #include "symbol-table.h"
 #include "resolved-name.h"
+#include "visitor.h"
+#include "block.h"
+#include "var-decl.h"
+
+#if 0
+#define DEBUG_NAME_RESOLUTION
+#endif
 
 void resolver_init(name_resolver *resolver)
 {
-    resolver->lexical_scopes = NULL;
 }
 
-static void resolve_names_expr(name_resolver *resolver, toy_expr *expr);
-
-static void resolve_name(name_resolver *resolver, toy_str name, resolved_name *resolved)
+static void resolve_identifier_block_and_parents(toy_block *block, toy_identifier *identifier)
 {
-    assert(resolver);
-    assert(name);
-    assert(strlen(name));
-    log_printf("Resolving name '%s'\n", name);
-    resolved->type = REF_UNDEFINED;
-    lexical_stack_resolve(resolver->lexical_scopes, name, resolved);
-    if (is_resolved(resolved)) {
-        resolved_name_dump(resolved);
-    } else {
-        log_printf("Resolving predef constant '%s'\n", name);
-        const predefined_constant *predef_const = lookup_predefined_constant(name);
-        if (predef_const) {
-            resolved->type = REF_PREDEF_CONST;
-            resolved->predef_const = predef_const;
-        } else {
-            log_printf("Resolving predef func '%s'\n", name);
-            const toy_val *val = predef_func_lookup_name(name);
-            if (val) {
-                assert(VAL_FUNC == val->type);
-                const toy_function *func = val->func;
-                assert(FUNC_PREDEFINED == func->type);
-                resolved->type = REF_PREDEF_FUNC;
-                resolved->predef_func = val;
-            } else {
-                undeclared_identifier(name);
+    size_t frames_up = 0;
+    do {
+        symbol_table_entry *entry;
+        symbol_table_assert_valid(&block->variables);
+        entry = symbol_table_get(&block->variables, identifier->name);
+        if (entry) {
+            identifier->resolved.type = REF_VAR_DECL;
+            identifier->resolved.var_decl.frames_up = frames_up;
+            identifier->resolved.var_decl.var_index = entry->index;
+            if (frames_up != 0 && !entry->is_closed_over) {
+                entry->is_closed_over = TOY_TRUE;
+                symbol_table_set(&block->variables, identifier->name, entry);
             }
+#ifdef DEBUG_NAME_RESOLUTION
+            log_printf("Resolved '%s' to variable %d, %d frames up\n", identifier->name, *i, frames_up);
+#endif /* DEBUG_NAME_RESOLUTION */
+            return;
+        }
+        symbol_table_assert_valid(&block->parameters);
+        entry = symbol_table_get(&block->parameters, identifier->name);
+        if (entry) {
+            identifier->resolved.type = REF_FUNC_PARAM;
+            identifier->resolved.func_param.frames_up = frames_up;
+            identifier->resolved.func_param.param_index = entry->index;
+            if (frames_up != 0 && !entry->is_closed_over) {
+                entry->is_closed_over = TOY_TRUE;
+                symbol_table_set(&block->parameters, identifier->name, entry);
+            }
+#ifdef DEBUG_NAME_RESOLUTION
+            log_printf("Resolved '%s' to function parameter %d, %d frames up\n", identifier->name, *i, frames_up);
+#endif /* DEBUG_NAME_RESOLUTION */
+            return;
+        }
+        block = block->parent;
+        frames_up++;
+    } while (block);
+}
+
+static void resolve_identifier(toy_block *block, toy_identifier *identifier)
+{
+#ifdef DEBUG_NAME_RESOLUTION
+    log_printf("Resolving identifier '%s'\n", identifier->name);
+#endif /* DEBUG_NAME_RESOLUTION */
+    resolve_identifier_block_and_parents(block, identifier);
+    if (!is_resolved(&identifier->resolved)) {
+        const predefined_constant *predef_const = lookup_predefined_constant(identifier->name);
+        if (predef_const) {
+            identifier->resolved.type = REF_PREDEF_CONST;
+            identifier->resolved.predef_const = predef_const;
+#ifdef DEBUG_NAME_RESOLUTION
+            log_printf("Resolved '%s' to predef constant\n", identifier->name);
+#endif /* DEBUG_NAME_RESOLUTION */
         }
     }
-}
-
-static void resolve_names_unary_op(name_resolver *resolver, toy_unary_op *unop)
-{
-    resolve_names_expr(resolver, unop->arg);
-}
-
-static void resolve_names_binop(name_resolver *resolver, toy_binary_op *binop)
-{
-    resolve_names_expr(resolver, binop->arg1);
-    resolve_names_expr(resolver, binop->arg2);
-}
-
-static void resolve_names_postfix_decrement(name_resolver *resolver, toy_postfix_decrement *postdec)
-{
-    resolve_name(resolver, postdec->id, &postdec->resolved);
-}
-
-static void resolve_names_postfix_increment(name_resolver *resolver, toy_postfix_increment *postinc)
-{
-    resolve_name(resolver, postinc->id, &postinc->resolved);
-}
-
-static void resolve_names_prefix_decrement(name_resolver *resolver, toy_prefix_decrement *predec)
-{
-    resolve_name(resolver, predec->id, &predec->resolved);
-}
-
-static void resolve_names_prefix_increment(name_resolver *resolver, toy_prefix_increment *preinc)
-{
-    resolve_name(resolver, preinc->id, &preinc->resolved);
-}
-
-static void resolve_names_ternary(name_resolver *resolver, toy_ternary *tern)
-{
-    resolve_names_expr(resolver, tern->condition);
-    resolve_names_expr(resolver, tern->if_true);
-    resolve_names_expr(resolver, tern->if_false);
-}
-
-typedef struct expr_cb_args_struct {
-    name_resolver *resolver;
-} expr_cb_args;
-
-static item_callback_result resolve_expr_list_entry_callback(void *cookie, size_t index, toy_expr_list *item)
-{
-    expr_cb_args *args = (expr_cb_args *) cookie;
-    toy_expr *expr = expr_list_payload(item);
-    resolve_names_expr(args->resolver, expr);
-    return CONTINUE_ENUMERATION;
-}
-
-static void resolve_names_expr_list(name_resolver *resolver, toy_expr_list *expr)
-{
-    expr_cb_args args = { .resolver = resolver };
-    enumeration_result res = expr_list_foreach(expr, resolve_expr_list_entry_callback, &args);
-    assert(res == ENUMERATION_COMPLETE);
-}
-
-static void resolve_names_val(name_resolver *resolver, toy_val *val);
-
-typedef struct val_list_entry_cb_args_struct {
-    name_resolver *resolver;
-} val_list_entry_cb_args;
-
-static item_callback_result resolve_val_list_entry_callback(void *cookie, size_t index, toy_val_list *entry)
-{
-    val_list_entry_cb_args *args = (val_list_entry_cb_args *) cookie;
-    toy_val *val = val_list_payload(entry);
-    resolve_names_val(args->resolver, val);
-    return CONTINUE_ENUMERATION;
-}
-
-static void resolve_names_val_list(name_resolver *resolver, toy_val_list *val_list)
-{
-    val_list_entry_cb_args args = { .resolver = resolver };
-    enumeration_result res = val_list_foreach(val_list, resolve_val_list_entry_callback, &args);
-    assert(res == ENUMERATION_COMPLETE);
-}
-
-typedef struct map_val_entry_cb_args_struct {
-    name_resolver *resolver;
-} map_val_entry_cb_args;
-
-static item_callback_result resolve_map_val_entry_callback(void *cookie, map_val_entry *entry)
-{
-    map_val_entry_cb_args *args = (map_val_entry_cb_args *) cookie;
-    resolve_names_val(args->resolver, &entry->value);
-    return CONTINUE_ENUMERATION;
-}
-
-static void resolve_names_map_val(name_resolver *resolver, map_val *val_map)
-{
-    map_val_entry_cb_args args = { .resolver = resolver };
-    enumeration_result res = map_val_foreach(val_map, resolve_map_val_entry_callback, &args);
-    assert(ENUMERATION_COMPLETE == res);
-}
-
-static void resolve_names_func(name_resolver *resolver, toy_function *func);
-
-static void resolve_names_val(name_resolver *resolver, toy_val *val)
-{
-    switch (val->type) {
-    case VAL_BOOL:
-        break;
-    case VAL_FUNC:
-        resolve_names_func(resolver, val->func);
-        break;
-    case VAL_LIST:
-        resolve_names_val_list(resolver, val->list);
-        break;
-    case VAL_MAP:
-        resolve_names_map_val(resolver, val->map);
-        break;
-    case VAL_NULL:
-    case VAL_NUM:
-    case VAL_STR:
-        break;
-    default:
-        assert(0);
-        break;
+    if (!is_resolved(&identifier->resolved)) {
+        const toy_val *val = predef_func_lookup_name(identifier->name);
+        if (val) {
+            assert(VAL_FUNC == val->type);
+            const toy_function *func = val->func;
+            assert(FUNC_PREDEFINED == func->type);
+            identifier->resolved.type = REF_PREDEF_FUNC;
+            identifier->resolved.predef_func = val;
+#ifdef DEBUG_NAME_RESOLUTION
+            log_printf("Resolved '%s' to predef function\n", identifier->name);
+#endif /* DEBUG_NAME_RESOLUTION */
+        }
+    }
+    if (!is_resolved(&identifier->resolved)) {
+        undeclared_identifier(identifier->name);
     }
 }
 
-typedef struct map_entry_cb_args_struct {
-    name_resolver *resolver;
-} map_entry_cb_args;
+static toy_block *cur_block = NULL;
 
-static item_callback_result resolve_map_entry_callback(void *cookie, size_t index, toy_map_entry_list *item)
+static void handle_block(visitor *v, toy_block *block)
 {
-    map_entry_cb_args *args = (map_entry_cb_args *) cookie;
-    toy_map_entry *entry = map_entry_list_payload(item);
-    resolve_names_expr(args->resolver, entry->value);
-    return CONTINUE_ENUMERATION;
+#ifdef DEBUG_NAME_RESOLUTION
+    log_printf("*** BLOCK\n");
+#endif /* DEBUG_NAME_RESOLUTION */
+    toy_block *old_block = cur_block;
+    cur_block = block;
+    symbol_table_init(&block->variables);
+    symbol_table_init(&block->parameters);
+    default_block(v, block);
+    cur_block = old_block;
 }
 
-void resolve_names_map_entry_list(name_resolver *resolver, toy_map_entry_list *entry_list)
+static toy_func_decl_stmt *cur_func_decl = NULL;
+
+static void handle_func_decl(visitor *v, toy_func_decl_stmt *func_decl)
 {
-    map_entry_cb_args args = { .resolver = resolver };
-    enumeration_result res = map_entry_list_foreach(entry_list, resolve_map_entry_callback, &args);
-    assert(res == ENUMERATION_COMPLETE);
+#ifdef DEBUG_NAME_RESOLUTION
+    log_printf("*** FUNC DECL: %s\n", func_decl->func.name);
+#endif /* DEBUG_NAME_RESOLUTION */
+    toy_func_decl_stmt *old_func_decl = cur_func_decl;
+    cur_func_decl = func_decl;
+    assert(cur_block);
+    symbol_table_assert_valid(&cur_block->variables);
+    symbol_table_add(&cur_block->variables, func_decl->func.name);
+    default_func_decl(v, func_decl);
+    cur_func_decl = old_func_decl;
 }
 
-static void resolve_names_expr(name_resolver *resolver, toy_expr *expr)
+static toy_var_decl *cur_var_decl = NULL;
+
+static void handle_var_decl(visitor *v, toy_var_decl *var_decl)
 {
-    switch (expr->type) {
-    case EXPR_AND:
-        resolve_names_binop(resolver, &expr->binary_op);
-        break;
-    case EXPR_ASSIGN:
-        toy_assignment *assignment = &expr->assignment;
-        resolve_name(resolver, assignment->lhs, &assignment->resolved);
-        resolve_names_expr(resolver, assignment->rhs);
-        break;
-    case EXPR_COLLECTION_LOOKUP:
-        toy_collection_lookup *lookup = &expr->collection_lookup;
-        resolve_name(resolver, lookup->lhs, &lookup->resolved);
-        resolve_names_expr(resolver, lookup->rhs);
-        break;
-    case EXPR_COMMA:
-    case EXPR_DIV:
-    case EXPR_EQUAL:
-    case EXPR_EXPONENT:
-        resolve_names_binop(resolver, &expr->binary_op);
-        break;
-    case EXPR_FIELD_REF:
-        toy_field_ref *field_ref = &expr->field_ref;
-        resolve_name(resolver, field_ref->lhs, &field_ref->resolved);
-        break;
-    case EXPR_FUNC_CALL:
-        toy_func_call *call = &expr->func_call;
-        resolve_name(resolver, call->id, &call->resolved);
-        resolve_names_expr_list(resolver, call->args);
-        break;
-    case EXPR_GT:
-    case EXPR_GTE:
-        resolve_names_binop(resolver, &expr->binary_op);
-        break;
-    case EXPR_IDENTIFIER:
-        toy_id_expr *id_expr = &expr->id;
-        resolve_name(resolver, id_expr->id, &id_expr->resolved);
-        break;
-    case EXPR_IN:
-        resolve_names_binop(resolver, &expr->binary_op);
-        break;
-    case EXPR_LIST:
-        resolve_names_expr_list(resolver, expr->list);
-        break;
-    case EXPR_LITERAL:
-        toy_val *val = &expr->val;
-        resolve_names_val(resolver, val);
-        break;
-    case EXPR_LT:
-    case EXPR_LTE:
-        resolve_names_binop(resolver, &expr->binary_op);
-        break;
-    case EXPR_MAP:
-        toy_map_entry_list *entry_list = expr->map;
-        resolve_names_map_entry_list(resolver, entry_list);
-        break;
-    case EXPR_METHOD_CALL:
-        toy_method_call *method_call = &expr->method_call;
-        resolve_name(resolver, method_call->lhs, &method_call->resolved_lhs);
-        resolve_name(resolver, method_call->method_name, &method_call->resolved_method);
-        break;
-    case EXPR_MINUS:
-    case EXPR_MODULUS:
-    case EXPR_MUL:
-    case EXPR_NEQUAL:
-        resolve_names_binop(resolver, &expr->binary_op);
-        break;
-    case EXPR_NOT:
-        resolve_names_unary_op(resolver, &expr->unary_op);
-        break;
-    case EXPR_PLUS:
-        resolve_names_binop(resolver, &expr->binary_op);
-        break;
-    case EXPR_POSTFIX_DECREMENT:
-        resolve_names_postfix_decrement(resolver, &expr->postfix_decrement);
-        break;
-    case EXPR_POSTFIX_INCREMENT:
-        resolve_names_postfix_increment(resolver, &expr->postfix_increment);
-        break;
-    case EXPR_PREFIX_DECREMENT:
-        resolve_names_prefix_decrement(resolver, &expr->prefix_decrement);
-        break;
-    case EXPR_PREFIX_INCREMENT:
-        resolve_names_prefix_increment(resolver, &expr->prefix_increment);
-        break;
-    case EXPR_TERNARY:
-        resolve_names_ternary(resolver, &expr->ternary);
-        break;
-    case EXPR_UNEG:
-        resolve_names_unary_op(resolver, &expr->unary_op);
-        break;
-    default:
-        assert(0);
-        break;
-    }
+#ifdef DEBUG_NAME_RESOLUTION
+    log_printf("*** VAR DECL: %s\n", var_decl->name);
+#endif /* DEBUG_NAME_RESOLUTION */
+    toy_var_decl *old_var_decl = cur_var_decl;
+    cur_var_decl = var_decl;
+    var_decl_assert_valid(var_decl);
+    assert(cur_block);
+    symbol_table_assert_valid(&cur_block->variables);
+    symbol_table_add(&cur_block->variables, var_decl->name);
+    default_var_decl(v, var_decl);
+    cur_var_decl = old_var_decl;
 }
 
-static void resolve_names_stmt(name_resolver *resolver, toy_stmt *stmt);
+static toy_function *cur_func_expr = NULL;
 
-typedef struct stmt_resolve_cb_args_struct {
-    name_resolver *resolver;
-} stmt_resolve_cb_args;
-
-static item_callback_result resolve_stmt_callback(void *cookie, size_t index, toy_stmt_list *item)
+static void handle_func_expr(visitor *v, toy_function *func)
 {
-    stmt_resolve_cb_args *args = (stmt_resolve_cb_args *) cookie;
-    toy_stmt *stmt = stmt_list_payload(item);
-    resolve_names_stmt(args->resolver, stmt);
-    return CONTINUE_ENUMERATION;
+#ifdef DEBUG_NAME_RESOLUTION
+    log_printf("*** FUNC EXPR\n");
+#endif /* DEBUG_NAME_RESOLUTION */
+    toy_function *old_func_expr = cur_func_expr;
+    cur_func_expr = func;
+    default_func_expr(v, func);
+    cur_func_expr = old_func_expr;
 }
 
-static void resolve_names_stmt_list(name_resolver *resolver, toy_stmt_list *stmt_list)
+static void handle_parameter(visitor *v, toy_str parameter)
 {
-    log_debug("In resolve_names_stmt_list\n");
-    stmt_resolve_cb_args args = { .resolver = resolver };
-    enumeration_result res = stmt_list_foreach(stmt_list, resolve_stmt_callback, &args);
-    assert(ENUMERATION_COMPLETE == res);
+#ifdef DEBUG_NAME_RESOLUTION
+    log_printf("*** PARAM: %s\n", parameter);
+#endif /* DEBUG_NAME_RESOLUTION */
+    assert(cur_func_decl || cur_func_expr);
+    assert(cur_block);
+    symbol_table_assert_valid(&cur_block->parameters);
+    symbol_table_add(&cur_block->parameters, parameter);
+    default_parameter(v, parameter);
 }
 
-static void resolve_names_block(name_resolver *resolver, toy_block *block)
+static void handle_identifier(visitor *v, toy_identifier *identifier)
 {
-    lexical_frame stack_entry = { .type = LEXICAL_FRAME_BLOCK, .block_frame = { .block = block } };
-    symbol_table_init(&stack_entry.variables);
-    resolver->lexical_scopes = lexical_stack_push(resolver->lexical_scopes, &stack_entry);
-    resolve_names_stmt_list(resolver, block->stmts);
-    resolver->lexical_scopes = lexical_stack_pop(resolver->lexical_scopes, NULL);
+    assert(cur_block);
+#ifdef DEBUG_NAME_RESOLUTION
+    log_printf("*** IDENTIFIER: %s\n", identifier->name);
+#endif /* DEBUG_NAME_RESOLUTION */
+    resolve_identifier(cur_block, identifier);
+    default_identifier(v, identifier);
 }
 
-static item_callback_result populate_param_name_callback(void *cookie, size_t index, const toy_str_list *item)
-{
-    symbol_table *map = (symbol_table *) cookie;
-    toy_str param_name = str_list_payload_const(item);
-    size_t added_index = symbol_table_set(map, param_name);
-    assert(added_index == index);
-    return CONTINUE_ENUMERATION;
-}
-
-static void populate_param_names(symbol_table *map, const toy_str_list *param_names)
-{
-    symbol_table_init(map);
-    enumeration_result res = str_list_foreach_const(param_names, populate_param_name_callback, map);
-    assert(ENUMERATION_COMPLETE == res);
-}
-
-static void resolve_names_func(name_resolver *resolver, toy_function *func)
-{
-    log_debug("In resolve_names_func\n");
-    lexical_frame stack_entry = { .type = LEXICAL_FRAME_FUNCTION, .function_frame = { .function = func } };
-    symbol_table_init(&stack_entry.variables);
-    populate_param_names(&stack_entry.function_frame.arguments, func->param_names);
-    log_debug("Param name symbol table:\n");
-    symbol_table_dump(&stack_entry.function_frame.arguments);
-    resolver->lexical_scopes = lexical_stack_push(resolver->lexical_scopes, &stack_entry);
-    resolve_names_stmt_list(resolver, func->code.stmts);
-    resolver->lexical_scopes = lexical_stack_pop(resolver->lexical_scopes, NULL);
-}
-
-typedef struct if_arm_cb_args_struct {
-    name_resolver *resolver;
-} if_arm_cb_args;
-
-static item_callback_result resolve_if_arm_callback(void *cookie, size_t index, toy_if_arm_list *entry)
-{
-    if_arm_cb_args *args = (if_arm_cb_args *) cookie;
-    toy_if_arm *arm = if_arm_list_payload(entry);
-    resolve_names_expr(args->resolver, arm->condition);
-    resolve_names_block(args->resolver, &arm->code);
-    return CONTINUE_ENUMERATION;
-}
-
-static void resolve_names_if_arm_list(name_resolver *resolver, toy_if_arm_list *if_arm_list)
-{
-    if_arm_cb_args args = { .resolver = resolver };
-    enumeration_result res = if_arm_list_foreach(if_arm_list, resolve_if_arm_callback, &args);
-    assert(ENUMERATION_COMPLETE == res);
-}
-
-typedef struct var_decl_cb_args_struct {
-    name_resolver *resolver;
-} var_decl_cb_args;
-
-static item_callback_result resolve_var_decl_callback(void *cookie, size_t index, toy_var_decl_list *entry)
-{
-    var_decl_cb_args *args = (var_decl_cb_args *) cookie;
-    toy_var_decl *decl = var_decl_list_payload(entry);
-    resolve_names_expr(args->resolver, decl->value);
-    lexical_stack *stack = args->resolver->lexical_scopes;
-    lexical_frame *frame = lexical_stack_payload(stack);
-    symbol_table *table = &frame->variables;
-    symbol_table_set(table, decl->name);
-    return CONTINUE_ENUMERATION;
-}
-
-static void resolve_names_var_decl_list(name_resolver *resolver, toy_var_decl_list *var_decl_list)
-{
-    var_decl_cb_args args = { .resolver = resolver };
-    enumeration_result res = var_decl_list_foreach(var_decl_list, resolve_var_decl_callback, &args);
-    assert(ENUMERATION_COMPLETE == res);
-}
-
-static void resolve_names_stmt(name_resolver *resolver, toy_stmt *stmt)
-{
-    switch (stmt->type) {
-    case STMT_BLOCK:
-        toy_block *block = &stmt->block_stmt.block;
-        resolve_names_block(resolver, block);
-        break;
-    case STMT_BREAK:
-    case STMT_CONTINUE:
-        break;
-    case STMT_EXPR:
-        toy_expr *expr = stmt->expr_stmt.expr;
-        resolve_names_expr(resolver, expr);
-        break;
-    case STMT_FOR:
-        toy_for_stmt *for_stmt = &stmt->for_stmt;
-        resolve_names_stmt(resolver, for_stmt->at_end);
-        resolve_names_stmt(resolver, for_stmt->at_start);
-        resolve_names_block(resolver, &for_stmt->body);
-        resolve_names_expr(resolver, for_stmt->condition);
-        break;
-    case STMT_FUNC_DECL:
-        toy_func_decl_stmt *fdecl = &stmt->func_decl_stmt;
-        toy_function *func = &fdecl->func;
-        lexical_stack *stack = resolver->lexical_scopes;
-        lexical_frame *frame = lexical_stack_payload(stack);
-        symbol_table *table = &frame->variables;
-        symbol_table_set(table, func->name);
-        resolve_names_func(resolver, &fdecl->func);
-        break;
-    case STMT_IF:
-        toy_if_stmt *if_stmt = &stmt->if_stmt;
-        resolve_names_if_arm_list(resolver, if_stmt->arms);
-        resolve_names_block(resolver, &if_stmt->elsepart);
-        break;
-    case STMT_NULL:
-        break;
-    case STMT_RETURN:
-        toy_return_stmt *return_stmt = &stmt->return_stmt;
-        resolve_names_expr(resolver, return_stmt->expr);
-        break;
-    case STMT_VAR_DECL:
-        toy_var_decl_list *vdecl_list = &stmt->var_decl_stmt;
-        resolve_names_var_decl_list(resolver, vdecl_list);
-        break;
-    case STMT_WHILE:
-        toy_while_stmt *while_stmt = &stmt->while_stmt;
-        resolve_names_expr(resolver, while_stmt->condition);
-        resolve_names_block(resolver, &while_stmt->body);
-        break;
-    default:
-        assert(0);
-        break;
-    }
-}
+static visitor resolver_visitor = {
+    .block = handle_block,
+    .func_decl = handle_func_decl,
+    .func_expr = handle_func_expr,
+    .identifier = handle_identifier,
+    .parameter = handle_parameter,
+    .var_decl = handle_var_decl
+};
 
 void resolve_names(name_resolver *resolver, toy_function *func)
 {
-    assert(func->type == FUNC_USER_DECLARED);
-    resolve_names_func(resolver, func);
+    resolver_visitor.cookie = resolver;
+    visit_func_expr(&resolver_visitor, func);
 }

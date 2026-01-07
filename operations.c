@@ -342,9 +342,9 @@ static void lookup_field(toy_val *result, toy_val *target, toy_str field_name)
     /* TODO */
 }
 
-void op_field_ref(toy_interp *interp, toy_val *result, resolved_name *resolved, toy_str field_name)
+void op_field_ref(toy_interp *interp, toy_val *result, toy_identifier *identifier, toy_str field_name)
 {
-    toy_val *val = interp_get_lvalue(interp, resolved);
+    toy_val *val = interp_get_lvalue(interp, identifier);
     lookup_field(result, val, field_name);
 }
 
@@ -365,10 +365,10 @@ void op_method_call(toy_interp *interp, toy_val *result, const toy_method_call *
     }
 }
 
-void op_assign(toy_interp *interp, toy_val *result, resolved_name *lhs, toy_expr *rhs)
+void op_assign(toy_interp *interp, toy_val *result, toy_identifier *identifier, toy_expr *rhs)
 {
     toy_val rhs_result;
     interp_eval(interp, &rhs_result, rhs);
-    toy_val *val = interp_get_lvalue(interp, lhs);
+    toy_val *val = interp_get_lvalue(interp, identifier);
     *result = *val = rhs_result;
 }

@@ -74,19 +74,25 @@ typedef struct func_param_ref_struct {
 typedef struct block_var_ref_struct {
     size_t frames_up;
     size_t var_index;
-} block_var_ref;
+} var_ref;
 
 typedef struct resolved_name_struct {
     reference_type type;
     union {
         const toy_func_decl_stmt *func_decl;
         func_param_ref func_param;
-        /* TODO: Should be named var_ref */
-        block_var_ref var_decl;
+        var_ref var_decl;
+        /* TODO: Can this be toy_val too? */
         const predefined_constant *predef_const;
         const toy_val *predef_func;
     };
 } resolved_name;
+
+typedef struct toy_identifier_struct {
+    toy_str name;
+    /* TODO: This is leakage of the name resolution phase into the parse tree */
+    resolved_name resolved;
+} toy_identifier;
 
 typedef struct toy_unary_op_struct {
     toy_expr *arg;
@@ -99,41 +105,29 @@ typedef struct toy_binary_op_struct {
 
 /* TODO: Could be merged with toy_method_call */
 typedef struct toy_func_call_struct {
-    toy_str id;
-    /* TODO: This is leakage of the name resolution phase into the parse tree */
-    resolved_name resolved;
+    toy_identifier id;
     toy_expr_list *args;
 } toy_func_call;
 
 typedef struct toy_assignment_struct {
-    toy_str lhs;
-    /* TODO: This is leakage of the name resolution phase into the parse tree */
-    resolved_name resolved;
+    toy_identifier id;
     toy_expr *rhs;
 } toy_assignment;
 
 typedef struct toy_postfix_decrement_struct {
-    toy_str id;
-    /* TODO: This is leakage of the name resolution phase into the parse tree */
-    resolved_name resolved;
+    toy_identifier id;
 } toy_postfix_decrement;
 
 typedef struct toy_postfix_increment_struct {
-    toy_str id;
-    /* TODO: This is leakage of the name resolution phase into the parse tree */
-    resolved_name resolved;
+    toy_identifier id;
 } toy_postfix_increment;
 
 typedef struct toy_prefix_decrement_struct {
-    toy_str id;
-    /* TODO: This is leakage of the name resolution phase into the parse tree */
-    resolved_name resolved;
+    toy_identifier id;
 } toy_prefix_decrement;
 
 typedef struct toy_prefix_increment_struct {
-    toy_str id;
-    /* TODO: This is leakage of the name resolution phase into the parse tree */
-    resolved_name resolved;
+    toy_identifier id;
 } toy_prefix_increment;
 
 typedef struct toy_ternary_struct {
@@ -143,34 +137,22 @@ typedef struct toy_ternary_struct {
 } toy_ternary;
 
 typedef struct toy_field_ref_struct {
-    toy_str lhs;
-    toy_str rhs;
-    /* TODO: This is leakage of the name resolution phase into the parse tree */
-    resolved_name resolved;
+    toy_identifier id;
+    toy_str field_name;
 } toy_field_ref;
 
 typedef struct toy_method_call_struct {
-    toy_str lhs;
+    toy_identifier id;
     toy_str method_name;
-    toy_expr_list *args;
-    /* TODO: This is leakage of the name resolution phase into the parse tree */
-    resolved_name resolved_lhs;
     /* TODO: Could be a toy_function, directly resolved */
     resolved_name resolved_method;
+    toy_expr_list *args;
 } toy_method_call;
 
 typedef struct toy_collection_lookup_struct {
-    toy_str lhs;
+    toy_identifier id;
     toy_expr *rhs;
-    /* TODO: This is leakage of the name resolution phase into the parse tree */
-    resolved_name resolved;
 } toy_collection_lookup;
-
-typedef struct toy_id_expr_struct {
-    toy_str id;
-    /* TODO: This is leakage of the name resolution phase into the parse tree */
-    resolved_name resolved;
-} toy_id_expr;
 
 struct toy_expr_struct {
     toy_expr_type type;
@@ -188,7 +170,7 @@ struct toy_expr_struct {
         toy_ternary ternary;
         toy_field_ref field_ref;
         toy_collection_lookup collection_lookup;
-        toy_id_expr id;
+        toy_identifier id;
         /* These two hold AST expressions, as opposed to the interpreter values held in the toy_val member. */
         /* TODO: Do I really need these? */
         toy_map_entry_list *map;
