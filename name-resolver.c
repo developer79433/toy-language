@@ -1,37 +1,18 @@
 #include <assert.h>
 #include <string.h>
 
-#include "str.h"
-#include "errors.h"
-#include "stmt.h"
-#include "str-list.h"
-#include "stmt-list.h"
 #include "name-resolver.h"
-#include "var-decl-list.h"
-#include "constants.h"
-#include "function.h"
-#include "predef-function.h"
-#include "expr-list.h"
-#include "if-arm-list.h"
-#include "name-resolver-types.h"
-#include "map-val.h"
-#include "val-list.h"
-#include "log.h"
-#include "constants.h"
-#include "predef-function.h"
-#include "symbol-table.h"
+#include "expr-types.h"
 #include "resolved-name.h"
+#include "constants.h"
+#include "predef-function.h"
+#include "errors.h"
 #include "visitor.h"
-#include "block.h"
 #include "var-decl.h"
 
 #if 0
 #define DEBUG_NAME_RESOLUTION
 #endif
-
-void resolver_init(name_resolver *resolver)
-{
-}
 
 static void resolve_identifier_block_and_parents(toy_block *block, toy_identifier *identifier)
 {
@@ -190,7 +171,7 @@ static void handle_identifier(visitor *v, toy_identifier *identifier)
     default_identifier(v, identifier);
 }
 
-static visitor resolver_visitor = {
+static visitor resolver = {
     .block = handle_block,
     .func_decl = handle_func_decl,
     .func_expr = handle_func_expr,
@@ -199,8 +180,7 @@ static visitor resolver_visitor = {
     .var_decl = handle_var_decl
 };
 
-void resolve_names(name_resolver *resolver, toy_function *func)
+void resolve_names(toy_function *func)
 {
-    resolver_visitor.cookie = resolver;
-    visit_func_expr(&resolver_visitor, func);
+    visit_func_expr(&resolver, func);
 }
