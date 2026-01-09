@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <assert.h>
+#include <string.h>
 
 #include "bool.h"
 #include "num-types.h"
@@ -15,40 +16,25 @@
 #include "block.h"
 #include "toy-lexer.h"
 
+static toy_function toplevel_function = {
+    .code = {
+        .stmts = NULL,
+        .parent = NULL
+    },
+    .doc = "Global top-level function",
+    .name = "global",
+    .param_names = NULL,
+    .type = FUNC_USER_DECLARED
+};
+
 void parser_assert_valid(const toy_parser *parser)
 {
-    stmt_list_assert_valid(parser->program_start);
-    block_assert_valid(parser->cur_block);
-}
-
-toy_stmt_list *parser_get_program_start(toy_parser *parser)
-{
-    return parser->program_start;
-}
-
-void parser_set_program_start(toy_parser *parser, toy_stmt_list *stmt_list)
-{
-    parser->program_start = stmt_list;
-}
-
-static toy_parser the_parser;
-toy_parser *the_parser_ptr = NULL;
-
-toy_parser *parser_global_get(void)
-{
-    if (NULL == the_parser_ptr) {
-        the_parser_ptr = &the_parser;
-    }
-    return the_parser_ptr;
-}
-
-void parser_global_set(toy_parser *new_parser)
-{
-    the_parser_ptr = new_parser;
+    stmt_list_assert_valid(parser->toplevel_function.code.stmts);
 }
 
 void parser_init(toy_parser *parser)
 {
+    memcpy(&parser->toplevel_function, &toplevel_function, sizeof(parser->toplevel_function));
 #if YYDEBUG
 #define YYERROR_VERBOSE
     yydebug = 1;
@@ -60,12 +46,19 @@ void yyerror(const char *s)
     log_printf("\nError: %s\n", s);  
 }
 
-void parser_parse(toy_parser *parser, FILE *in)
+toy_stmt_list *program_start;
+
+toy_function *parser_parse(toy_parser *parser, FILE *in)
 {
+    program_start = NULL;
     init_lexer(in);
     int parse_res = yyparse();
-    if (parse_res != 0) {
+    if (0 == parse_res) {
+        parser->toplevel_function.code.stmts = program_start;
+    } else {
         fprintf(stderr, "yyparse() returned %d\n", parse_res);
-        exit(EXIT_FAILURE);
+        parser->toplevel_function.code.stmts = NULL;
     }
+    program_start = NULL;
+    return &parser->toplevel_function;
 }

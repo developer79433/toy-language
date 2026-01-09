@@ -21,6 +21,7 @@
 
 extern int yylex(void);
 void yyerror(const char *s);
+extern toy_stmt_list *program_start;
 
 %}
 
@@ -77,8 +78,7 @@ void yyerror(const char *s);
 
 program :
     stmts {
-        toy_parser *parser = parser_global_get();
-        parser_set_program_start(parser, $1);
+        program_start = $1;
     }
 ;
 
