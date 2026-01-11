@@ -9,7 +9,7 @@
 #include "val.h"
 
 const toy_val null_val = { .type = VAL_NULL };
-const toy_expr null_expr = { .type = EXPR_LITERAL, .val = null_val };
+const toy_expr null_expr = { .type = EXPR_LITERAL, .val = (toy_val *) &null_val };
 const toy_val true_val = { .type = VAL_BOOL, .num = 1 };
 const toy_val false_val = { .type = VAL_BOOL, .num = 0 };
 

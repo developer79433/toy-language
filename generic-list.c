@@ -40,8 +40,8 @@ enumeration_result generic_list_foreach(generic_list *list, generic_list_item_ca
 {
     for (size_t i = 0; list; i++) {
         generic_list *next = list->next;
-        item_callback_result ret = callback(cookie, i, list);
-        if (STOP_ENUMERATION == ret) {
+        item_callback_result res = callback(cookie, i, list);
+        if (STOP_ENUMERATION == res) {
             return ENUMERATION_INTERRUPTED;
         }
         list = next;
@@ -53,8 +53,8 @@ enumeration_result generic_list_foreach_const(const generic_list *list, const_ge
 {
     for (size_t i = 0; list; i++) {
         const generic_list *next = list->next;
-        item_callback_result ret = callback(cookie, i, list);
-        if (STOP_ENUMERATION == ret) {
+        item_callback_result res = callback(cookie, i, list);
+        if (STOP_ENUMERATION == res) {
             return ENUMERATION_INTERRUPTED;
         }
         list = next;

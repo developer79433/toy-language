@@ -11,6 +11,7 @@
 #include "debug.h"
 #include "stmt-list.h"
 #include "log.h"
+#include "block.h"
 
 void func_dump(const toy_function *func, toy_bool verbose)
 {
@@ -27,7 +28,7 @@ void func_dump(const toy_function *func, toy_bool verbose)
         if (func->type == FUNC_PREDEFINED) {
             log_printf("/* Pre-defined function code at %p */\n", func->predef);
         } else if (func->type == FUNC_USER_DECLARED) {
-            stmt_list_dump(func->code.stmts);
+            stmt_list_dump(func->code->stmts);
         } else {
             invalid_function_type(func->type);
         }
@@ -41,11 +42,15 @@ void func_assert_valid(const toy_function *func)
     assert(func);
     str_assert_valid(func->name);
     if (func->param_names) {
-        if (valid_check_depth < VALID_CHECK_RECURSION_DEPTH) {
-            valid_check_depth++;
-            str_list_assert_valid(func->param_names);
-            valid_check_depth--;
-        }
+        str_list_assert_valid(func->param_names);
+    }
+    if (func->type == FUNC_USER_DECLARED) {
+        toy_block *block = func->code;
+        assert(
+            block == &toplevel_block
+            || block->parent
+        );
+        block_assert_valid(block);
     }
 }
 #endif /* NDEBUG */

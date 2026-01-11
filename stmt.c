@@ -59,28 +59,32 @@ toy_stmt *stmt_alloc(toy_stmt_type stmt_type)
 
 toy_stmt *func_decl_stmt_alloc(toy_str name, toy_str_list *param_names, toy_block *block)
 {
-    toy_stmt *stmt = stmt_alloc(STMT_FUNC_DECL);
-    stmt->func_decl_stmt.func.type = FUNC_USER_DECLARED;
-    stmt->func_decl_stmt.func.name = name;
-    stmt->func_decl_stmt.func.param_names = param_names;
-    stmt->func_decl_stmt.val.type = VAL_FUNC;
-    stmt->func_decl_stmt.val.func = &stmt->func_decl_stmt.func;
-    /* FIXME: Structure copy */
-    stmt->func_decl_stmt.func.code = *block;
+    toy_stmt *stmt = malloc(sizeof(toy_stmt) + sizeof(toy_function) + sizeof(toy_val));
+    stmt->type = STMT_FUNC_DECL;
+    toy_func_decl_stmt *func_decl = &stmt->func_decl_stmt;
+    toy_function *func = func_decl->func = (toy_function *) (stmt + 1);
+    func->type = FUNC_USER_DECLARED;
+    func->name = name;
+    func->code = block;
+    func->param_names = param_names;
+    func_decl->val = (toy_val *) (func + 1);
+    func_decl->val->type = VAL_FUNC;
+    func_decl->val->func = func;
+    assert(func_decl->val->func == func_decl->func);
     return stmt;
 }
 
 void func_decl_stmt_dump(const toy_func_decl_stmt *func_decl)
 {
-    func_assert_valid(&func_decl->func);
-    val_assert_valid(&func_decl->val);
+    func_assert_valid(func_decl->func);
+    val_assert_valid(func_decl->val);
 }
 
 toy_stmt *var_decl_stmt_alloc(toy_var_decl_list *var_decl_list)
 {
     toy_stmt *stmt = stmt_alloc(STMT_VAR_DECL);
     /* TODO: Eliminate structure assign. Likely memory management bugs here. */
-    stmt->var_decl_stmt = *var_decl_list;
+    stmt->var_decl_stmt.var_decl_list = var_decl_list;
     return stmt;
 }
 
@@ -95,7 +99,7 @@ void stmt_dump(const toy_stmt *stmt, int append_semicolon)
     case STMT_BLOCK:
         log_puts("{\n");
         const toy_block_stmt *block_stmt = &stmt->block_stmt;
-        stmt_list_dump(block_stmt->block.stmts);
+        stmt_list_dump(block_stmt->block->stmts);
         log_puts("}\n");
         break;
     case STMT_BREAK:
@@ -134,17 +138,18 @@ void stmt_dump(const toy_stmt *stmt, int append_semicolon)
             stmt_dump(for_stmt->at_end, 0);
         }
         log_puts(") {\n");
-        if (for_stmt->body.stmts) {
-            stmt_list_dump(for_stmt->body.stmts);
+        if (for_stmt->body->stmts) {
+            stmt_list_dump(for_stmt->body->stmts);
         }
         log_puts("}");
         break;
     case STMT_FUNC_DECL:
         const toy_func_decl_stmt *func_decl_stmt = &stmt->func_decl_stmt;
-        log_printf("fun %s(", func_decl_stmt->func.name);
-        str_list_dump(func_decl_stmt->func.param_names);
+        const toy_function *func = func_decl_stmt->func;
+        log_printf("fun %s(", func->name);
+        str_list_dump(func->param_names);
         log_puts(") {\n");
-        stmt_list_dump(func_decl_stmt->func.code.stmts);
+        stmt_list_dump(func->code->stmts);
         log_puts("}");
         break;
     case STMT_IF:
@@ -157,12 +162,12 @@ void stmt_dump(const toy_stmt *stmt, int append_semicolon)
             }
             expr_dump(arm_list->arm.condition);
             log_puts(") {\n");
-            stmt_list_dump(arm_list->arm.code.stmts);
+            stmt_list_dump(arm_list->arm.code->stmts);
             log_puts("}");
         }
-        if (if_stmt->elsepart.stmts) {
+        if (if_stmt->elsepart->stmts) {
             log_puts(" else {\n");
-            stmt_list_dump(if_stmt->elsepart.stmts);
+            stmt_list_dump(if_stmt->elsepart->stmts);
             log_puts("}");
         }
         break;
@@ -180,7 +185,7 @@ void stmt_dump(const toy_stmt *stmt, int append_semicolon)
         break;
     case STMT_VAR_DECL:
         log_puts("var ");
-        var_decl_list_dump(&stmt->var_decl_stmt);
+        var_decl_list_dump(stmt->var_decl_stmt.var_decl_list);
         if (append_semicolon) {
             log_putc(';');
         }
@@ -190,7 +195,7 @@ void stmt_dump(const toy_stmt *stmt, int append_semicolon)
         log_puts("while (\n");
         expr_dump(while_stmt->condition);
         log_puts(") {\n");
-        stmt_list_dump(while_stmt->body.stmts);
+        stmt_list_dump(while_stmt->body->stmts);
         /* TODO: block_dump(while_stmt->body.parent); */
         log_puts("}");
         break;

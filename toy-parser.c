@@ -17,10 +17,7 @@
 #include "toy-lexer.h"
 
 static toy_function toplevel_function = {
-    .code = {
-        .stmts = NULL,
-        .parent = NULL
-    },
+    .code = &toplevel_block,
     .doc = "Global top-level function",
     .name = "global",
     .param_names = NULL,
@@ -29,7 +26,7 @@ static toy_function toplevel_function = {
 
 void parser_assert_valid(const toy_parser *parser)
 {
-    stmt_list_assert_valid(parser->toplevel_function.code.stmts);
+    stmt_list_assert_valid(parser->toplevel_function.code->stmts);
 }
 
 void parser_init(toy_parser *parser)
@@ -54,10 +51,10 @@ toy_function *parser_parse(toy_parser *parser, FILE *in)
     init_lexer(in);
     int parse_res = yyparse();
     if (0 == parse_res) {
-        parser->toplevel_function.code.stmts = program_start;
+        parser->toplevel_function.code->stmts = program_start;
     } else {
         fprintf(stderr, "yyparse() returned %d\n", parse_res);
-        parser->toplevel_function.code.stmts = NULL;
+        parser->toplevel_function.code->stmts = NULL;
     }
     program_start = NULL;
     return &parser->toplevel_function;

@@ -25,10 +25,6 @@ static void resolve_identifier_block_and_parents(toy_block *block, toy_identifie
             identifier->resolved.type = REF_VAR_DECL;
             identifier->resolved.var_decl.frames_up = frames_up;
             identifier->resolved.var_decl.var_index = entry->index;
-            if (frames_up != 0 && !entry->is_closed_over) {
-                entry->is_closed_over = TOY_TRUE;
-                symbol_table_set(&block->variables, identifier->name, entry);
-            }
 #ifdef DEBUG_NAME_RESOLUTION
             log_printf("Resolved '%s' to variable %d, %d frames up\n", identifier->name, *i, frames_up);
 #endif /* DEBUG_NAME_RESOLUTION */
@@ -40,10 +36,6 @@ static void resolve_identifier_block_and_parents(toy_block *block, toy_identifie
             identifier->resolved.type = REF_FUNC_PARAM;
             identifier->resolved.func_param.frames_up = frames_up;
             identifier->resolved.func_param.param_index = entry->index;
-            if (frames_up != 0 && !entry->is_closed_over) {
-                entry->is_closed_over = TOY_TRUE;
-                symbol_table_set(&block->parameters, identifier->name, entry);
-            }
 #ifdef DEBUG_NAME_RESOLUTION
             log_printf("Resolved '%s' to function parameter %d, %d frames up\n", identifier->name, *i, frames_up);
 #endif /* DEBUG_NAME_RESOLUTION */
@@ -97,68 +89,8 @@ static void handle_block(visitor *v, toy_block *block)
 #endif /* DEBUG_NAME_RESOLUTION */
     toy_block *old_block = cur_block;
     cur_block = block;
-    symbol_table_init(&block->variables);
-    symbol_table_init(&block->parameters);
     default_block(v, block);
     cur_block = old_block;
-}
-
-static toy_func_decl_stmt *cur_func_decl = NULL;
-
-static void handle_func_decl(visitor *v, toy_func_decl_stmt *func_decl)
-{
-#ifdef DEBUG_NAME_RESOLUTION
-    log_printf("*** FUNC DECL: %s\n", func_decl->func.name);
-#endif /* DEBUG_NAME_RESOLUTION */
-    toy_func_decl_stmt *old_func_decl = cur_func_decl;
-    cur_func_decl = func_decl;
-    assert(cur_block);
-    symbol_table_assert_valid(&cur_block->variables);
-    symbol_table_add(&cur_block->variables, func_decl->func.name);
-    default_func_decl(v, func_decl);
-    cur_func_decl = old_func_decl;
-}
-
-static toy_var_decl *cur_var_decl = NULL;
-
-static void handle_var_decl(visitor *v, toy_var_decl *var_decl)
-{
-#ifdef DEBUG_NAME_RESOLUTION
-    log_printf("*** VAR DECL: %s\n", var_decl->name);
-#endif /* DEBUG_NAME_RESOLUTION */
-    toy_var_decl *old_var_decl = cur_var_decl;
-    cur_var_decl = var_decl;
-    var_decl_assert_valid(var_decl);
-    assert(cur_block);
-    symbol_table_assert_valid(&cur_block->variables);
-    symbol_table_add(&cur_block->variables, var_decl->name);
-    default_var_decl(v, var_decl);
-    cur_var_decl = old_var_decl;
-}
-
-static toy_function *cur_func_expr = NULL;
-
-static void handle_func_expr(visitor *v, toy_function *func)
-{
-#ifdef DEBUG_NAME_RESOLUTION
-    log_printf("*** FUNC EXPR\n");
-#endif /* DEBUG_NAME_RESOLUTION */
-    toy_function *old_func_expr = cur_func_expr;
-    cur_func_expr = func;
-    default_func_expr(v, func);
-    cur_func_expr = old_func_expr;
-}
-
-static void handle_parameter(visitor *v, toy_str parameter)
-{
-#ifdef DEBUG_NAME_RESOLUTION
-    log_printf("*** PARAM: %s\n", parameter);
-#endif /* DEBUG_NAME_RESOLUTION */
-    assert(cur_func_decl || cur_func_expr);
-    assert(cur_block);
-    symbol_table_assert_valid(&cur_block->parameters);
-    symbol_table_add(&cur_block->parameters, parameter);
-    default_parameter(v, parameter);
 }
 
 static void handle_identifier(visitor *v, toy_identifier *identifier)
@@ -173,11 +105,7 @@ static void handle_identifier(visitor *v, toy_identifier *identifier)
 
 static visitor resolver = {
     .block = handle_block,
-    .func_decl = handle_func_decl,
-    .func_expr = handle_func_expr,
-    .identifier = handle_identifier,
-    .parameter = handle_parameter,
-    .var_decl = handle_var_decl
+    .identifier = handle_identifier
 };
 
 void resolve_names(toy_function *func)

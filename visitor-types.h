@@ -16,6 +16,7 @@ struct visitor_struct {
     void (*expr_list)(visitor *v, toy_expr_list *expr_list);
     void (*field_ref)(visitor *v, toy_field_ref *field_ref);
     void (*for_stmt)(visitor *v, toy_for_stmt *for_stmt);
+    void (*func_call)(visitor *v, toy_func_call *func_call);
     void (*func_decl)(visitor *v, toy_func_decl_stmt *func_decl);
     void (*func_expr)(visitor *v, toy_function *func);
     void (*identifier)(visitor *v, toy_identifier *identifier);

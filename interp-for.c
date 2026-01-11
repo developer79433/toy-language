@@ -36,7 +36,7 @@ run_stmt_result for_stmt(toy_interp *interp, const toy_for_stmt *for_stmt)
         /* TRUE */;
         run_for_stmt_at_end(interp, for_stmt)
     ) {
-        interp_push_loop(interp, &for_stmt->body);
+        interp_push_loop(interp, for_stmt->body);
         if (!for_stmt_condition_truthy(interp, for_stmt)) {
             interp_pop(interp);
             res = EXECUTED_STATEMENT;

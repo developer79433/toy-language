@@ -66,6 +66,7 @@ typedef struct toy_func_decl_stmt_struct toy_func_decl_stmt;
 struct toy_var_decl_struct;
 typedef struct toy_var_decl_struct toy_var_decl;
 
+/* TODO: These can be merged */
 typedef struct func_param_ref_struct {
     size_t frames_up;
     size_t param_index;
@@ -74,15 +75,16 @@ typedef struct func_param_ref_struct {
 typedef struct block_var_ref_struct {
     size_t frames_up;
     size_t var_index;
-} var_ref;
+} var_closure;
 
 typedef struct resolved_name_struct {
     reference_type type;
     union {
-        const toy_func_decl_stmt *func_decl;
+        /* function parameter */
         func_param_ref func_param;
-        var_ref var_decl;
-        /* TODO: Can this be toy_val too? */
+        /* variable or function declaration */
+        var_closure var_decl;
+        /* TODO: Can this be a var_closure too? */
         const predefined_constant *predef_const;
         const toy_val *predef_func;
     };
@@ -144,8 +146,6 @@ typedef struct toy_field_ref_struct {
 typedef struct toy_method_call_struct {
     toy_identifier id;
     toy_str method_name;
-    /* TODO: Could be a toy_function, directly resolved */
-    resolved_name resolved_method;
     toy_expr_list *args;
 } toy_method_call;
 
@@ -157,7 +157,7 @@ typedef struct toy_collection_lookup_struct {
 struct toy_expr_struct {
     toy_expr_type type;
     union {
-        toy_val val;
+        toy_val *val;
         toy_func_call func_call;
         toy_method_call method_call;
         toy_unary_op unary_op;
@@ -174,7 +174,7 @@ struct toy_expr_struct {
         /* These two hold AST expressions, as opposed to the interpreter values held in the toy_val member. */
         /* TODO: Do I really need these? */
         toy_map_entry_list *map;
-        toy_expr_list *list;
+        toy_expr_list *expr_list;
     };
 };
 

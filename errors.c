@@ -49,7 +49,7 @@ void invalid_expr_type(toy_expr_type expr_type) {
 
 void invalid_stmt_type(toy_stmt_type stmt_type)
 {
-    fatal_error("Invalid statement type %s", stmt_type_name(stmt_type));
+    fatal_error("Invalid statement type %d", stmt_type);
 }
 
 /* TODO: Delete me */
@@ -112,7 +112,7 @@ void invalid_argument_type(toy_val_type expected_type, const toy_val *actual_arg
 
 void invalid_value_type(toy_val_type value_type)
 {
-    fatal_error("Invalid value type %s", val_type_name(value_type));
+    fatal_error("Invalid value type %d", value_type);
 }
 
 void divide_by_zero(void)
@@ -163,18 +163,19 @@ const char *resolved_name_ref_name(const resolved_name *resolved)
     case REF_UNDEFINED:
         return "null";
     case REF_FUNC_DECL:
-        const toy_func_decl_stmt *func_decl = resolved->func_decl;
-        const toy_function *func = &func_decl->func;
-        return func->name;
+        const var_closure *func_ref = &resolved->var_decl;
+        assert(func_ref->frames_up >= 0);
+        assert(func_ref->var_index >= 0);
+        return "function reference";
     case REF_FUNC_PARAM:
         const func_param_ref *param_ref = &resolved->func_param;
         assert(param_ref);
         /* TODO */
         return "function parameter";
     case REF_VAR_DECL:
-        const var_ref *var_ref = &resolved->var_decl;
-        assert(var_ref->frames_up);
-        assert(var_ref->var_index);
+        const var_closure *var_ref = &resolved->var_decl;
+        assert(var_ref->frames_up >= 0);
+        assert(var_ref->var_index >= 0);
         return "variable reference";
     case REF_PREDEF_CONST:
         const predefined_constant *predef_const = resolved->predef_const;

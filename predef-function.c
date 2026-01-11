@@ -12,12 +12,13 @@
 #include "str.h"
 #include "constants.h"
 #include "log.h"
+#include "var.h"
 
-static run_stmt_result predefined_list_len(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_list_len(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(args);
     assert(num_args == 1);
-    const toy_val *arg = &args[0];
+    const toy_val *arg = var_get_const(&args[0]);
     if (arg->type != VAL_LIST) {
         invalid_argument_type(VAL_LIST, arg);
     }
@@ -28,11 +29,11 @@ static run_stmt_result predefined_list_len(toy_interp *interp, const toy_val *ar
     return REACHED_RETURN;
 }
 
-static run_stmt_result predefined_map_len(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_map_len(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(args);
     assert(num_args == 1);
-    const toy_val *arg = &args[0];
+    const toy_val *arg = var_get_const(&args[0]);
     if (arg->type != VAL_MAP) {
         invalid_argument_type(VAL_MAP, arg);
     }
@@ -43,9 +44,10 @@ static run_stmt_result predefined_map_len(toy_interp *interp, const toy_val *arg
     return REACHED_RETURN;
 }
 
-static run_stmt_result predefined_print(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_print(toy_interp *interp, const toy_var *args, size_t num_args)
 {
-    for (const toy_val *val = args; val < &args[num_args]; val++) {
+    for (const toy_var *var = args; var < &args[num_args]; var++) {
+        const toy_val *val = var_get_const(var);
         if (val->type == VAL_STR) {
             print_str(val->str);
         } else {
@@ -69,11 +71,11 @@ static void toy_assert_fail(const char * msg, size_t num_vals, ...)
     fatal_error("Assertion failed: %s", msg);
 }
 
-static run_stmt_result predefined_assert_equal(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_assert_equal(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(num_args == 2);
-    const toy_val *arg1 = &args[0];
-    const toy_val *arg2 = &args[1];
+    const toy_val *arg1 = var_get_const(&args[0]);
+    const toy_val *arg2 = var_get_const(&args[1]);
     if (vals_equal(arg1, arg2)) {
         /* Assertion succeeded */
     } else {
@@ -82,11 +84,11 @@ static run_stmt_result predefined_assert_equal(toy_interp *interp, const toy_val
     return REACHED_BLOCK_END;
 }
 
-static run_stmt_result predefined_assert_not_equal(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_assert_not_equal(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(num_args == 2);
-    const toy_val *arg1 = &args[0];
-    const toy_val *arg2 = &args[1];
+    const toy_val *arg1 = var_get_const(&args[0]);
+    const toy_val *arg2 = var_get_const(&args[1]);
     if (vals_nequal(arg1, arg2)) {
         /* Assertion succeeded */
     } else {
@@ -95,11 +97,11 @@ static run_stmt_result predefined_assert_not_equal(toy_interp *interp, const toy
     return REACHED_BLOCK_END;
 }
 
-static run_stmt_result predefined_assert_gt(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_assert_gt(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(num_args == 2);
-    const toy_val *arg1 = &args[0];
-    const toy_val *arg2 = &args[1];
+    const toy_val *arg1 = var_get_const(&args[0]);
+    const toy_val *arg2 = var_get_const(&args[1]);
     if (val_gt(arg1, arg2)) {
         /* Assertion succeeded */
     } else {
@@ -108,11 +110,11 @@ static run_stmt_result predefined_assert_gt(toy_interp *interp, const toy_val *a
     return REACHED_BLOCK_END;
 }
 
-static run_stmt_result predefined_assert_gte(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_assert_gte(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(num_args == 2);
-    const toy_val *arg1 = &args[0];
-    const toy_val *arg2 = &args[1];
+    const toy_val *arg1 = var_get_const(&args[0]);
+    const toy_val *arg2 = var_get_const(&args[1]);
     if (val_gte(arg1, arg2)) {
         /* Assertion succeeded */
     } else {
@@ -121,11 +123,11 @@ static run_stmt_result predefined_assert_gte(toy_interp *interp, const toy_val *
     return REACHED_BLOCK_END;
 }
 
-static run_stmt_result predefined_assert_lt(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_assert_lt(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(num_args == 2);
-    const toy_val *arg1 = &args[0];
-    const toy_val *arg2 = &args[1];
+    const toy_val *arg1 = var_get_const(&args[0]);
+    const toy_val *arg2 = var_get_const(&args[1]);
     if (val_lt(arg1, arg2)) {
         /* Assertion succeeded */
     } else {
@@ -134,11 +136,11 @@ static run_stmt_result predefined_assert_lt(toy_interp *interp, const toy_val *a
     return REACHED_BLOCK_END;
 }
 
-static run_stmt_result predefined_assert_lte(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_assert_lte(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(num_args == 2);
-    const toy_val *arg1 = &args[0];
-    const toy_val *arg2 = &args[1];
+    const toy_val *arg1 = var_get_const(&args[0]);
+    const toy_val *arg2 = var_get_const(&args[1]);
     if (val_lte(arg1, arg2)) {
         /* Assertion succeeded */
     } else {
@@ -149,10 +151,10 @@ static run_stmt_result predefined_assert_lte(toy_interp *interp, const toy_val *
 
 static const toy_val zero = { .type = VAL_NUM, .num = 0 };
 
-static run_stmt_result predefined_assert_zero(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_assert_zero(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(num_args == 1);
-    const toy_val *arg = &args[0];
+    const toy_val *arg = var_get_const(&args[0]);
     if (vals_equal(arg, &zero)) {
         /* Assertion succeeded */
     } else {
@@ -161,10 +163,10 @@ static run_stmt_result predefined_assert_zero(toy_interp *interp, const toy_val 
     return REACHED_BLOCK_END;
 }
 
-static run_stmt_result predefined_assert_not_zero(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_assert_not_zero(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(num_args == 1);
-    const toy_val *arg = &args[0];
+    const toy_val *arg = var_get_const(&args[0]);
     if (vals_nequal(arg, &zero)) {
         /* Assertion succeeded */
     } else {
@@ -173,10 +175,10 @@ static run_stmt_result predefined_assert_not_zero(toy_interp *interp, const toy_
     return REACHED_BLOCK_END;
 }
 
-static run_stmt_result predefined_assert_null(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_assert_null(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(num_args == 1);
-    const toy_val *arg = &args[0];
+    const toy_val *arg = var_get_const(&args[0]);
     if (vals_equal(arg, &null_val)) {
         /* Assertion succeeded */
     } else {
@@ -185,10 +187,10 @@ static run_stmt_result predefined_assert_null(toy_interp *interp, const toy_val 
     return REACHED_BLOCK_END;
 }
 
-static run_stmt_result predefined_assert_not_null(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_assert_not_null(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(num_args == 1);
-    const toy_val *arg = &args[0];
+    const toy_val *arg = var_get_const(&args[0]);
     if (vals_nequal(arg, &null_val)) {
         /* Assertion succeeded */
     } else {
@@ -197,10 +199,10 @@ static run_stmt_result predefined_assert_not_null(toy_interp *interp, const toy_
     return REACHED_BLOCK_END;
 }
 
-static run_stmt_result predefined_assert(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_assert(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(num_args == 1);
-    const toy_val *arg = &args[0];
+    const toy_val *arg = var_get_const(&args[0]);
     toy_bool b = val_truthy(arg);
     if (b) {
         /* Assertion succeeded */
@@ -224,11 +226,11 @@ static toy_bool val_list_all_callback(void *cookie, size_t index, const toy_val_
     return val_truthy(value);
 }
 
-static run_stmt_result predefined_list_all(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_list_all(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(num_args == 2);
-    const toy_val *arg1 = &args[0];
-    const toy_val *arg2 = &args[1];
+    const toy_val *arg1 = var_get_const(&args[0]);
+    const toy_val *arg2 = var_get_const(&args[1]);
     toy_bool ret;
     if (arg1->type == VAL_LIST) {
         toy_val_list *list = arg1->list;
@@ -266,11 +268,11 @@ static item_callback_result val_list_foreach_item_callback(void *cookie, size_t 
     return CONTINUE_ENUMERATION;
 }
 
-static run_stmt_result predefined_list_foreach(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_list_foreach(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(num_args == 2);
-    const toy_val *arg1 = &args[0];
-    const toy_val *arg2 = &args[1];
+    const toy_val *arg1 = var_get_const(&args[0]);
+    const toy_val *arg2 = var_get_const(&args[1]);
     if (arg1->type == VAL_LIST) {
         toy_val_list *list = arg1->list;
         if (arg2->type == VAL_FUNC) {
@@ -321,11 +323,11 @@ static item_callback_result val_list_filter_item_callback(void *cookie, size_t i
     return CONTINUE_ENUMERATION;
 }
 
-static run_stmt_result predefined_list_filter(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_list_filter(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(num_args == 2);
-    const toy_val *arg1 = &args[0];
-    const toy_val *arg2 = &args[1];
+    const toy_val *arg1 = var_get_const(&args[0]);
+    const toy_val *arg2 = var_get_const(&args[1]);
     if (arg1->type == VAL_LIST) {
         toy_val_list *list = arg1->list;
         if (arg2->type == VAL_FUNC) {
@@ -356,11 +358,11 @@ static toy_bool val_list_none_callback(void *cookie, size_t index, const toy_val
     return val_truthy(value);
 }
 
-static run_stmt_result predefined_list_none(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_list_none(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(num_args == 2);
-    const toy_val *arg1 = &args[0];
-    const toy_val *arg2 = &args[1];
+    const toy_val *arg1 = var_get_const(&args[0]);
+    const toy_val *arg2 = var_get_const(&args[1]);
     toy_bool ret;
     if (arg1->type == VAL_LIST) {
         toy_val_list *list = arg1->list;
@@ -400,11 +402,11 @@ static item_callback_result map_foreach_callback(void *cookie, const map_val_ent
     return CONTINUE_ENUMERATION;
 }
 
-static run_stmt_result predefined_map_foreach(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_map_foreach(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(num_args == 2);
-    const toy_val *arg1 = &args[0];
-    const toy_val *arg2 = &args[1];
+    const toy_val *arg1 = var_get_const(&args[0]);
+    const toy_val *arg2 = var_get_const(&args[1]);
     if (arg1->type == VAL_MAP) {
         map_val *map = arg1->map;
         if (arg2->type == VAL_FUNC) {
@@ -455,11 +457,11 @@ static item_callback_result map_filter_callback(void *cookie, const map_val_entr
     return CONTINUE_ENUMERATION;
 }
 
-static run_stmt_result predefined_map_filter(toy_interp *interp, const toy_val *args, size_t num_args)
+static run_stmt_result predefined_map_filter(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(num_args == 2);
-    const toy_val *arg1 = &args[0];
-    const toy_val *arg2 = &args[1];
+    const toy_val *arg1 = var_get_const(&args[0]);
+    const toy_val *arg2 = var_get_const(&args[1]);
     if (arg1->type == VAL_MAP) {
         map_val *map = arg1->map;
         map_val_assert_valid(map);

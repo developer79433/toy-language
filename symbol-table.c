@@ -50,7 +50,7 @@ size_t symbol_table_add(symbol_table *table, const toy_str name)
     symbol_table_assert_valid(table);
     str_assert_valid(name);
     size_t num_variables = symbol_table_size(table);
-    symbol_table_entry entry = { .index = num_variables, .is_closed_over = TOY_FALSE, .key = name };
+    symbol_table_entry entry = { .index = num_variables, .key = name };
     set_result res = map_buf_set((map_buf *) table, name, &entry, sizeof(entry));
     assert(SET_NEW == res);
     return num_variables;

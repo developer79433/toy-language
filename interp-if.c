@@ -48,9 +48,9 @@ run_stmt_result if_stmt(toy_interp *interp, const toy_if_stmt *if_stmt)
     );
     run_stmt_result run_result;
     if (args.found_arm) {
-        run_result = run_if_stmt_block(interp, &args.found_arm->code);
+        run_result = run_if_stmt_block(interp, args.found_arm->code);
     } else {
-        run_result = run_if_stmt_block(interp, &if_stmt->elsepart);
+        run_result = run_if_stmt_block(interp, if_stmt->elsepart);
     }
     if (run_result == REACHED_BLOCK_END) {
         run_result = EXECUTED_STATEMENT;

@@ -314,7 +314,7 @@ toy_val *val_alloc_func_decl(toy_str_list *formalparams, toy_block *body)
     val->func->type = FUNC_USER_DECLARED;
     val->func->name = ""; /* TODO: generated unique name */
     val->func->param_names = formalparams;
-    val->func->code.stmts = body->stmts;
+    val->func->code->stmts = body->stmts;
     return val;
 }
 

@@ -5,6 +5,7 @@
 #include "stmt-list-types.h"
 #include "map-val-types.h"
 #include "val-list-types.h"
+#include "var-types.h"
 
 enum frame_type_enum {
     FRAME_LOOP_BODY,
@@ -18,7 +19,7 @@ typedef enum frame_type_enum frame_type;
 typedef struct func_call_frame_struct {
     const toy_function *func;
     size_t num_arguments;
-    toy_val *arguments;
+    toy_var *arguments;
 } func_call_frame;
 
 typedef struct block_frame_struct {
@@ -33,8 +34,7 @@ typedef struct interp_frame_struct {
     };
     toy_stmt_list *cur_stmt;
     size_t num_variables;
-    toy_val *variables;
-    toy_val *cur_val;
+    toy_var *variables;
 } interp_frame;
 
 #endif /* TOY_INTERP_FRAME_TYPES_H */

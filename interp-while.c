@@ -11,7 +11,7 @@ run_stmt_result while_stmt(toy_interp *interp, const toy_while_stmt *while_stmt)
 {
     run_stmt_result res;
     for (;;) {
-        interp_push_loop(interp, &while_stmt->body);
+        interp_push_loop(interp, while_stmt->body);
         if (!while_stmt_condition_truthy(interp, while_stmt)) {
             res = EXECUTED_STATEMENT;
             interp_pop(interp);

@@ -31,7 +31,7 @@ struct toy_function_struct {
     toy_str doc;
     enum toy_func_type type;
     union {
-        toy_block code;
+        toy_block *code;
         predefined_func_addr predef;
     };
 };

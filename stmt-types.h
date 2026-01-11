@@ -14,9 +14,14 @@
 struct toy_stmt_struct;
 typedef struct toy_stmt_struct toy_stmt;
 
+typedef struct toy_var_decl_stmt_struct {
+    toy_var_decl_list *var_decl_list;
+} toy_var_decl_stmt;
+
 typedef struct toy_func_decl_stmt_struct {
-    toy_val val;
-    toy_function func;
+    toy_val *val;
+    toy_function *func;
+    size_t decl_index; /* offset in parent block's list of declarations */
 } toy_func_decl_stmt;
 
 typedef struct toy_expr_stmt_struct {
@@ -32,23 +37,23 @@ typedef struct toy_if_arm_list_struct toy_if_arm_list;
 
 typedef struct toy_if_stmt_struct {
     toy_if_arm_list *arms;
-    toy_block elsepart;
+    toy_block *elsepart;
 } toy_if_stmt;
 
 typedef struct toy_for_stmt_struct {
     toy_expr *condition;
     toy_stmt *at_start;
     toy_stmt *at_end;
-    toy_block body;
+    toy_block *body;
 } toy_for_stmt;
 
 typedef struct toy_while_stmt_struct {
     toy_expr *condition;
-    toy_block body;
+    toy_block *body;
 } toy_while_stmt;
 
 typedef struct toy_block_stmt_struct {
-    toy_block block;
+    toy_block *block;
 } toy_block_stmt;
 
 enum toy_stmt_type_enum {
@@ -76,7 +81,7 @@ struct toy_stmt_struct {
         toy_if_stmt if_stmt;
         toy_for_stmt for_stmt;
         toy_while_stmt while_stmt;
-        toy_var_decl_list var_decl_stmt;
+        toy_var_decl_stmt var_decl_stmt;
         toy_func_decl_stmt func_decl_stmt;
         toy_return_stmt return_stmt;
         toy_block_stmt block_stmt;

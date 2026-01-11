@@ -87,24 +87,25 @@ toy_expr *alloc_expr(toy_expr_type expr_type)
 
 toy_expr *alloc_expr_literal(toy_val_type val_type)
 {
-    toy_expr *expr;
-    expr = mymalloc(toy_expr);
+    toy_expr *expr = malloc(sizeof(toy_expr) + sizeof(toy_val));
     expr->type = EXPR_LITERAL;
-    expr->val.type = val_type;
+    expr->val = (toy_val *) (expr + 1);
+    expr->val->type = val_type;
     return expr;
 }
 
 toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_block *block)
 {
     toy_expr *expr;
-    expr = (toy_expr *) malloc(sizeof(toy_expr) + sizeof(toy_function));
+    expr = (toy_expr *) malloc(sizeof(toy_expr) + sizeof(toy_val) + sizeof(toy_function));
     expr->type = EXPR_LITERAL;
-    expr->val.type = VAL_FUNC;
-    expr->val.func = (toy_function *) (expr + 1);
-    expr->val.func->type = FUNC_USER_DECLARED;
-    expr->val.func->name = ""; /* TODO: generated unique name */
-    expr->val.func->code.stmts = block->stmts;
-    expr->val.func->param_names = formalparams;
+    expr->val = (toy_val *) (expr + 1);
+    expr->val->type = VAL_FUNC;
+    expr->val->func = (toy_function *) (expr->val + 1);
+    expr->val->func->type = FUNC_USER_DECLARED;
+    expr->val->func->name = ""; /* TODO: generated unique name */
+    expr->val->func->code->stmts = block->stmts;
+    expr->val->func->param_names = formalparams;
     return expr;
 }
 
@@ -254,10 +255,10 @@ void expr_dump(const toy_expr *expr) {
             dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " in ");
             break;
         case EXPR_LIST:
-            expr_list_dump(expr->list);
+            expr_list_dump(expr->expr_list);
             break;
         case EXPR_LITERAL:
-            val_dump(&expr->val, 1);
+            val_dump(expr->val, 1);
             break;
         case EXPR_LT:
             dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " < ");

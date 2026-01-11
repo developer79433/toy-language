@@ -6,7 +6,7 @@
 #include "val-types.h"
 
 typedef struct toy_var_struct {
-    toy_val val;
+    toy_val *val;
     size_t num_refs;
 } toy_var;
 

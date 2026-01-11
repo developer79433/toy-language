@@ -9,6 +9,7 @@
 
 typedef struct generic_list_struct {
     struct generic_list_struct *next;
+    /* user code should declare additional members in 'subclasses' here */
 } generic_list;
 
 typedef item_callback_result (*generic_list_item_callback)(void *cookie, size_t index, generic_list *item);

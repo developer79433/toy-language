@@ -11,7 +11,7 @@
 
 void default_func_decl(visitor *v, toy_func_decl_stmt *func_decl)
 {
-    toy_function *func = &func_decl->func;
+    toy_function *func = func_decl->func;
     assert(func->type == FUNC_USER_DECLARED);
     visit_string(v, func->name);
     visit_parameter_list(v, func->param_names);
@@ -180,6 +180,21 @@ void visit_bool(visitor *v, toy_bool b)
         v->bool(v, b);
     } else {
         default_bool(v, b);
+    }
+}
+
+void default_func_call(visitor *v, toy_func_call *func_call)
+{
+    visit_identifier(v, &func_call->id);
+    visit_expr_list(v, func_call->args);
+}
+
+void visit_func_call(visitor *v, toy_func_call *func_call)
+{
+    if (v->func_call) {
+        v->func_call(v, func_call);
+    } else {
+        default_func_call(v, func_call);
     }
 }
 
@@ -463,6 +478,7 @@ void default_expr(visitor *v, toy_expr *expr)
         break;
     case EXPR_FUNC_CALL:
         toy_func_call *call = &expr->func_call;
+        visit_func_call(v, call);
         visit_identifier(v, &call->id);
         visit_expr_list(v, call->args);
         break;
@@ -478,10 +494,10 @@ void default_expr(visitor *v, toy_expr *expr)
         visit_binop(v, &expr->binary_op);
         break;
     case EXPR_LIST:
-        visit_expr_list(v, expr->list);
+        visit_expr_list(v, expr->expr_list);
         break;
     case EXPR_LITERAL:
-        toy_val *val = &expr->val;
+        toy_val *val = expr->val;
         visit_val(v, val);
         break;
     case EXPR_LT:
@@ -549,7 +565,7 @@ void default_for_stmt(visitor *v, toy_for_stmt *for_stmt)
     visit_stmt(v, for_stmt->at_end);
     visit_stmt(v, for_stmt->at_start);
     visit_expr(v, for_stmt->condition);
-    visit_block(v, &for_stmt->body);
+    visit_block(v, for_stmt->body);
 }
 
 void visit_for_stmt(visitor *v, toy_for_stmt *for_stmt)
@@ -564,7 +580,7 @@ void visit_for_stmt(visitor *v, toy_for_stmt *for_stmt)
 void default_if_arm(visitor *v, toy_if_arm *if_arm)
 {
     visit_expr(v, if_arm->condition);
-    visit_block(v, &if_arm->code);
+    visit_block(v, if_arm->code);
 }
 
 void visit_if_arm(visitor *v, toy_if_arm *if_arm)
@@ -607,7 +623,7 @@ void visit_if_arm_list(visitor *v, toy_if_arm_list *if_arm_list)
 void default_if_stmt(visitor *v, toy_if_stmt *if_stmt)
 {
     visit_if_arm_list(v, if_stmt->arms);
-    visit_block(v, &if_stmt->elsepart);
+    visit_block(v, if_stmt->elsepart);
 }
 
 void visit_if_stmt(visitor *v, toy_if_stmt *if_stmt)
@@ -693,7 +709,7 @@ void visit_var_decl_list(visitor *v, toy_var_decl_list *var_decl_list)
 void default_while_stmt(visitor *v, toy_while_stmt *while_stmt)
 {
     visit_expr(v, while_stmt->condition);
-    visit_block(v, &while_stmt->body);
+    visit_block(v, while_stmt->body);
 }
 
 void visit_while_stmt(visitor *v, toy_while_stmt *while_stmt)
@@ -709,7 +725,7 @@ void default_stmt(visitor *v, toy_stmt *stmt)
 {
     switch (stmt->type) {
     case STMT_BLOCK:
-        toy_block *block = &stmt->block_stmt.block;
+        toy_block *block = stmt->block_stmt.block;
         visit_block(v, block);
         break;
     case STMT_BREAK:
@@ -742,7 +758,8 @@ void default_stmt(visitor *v, toy_stmt *stmt)
         visit_return_stmt(v, return_stmt);
         break;
     case STMT_VAR_DECL:
-        toy_var_decl_list *var_decl_list = &stmt->var_decl_stmt;
+        toy_var_decl_stmt *var_decl_stmt = &stmt->var_decl_stmt;
+        toy_var_decl_list *var_decl_list = var_decl_stmt->var_decl_list;
         visit_var_decl_list(v, var_decl_list);
         break;
     case STMT_WHILE:
@@ -808,7 +825,7 @@ void visit_block(visitor *v, toy_block *block)
 
 void default_func_expr(visitor *v, toy_function *func)
 {
-    visit_block(v, &func->code);
+    visit_block(v, func->code);
 }
 
 void visit_func_expr(visitor *v, toy_function *func)

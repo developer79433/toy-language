@@ -8,7 +8,7 @@ toy_if_arm_list *if_arm_list_alloc(toy_expr *condition, toy_block *block)
     toy_if_arm_list *arm_list;
     arm_list = mymalloc(toy_if_arm_list);
     arm_list->arm.condition = condition;
-    arm_list->arm.code.stmts = block->stmts;
+    arm_list->arm.code = block;
     arm_list->next = NULL;
     return arm_list;
 }

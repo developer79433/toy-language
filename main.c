@@ -33,10 +33,10 @@ int main(int argc, char **argv)
     func_dump(program, TOY_TRUE);
 
     add_block_parents(program);
-    resolve_names(program);
     allocate_registers(program);
+    resolve_names(program);
 
-    toy_interp *interp = interp_alloc(program->code.stmts);
+    toy_interp *interp = interp_alloc(program);
     interp_run_current_block(interp);
     interp_free(interp);
 

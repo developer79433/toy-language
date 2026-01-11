@@ -17,6 +17,7 @@
 #include "var-decl-list.h"
 #include "stmt-list.h"
 #include "if-arm-list.h"
+#include "block.h"
 #include "toy-parser.h"
 
 extern int yylex(void);
@@ -39,7 +40,7 @@ extern toy_stmt_list *program_start;
     toy_var_decl *var_decl;
     toy_var_decl_list *var_decl_list;
     toy_if_arm_list *if_arm;
-    toy_block block;
+    toy_block *block;
     toy_str_list *str_list;
     toy_map_entry_list *map_entry_list;
 }
@@ -128,7 +129,7 @@ stmt_in_for_atend:
 if_stmt:
     T_IF T_LPAREN expr T_RPAREN block elseifs elsepart {
         $$ = stmt_alloc(STMT_IF);
-        $$->if_stmt.arms = if_arm_list_alloc($3, &$5);
+        $$->if_stmt.arms = if_arm_list_alloc($3, $5);
         $$->if_stmt.arms->next = $6;
         $$->if_stmt.elsepart = $7;
     }
@@ -181,7 +182,9 @@ expr_stmt:
 
 func_decl_stmt:
     T_FUN T_IDENTIFIER T_LPAREN formalparams T_RPAREN block {
-        $$ = func_decl_stmt_alloc($2, $4, &$6);
+        $$ = func_decl_stmt_alloc($2, $4, $6);
+        log_puts("parser: func decl stmt:\n");
+        stmt_dump($$, TOY_TRUE);
     }
 ;
 
@@ -249,7 +252,7 @@ vardecl :
 elseifs :
     { $$ = NULL; }
     | elseifs T_ELSEIF T_LPAREN expr T_RPAREN block {
-        toy_if_arm_list *this_arm = if_arm_list_alloc($4, &$6);
+        toy_if_arm_list *this_arm = if_arm_list_alloc($4, $6);
         
         if ($1) {
             if_arm_list_concat($1, this_arm);
@@ -259,7 +262,7 @@ elseifs :
         }
     }
     | elseifs T_ELSE T_IF T_LPAREN expr T_RPAREN block {
-        toy_if_arm_list *this_arm = if_arm_list_alloc($5, &$7);
+        toy_if_arm_list *this_arm = if_arm_list_alloc($5, $7);
         
         if ($1) {
             if_arm_list_concat($1, this_arm);
@@ -381,15 +384,15 @@ literal:
     }
     | T_BOOLEAN {
         $$ = alloc_expr_literal(VAL_BOOL);
-        $$->val.boolean = $1;
+        $$->val->boolean = $1;
     }
     | T_FLOAT {
         $$ = alloc_expr_literal(VAL_NUM);
-        $$->val.num = $1;
+        $$->val->num = $1;
     }
     | T_STRING {
         $$ = alloc_expr_literal(VAL_STR);
-        $$->val.str = $1;
+        $$->val->str = $1;
     }
     /* TODO: identifier is not a literal - this needs breaking up */
     | T_IDENTIFIER {
@@ -560,7 +563,7 @@ unary_neg_expr: T_MINUS expr_no_comma {
 
 listexpr: T_LBRACKET listitems T_RBRACKET {
         $$ = alloc_expr(EXPR_LIST);
-        $$->list = $2;
+        $$->expr_list = $2;
     }
 ;
 
@@ -573,8 +576,8 @@ map_expr: T_LBRACE mapitems T_RBRACE {
 /* TODO: This should be a literal, not an expression */
 function_decl_expr:
     T_FUN T_LPAREN formalparams T_RPAREN block {
-        $$ = alloc_expr_func_decl($3, &$5);
-        assert($$->val.type == VAL_FUNC);
+        $$ = alloc_expr_func_decl($3, $5);
+        assert($$->val->type == VAL_FUNC);
     }
 ;
 
@@ -720,7 +723,7 @@ expr :
 
 block :
     T_LBRACE stmts T_RBRACE {
-        $$.stmts = $2;
+        $$ = block_alloc($2);
     }
 ;
 

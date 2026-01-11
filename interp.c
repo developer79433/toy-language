@@ -32,32 +32,40 @@
 #include "interp-frame.h"
 #include "resolved-name.h"
 #include "block.h"
+#include "var.h"
 
 #if 0
 #define DEBUG_STACK 1
 #endif
 
-#if 0
+#if 1
 #define DEBUG_INTERP_LOOKUPS
 #endif
 
 typedef struct toy_interp_struct {
-    /* TODO: Delete me */
-    toy_function main_program;
+    const toy_function * main_program;
     interp_stack *stack;
     toy_val return_val;
 } toy_interp;
+
+void interp_assert_valid(const toy_interp *interp)
+{
+    func_assert_valid(interp->main_program);
+    val_assert_valid(&interp->return_val);
+    interp_stack_assert_valid(interp->stack);
+}
 
 static run_stmt_result block_stmt(toy_interp *interp, const toy_block *block);
 
 interp_stack *interp_get_stack(toy_interp *interp)
 {
-    assert(interp->stack != NULL);
+    interp_assert_valid(interp);
     return interp->stack;
 }
 
 interp_frame *interp_cur_frame(toy_interp *interp)
 {
+    interp_assert_valid(interp);
     interp_stack *stack = interp_get_stack(interp);
     return interp_stack_payload(stack);
 }
@@ -71,19 +79,21 @@ static item_callback_result append_val_list_callback(void *cookie, size_t index,
 {
     append_cb_args *args = (append_cb_args *) cookie;
     toy_expr *expr = expr_list_payload(list);
-    toy_val value;
-    interp_eval(args->interp, &value, expr);
+    toy_val val;
+    interp_assert_valid(args->interp);
+    interp_eval_val(args->interp, &val, expr);
     assert(args->result->type == VAL_LIST);
-    val_list_append(args->result->list, &value);
+    val_list_append(args->result->list, &val);
     return CONTINUE_ENUMERATION;
 }
 
 static void eval_expr_list(toy_interp *interp, toy_val *result, const toy_expr_list *expr_list)
 {
+    interp_assert_valid(interp);
     result->type = VAL_LIST;
     if (expr_list) {
         toy_val element;
-        interp_eval(interp, &element, expr_list->expr);
+        interp_eval_val(interp, &element, expr_list->expr);
         result->list = val_list_alloc(&element);
         append_cb_args append_args = { .interp = interp, .result = result };
         enumeration_result res = expr_list_foreach(expr_list->next, append_val_list_callback, &append_args);
@@ -95,6 +105,7 @@ static void eval_expr_list(toy_interp *interp, toy_val *result, const toy_expr_l
 
 static run_stmt_result run_predefined_func_val_list(toy_interp *interp, predefined_func_addr predef)
 {
+    interp_assert_valid(interp);
     interp_frame *frame = interp_cur_frame(interp);
     assert(FRAME_PRE_DEF_FUNC == frame->type);
     const func_call_frame *func_inv = &frame->func_call;
@@ -103,6 +114,7 @@ static run_stmt_result run_predefined_func_val_list(toy_interp *interp, predefin
 
 run_stmt_result interp_run_func_expr_list(toy_interp *interp, const toy_function *func, const toy_expr_list *args)
 {
+    interp_assert_valid(interp);
     toy_val actual_args;
     eval_expr_list(interp, &actual_args, args);
     assert(VAL_LIST == actual_args.type);
@@ -133,6 +145,7 @@ run_stmt_result interp_run_func_expr_list(toy_interp *interp, const toy_function
 
 toy_val *interp_get_return_value(toy_interp *interp)
 {
+    interp_assert_valid(interp);
     toy_val *val = &interp->return_val;
     val_assert_valid(val);
     return val;
@@ -140,12 +153,14 @@ toy_val *interp_get_return_value(toy_interp *interp)
 
 void interp_set_return_value(toy_interp *interp, toy_val *val)
 {
+    interp_assert_valid(interp);
     val_assert_valid(val);
     interp->return_val = *val;
 }
 
 run_stmt_result interp_run_func_val_list(toy_interp *interp, toy_function *def, const toy_val_list *args)
 {
+    interp_assert_valid(interp);
     val_list_assert_valid(args);
     switch (def->type) {
     case FUNC_PREDEFINED:
@@ -168,12 +183,15 @@ run_stmt_result interp_run_func_val_list(toy_interp *interp, toy_function *def, 
 
 run_stmt_result interp_run_func_single_arg(toy_interp *interp, toy_function *def, const toy_val *arg)
 {
+    interp_assert_valid(interp);
     toy_val_list func_args = { .val = *arg, .next = NULL };
     return interp_run_func_val_list(interp, def, &func_args);
 }
 
 run_stmt_result interp_call_func(toy_interp *interp, const toy_function *func, const toy_expr_list *args)
 {
+    interp_assert_valid(interp);
+    func_assert_valid(func);
     run_stmt_result res;
     if (func->param_names == &INFINITE_PARAMS) {
         res = interp_run_func_expr_list(interp, func, args);
@@ -194,13 +212,14 @@ run_stmt_result interp_call_func(toy_interp *interp, const toy_function *func, c
     return res;
 }
 
-static void list_lookup(toy_interp *interp, toy_val *result, toy_val_list *list, toy_val *index)
+static void list_lookup(toy_interp *interp, toy_val *result, const toy_val_list *list, toy_val *index)
 {
+    interp_assert_valid(interp);
     if (index->type == VAL_NUM) {
         if (index->num < 0) {
             invalid_val_list_index(list, index->num);
         } else {
-            toy_val *lookup_result = val_list_index(list, index->num);
+            const toy_val *lookup_result = val_list_index_const(list, index->num);
             if (lookup_result) {
                 *result = *lookup_result;
             } else {
@@ -212,12 +231,13 @@ static void list_lookup(toy_interp *interp, toy_val *result, toy_val_list *list,
     }
 }
 
-static void map_lookup(toy_interp *interp, toy_val *result, map_val *map, toy_val *index)
+static void map_lookup(toy_interp *interp, toy_val *result, const map_val *map, toy_val *index)
 {
+    interp_assert_valid(interp);
     if (index->type == VAL_STR) {
-        toy_val *existing_value = map_val_get(map, index->str);
-        if (existing_value) {
-            *result = *existing_value;
+        const toy_val *retrieved_value = map_val_get_const(map, index->str);
+        if (retrieved_value) {
+            *result = *retrieved_value;
         } else {
             *result = null_val;
         }
@@ -228,6 +248,7 @@ static void map_lookup(toy_interp *interp, toy_val *result, map_val *map, toy_va
 
 static void str_lookup(toy_interp *interp, toy_val *result, toy_str str, toy_val *index)
 {
+    interp_assert_valid(interp);
     if (index->type == VAL_NUM) {
         if (index->num >= 0 && index->num < strlen(str)) {
             result->type = VAL_NUM;
@@ -240,72 +261,58 @@ static void str_lookup(toy_interp *interp, toy_val *result, toy_str str, toy_val
     }
 }
 
-static void collection_lookup(toy_interp *interp, toy_val *result, toy_identifier *identifier, toy_expr *index)
+static void collection_lookup(toy_interp *interp, toy_val *result, toy_identifier *collection_identifier, toy_expr *index)
 {
+    interp_assert_valid(interp);
     toy_val index_result;
-    interp_eval(interp, &index_result, index);
-    toy_val *val = interp_get_lvalue(interp, identifier);
-    if (val->type == VAL_LIST) {
-        list_lookup(interp, result, val->list, &index_result);
-    } else if (val->type == VAL_MAP) {
-        map_lookup(interp, result, val->map, &index_result);
-    } else if (val->type == VAL_STR) {
-        str_lookup(interp, result, val->str, &index_result);
+    interp_eval_val(interp, &index_result, index);
+    /* type checking of index is delegated to collection-type-specific subroutines */
+    const toy_val *collection_val = interp_get_rvalue(interp, collection_identifier);
+    if (collection_val->type == VAL_LIST) {
+        list_lookup(interp, result, collection_val->list, &index_result);
+    } else if (collection_val->type == VAL_MAP) {
+        map_lookup(interp, result, collection_val->map, &index_result);
+    } else if (collection_val->type == VAL_STR) {
+        str_lookup(interp, result, collection_val->str, &index_result);
     } else {
-        invalid_operand(EXPR_COLLECTION_LOOKUP, val);
+        invalid_operand(EXPR_COLLECTION_LOOKUP, collection_val);
     }
 }
 
-static toy_val *interp_get_func_param(toy_interp *interp, const func_param_ref *param_ref)
+static toy_var *interp_get_param_closure(toy_interp *interp, const func_param_ref *param_ref)
 {
+    interp_assert_valid(interp);
     interp_stack *stack = interp_get_stack(interp);
-    return interp_stack_get_func_param(stack, param_ref->frames_up, param_ref->param_index);
+    interp_frame *frame = interp_stack_index(stack, param_ref->frames_up);
+    toy_var *var = interp_frame_get_func_arg(frame, param_ref->param_index);
+    var_assert_valid(var);
+    return var;
 }
 
-/* TODO: Belongs elsewhere */
-static const toy_block *block_lookup_parents_const(const toy_block *cur_block, size_t num_parents)
+static toy_var *interp_get_var_closure(toy_interp *interp, const var_closure *closure)
 {
-    while (num_parents--) {
-        const toy_block *new_block = block_parent_const(cur_block);
-        assert(new_block != NULL);
-        assert(new_block != cur_block);
-        cur_block = new_block;
-    }
-    return cur_block;
-}
-
-static toy_val *interp_frame_get_variable(interp_frame *frame, size_t frames_up, size_t var_index)
-{
-    const toy_block *block = interp_frame_get_block_const(frame);
-    /*
-    log_debug("interp: current block");
-    block_dump(block);
-    */
-    block = block_lookup_parents_const(block, frames_up);
+    interp_assert_valid(interp);
+    interp_stack *stack = interp_get_stack(interp);
+    /* FIXME: This is indexing into the lexical scope, but then into the runtime variables' values */
+    interp_frame *frame = interp_stack_index(stack, closure->frames_up);
 #ifdef DEBUG_INTERP_LOOKUPS
-    log_printf("interp: var_index is %zu and frame is:\n", var_index);
-    block_dump(block);
+    log_printf("interp: var_index is %zu and frame is:\n", closure->var_index);
+    interp_frame_dump(frame);
+    log_printf("\n");
 #endif /* DEBUG_INTERP_LOOKUPS */
-    toy_val *val = interp_frame_get_var(frame, var_index);
+    toy_var *var = interp_frame_get_var(frame, closure->var_index);
+    var_assert_valid(var);
 #ifdef DEBUG_INTERP_LOOKUPS
-    log_printf("interp: val retrieved:\n");
-    val_dump(val, TOY_FALSE);
+    log_printf("interp: var retrieved:\n");
+    var_dump(var, TOY_FALSE);
     log_putc('\n');
 #endif /* DEBUG_INTERP_LOOKUPS */
-    return val;
+    return var;
 }
 
-static toy_val *interp_get_variable(toy_interp *interp, const var_ref *var_ref)
+toy_var *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier)
 {
-    interp_frame *cur_frame = interp_cur_frame(interp);
-    /* FIXME: This is indexing into the lexical scope, but then into the runtime variables' values */
-    return interp_frame_get_variable(cur_frame, var_ref->frames_up, var_ref->var_index);
-}
-
-toy_val *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier)
-{
-    toy_val *val;
-
+    interp_assert_valid(interp);
 #ifdef DEBUG_INTERP_LOOKUPS
     log_debug("interp: retrieving lvalue");
     resolved_name_dump(&identifier->resolved);
@@ -313,14 +320,19 @@ toy_val *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier)
 
     switch (identifier->resolved.type) {
     case REF_FUNC_DECL:
-        log_debug("interp: lvalue is func decl");
-        invalid_lvalue(&identifier->resolved);
-        break;
+        /* Treat function declarations as mutable variable declarations with an initial function value */
+        var_closure *func_ref = &identifier->resolved.var_decl;
+        toy_var *func_decl_var = interp_get_var_closure(interp, func_ref);
+        toy_val *func_val = var_get(func_decl_var);
+        assert(VAL_FUNC == func_val->type);
+        var_assert_valid(func_decl_var);
+        return func_decl_var;
     case REF_FUNC_PARAM:
         func_param_ref *param_ref = &identifier->resolved.func_param;
         log_debug("interp: lvalue is func param");
-        val = interp_get_func_param(interp, param_ref);
-        break;
+        toy_var *param_var = interp_get_param_closure(interp, param_ref);
+        var_assert_valid(param_var);
+        return param_var;
     case REF_PREDEF_CONST:
     case REF_PREDEF_FUNC:
         log_debug("interp: lvalue is predef const or func");
@@ -331,48 +343,64 @@ toy_val *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier)
         assert(0);
         break;
     case REF_VAR_DECL:
-        var_ref *var_ref = &identifier->resolved.var_decl;
-        val = interp_get_variable(interp, var_ref);
-        break;
+        var_closure *var_ref = &identifier->resolved.var_decl;
+        toy_var *var_decl_var = interp_get_var_closure(interp, var_ref);
+        var_assert_valid(var_decl_var);
+        return var_decl_var;
     default:
         assert(0);
         break;
     }
-
-    return val;
+    assert(0);
+    return NULL;
 }
 
-const toy_val *interp_get_rvalue(toy_interp *interp, toy_identifier *identifier)
+const toy_val *interp_get_rvalue(toy_interp *interp, const toy_identifier *identifier)
 {
+    interp_assert_valid(interp);
     switch (identifier->resolved.type) {
     case REF_FUNC_DECL:
-        const toy_func_decl_stmt *func_decl = identifier->resolved.func_decl;
-        return &func_decl->val;
+        const var_closure *func_ref = &identifier->resolved.var_decl;
+        toy_var *func_decl_var = interp_get_var_closure(interp, func_ref);
+        toy_val *func_val = var_get(func_decl_var);
+        assert(VAL_FUNC == func_val->type);
+        val_assert_valid(func_val);
+        return func_val;
     case REF_FUNC_PARAM:
         const func_param_ref *param_ref = &identifier->resolved.func_param;
-        return interp_get_func_param(interp, param_ref);
+        toy_var *func_param_var = interp_get_param_closure(interp, param_ref);
+        toy_val *func_param_val = var_get(func_param_var);
+        val_assert_valid(func_param_val);
+        return func_param_val;
     case REF_PREDEF_CONST:
         const predefined_constant *predef_const = identifier->resolved.predef_const;
-        return &predef_const->value;
+        const toy_val *predef_const_val = &predef_const->value;
+        val_assert_valid(predef_const_val);
+        return predef_const_val;
     case REF_PREDEF_FUNC:
-        return identifier->resolved.predef_func;
+        const toy_val *predef_func_val = identifier->resolved.predef_func;
+        val_assert_valid(predef_func_val);
+        return predef_func_val;
     case REF_UNDEFINED:
         assert(0);
         break;
     case REF_VAR_DECL:
-        const var_ref *var_ref = &identifier->resolved.var_decl;
-        return interp_get_variable(interp, var_ref);
+        const var_closure *var_ref = &identifier->resolved.var_decl;
+        toy_var *var_decl_var = interp_get_var_closure(interp, var_ref);
+        toy_val *var_val = var_get(var_decl_var);
+        val_assert_valid(var_val);
+        return var_val;
     default:
         assert(0);
         break;
     }
-
-    return NULL;
 }
 
 static void op_postfix_decrement(toy_interp *interp, toy_val *result, toy_identifier *identifier)
 {
-    toy_val *val = interp_get_lvalue(interp, identifier);
+    interp_assert_valid(interp);
+    toy_var *var = interp_get_lvalue(interp, identifier);
+    toy_val *val = var_get(var);
     if (val->type == VAL_NUM) {
         *result = *val;
         val->num--;
@@ -383,7 +411,9 @@ static void op_postfix_decrement(toy_interp *interp, toy_val *result, toy_identi
 
 static void op_postfix_increment(toy_interp *interp, toy_val *result, toy_identifier *identifier)
 {
-    toy_val *val = interp_get_lvalue(interp, identifier);
+    interp_assert_valid(interp);
+    toy_var *var = interp_get_lvalue(interp, identifier);
+    toy_val *val = var_get(var);
     if (val->type == VAL_NUM) {
         *result = *val;
         val->num++;
@@ -394,7 +424,9 @@ static void op_postfix_increment(toy_interp *interp, toy_val *result, toy_identi
 
 static void op_prefix_decrement(toy_interp *interp, toy_val *result, toy_identifier *identifier)
 {
-    toy_val *val = interp_get_lvalue(interp, identifier);
+    interp_assert_valid(interp);
+    toy_var *var = interp_get_lvalue(interp, identifier);
+    toy_val *val = var_get(var);
     if (val->type == VAL_NUM) {
         val->num--;
         *result = *val;
@@ -405,7 +437,9 @@ static void op_prefix_decrement(toy_interp *interp, toy_val *result, toy_identif
 
 static void op_prefix_increment(toy_interp *interp, toy_val *result, toy_identifier *identifier)
 {
-    toy_val *val = interp_get_lvalue(interp, identifier);
+    interp_assert_valid(interp);
+    toy_var *var = interp_get_lvalue(interp, identifier);
+    toy_val *val = var_get(var);
     if (val->type == VAL_NUM) {
         val->num++;
         *result = *val;
@@ -424,13 +458,15 @@ static item_callback_result map_entry_callback(void *cookie, size_t index, const
     map_entry_cb_args *args = (map_entry_cb_args *) cookie;
     const toy_map_entry *map_entry = map_entry_list_payload_const(list);
     toy_val value;
-    interp_eval(args->interp, &value, map_entry->value);
+    interp_assert_valid(args->interp);
+    interp_eval_val(args->interp, &value, map_entry->value);
     map_val_set(args->map, map_entry->key, &value);
     return CONTINUE_ENUMERATION;
 }
 
 static void eval_map(toy_interp *interp, toy_val *result, const toy_map_entry_list *entry_list)
 {
+    interp_assert_valid(interp);
     result->type = VAL_MAP;
     result->map = map_val_alloc();
     map_entry_cb_args map_entry_args = { .interp = interp, .map = result->map };
@@ -440,9 +476,11 @@ static void eval_map(toy_interp *interp, toy_val *result, const toy_map_entry_li
 
 static void op_func_call(toy_interp *interp, toy_val *result, toy_func_call *call)
 {
-    const toy_val *val = interp_get_rvalue(interp, &call->id);
-    if (VAL_FUNC == val->type) {
-        const toy_function *func = val->func;
+    interp_assert_valid(interp);
+    const toy_val *referenced_val = interp_get_rvalue(interp, &call->id);
+    if (VAL_FUNC == referenced_val->type) {
+        const toy_function *func = referenced_val->func;
+        log_printf("interp: resolved callee %s to %p\n", call->id.name, func);
         run_stmt_result res = interp_call_func(interp, func, call->args);
         if (res == REACHED_RETURN) {
             *result = *interp_get_return_value(interp);
@@ -450,12 +488,34 @@ static void op_func_call(toy_interp *interp, toy_val *result, toy_func_call *cal
             *result = null_val;
         }
     } else {
-        invalid_operand(EXPR_FUNC_CALL, val);
+        invalid_operand(EXPR_FUNC_CALL, referenced_val);
     }
 }
 
-void interp_eval(toy_interp *interp, toy_val *result, toy_expr *expr)
+void interp_eval_var(toy_interp *interp, toy_var *result, toy_expr *expr)
 {
+    interp_assert_valid(interp);
+    expr_assert_valid(expr);
+    toy_val *val = var_get(result);
+    interp_eval_val(interp, val, expr);
+    val_assert_valid(val);
+    val_assert_valid(val);
+}
+
+static void expr_identifier(toy_interp *interp, toy_val *result, toy_identifier *identifier)
+{
+    interp_assert_valid(interp);
+    toy_var *referenced_var = interp_get_lvalue(interp, identifier);
+    var_assert_valid(referenced_var);
+    toy_val *referenced_val = var_get(referenced_var);
+    val_assert_valid(referenced_val);
+    *result = *referenced_val;
+    val_assert_valid(result);
+}
+
+void interp_eval_val(toy_interp *interp, toy_val *result, toy_expr *expr)
+{
+    interp_assert_valid(interp);
     if (!expr) {
         *result = null_val;
         return;
@@ -496,19 +556,17 @@ void interp_eval(toy_interp *interp, toy_val *result, toy_expr *expr)
         op_gte(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_IDENTIFIER:
-        toy_identifier *identifier = &expr->id;
-        toy_val *val = interp_get_lvalue(interp, identifier);
-        *result = *val;
+        expr_identifier(interp, result, &expr->id);
         break;
     case EXPR_IN:
         op_in(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_LIST:
-        eval_expr_list(interp, result, expr->list);
+        eval_expr_list(interp, result, expr->expr_list);
         break;
     case EXPR_LITERAL:
-        assert(expr->val.type != VAL_FUNC);
-        *result = expr->val;
+        assert(expr->val->type != VAL_FUNC);
+        *result = *expr->val;
         break;
     case EXPR_LT:
         op_lt(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
@@ -595,68 +653,105 @@ toy_bool interp_is_control_result(run_stmt_result stmt_result)
 /* TODO: Delete me */
 run_stmt_result interp_run_one_stmt(toy_interp *interp, toy_stmt *stmt)
 {
+    interp_assert_valid(interp);
     return interp_run_stmt(interp, stmt);
 }
 
 toy_bool interp_condition_truthy(toy_interp *interp, toy_expr *expr)
 {
+    interp_assert_valid(interp);
     if (expr) {
         toy_val cond_result;
-        interp_eval(interp, &cond_result, expr);
+        interp_eval_val(interp, &cond_result, expr);
         return val_truthy(&cond_result);
     }
     /* An empty condition is treated as true, so we can do eg for(;;) {...} */
     return TOY_TRUE;
 }
 
+#define DEBUG_VARIABLES
+
 typedef struct set_var_cb_args_struct {
     toy_interp *interp;
+    interp_frame *cur_frame;
 } set_var_cb_args;
 
 static item_callback_result set_var_callback(void *cookie, size_t index, const toy_var_decl_list *item)
 {
     set_var_cb_args *args = (set_var_cb_args *) cookie;
     const toy_var_decl *var_decl = var_decl_list_payload_const(item);
-    interp_stack *stack = args->interp->stack;
-    interp_frame *cur_frame = interp_stack_payload(stack);
-    size_t var_index = cur_frame->cur_val - cur_frame->variables;
-    interp_eval(args->interp, cur_frame->cur_val, var_decl->value);
-    log_printf("Setting var %d to val ", var_index);
-    val_dump(cur_frame->cur_val, 0);
-    log_printf("\n");
-    cur_frame->cur_val++;
+
+    toy_val *initial_val = mymalloc(toy_val);
+    interp_assert_valid(args->interp);
+    interp_eval_val(args->interp, initial_val, var_decl->value);
+
+#ifdef DEBUG_VARIABLES
+    log_printf("Setting frame var %d to initial val ", var_decl->decl_index);
+    val_dump(initial_val, 0);
+    log_putc('\n');
+    interp_frame_dump(args->cur_frame);
+    log_putc('\n');
+#endif /* DEBUG_VARIABLES */
+
+    toy_var *var = interp_frame_get_var(args->cur_frame, var_decl->decl_index);
+    var_init(var);
+    var_set(var, initial_val);
+
     return CONTINUE_ENUMERATION;
+}
+
+static run_stmt_result var_decl_stmt(toy_interp *interp, const toy_var_decl_stmt *var_decl_stmt)
+{
+    interp_assert_valid(interp);
+    interp_stack *stack = interp->stack;
+    interp_frame *cur_frame = interp_stack_payload(stack);
+    set_var_cb_args args = { .interp = interp, .cur_frame = cur_frame };
+    toy_var_decl_list *var_decl_list = var_decl_stmt->var_decl_list;
+    enumeration_result res = var_decl_list_foreach_const(var_decl_list, set_var_callback, &args);
+    assert(ENUMERATION_COMPLETE == res);
+    interp_assert_valid(interp);
+    return EXECUTED_STATEMENT;
+}
+
+static run_stmt_result func_decl_stmt(toy_interp *interp, const toy_func_decl_stmt *func_decl)
+{
+    interp_assert_valid(interp);
+    interp_stack *stack = interp->stack;
+    interp_frame *cur_frame = interp_stack_payload(stack);
+    assert(func_decl->val->type == VAL_FUNC);
+    assert(func_decl->val->func == func_decl->func);
+#ifdef DEBUG_VARIABLES
+    log_printf("Setting frame var %d to initial function ", func_decl->decl_index);
+    val_dump(func_decl->val, 0);
+    log_printf("\n");
+#endif /* DEBUG_VARIABLES */
+    toy_var *var = interp_frame_get_var(cur_frame, func_decl->decl_index);
+    assert(!var->val);
+    var_init(var);
+    var_set(var, func_decl->val);
+    interp_assert_valid(interp);
+    return EXECUTED_STATEMENT;
 }
 
 run_stmt_result interp_run_stmt(toy_interp *interp, const toy_stmt *stmt)
 {
+    interp_assert_valid(interp);
     switch (stmt->type) {
     case STMT_BLOCK:
-        return block_stmt(interp, &stmt->block_stmt.block);
+        return block_stmt(interp, stmt->block_stmt.block);
     case STMT_BREAK:
         return REACHED_BREAK;
     case STMT_CONTINUE:
         return REACHED_CONTINUE;
     case STMT_EXPR:
         toy_val result;
-        interp_eval(interp, &result, stmt->expr_stmt.expr);
+        interp_eval_val(interp, &result, stmt->expr_stmt.expr);
         /* throw result away */
         return EXECUTED_STATEMENT;
     case STMT_FOR:
         return for_stmt(interp, &stmt->for_stmt);
     case STMT_FUNC_DECL:
-        {
-            const toy_func_decl_stmt *func_decl = &stmt->func_decl_stmt;
-            interp_stack *stack = interp->stack;
-            interp_frame *cur_frame = interp_stack_payload(stack);
-            size_t var_index = cur_frame->cur_val - cur_frame->variables;
-            *cur_frame->cur_val = func_decl->val;
-            log_printf("Setting var %d to function ", var_index);
-            val_dump(cur_frame->cur_val, 0);
-            log_printf("\n");
-            cur_frame->cur_val++;
-        }
-        return EXECUTED_STATEMENT;
+        return func_decl_stmt(interp, &stmt->func_decl_stmt);
     case STMT_IF:
         return if_stmt(interp, &stmt->if_stmt);
     case STMT_NULL:
@@ -664,13 +759,7 @@ run_stmt_result interp_run_stmt(toy_interp *interp, const toy_stmt *stmt)
     case STMT_RETURN:
         return return_stmt(interp, &stmt->return_stmt);
     case STMT_VAR_DECL:
-        {
-            const toy_var_decl_list *var_decl_list = &stmt->var_decl_stmt;
-            set_var_cb_args args = { .interp = interp };
-            enumeration_result res = var_decl_list_foreach_const(var_decl_list, set_var_callback, &args);
-            assert(ENUMERATION_COMPLETE == res);
-        }
-        return EXECUTED_STATEMENT;
+        return var_decl_stmt(interp, &stmt->var_decl_stmt);
     case STMT_WHILE:
         return while_stmt(interp, &stmt->while_stmt);
     default:
@@ -690,6 +779,7 @@ static item_callback_result stmt_run_callback(void *cookie, size_t index, const 
 {
     stmt_run_cb_args *args = (stmt_run_cb_args *) cookie;
     const toy_stmt *stmt = stmt_list_payload_const(item);
+    interp_assert_valid(args->interp);
     args->result = interp_run_stmt(args->interp, stmt);
     assert(args->result != REACHED_BLOCK_END);
     switch (args->result) {
@@ -711,6 +801,7 @@ static item_callback_result stmt_run_callback(void *cookie, size_t index, const 
 
 run_stmt_result interp_run_current_block(toy_interp *interp)
 {
+    interp_assert_valid(interp);
     interp_stack *stack = interp_get_stack(interp);
     interp_frame *cur_frame = interp_stack_payload(stack);
     stmt_run_cb_args args = { .interp = interp };
@@ -725,6 +816,7 @@ run_stmt_result interp_run_current_block(toy_interp *interp)
 
 static run_stmt_result block_stmt(toy_interp *interp, const toy_block *block)
 {
+    interp_assert_valid(interp);
     interp->stack = interp_stack_push_block(interp->stack, block);
     run_stmt_result res = interp_run_current_block(interp);
     interp->stack = interp_stack_pop(interp->stack);
@@ -734,22 +826,20 @@ static run_stmt_result block_stmt(toy_interp *interp, const toy_block *block)
     return res;
 }
 
-toy_interp *interp_alloc(const toy_stmt_list *program)
+toy_interp *interp_alloc(const toy_function *program)
 {
     toy_interp *interp;
     interp = mymalloc(toy_interp);
-    interp->main_program.type = FUNC_USER_DECLARED;
-    interp->main_program.code.stmts = (toy_stmt_list *) program;
-    interp->main_program.name = "global";
-    interp->main_program.param_names = NULL;
-    interp->stack = NULL;
-    interp->stack = interp_stack_push_user_func(interp->stack, &interp->main_program, NULL);
+    interp->main_program = program;
+    interp->stack = interp_stack_push_user_func(interp->stack, interp->main_program, NULL);
     /* interp_stack_dump("at program start", interp->stack); */
+    interp_assert_valid(interp);
     return interp;
 }
 
 void interp_free(toy_interp *interp)
 {
+    interp_assert_valid(interp);
     interp->stack = interp_stack_pop(interp->stack);
     interp_stack_free(interp->stack);
     free(interp);
@@ -758,15 +848,18 @@ void interp_free(toy_interp *interp)
 /* TODO: Can these be unified? */
 void interp_push_if(toy_interp *interp, const toy_block *block)
 {
+    interp_assert_valid(interp);
     interp->stack = interp_stack_push_if(interp->stack, block);
 }
 
 void interp_push_loop(toy_interp *interp, const toy_block *block)
 {
+    interp_assert_valid(interp);
     interp->stack = interp_stack_push_loop(interp->stack, block);
 }
 
 void interp_pop(toy_interp *interp)
 {
+    interp_assert_valid(interp);
     interp->stack = interp_stack_pop(interp->stack);
 }

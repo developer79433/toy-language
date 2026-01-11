@@ -9,7 +9,6 @@
 typedef struct symbol_table_entry_struct {
     toy_str key;
     size_t index;
-    toy_bool is_closed_over;
 } symbol_table_entry;
 
 typedef struct symbol_table_entry_list_struct {

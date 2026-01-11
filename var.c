@@ -4,14 +4,40 @@
 
 #include "var.h"
 #include "mymalloc.h"
+#include "val.h"
+#include "log.h"
 
-toy_var *var_alloc(toy_val *val)
+void var_init(toy_var *var)
 {
-    toy_var *var = mymalloc(toy_var);
-    if (val) {
-        memcpy(&var->val, val, sizeof(var->val));
-    }
     var->num_refs = 1;
+    var->val = NULL;
+}
+
+toy_var *var_alloc_ref(toy_val *val)
+{
+    val_assert_valid(val);
+    toy_var *var = mymalloc(toy_var);
+    var_init(var);
+    var->val = val;
+    return var;
+}
+
+toy_var *var_alloc_array(size_t count)
+{
+    toy_var *vars = mymalloc_array(toy_var, count);
+    for (toy_var *var = vars; var < vars + count; var++) {
+        var_init(var);
+    }
+    return vars;
+}
+
+toy_var *var_alloc_copy(const toy_val *val)
+{
+    val_assert_valid(val);
+    toy_var *var = (toy_var *) malloc(sizeof(toy_var) + sizeof(toy_val));
+    var_init(var);
+    var->val = (toy_val *) (var + 1);
+    memcpy(var->val, val, sizeof(*var->val));
     return var;
 }
 
@@ -21,11 +47,86 @@ toy_var *var_ref(toy_var *var)
     return var;
 }
 
+toy_val *var_get(toy_var *var)
+{
+    return var->val;
+}
+
+const toy_val *var_get_const(const toy_var *var)
+{
+    return var->val;
+}
+
+void var_set(toy_var *var, toy_val *new_val)
+{
+    var_assert_valid(var);
+    val_assert_valid(new_val);
+    var->val = new_val;
+}
+
+void var_set_copy(toy_var *var, const toy_val *new_val)
+{
+    var_assert_valid(var);
+    val_assert_valid(new_val);
+    memcpy(var->val, new_val, sizeof(*var->val));
+}
+
 void var_free(toy_var *var)
 {
     assert(var->num_refs > 0);
     var->num_refs--;
     if (0 == var->num_refs) {
+        if (var->val != (toy_val *) (var + 1)) {
+            free(var->val);
+        }
         free(var);
+    }
+}
+
+void var_assert_valid(const toy_var *var)
+{
+    assert(var->num_refs >= 0);
+    if (var->val) {
+        val_assert_valid(var->val);
+    }
+}
+
+void var_array_assert_valid(const toy_var *vars, size_t count)
+{
+    for (const toy_var *var = vars; var < vars + count; var++) {
+        var_assert_valid(var);
+    }
+}
+
+void var_dump(const toy_var *var, toy_bool verbose)
+{
+    if (verbose) {
+        log_printf("var {\n");
+        log_printf("num_refs: %d\n", var->num_refs);
+        log_printf("val:\n");
+        val_dump(var->val, verbose);
+        log_printf("} var\n");
+    } else {
+        const toy_val *val = var_get_const(var);
+        val_dump(val, verbose);
+    }
+}
+
+void var_array_dump(const toy_var *vars, size_t size, toy_bool verbose)
+{
+    toy_bool printed_anything = TOY_FALSE;
+    for (const toy_var *var = vars; var < &vars[size]; var++) {
+        if (printed_anything) {
+            log_puts(", ");
+        }
+        var_dump(var, verbose);
+        printed_anything = TOY_TRUE;
+    }
+}
+
+void var_array_free(toy_var *vars, size_t size)
+{
+    for (toy_var *var = vars; var < vars + size; var++) {
+        var_free(var);
     }
 }
