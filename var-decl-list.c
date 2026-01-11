@@ -88,3 +88,16 @@ toy_var_decl_list *var_decl_list_append(toy_var_decl_list *list, toy_var_decl *n
     assert(NULL == new_list->next);
     return var_decl_list_concat(list, new_list);
 }
+
+static item_callback_result decl_assert_valid_cb(void *cookie, size_t index, const toy_var_decl_list *item)
+{
+    const toy_var_decl *var_decl = var_decl_list_payload_const(item);
+    var_decl_assert_valid(var_decl);
+    return CONTINUE_ENUMERATION;
+}
+
+void var_decl_list_assert_valid(const toy_var_decl_list *list)
+{
+    enumeration_result res = var_decl_list_foreach_const(list, decl_assert_valid_cb, NULL);
+    assert(ENUMERATION_COMPLETE == res);
+}

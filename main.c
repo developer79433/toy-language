@@ -30,9 +30,9 @@ int main(int argc, char **argv)
     parser_assert_valid(&parser);
     toy_function *program = parser_parse(&parser, in);
 
+    add_block_parents(program);
     func_dump(program, TOY_TRUE);
 
-    add_block_parents(program);
     allocate_registers(program);
     resolve_names(program);
 

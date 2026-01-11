@@ -17,6 +17,7 @@
 #include "val.h"
 #include "block.h"
 #include "toy-parser.h"
+#include "if-arm-list.h"
 
 static const char *toy_stmt_type_names[] = {
     "block statement",
@@ -83,14 +84,103 @@ void func_decl_stmt_dump(const toy_func_decl_stmt *func_decl)
 toy_stmt *var_decl_stmt_alloc(toy_var_decl_list *var_decl_list)
 {
     toy_stmt *stmt = stmt_alloc(STMT_VAR_DECL);
-    /* TODO: Eliminate structure assign. Likely memory management bugs here. */
     stmt->var_decl_stmt.var_decl_list = var_decl_list;
     return stmt;
 }
 
+void block_stmt_assert_valid(const toy_block_stmt *block_stmt)
+{
+    block_assert_valid(block_stmt->block);
+}
+
+void expr_stmt_assert_valid(const toy_expr_stmt *expr_stmt)
+{
+    expr_assert_valid(expr_stmt->expr);
+}
+
+void for_stmt_assert_valid(const toy_for_stmt *for_stmt)
+{
+    stmt_assert_valid(for_stmt->at_end);
+    stmt_assert_valid(for_stmt->at_start);
+    block_assert_valid(for_stmt->body);
+    expr_assert_valid(for_stmt->condition);
+}
+
+void func_decl_stmt_assert_valid(const toy_func_decl_stmt *func_decl_stmt)
+{
+    assert(func_decl_stmt->decl_index >= 0);
+    func_assert_valid(func_decl_stmt->func);
+    val_assert_valid(func_decl_stmt->val);
+}
+
+void if_stmt_assert_valid(const toy_if_stmt *if_stmt)
+{
+    if_arm_list_assert_valid(if_stmt->arms);
+    block_assert_valid(if_stmt->elsepart);
+}
+
+void return_stmt_assert_Valid(const toy_return_stmt *return_stmt)
+{
+    expr_assert_valid(return_stmt->expr);
+}
+
+void var_decl_stmt_assert_valid(const toy_var_decl_stmt *var_decl_stmt)
+{
+    var_decl_list_assert_valid(var_decl_stmt->var_decl_list);
+}
+
+void while_stmt_assert_valid(const toy_while_stmt *while_stmt)
+{
+    block_assert_valid(while_stmt->body);
+    expr_assert_valid(while_stmt->condition);
+}
+
+
 void stmt_assert_valid(const toy_stmt *stmt)
 {
-    /* TODO */
+    switch (stmt->type) {
+    case STMT_BLOCK:
+        const toy_block_stmt *block_stmt = &stmt->block_stmt;
+        block_stmt_assert_valid(block_stmt);
+        break;
+    case STMT_BREAK:
+        break;
+    case STMT_CONTINUE:
+        break;
+    case STMT_EXPR:
+        const toy_expr_stmt *expr_stmt = &stmt->expr_stmt;
+        expr_stmt_assert_valid(expr_stmt);
+        break;
+    case STMT_FOR:
+        const toy_for_stmt *for_stmt = &stmt->for_stmt;
+        for_stmt_assert_valid(for_stmt);
+        break;
+    case STMT_FUNC_DECL:
+        const toy_func_decl_stmt *func_decl_stmt = &stmt->func_decl_stmt;
+        func_decl_stmt_assert_valid(func_decl_stmt);
+        break;
+    case STMT_IF:
+        const toy_if_stmt *if_stmt = &stmt->if_stmt;
+        if_stmt_assert_valid(if_stmt);
+        break;
+    case STMT_NULL:
+        break;
+    case STMT_RETURN:
+        const toy_return_stmt *return_stmt = &stmt->return_stmt;
+        return_stmt_assert_Valid(return_stmt);
+        break;
+    case STMT_VAR_DECL:
+        const toy_var_decl_stmt *var_decl_stmt = &stmt->var_decl_stmt;
+        var_decl_stmt_assert_valid(var_decl_stmt);
+        break;
+    case STMT_WHILE:
+        const toy_while_stmt *while_stmt = &stmt->while_stmt;
+        while_stmt_assert_valid(while_stmt);
+        break;
+    default:
+        assert(0);
+        break;
+    }
 }
 
 void stmt_dump(const toy_stmt *stmt, int append_semicolon)

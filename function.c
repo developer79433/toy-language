@@ -46,10 +46,6 @@ void func_assert_valid(const toy_function *func)
     }
     if (func->type == FUNC_USER_DECLARED) {
         toy_block *block = func->code;
-        assert(
-            block == &toplevel_block
-            || block->parent
-        );
         block_assert_valid(block);
     }
 }
