@@ -320,13 +320,9 @@ toy_var *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier)
 
     switch (identifier->resolved.type) {
     case REF_FUNC_DECL:
-        /* Treat function declarations as mutable variable declarations with an initial function value */
-        var_closure *func_ref = &identifier->resolved.var_decl;
-        toy_var *func_decl_var = interp_get_var_closure(interp, func_ref);
-        toy_val *func_val = var_get(func_decl_var);
-        assert(VAL_FUNC == func_val->type);
-        var_assert_valid(func_decl_var);
-        return func_decl_var;
+        /* Function declarations are immutable */
+        invalid_lvalue(&identifier->resolved);
+        break;
     case REF_FUNC_PARAM:
         func_param_ref *param_ref = &identifier->resolved.func_param;
         log_debug("interp: lvalue is func param");
@@ -360,9 +356,8 @@ const toy_val *interp_get_rvalue(toy_interp *interp, const toy_identifier *ident
     interp_assert_valid(interp);
     switch (identifier->resolved.type) {
     case REF_FUNC_DECL:
-        const var_closure *func_ref = &identifier->resolved.var_decl;
-        toy_var *func_decl_var = interp_get_var_closure(interp, func_ref);
-        toy_val *func_val = var_get(func_decl_var);
+        const toy_func_decl_stmt *func_decl_stmt = identifier->resolved.func_decl_stmt;
+        toy_val *func_val = func_decl_stmt->val;
         assert(VAL_FUNC == func_val->type);
         val_assert_valid(func_val);
         return func_val;

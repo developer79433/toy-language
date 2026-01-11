@@ -12,9 +12,8 @@ toy_bool is_resolved(const resolved_name *resolved)
     case REF_UNDEFINED:
         return TOY_FALSE;
     case REF_FUNC_DECL:
-        assert(resolved->var_decl.frames_up >= 0);
-        assert(resolved->var_decl.var_index >= 0);
-        return TOY_TRUE;
+        toy_func_decl_stmt *func_decl_stmt = resolved->func_decl_stmt;
+        return (func_decl_stmt && func_decl_stmt->func) ? TOY_TRUE : TOY_FALSE;
     case REF_FUNC_PARAM:
         const func_param_ref *param_ref = &resolved->func_param;
         assert(param_ref->frames_up >= 0);
@@ -42,7 +41,8 @@ void resolved_name_dump(const resolved_name *resolved)
 {
     switch (resolved->type) {
     case REF_FUNC_DECL:
-        log_printf("Function, declaration #%zd, %zd frames up\n", resolved->var_decl.var_index, resolved->var_decl.frames_up);
+        toy_func_decl_stmt *func_decl_stmt = resolved->func_decl_stmt;
+        log_printf("Function %s\n", func_decl_stmt->func->name);
         break;
     case REF_FUNC_PARAM:
         const func_param_ref *param_ref = &resolved->func_param;

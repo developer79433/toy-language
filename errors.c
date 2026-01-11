@@ -163,10 +163,9 @@ const char *resolved_name_ref_name(const resolved_name *resolved)
     case REF_UNDEFINED:
         return "null";
     case REF_FUNC_DECL:
-        const var_closure *func_ref = &resolved->var_decl;
-        assert(func_ref->frames_up >= 0);
-        assert(func_ref->var_index >= 0);
-        return "function reference";
+        const toy_func_decl_stmt *func_decl_stmt = resolved->func_decl_stmt;
+        toy_function *func = func_decl_stmt->func;
+        return func->name;
     case REF_FUNC_PARAM:
         const func_param_ref *param_ref = &resolved->func_param;
         assert(param_ref);

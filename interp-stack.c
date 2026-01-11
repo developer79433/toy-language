@@ -53,11 +53,11 @@ void interp_stack_free(interp_stack *stack)
     return interp_frame_stack_free(stack);
 }
 
-static toy_var *init_variables(const toy_block *block, size_t *num_variables)
+static toy_var *init_variables(const toy_block *block, size_t *num_declarations)
 {
-    *num_variables = block_num_variables(block);
-    if (*num_variables) {
-        return var_alloc_array(*num_variables);
+    *num_declarations = block_num_declarations(block);
+    if (*num_declarations) {
+        return var_alloc_array(*num_declarations);
     }
     return NULL;
 }

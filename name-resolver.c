@@ -19,8 +19,10 @@ static void resolve_identifier_block_and_parents(toy_block *block, toy_identifie
     size_t frames_up = 0;
     do {
         symbol_table_entry *entry;
-        symbol_table_assert_valid(&block->variables);
-        entry = symbol_table_get(&block->variables, identifier->name);
+        /* FIXME: These entry indices come from the earlier register allocation pass */
+        /* FIXME: Never sets REF_FUNC_DECL */
+        symbol_table_assert_valid(&block->declarations);
+        entry = symbol_table_get(&block->declarations, identifier->name);
         if (entry) {
             identifier->resolved.type = REF_VAR_DECL;
             identifier->resolved.var_decl.frames_up = frames_up;

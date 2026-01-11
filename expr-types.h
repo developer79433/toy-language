@@ -72,7 +72,7 @@ typedef struct func_param_ref_struct {
     size_t param_index;
 } func_param_ref;
 
-typedef struct block_var_ref_struct {
+typedef struct var_closure_struct {
     size_t frames_up;
     size_t var_index;
 } var_closure;
@@ -82,8 +82,10 @@ typedef struct resolved_name_struct {
     union {
         /* function parameter */
         func_param_ref func_param;
-        /* variable or function declaration */
+        /* variable declaration */
         var_closure var_decl;
+        /* function declaration */
+        toy_func_decl_stmt *func_decl_stmt;
         /* TODO: Can this be a var_closure too? */
         const predefined_constant *predef_const;
         const toy_val *predef_func;

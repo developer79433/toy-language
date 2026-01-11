@@ -21,9 +21,9 @@ const toy_block *block_parent_const(const toy_block *block)
     return block->parent;
 }
 
-size_t block_num_variables(const toy_block *block)
+size_t block_num_declarations(const toy_block *block)
 {
-    return symbol_table_size(&block->variables);
+    return symbol_table_size(&block->declarations);
 }
 
 size_t block_num_parameters(const toy_block *block)
@@ -36,9 +36,9 @@ symbol_table *block_parameters(toy_block *block)
     return &block->parameters;
 }
 
-symbol_table *block_variables(toy_block *block)
+symbol_table *block_declarations(toy_block *block)
 {
-    return &block->variables;
+    return &block->declarations;
 }
 
 void block_assert_valid(const toy_block *block)
@@ -46,7 +46,7 @@ void block_assert_valid(const toy_block *block)
     assert(block);
     assert(block == &toplevel_block || block->parent);
     symbol_table_assert_valid(&block->parameters);
-    symbol_table_assert_valid(&block->variables);
+    symbol_table_assert_valid(&block->declarations);
     stmt_list_assert_valid(block->stmts);
 }
 

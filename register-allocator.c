@@ -22,14 +22,14 @@ static void handle_block(visitor *v, toy_block *block)
 static void handle_func_decl(visitor *v, toy_func_decl_stmt *func_decl)
 {
     assert(cur_block);
-    func_decl->decl_index = symbol_table_add(&cur_block->variables, func_decl->func->name);
+    func_decl->decl_index = symbol_table_add(&cur_block->declarations, func_decl->func->name);
     default_func_decl(v, func_decl);
 }
 
 static void handle_var_decl(visitor *v, toy_var_decl *var_decl)
 {
     assert(cur_block);
-    var_decl->decl_index = symbol_table_add(&cur_block->variables, var_decl->name);
+    var_decl->decl_index = symbol_table_add(&cur_block->declarations, var_decl->name);
     default_var_decl(v, var_decl);
 }
 
