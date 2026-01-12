@@ -295,15 +295,10 @@ static toy_var *interp_get_var_closure(toy_interp *interp, const var_closure *cl
     interp_stack *stack = interp_get_stack(interp);
     /* FIXME: This is indexing into the lexical scope, but then into the runtime variables' values */
     interp_frame *frame = interp_stack_index(stack, closure->frames_up);
-#ifdef DEBUG_INTERP_LOOKUPS
-    log_printf("interp: var_index is %zu and frame is:\n", closure->var_index);
-    interp_frame_dump(frame);
-    log_printf("\n");
-#endif /* DEBUG_INTERP_LOOKUPS */
     toy_var *var = interp_frame_get_var(frame, closure->var_index);
     var_assert_valid(var);
 #ifdef DEBUG_INTERP_LOOKUPS
-    log_printf("interp: var retrieved:\n");
+    log_printf("interp: var retrieved: ");
     var_dump(var, TOY_FALSE);
     log_putc('\n');
 #endif /* DEBUG_INTERP_LOOKUPS */
@@ -475,7 +470,6 @@ static void op_func_call(toy_interp *interp, toy_val *result, toy_func_call *cal
     const toy_val *referenced_val = interp_get_rvalue(interp, &call->id);
     if (VAL_FUNC == referenced_val->type) {
         const toy_function *func = referenced_val->func;
-        log_printf("interp: resolved callee %s to %p\n", call->id.name, func);
         run_stmt_result res = interp_call_func(interp, func, call->args);
         if (res == REACHED_RETURN) {
             *result = *interp_get_return_value(interp);
@@ -681,10 +675,8 @@ static item_callback_result set_var_callback(void *cookie, size_t index, const t
     interp_eval_val(args->interp, initial_val, var_decl->value);
 
 #ifdef DEBUG_VARIABLES
-    log_printf("Setting frame var %d to initial val ", var_decl->decl_index);
+    log_printf("interp: setting frame var %d to initial val ", var_decl->decl_index);
     val_dump(initial_val, 0);
-    log_putc('\n');
-    interp_frame_dump(args->cur_frame);
     log_putc('\n');
 #endif /* DEBUG_VARIABLES */
 
@@ -716,12 +708,11 @@ static run_stmt_result func_decl_stmt(toy_interp *interp, const toy_func_decl_st
     assert(func_decl->val->type == VAL_FUNC);
     assert(func_decl->val->func == func_decl->func);
 #ifdef DEBUG_VARIABLES
-    log_printf("Setting frame var %d to initial function ", func_decl->decl_index);
+    log_printf("interp: setting frame var %d to initial function ", func_decl->decl_index);
     val_dump(func_decl->val, 0);
     log_printf("\n");
 #endif /* DEBUG_VARIABLES */
     toy_var *var = interp_frame_get_var(cur_frame, func_decl->decl_index);
-    assert(!var->val);
     var_init(var);
     var_set(var, func_decl->val);
     interp_assert_valid(interp);

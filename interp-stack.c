@@ -163,7 +163,6 @@ interp_stack *interp_stack_push_user_func(interp_stack *stack, const toy_functio
     copy_args_into_frame(arguments, actual_arguments);
     size_t num_variables;
     toy_var *variables = init_variables(func->code, &num_variables);
-    log_printf("interp-stack: function %s (%p, block %p) has %d variables\n", func->name, func, &func->code, num_variables);
     interp_frame frame = {
         .type = FRAME_USER_DEF_FUNC,
         .variables = variables,

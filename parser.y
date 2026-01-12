@@ -183,8 +183,6 @@ expr_stmt:
 func_decl_stmt:
     T_FUN T_IDENTIFIER T_LPAREN formalparams T_RPAREN block {
         $$ = func_decl_stmt_alloc($2, $4, $6);
-        log_puts("parser: func decl stmt:\n");
-        stmt_dump($$, TOY_TRUE);
     }
 ;
 

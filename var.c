@@ -10,7 +10,7 @@
 void var_init(toy_var *var)
 {
     var->num_refs = 1;
-    var->val = NULL;
+    var->val.type = VAL_NULL;
 }
 
 toy_var *var_alloc_ref(toy_val *val)
@@ -18,7 +18,8 @@ toy_var *var_alloc_ref(toy_val *val)
     val_assert_valid(val);
     toy_var *var = mymalloc(toy_var);
     var_init(var);
-    var->val = val;
+    memcpy(&var->val, val, sizeof(var->val));
+    var_assert_valid(var);
     return var;
 }
 
@@ -31,16 +32,6 @@ toy_var *var_alloc_array(size_t count)
     return vars;
 }
 
-toy_var *var_alloc_copy(const toy_val *val)
-{
-    val_assert_valid(val);
-    toy_var *var = (toy_var *) malloc(sizeof(toy_var) + sizeof(toy_val));
-    var_init(var);
-    var->val = (toy_val *) (var + 1);
-    memcpy(var->val, val, sizeof(*var->val));
-    return var;
-}
-
 toy_var *var_ref(toy_var *var)
 {
     var->num_refs++;
@@ -49,26 +40,19 @@ toy_var *var_ref(toy_var *var)
 
 toy_val *var_get(toy_var *var)
 {
-    return var->val;
+    return &var->val;
 }
 
 const toy_val *var_get_const(const toy_var *var)
 {
-    return var->val;
+    return &var->val;
 }
 
 void var_set(toy_var *var, toy_val *new_val)
 {
     var_assert_valid(var);
     val_assert_valid(new_val);
-    var->val = new_val;
-}
-
-void var_set_copy(toy_var *var, const toy_val *new_val)
-{
-    var_assert_valid(var);
-    val_assert_valid(new_val);
-    memcpy(var->val, new_val, sizeof(*var->val));
+    memcpy(&var->val, new_val, sizeof(var->val));
 }
 
 void var_free(toy_var *var)
@@ -76,9 +60,6 @@ void var_free(toy_var *var)
     assert(var->num_refs > 0);
     var->num_refs--;
     if (0 == var->num_refs) {
-        if (var->val != (toy_val *) (var + 1)) {
-            free(var->val);
-        }
         free(var);
     }
 }
@@ -86,9 +67,7 @@ void var_free(toy_var *var)
 void var_assert_valid(const toy_var *var)
 {
     assert(var->num_refs >= 0);
-    if (var->val) {
-        val_assert_valid(var->val);
-    }
+    val_assert_valid(&var->val);
 }
 
 void var_array_assert_valid(const toy_var *vars, size_t count)
@@ -104,7 +83,7 @@ void var_dump(const toy_var *var, toy_bool verbose)
         log_printf("var {\n");
         log_printf("num_refs: %d\n", var->num_refs);
         log_printf("val:\n");
-        val_dump(var->val, verbose);
+        val_dump(&var->val, verbose);
         log_printf("} var\n");
     } else {
         const toy_val *val = var_get_const(var);
