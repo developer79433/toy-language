@@ -23,30 +23,30 @@ const toy_block *block_parent_const(const toy_block *block)
 
 size_t block_num_declarations(const toy_block *block)
 {
-    return symbol_table_size(&block->declarations);
+    return symbol_table_size(&block->declaration_symbols);
 }
 
 size_t block_num_parameters(const toy_block *block)
 {
-    return symbol_table_size(&block->parameters);
+    return symbol_table_size(&block->parameter_symbols);
 }
 
 symbol_table *block_parameters(toy_block *block)
 {
-    return &block->parameters;
+    return &block->parameter_symbols;
 }
 
 symbol_table *block_declarations(toy_block *block)
 {
-    return &block->declarations;
+    return &block->declaration_symbols;
 }
 
 void block_assert_valid(const toy_block *block)
 {
     assert(block);
     assert(block == &toplevel_block || block->parent);
-    symbol_table_assert_valid(&block->parameters);
-    symbol_table_assert_valid(&block->declarations);
+    symbol_table_assert_valid(&block->parameter_symbols);
+    symbol_table_assert_valid(&block->declaration_symbols);
     stmt_list_assert_valid(block->stmts);
 }
 

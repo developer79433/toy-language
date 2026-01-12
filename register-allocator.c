@@ -22,33 +22,34 @@ static void handle_block(visitor *v, toy_block *block)
 static void handle_func_decl(visitor *v, toy_func_decl_stmt *func_decl)
 {
     assert(cur_block);
-    func_decl->decl_index = symbol_table_add(&cur_block->declarations, func_decl->func->name);
+    func_decl->decl_index = symbol_table_add(&cur_block->declaration_symbols, func_decl->func->name);
     default_func_decl(v, func_decl);
 }
 
 static void handle_var_decl(visitor *v, toy_var_decl *var_decl)
 {
     assert(cur_block);
-    var_decl->decl_index = symbol_table_add(&cur_block->declarations, var_decl->name);
+    var_decl->decl_index = symbol_table_add(&cur_block->declaration_symbols, var_decl->name);
     default_var_decl(v, var_decl);
 }
 
 typedef struct add_param_args_struct {
-    symbol_table *parameters;
+    symbol_table *parameter_symbols;
 } add_param_args;
 
 static item_callback_result add_param_to_symbol_table(void *cookie, size_t index, toy_str_list *item)
 {
     add_param_args *args = (add_param_args *) cookie;
     toy_str param_name = str_list_payload(item);
-    symbol_table_add(args->parameters, param_name);
+    symbol_table_add(args->parameter_symbols, param_name);
     return CONTINUE_ENUMERATION;
 }
 
 static void handle_func_expr(visitor *v, toy_function *func)
 {
-    symbol_table *parameters = &func->code->parameters;
-    add_param_args args = { .parameters = parameters };
+    toy_block *block = func->code;
+    symbol_table *parameter_symbols = &block->parameter_symbols;
+    add_param_args args = { .parameter_symbols = parameter_symbols };
     enumeration_result res = str_list_foreach(func->param_names, add_param_to_symbol_table, &args);
     assert(ENUMERATION_COMPLETE == res);
     default_func_expr(v, func);

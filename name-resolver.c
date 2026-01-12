@@ -14,15 +14,28 @@
 #define DEBUG_NAME_RESOLUTION
 #endif
 
+typedef enum decl_ref_type_enum {
+    DECL_REF_VAR,
+    DECL_REF_FUNC
+} decl_ref_type;
+
+typedef struct decl_ref_struct {
+    decl_ref_type type;
+    union {
+        toy_var_decl_stmt *var_decl;
+        toy_func_decl_stmt *func_decl;
+    };
+} decl_ref;
+
 static void resolve_identifier_block_and_parents(toy_block *block, toy_identifier *identifier)
 {
     size_t frames_up = 0;
     do {
         symbol_table_entry *entry;
-        /* FIXME: These entry indices come from the earlier register allocation pass */
         /* FIXME: Never sets REF_FUNC_DECL */
-        symbol_table_assert_valid(&block->declarations);
-        entry = symbol_table_get(&block->declarations, identifier->name);
+        /* TODO: Just put all the declarations into an array already! */
+        symbol_table_assert_valid(&block->declaration_symbols);
+        entry = symbol_table_get(&block->declaration_symbols, identifier->name);
         if (entry) {
             identifier->resolved.type = REF_VAR_DECL;
             identifier->resolved.var_decl.frames_up = frames_up;
@@ -32,8 +45,8 @@ static void resolve_identifier_block_and_parents(toy_block *block, toy_identifie
 #endif /* DEBUG_NAME_RESOLUTION */
             return;
         }
-        symbol_table_assert_valid(&block->parameters);
-        entry = symbol_table_get(&block->parameters, identifier->name);
+        symbol_table_assert_valid(&block->parameter_symbols);
+        entry = symbol_table_get(&block->parameter_symbols, identifier->name);
         if (entry) {
             identifier->resolved.type = REF_FUNC_PARAM;
             identifier->resolved.func_param.frames_up = frames_up;
