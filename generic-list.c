@@ -62,6 +62,32 @@ enumeration_result generic_list_foreach_const(const generic_list *list, const_ge
     return ENUMERATION_COMPLETE;
 }
 
+enumeration_result generic_list_visitor_visit(generic_list_visitor *visitor, generic_list *list)
+{
+    for (size_t i = 0; list; i++) {
+        generic_list *next = list->next;
+        item_callback_result res = visitor->visit(visitor, i, list);
+        if (STOP_ENUMERATION == res) {
+            return ENUMERATION_INTERRUPTED;
+        }
+        list = next;
+    }
+    return ENUMERATION_COMPLETE;
+}
+
+enumeration_result generic_list_visitor_visit_const(const_generic_list_visitor *visitor, const generic_list *list)
+{
+    for (size_t i = 0; list; i++) {
+        const generic_list *next = list->next;
+        item_callback_result res = visitor->visit(visitor, i, list);
+        if (STOP_ENUMERATION == res) {
+            return ENUMERATION_INTERRUPTED;
+        }
+        list = next;
+    }
+    return ENUMERATION_COMPLETE;
+}
+
 static item_callback_result free_item_cb(void *cookie, size_t index, generic_list *list)
 {
     free(list);

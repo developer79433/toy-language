@@ -12,6 +12,8 @@ generic_list *generic_list_remove_first(generic_list *list, generic_list **remov
 generic_list *generic_list_remove_last(generic_list *list, generic_list **removed);
 enumeration_result generic_list_foreach(generic_list *list, generic_list_item_callback callback, void *cookie);
 enumeration_result generic_list_foreach_const(const generic_list *list, const_generic_list_item_callback callback, void *cookie);
+enumeration_result generic_list_visitor_visit(generic_list_visitor *visitor, generic_list *list);
+enumeration_result generic_list_visitor_visit_const(const_generic_list_visitor *visitor, const generic_list *list);
 void generic_list_free(generic_list *list);
 generic_list *generic_list_index(generic_list *list, size_t index);
 const generic_list *generic_list_index_const(const generic_list *list, size_t index);

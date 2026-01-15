@@ -349,6 +349,11 @@ toy_var *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier)
 const toy_val *interp_get_rvalue(toy_interp *interp, const toy_identifier *identifier)
 {
     interp_assert_valid(interp);
+#ifdef DEBUG_INTERP_LOOKUPS
+    log_debug("interp: retrieving rvalue");
+    resolved_name_dump(&identifier->resolved);
+#endif /* DEBUG_INTERP_LOOKUPS */
+
     switch (identifier->resolved.type) {
     case REF_FUNC_DECL:
         const toy_func_decl_stmt *func_decl_stmt = identifier->resolved.func_decl_stmt;

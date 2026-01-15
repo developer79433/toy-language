@@ -33,4 +33,14 @@ typedef struct const_filter_args_struct {
     void *user_cookie;
 } const_filter_args;
 
+typedef struct generic_list_visitor_struct {
+    void *cookie;
+    item_callback_result (*visit)(struct generic_list_visitor_struct *visitor, size_t index, generic_list *item);
+} generic_list_visitor;
+
+typedef struct const_generic_list_visitor_struct {
+    void *cookie;
+    item_callback_result (*visit)(struct const_generic_list_visitor_struct *visitor, size_t index, const generic_list *item);
+} const_generic_list_visitor;
+
 #endif /* GENERIC_LIST_TYPES_H */

@@ -29,4 +29,14 @@ typedef struct map_filter_args_struct {
     void *user_cookie;
 } map_filter_args;
 
+typedef struct generic_map_visitor_struct {
+    void *cookie;
+    item_callback_result (*visit)(struct generic_map_visitor_struct *visitor, generic_map_entry *entry);
+} generic_map_visitor;
+
+typedef struct const_generic_map_visitor_struct {
+    void *cookie;
+    item_callback_result (*visit)(struct const_generic_map_visitor_struct *visitor, const generic_map_entry *entry);
+} const_generic_map_visitor;
+
 #endif /* TOY_GENERIC_MAP_TYPES_H */
