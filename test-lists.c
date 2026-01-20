@@ -73,37 +73,57 @@ void latch_visitor_init(latch_visitor *latch, toy_bool stop_on_first)
     latch->stop_on_first = stop_on_first;
 }
 
-generic_list *list_find(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, toy_bool stop_on_first, toy_bool inverted)
-{
+typedef struct latch_prev_visitor_struct {
     latch_visitor latch;
-    latch_visitor_init(&latch, stop_on_first);
+    generic_list *prev;
+} latch_prev_visitor;
+
+item_callback_result latch_prev_visitor_visit_entry(latch_prev_visitor *latch_prev, size_t index, generic_list *item)
+{
+    item_callback_result res = latch_visitor_visit_entry(&latch_prev->latch, index, item);
+    latch_prev->prev = item;
+    return res;
+}
+
+void latch_prev_visitor_init(latch_prev_visitor *latch_prev, toy_bool stop_on_first)
+{
+    latch_visitor_init(&latch_prev->latch, stop_on_first);
+    latch_prev->latch.base.visit_entry = (list_entry_visit_func) latch_prev_visitor_visit_entry;
+    latch_prev->prev = NULL;
+}
+
+generic_list *list_find(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, toy_bool stop_on_first, toy_bool inverted, generic_list **prev)
+{
+    latch_prev_visitor latch_prev;
+    latch_prev_visitor_init(&latch_prev, stop_on_first);
     my_list_filter filter;
-    list_filter_init(&filter, filter_func, filter_cookie, inverted, (list_visitor *) &latch);
+    list_filter_init(&filter, filter_func, filter_cookie, inverted, (list_visitor *) &latch_prev);
     enumeration_result res = list_filter_visit_list(&filter, list);
     assert(ENUMERATION_COMPLETE == res || ENUMERATION_INTERRUPTED == res);
-    return latch.last_seen_item;
+    *prev = latch_prev.prev;
+    return latch_prev.latch.last_seen_item;
 }
 
-generic_list *list_find_first(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
+generic_list *list_find_first(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, generic_list **prev)
 {
-    return list_find(list, filter_func, filter_cookie, TOY_TRUE, TOY_FALSE);
+    return list_find(list, filter_func, filter_cookie, TOY_TRUE, TOY_FALSE, prev);
 }
 
-generic_list *list_find_first_not(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
+generic_list *list_find_first_not(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, generic_list **prev)
 {
-    return list_find(list, filter_func, filter_cookie, TOY_TRUE, TOY_TRUE);
+    return list_find(list, filter_func, filter_cookie, TOY_TRUE, TOY_TRUE, prev);
 }
 
-generic_list *list_find_last(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
-{
-    /* TODO: Should use list_reverse(list) or reverse visitor */
-    return list_find(list, filter_func, filter_cookie, TOY_FALSE, TOY_FALSE);
-}
-
-generic_list *list_find_last_not(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
+generic_list *list_find_last(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, generic_list **prev)
 {
     /* TODO: Should use list_reverse(list) or reverse visitor */
-    return list_find(list, filter_func, filter_cookie, TOY_FALSE, TOY_TRUE);
+    return list_find(list, filter_func, filter_cookie, TOY_FALSE, TOY_FALSE, prev);
+}
+
+generic_list *list_find_last_not(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, generic_list **prev)
+{
+    /* TODO: Should use list_reverse(list) or reverse visitor */
+    return list_find(list, filter_func, filter_cookie, TOY_FALSE, TOY_TRUE, prev);
 }
 
 struct const_my_list_filter_struct;
@@ -146,7 +166,6 @@ void const_list_filter_init(const_my_list_filter *filter, generic_list_filter_fu
     filter->next_visitor = next_visitor;
 }
 
-/* TODO: Cookie support? Since these don't use consumers */
 const generic_list *list_find_const(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, toy_bool stop_on_first, toy_bool inverted)
 {
     latch_visitor latch;
@@ -231,11 +250,6 @@ static void test_filters(toy_str_list *list)
     assert(ENUMERATION_COMPLETE == res || ENUMERATION_INTERRUPTED == res);
 }
 
-static void test_visitors(toy_str_list *list)
-{
-    /* TODO */
-}
-
 static toy_bool matches_all(void *cookie, size_t index, const toy_str_list *item)
 {
     assert(!cookie);
@@ -265,6 +279,11 @@ static void test_set_algebra(toy_str_list *list)
     assert(list_some_match((generic_list *) list, (generic_list_filter_func) matches_proper_subset, NULL));
 }
 
+static void test_visitors(void)
+{
+    /* TODO */
+}
+
 void test_lists(void)
 {
     toy_str_list *list = str_list_alloc("First item");
@@ -272,8 +291,8 @@ void test_lists(void)
     list = str_list_append(list, "Third item");
     list = str_list_append(list, "Fourth item");
     list = str_list_append(list, "Fifth item");
-    test_visitors(list);
     test_filters(list);
     test_set_algebra(list);
+    test_visitors();
     str_list_free(list);
 }
