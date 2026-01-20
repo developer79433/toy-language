@@ -21,5 +21,7 @@ toy_str str_list_payload(toy_str_list *list);
 const toy_str str_list_payload_const(const toy_str_list *list);
 enumeration_result str_list_foreach(toy_str_list *list, toy_str_list_item_callback callback, void *cookie);
 enumeration_result str_list_foreach_const(const toy_str_list *list, const_toy_str_list_item_callback callback, void *cookie);
+enumeration_result str_list_visitor_visit_list(str_list_visitor *visitor, toy_str_list *list);
+enumeration_result const_str_list_visitor_visit_list(const_str_list_visitor *visitor, const toy_str_list *list);
 
 #endif /* TOY_STR_LIST_H */

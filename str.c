@@ -43,6 +43,28 @@ toy_bool str_nequal_nocase(const toy_str s1, const toy_str s2)
     return !str_equal_nocase(s1, s2);
 }
 
+toy_str str_find_first(toy_str haystack, toy_str needle)
+{
+    return strstr(haystack, needle);
+}
+
+toy_bool str_contains(toy_str haystack, toy_str needle)
+{
+    toy_str substr = str_find_first(haystack, needle);
+    return substr != NULL;
+}
+
+toy_str str_find_first_nocase(toy_str haystack, toy_str needle)
+{
+    return strcasestr(haystack, needle);
+}
+
+toy_bool str_contains_nocase(toy_str haystack, toy_str needle)
+{
+    toy_str substr = str_find_first_nocase(haystack, needle);
+    return substr != NULL;
+}
+
 #define ONE_MILLION 1000 * 1000
 
 void str_assert_valid(toy_str str)

@@ -92,3 +92,13 @@ void str_list_assert_valid(const toy_str_list *list)
     str_list_foreach_const(list, item_valid_callback, NULL);
 }
 #endif /* ndef NDEBUG */
+
+enumeration_result str_list_visitor_visit_list(str_list_visitor *visitor, toy_str_list *list)
+{
+    return ptr_list_visitor_visit_list((ptr_list_visitor *) visitor, (toy_ptr_list *) list);
+}
+
+enumeration_result const_str_list_visitor_visit_list(const_str_list_visitor *visitor, const toy_str_list *list)
+{
+    return const_ptr_list_visitor_visit_list((const_ptr_list_visitor *) visitor, (const toy_ptr_list *) list);
+}

@@ -62,11 +62,25 @@ enumeration_result generic_list_foreach_const(const generic_list *list, const_ge
     return ENUMERATION_COMPLETE;
 }
 
-enumeration_result generic_list_visitor_visit(generic_list_visitor *visitor, generic_list *list)
+item_callback_result list_visitor_visit_entry_default(list_visitor *visitor, size_t index, generic_list *item)
+{
+    /* NOP */
+    return CONTINUE_ENUMERATION;
+}
+
+item_callback_result list_visitor_visit_entry(list_visitor *visitor, size_t index, generic_list *item)
+{
+    if (visitor->visit_entry) {
+        return visitor->visit_entry(visitor, index, item);
+    }
+    return list_visitor_visit_entry_default(visitor, index, item);
+}
+
+enumeration_result list_visitor_visit_list_default(list_visitor *visitor, generic_list *list)
 {
     for (size_t i = 0; list; i++) {
         generic_list *next = list->next;
-        item_callback_result res = visitor->visit(visitor, i, list);
+        item_callback_result res = list_visitor_visit_entry(visitor, i, list);
         if (STOP_ENUMERATION == res) {
             return ENUMERATION_INTERRUPTED;
         }
@@ -75,17 +89,47 @@ enumeration_result generic_list_visitor_visit(generic_list_visitor *visitor, gen
     return ENUMERATION_COMPLETE;
 }
 
-enumeration_result generic_list_visitor_visit_const(const_generic_list_visitor *visitor, const generic_list *list)
+enumeration_result list_visitor_visit_list(list_visitor *visitor, generic_list *list)
+{
+    if (visitor->visit_list) {
+        return visitor->visit_list(visitor, list);
+    }
+    return list_visitor_visit_list_default(visitor, list);
+}
+
+item_callback_result const_list_visitor_visit_entry_default(const_list_visitor *visitor, size_t index, const generic_list *item)
+{
+    /* NOP */
+    return CONTINUE_ENUMERATION;
+}
+
+item_callback_result const_list_visitor_visit_entry(const_list_visitor *visitor, size_t index, const generic_list *item)
+{
+    if (visitor->visit_entry) {
+        return visitor->visit_entry(visitor, index, item);
+    }
+    return const_list_visitor_visit_entry_default(visitor, index, item);
+}
+
+enumeration_result const_list_visitor_visit_list_default(const_list_visitor *visitor, const generic_list *list)
 {
     for (size_t i = 0; list; i++) {
         const generic_list *next = list->next;
-        item_callback_result res = visitor->visit(visitor, i, list);
+        item_callback_result res = const_list_visitor_visit_entry(visitor, i, list);
         if (STOP_ENUMERATION == res) {
             return ENUMERATION_INTERRUPTED;
         }
         list = next;
     }
     return ENUMERATION_COMPLETE;
+}
+
+enumeration_result const_list_visitor_visit_list(const_list_visitor *visitor, const generic_list *list)
+{
+    if (visitor->visit_list) {
+        return visitor->visit_list(visitor, list);
+    }
+    return const_list_visitor_visit_list_default(visitor, list);
 }
 
 static item_callback_result free_item_cb(void *cookie, size_t index, generic_list *list)
@@ -125,7 +169,7 @@ static item_callback_result const_find_all_callback(void *cookie, size_t index, 
     return CONTINUE_ENUMERATION;
 }
 
-enumeration_result generic_list_flter_const(const generic_list *list, generic_list_filter_func filter, void *filter_cookie, const_generic_list_item_callback callback, void *cookie)
+enumeration_result generic_list_filter_const(const generic_list *list, generic_list_filter_func filter, void *filter_cookie, const_generic_list_item_callback callback, void *cookie)
 {
     const_filter_args args = { .filter = filter, .filter_cookie = filter_cookie, .user_callback = callback, .user_cookie = cookie };
     enumeration_result res = generic_list_foreach_const(list, const_find_all_callback, &args);
@@ -143,6 +187,7 @@ static item_callback_result find_first_callback(void *cookie, size_t index, gene
     find_one_args *args = (find_one_args *) cookie;
     if (args->filtargs.filter(args->filtargs.user_cookie, index, item)) {
         /* Ignore user callback return value */
+        /* FIXME: Shouldn't this set prev_item too? */
         args->found_item = item;
         return STOP_ENUMERATION;
     }

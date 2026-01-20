@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "tests.h"
+#include "test-lists.h"
 #include "test-map-vals.h"
 #include "test-map-ptrs.h"
 #include "test-strings.h"
@@ -19,6 +20,7 @@ static void test_expr_lists()
 void run_tests(void)
 {
     test_strings();
+    test_lists();
     test_str_lists();
     test_str_list_inlines();
     test_val_lists();

@@ -33,14 +33,26 @@ typedef struct const_filter_args_struct {
     void *user_cookie;
 } const_filter_args;
 
-typedef struct generic_list_visitor_struct {
-    void *cookie;
-    item_callback_result (*visit)(struct generic_list_visitor_struct *visitor, size_t index, generic_list *item);
-} generic_list_visitor;
+struct list_visitor_struct;
+typedef struct list_visitor_struct list_visitor;
 
-typedef struct const_generic_list_visitor_struct {
-    void *cookie;
-    item_callback_result (*visit)(struct const_generic_list_visitor_struct *visitor, size_t index, const generic_list *item);
-} const_generic_list_visitor;
+typedef enumeration_result (*list_visit_func)(list_visitor *visitor, generic_list *list);
+typedef item_callback_result (*list_entry_visit_func)(list_visitor *visitor, size_t index, generic_list *item);
+
+struct list_visitor_struct {
+    list_visit_func visit_list;
+    list_entry_visit_func visit_entry;
+};
+
+struct const_list_visitor_struct;
+typedef struct const_list_visitor_struct const_list_visitor;
+
+typedef enumeration_result (*const_list_visit_func)(const_list_visitor *visitor, const generic_list *list);
+typedef item_callback_result (*const_list_entry_visit_func)(const_list_visitor *visitor, size_t index, const generic_list *item);
+
+struct const_list_visitor_struct {
+    const_list_visit_func visit_list;
+    const_list_entry_visit_func visit_entry;
+};
 
 #endif /* GENERIC_LIST_TYPES_H */

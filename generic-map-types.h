@@ -29,14 +29,27 @@ typedef struct map_filter_args_struct {
     void *user_cookie;
 } map_filter_args;
 
-typedef struct generic_map_visitor_struct {
-    void *cookie;
-    item_callback_result (*visit)(struct generic_map_visitor_struct *visitor, generic_map_entry *entry);
-} generic_map_visitor;
+struct map_visitor_struct;
+typedef struct map_visitor_struct map_visitor;
+typedef item_callback_result (*map_entry_visit_func)(map_visitor *visitor, generic_map_entry *entry);
+struct map_visitor_struct {
+    map_entry_visit_func visit;
+};
 
-typedef struct const_generic_map_visitor_struct {
-    void *cookie;
-    item_callback_result (*visit)(struct const_generic_map_visitor_struct *visitor, const generic_map_entry *entry);
-} const_generic_map_visitor;
+struct const_map_visitor_struct;
+typedef struct const_map_visitor_struct const_map_visitor;
+typedef item_callback_result (*const_map_entry_visit_func)(const_map_visitor *visitor, const generic_map_entry *entry);
+struct const_map_visitor_struct {
+    const_map_entry_visit_func visit;
+};
+
+struct map_filter_struct;
+typedef struct map_filter_struct map_filter;
+typedef item_callback_result (*map_filter_entry_visit_func)(map_filter *visitor, generic_map_entry *entry);
+struct map_filter_struct {
+    map_filter_entry_visit_func visit;
+    generic_map_filter_func filter;
+    void *filter_cookie;
+};
 
 #endif /* TOY_GENERIC_MAP_TYPES_H */

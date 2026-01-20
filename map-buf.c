@@ -24,7 +24,7 @@ static map_buf_entry_list **map_buf_get_bucket(map_buf *map, const toy_str key)
 {
     assert(offsetof(map_buf, buckets) == offsetof(generic_map, buckets));
     assert(offsetof(map_buf, num_items) == offsetof(generic_map, num_items));
-    return (map_buf_entry_list **) generic_map_get_bucket((generic_map *) map, key);
+    return (map_buf_entry_list **) generic_map_get_bucket_ptr((generic_map *) map, key);
 }
 
 enumeration_result map_buf_foreach(map_buf *map, map_buf_entry_callback callback, void *cookie)
