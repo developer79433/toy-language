@@ -7,218 +7,28 @@
 #include "generic-list.h"
 #include "str-list.h"
 #include "log.h"
+#include "list-filter.h"
+#include "latch-visitor.h"
+#include "latch-prev-visitor.h"
 
-struct my_list_filter_struct;
-typedef struct my_list_filter_struct my_list_filter;
-struct my_list_filter_struct {
-#ifdef INLINE_BASE
-    list_visit_func visit_list;
-    list_entry_visit_func visit_entry;
-#else /* ndef INLINE_BASE */
-    list_visitor base;
-#endif /* INLINE_BASE */
-    generic_list_filter_func filter_func;
-    void *filter_cookie;
-    toy_bool inverted;
-    list_visitor *next_visitor;
-};
-
-item_callback_result list_filter_visit_entry(my_list_filter *filter, size_t index, generic_list *entry)
+static void assert_all_match(const generic_list *list, generic_list_filter_func filter_func)
 {
-    assert((void *) filter == (void *) &filter->base);
-    toy_bool filter_res = filter->filter_func(filter->filter_cookie, index, entry);
-    if (filter->inverted) {
-        filter_res = !filter_res;
-    }
-    if (filter_res) {
-        list_visitor *next = filter->next_visitor;
-        assert(next);
-        return list_visitor_visit_entry(next, index, entry);
-    }
-    return CONTINUE_ENUMERATION;
+    assert(list_all_match(list, filter_func, NULL));
 }
 
-enumeration_result list_filter_visit_list(my_list_filter *filter, generic_list *list)
+static void assert_none_match(const generic_list *list, generic_list_filter_func filter_func)
 {
-    return list_visitor_visit_list(&filter->base, list);
+    assert(list_none_match(list, filter_func, NULL));
 }
 
-void list_filter_init(my_list_filter *filter, generic_list_filter_func filter_func, void *filter_cookie, toy_bool inverted, list_visitor *next_visitor)
+static void assert_not_all_match(const generic_list *list, generic_list_filter_func filter_func)
 {
-    filter->base.visit_list = NULL;
-    filter->base.visit_entry = (list_entry_visit_func) list_filter_visit_entry;
-    filter->filter_func = filter_func;
-    filter->filter_cookie = filter_cookie;
-    filter->inverted = inverted;
-    filter->next_visitor = next_visitor;
+    assert(list_not_all_match(list, filter_func, NULL));
 }
 
-typedef struct latch_visitor_struct {
-    list_visitor base;
-    generic_list *last_seen_item;
-    toy_bool stop_on_first;
-} latch_visitor;
-
-item_callback_result latch_visitor_visit_entry(latch_visitor *latch, size_t index, generic_list *item)
+static void assert_some_match(const generic_list *list, generic_list_filter_func filter_func)
 {
-    latch->last_seen_item = item;
-    return latch->stop_on_first ? STOP_ENUMERATION : CONTINUE_ENUMERATION;
-}
-
-void latch_visitor_init(latch_visitor *latch, toy_bool stop_on_first)
-{
-    latch->base.visit_list = NULL;
-    latch->base.visit_entry = (list_entry_visit_func) latch_visitor_visit_entry;
-    latch->last_seen_item = NULL;
-    latch->stop_on_first = stop_on_first;
-}
-
-typedef struct latch_prev_visitor_struct {
-    latch_visitor latch;
-    generic_list *prev;
-} latch_prev_visitor;
-
-item_callback_result latch_prev_visitor_visit_entry(latch_prev_visitor *latch_prev, size_t index, generic_list *item)
-{
-    item_callback_result res = latch_visitor_visit_entry(&latch_prev->latch, index, item);
-    latch_prev->prev = item;
-    return res;
-}
-
-void latch_prev_visitor_init(latch_prev_visitor *latch_prev, toy_bool stop_on_first)
-{
-    latch_visitor_init(&latch_prev->latch, stop_on_first);
-    latch_prev->latch.base.visit_entry = (list_entry_visit_func) latch_prev_visitor_visit_entry;
-    latch_prev->prev = NULL;
-}
-
-generic_list *list_find(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, toy_bool stop_on_first, toy_bool inverted, generic_list **prev)
-{
-    latch_prev_visitor latch_prev;
-    latch_prev_visitor_init(&latch_prev, stop_on_first);
-    my_list_filter filter;
-    list_filter_init(&filter, filter_func, filter_cookie, inverted, (list_visitor *) &latch_prev);
-    enumeration_result res = list_filter_visit_list(&filter, list);
-    assert(ENUMERATION_COMPLETE == res || ENUMERATION_INTERRUPTED == res);
-    *prev = latch_prev.prev;
-    return latch_prev.latch.last_seen_item;
-}
-
-generic_list *list_find_first(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, generic_list **prev)
-{
-    return list_find(list, filter_func, filter_cookie, TOY_TRUE, TOY_FALSE, prev);
-}
-
-generic_list *list_find_first_not(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, generic_list **prev)
-{
-    return list_find(list, filter_func, filter_cookie, TOY_TRUE, TOY_TRUE, prev);
-}
-
-generic_list *list_find_last(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, generic_list **prev)
-{
-    /* TODO: Should use list_reverse(list) or reverse visitor */
-    return list_find(list, filter_func, filter_cookie, TOY_FALSE, TOY_FALSE, prev);
-}
-
-generic_list *list_find_last_not(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, generic_list **prev)
-{
-    /* TODO: Should use list_reverse(list) or reverse visitor */
-    return list_find(list, filter_func, filter_cookie, TOY_FALSE, TOY_TRUE, prev);
-}
-
-struct const_my_list_filter_struct;
-typedef struct const_my_list_filter_struct const_my_list_filter;
-struct const_my_list_filter_struct {
-    const_list_visitor base;
-    generic_list_filter_func filter_func;
-    void *filter_cookie;
-    toy_bool inverted;
-    const_list_visitor *next_visitor;
-};
-
-item_callback_result const_list_filter_visit_entry(const_my_list_filter *filter, size_t index, const generic_list *entry)
-{
-    assert((void *) filter == (void *) &filter->base);
-    toy_bool filter_res = filter->filter_func(filter->filter_cookie, index, entry);
-    if (filter->inverted) {
-        filter_res = !filter_res;
-    }
-    if (filter_res) {
-        const_list_visitor *next = filter->next_visitor;
-        assert(next);
-        return const_list_visitor_visit_entry(next, index, entry);
-    }
-    return CONTINUE_ENUMERATION;
-}
-
-enumeration_result const_list_filter_visit_list(const_my_list_filter *filter, const generic_list *list)
-{
-    return const_list_visitor_visit_list(&filter->base, list);
-}
-
-void const_list_filter_init(const_my_list_filter *filter, generic_list_filter_func filter_func, void *filter_cookie, toy_bool inverted, const_list_visitor *next_visitor)
-{
-    filter->base.visit_list = NULL;
-    filter->base.visit_entry = (const_list_entry_visit_func) const_list_filter_visit_entry;
-    filter->filter_func = filter_func;
-    filter->filter_cookie = filter_cookie;
-    filter->inverted = inverted;
-    filter->next_visitor = next_visitor;
-}
-
-const generic_list *list_find_const(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, toy_bool stop_on_first, toy_bool inverted)
-{
-    latch_visitor latch;
-    latch_visitor_init(&latch, stop_on_first);
-    const_my_list_filter filter;
-    const_list_filter_init(&filter, filter_func, filter_cookie, inverted, (const_list_visitor *) &latch);
-    enumeration_result res = const_list_filter_visit_list(&filter, list);
-    assert(ENUMERATION_COMPLETE == res || ENUMERATION_INTERRUPTED == res);
-    return latch.last_seen_item;
-}
-
-const generic_list *list_find_first_const(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
-{
-    return list_find_const(list, filter_func, filter_cookie, TOY_TRUE, TOY_FALSE);
-}
-
-const generic_list *list_find_first_not_const(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
-{
-    return list_find_const(list, filter_func, filter_cookie, TOY_TRUE, TOY_TRUE);
-}
-
-const generic_list *list_find_last_const(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
-{
-    /* TODO: Should use list_reverse(list) or reverse visitor */
-    return list_find_const(list, filter_func, filter_cookie, TOY_FALSE, TOY_FALSE);
-}
-
-const generic_list *list_find_last_not_const(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
-{
-    /* TODO: Should use list_reverse(list) or reverse visitor */
-    return list_find_const(list, filter_func, filter_cookie, TOY_FALSE, TOY_TRUE);
-}
-
-toy_bool list_all_match(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
-{
-    const generic_list *match = list_find_first_not_const(list, filter_func, filter_cookie);
-    return match == NULL;
-}
-
-toy_bool list_none_match(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
-{
-    const generic_list *match = list_find_first_const(list, filter_func, filter_cookie);
-    return match == NULL;
-}
-
-toy_bool list_not_all_match(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
-{
-    return !list_all_match(list, filter_func, filter_cookie);
-}
-
-toy_bool list_some_match(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
-{
-    return !list_none_match(list, filter_func, filter_cookie);
+    assert(list_some_match(list, filter_func, NULL));
 }
 
 static toy_bool compare_to_second_item(void *cookie, size_t index, const toy_str_list *item)
@@ -250,21 +60,21 @@ static void test_filters(toy_str_list *list)
     assert(ENUMERATION_COMPLETE == res || ENUMERATION_INTERRUPTED == res);
 }
 
-static toy_bool matches_all(void *cookie, size_t index, const toy_str_list *item)
+static toy_bool matches_all_test_data_1(void *cookie, size_t index, const toy_str_list *item)
 {
     assert(!cookie);
     toy_str str = str_list_payload_const(item);
     return str_contains_nocase(str, "item");
 }
 
-static toy_bool matches_none(void *cookie, size_t index, const toy_str_list *item)
+static toy_bool matches_none_test_data_1(void *cookie, size_t index, const toy_str_list *item)
 {
     assert(!cookie);
     toy_str str = str_list_payload_const(item);
     return str_contains_nocase(str, "this should not be present and contains utter garbage like shinfandoodle");
 }
 
-static toy_bool matches_proper_subset(void *cookie, size_t index, const toy_str_list *item)
+static toy_bool matches_proper_subset_test_data_1(void *cookie, size_t index, const toy_str_list *item)
 {
     assert(!cookie);
     toy_str str = str_list_payload_const(item);
@@ -273,15 +83,105 @@ static toy_bool matches_proper_subset(void *cookie, size_t index, const toy_str_
 
 static void test_set_algebra(toy_str_list *list)
 {
-    assert(list_all_match((generic_list *) list, (generic_list_filter_func) matches_all, NULL));
-    assert(list_none_match((generic_list *) list, (generic_list_filter_func) matches_none, NULL));
-    assert(list_not_all_match((generic_list *) list, (generic_list_filter_func) matches_proper_subset, NULL));
-    assert(list_some_match((generic_list *) list, (generic_list_filter_func) matches_proper_subset, NULL));
+    assert(list_all_match((generic_list *) list, (generic_list_filter_func) matches_all_test_data_1, NULL));
+    assert(list_none_match((generic_list *) list, (generic_list_filter_func) matches_none_test_data_1, NULL));
+    assert(list_not_all_match((generic_list *) list, (generic_list_filter_func) matches_proper_subset_test_data_1, NULL));
+    assert(list_some_match((generic_list *) list, (generic_list_filter_func) matches_proper_subset_test_data_1, NULL));
+}
+
+typedef struct array_compare_visitor_struct {
+    list_visitor visitor;
+    const toy_str *str_array;
+    toy_bool result;
+} array_compare_visitor;
+
+static item_callback_result array_compare_visit_entry(array_compare_visitor *compare_visitor, size_t index, const toy_str_list *item)
+{
+    const toy_str list_str = str_list_payload_const(item);
+    const toy_str array_str = compare_visitor->str_array[index];
+    if (!str_equal(list_str, array_str)) {
+        compare_visitor->result = TOY_FALSE;
+        return STOP_ENUMERATION;
+    }
+    return CONTINUE_ENUMERATION;
+}
+
+static toy_bool str_list_equals_array(const toy_str_list *str_list, const toy_str *str_array)
+{
+    array_compare_visitor array_compare = { .visitor.visit_list = NULL, .visitor.visit_entry = (list_entry_visit_func) array_compare_visit_entry, .str_array = str_array, .result = TOY_TRUE };
+    enumeration_result res = list_visitor_visit_list((list_visitor *) &array_compare, (generic_list *) str_list);
+    assert(ENUMERATION_COMPLETE == res || ENUMERATION_INTERRUPTED == res);
+    return array_compare.result;
+}
+
+static toy_bool is_edible(void *cookie, size_t index, const toy_str_list *item)
+{
+    const toy_str str = str_list_payload_const(item);
+    if (
+        str_equal(str, "Apples")
+        || str_equal(str, "Oranges")
+        || str_equal(str, "Watermelon")
+        || str_equal(str, "Bread")
+        || str_equal(str, "Rice")
+    ) {
+        return TOY_TRUE;
+    }
+    if (
+        str_equal(str, "Concrete")
+    ) {
+        return TOY_FALSE;
+    }
+    assert(0);
+}
+
+static toy_bool is_fruit(void *cookie, size_t index, const toy_str_list *item)
+{
+    const toy_str str = str_list_payload_const(item);
+    if (
+        str_equal(str, "Apples")
+        || str_equal(str, "Oranges")
+        || str_equal(str, "Watermelon")
+    ) {
+        return TOY_TRUE;
+    }
+    if (
+        str_equal(str, "Concrete")
+        || str_equal(str, "Bread")
+        || str_equal(str, "Rice")
+    ) {
+        return TOY_FALSE;
+    }
+    assert(0);
 }
 
 static void test_visitors(void)
 {
-    /* TODO */
+    toy_str_list *list = str_list_alloc("Apples");
+    list = str_list_append(list, "Oranges");
+    const toy_str expected_values_1[] = { "Apples", "Oranges" };
+    assert(str_list_equals_array(list, expected_values_1));
+    list = str_list_append(list, "Watermelon");
+    const toy_str expected_values_2[] = { "Apples", "Oranges", "Watermelon" };
+    assert(str_list_equals_array(list, expected_values_2));
+    assert_all_match((generic_list *) list, (generic_list_filter_func) match_always);
+    assert_none_match((generic_list *) list, (generic_list_filter_func) match_never);
+    assert_all_match((generic_list *) list, (generic_list_filter_func) is_edible);
+    assert_all_match((generic_list *) list, (generic_list_filter_func) is_fruit);
+    list = str_list_append(list, "Bread");
+    list = str_list_append(list, "Rice");
+    assert_all_match((generic_list *) list, (generic_list_filter_func) match_always);
+    assert_none_match((generic_list *) list, (generic_list_filter_func) match_never);
+    assert_all_match((generic_list *) list, (generic_list_filter_func) is_edible);
+    assert_some_match((generic_list *) list, (generic_list_filter_func) is_fruit);
+    assert_not_all_match((generic_list *) list, (generic_list_filter_func) is_fruit);
+    list = str_list_append(list, "Concrete");
+    assert_all_match((generic_list *) list, (generic_list_filter_func) match_always);
+    assert_none_match((generic_list *) list, (generic_list_filter_func) match_never);
+    assert_some_match((generic_list *) list, (generic_list_filter_func) is_edible);
+    assert_not_all_match((generic_list *) list, (generic_list_filter_func) is_edible);
+    assert_some_match((generic_list *) list, (generic_list_filter_func) is_fruit);
+    assert_not_all_match((generic_list *) list, (generic_list_filter_func) is_fruit);
+    /* TODO: Remove list elements */
 }
 
 void test_lists(void)

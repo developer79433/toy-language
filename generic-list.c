@@ -5,6 +5,9 @@
 #include "bool-types.h"
 #include "mymalloc.h"
 #include "generic-list.h"
+#include "list-filter.h"
+#include "latch-visitor.h"
+#include "latch-prev-visitor.h"
 
 void *INDEX_OUT_OF_BOUNDS = (void *) 1;
 
@@ -395,4 +398,103 @@ generic_list *generic_list_remove_last(generic_list *list, generic_list **remove
         *removed = last;
     }
     return list;
+}
+
+static generic_list *list_find(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, toy_bool stop_on_first, toy_bool inverted, generic_list **prev)
+{
+    latch_prev_visitor latch_prev;
+    latch_prev_visitor_init(&latch_prev, list, stop_on_first);
+    my_list_filter filter;
+    list_filter_init(&filter, filter_func, filter_cookie, inverted, (list_visitor *) &latch_prev);
+    enumeration_result res = list_filter_visit_list(&filter, list);
+    assert(ENUMERATION_COMPLETE == res || ENUMERATION_INTERRUPTED == res);
+    *prev = latch_prev.prev;
+    return latch_prev.latch.last_seen_item;
+}
+
+generic_list *list_find_first(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, generic_list **prev)
+{
+    return list_find(list, filter_func, filter_cookie, TOY_TRUE, TOY_FALSE, prev);
+}
+
+generic_list *list_find_first_not(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, generic_list **prev)
+{
+    return list_find(list, filter_func, filter_cookie, TOY_TRUE, TOY_TRUE, prev);
+}
+
+generic_list *list_find_last(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, generic_list **prev)
+{
+    /* TODO: Should use list_reverse(list) or reverse visitor */
+    return list_find(list, filter_func, filter_cookie, TOY_FALSE, TOY_FALSE, prev);
+}
+
+generic_list *list_find_last_not(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, generic_list **prev)
+{
+    /* TODO: Should use list_reverse(list) or reverse visitor */
+    return list_find(list, filter_func, filter_cookie, TOY_FALSE, TOY_TRUE, prev);
+}
+
+static const generic_list *list_find_const(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, toy_bool stop_on_first, toy_bool inverted)
+{
+    latch_visitor latch;
+    latch_visitor_init(&latch, stop_on_first);
+    const_my_list_filter filter;
+    const_list_filter_init(&filter, filter_func, filter_cookie, inverted, (const_list_visitor *) &latch);
+    enumeration_result res = const_list_filter_visit_list(&filter, list);
+    assert(ENUMERATION_COMPLETE == res || ENUMERATION_INTERRUPTED == res);
+    return latch.last_seen_item;
+}
+
+const generic_list *list_find_first_const(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
+{
+    return list_find_const(list, filter_func, filter_cookie, TOY_TRUE, TOY_FALSE);
+}
+
+const generic_list *list_find_first_not_const(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
+{
+    return list_find_const(list, filter_func, filter_cookie, TOY_TRUE, TOY_TRUE);
+}
+
+const generic_list *list_find_last_const(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
+{
+    /* TODO: Should use list_reverse(list) or reverse visitor */
+    return list_find_const(list, filter_func, filter_cookie, TOY_FALSE, TOY_FALSE);
+}
+
+const generic_list *list_find_last_not_const(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
+{
+    /* TODO: Should use list_reverse(list) or reverse visitor */
+    return list_find_const(list, filter_func, filter_cookie, TOY_FALSE, TOY_TRUE);
+}
+
+toy_bool list_all_match(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
+{
+    const generic_list *match = list_find_first_not_const(list, filter_func, filter_cookie);
+    return match == NULL;
+}
+
+toy_bool list_none_match(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
+{
+    const generic_list *match = list_find_first_const(list, filter_func, filter_cookie);
+    return match == NULL;
+}
+
+toy_bool list_not_all_match(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
+{
+    return !list_all_match(list, filter_func, filter_cookie);
+}
+
+toy_bool list_some_match(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie)
+{
+    return !list_none_match(list, filter_func, filter_cookie);
+}
+
+toy_bool match_always(void *cookie, size_t index, const generic_list *item)
+{
+    return TOY_TRUE;
+}
+
+toy_bool match_never(void *cookie, size_t index, const generic_list *item)
+{
+    return TOY_FALSE;
 }

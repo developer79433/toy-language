@@ -33,5 +33,27 @@ const generic_list *generic_list_find_first_not_const(const generic_list *list, 
 toy_bool generic_list_none_match(const generic_list *list, generic_list_filter_func filter, void *cookie);
 toy_bool generic_list_all_match(const generic_list *list, generic_list_filter_func filter, void *cookie);
 generic_list *generic_list_last(generic_list *list, generic_list **prev);
+generic_list *list_find_first(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, generic_list **prev);
+generic_list *list_find_first_not(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, generic_list **prev);
+generic_list *list_find_last(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, generic_list **prev);
+generic_list *list_find_last_not(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, generic_list **prev);
+const generic_list *list_find_first_const(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie);
+const generic_list *list_find_first_not_const(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie);
+const generic_list *list_find_last_const(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie);
+const generic_list *list_find_last_not_const(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie);
+//  Ax  m(x)
+// ~Ex ~m(x)
+toy_bool list_all_match(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie);
+//  Ax ~m(x)
+// ~Ex  m(x)
+toy_bool list_none_match(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie);
+// ~Ax  m(x)
+//  Ex ~m(x)
+toy_bool list_not_all_match(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie);
+// ~Ax ~m(x)
+//  Ex  m(x)
+toy_bool list_some_match(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie);
+toy_bool match_always(void *cookie, size_t index, const generic_list *item);
+toy_bool match_never(void *cookie, size_t index, const generic_list *item);
 
 #endif /* GENERIC_LIST_H */
