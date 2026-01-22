@@ -27,7 +27,7 @@ typedef struct small_list_struct {
     char c;
 } small_list;
 
-generic_list *generic_list_alloc_size(size_t payload_size)
+generic_list *list_alloc_size(size_t payload_size)
 {
     generic_list *list;
     list = (generic_list *) malloc(
@@ -40,20 +40,20 @@ generic_list *generic_list_alloc_size(size_t payload_size)
     return list;
 }
 
-generic_list *generic_list_next(generic_list *list)
+generic_list *list_next(generic_list *list)
 {
     return list->next;
 }
 
-const generic_list *generic_list_next_const(const generic_list *list)
+const generic_list *list_next_const(const generic_list *list)
 {
     return list->next;
 }
 
-enumeration_result generic_list_foreach(generic_list *list, generic_list_item_callback callback, void *cookie)
+enumeration_result list_foreach(generic_list *list, generic_list_item_callback callback, void *cookie)
 {
     for (size_t i = 0; list; i++) {
-        generic_list *next = generic_list_next(list);
+        generic_list *next = list_next(list);
         item_callback_result res = callback(cookie, i, list);
         if (STOP_ENUMERATION == res) {
             return ENUMERATION_INTERRUPTED;
@@ -63,10 +63,10 @@ enumeration_result generic_list_foreach(generic_list *list, generic_list_item_ca
     return ENUMERATION_COMPLETE;
 }
 
-enumeration_result generic_list_foreach_const(const generic_list *list, const_generic_list_item_callback callback, void *cookie)
+enumeration_result list_foreach_const(const generic_list *list, const_generic_list_item_callback callback, void *cookie)
 {
     for (size_t i = 0; list; i++) {
-        const generic_list *next = generic_list_next_const(list);
+        const generic_list *next = list_next_const(list);
         item_callback_result res = callback(cookie, i, list);
         if (STOP_ENUMERATION == res) {
             return ENUMERATION_INTERRUPTED;
@@ -82,9 +82,9 @@ static item_callback_result free_item_cb(void *cookie, size_t index, generic_lis
     return CONTINUE_ENUMERATION;
 }
 
-void generic_list_free(generic_list *list)
+void list_free(generic_list *list)
 {
-    enumeration_result res = generic_list_foreach(list, free_item_cb, NULL);
+    enumeration_result res = list_foreach(list, free_item_cb, NULL);
     assert(res == ENUMERATION_COMPLETE);
 }
 
@@ -94,12 +94,12 @@ static toy_bool is_desired_index(void *cookie, size_t index, const generic_list 
     return (index == *desired_index);
 }
 
-generic_list *generic_list_index(generic_list *list, size_t index)
+generic_list *list_index(generic_list *list, size_t index)
 {
     return list_find_first(list, is_desired_index, &index, NULL);
 }
 
-const generic_list *generic_list_index_const(const generic_list *list, size_t index)
+const generic_list *list_index_const(const generic_list *list, size_t index)
 {
     return list_find_first_const(list, is_desired_index, &index);
 }
@@ -111,63 +111,63 @@ static item_callback_result increment_count_callback(void *cookie, size_t index,
     return CONTINUE_ENUMERATION;
 }
 
-size_t generic_list_len(const generic_list *list)
+size_t list_len(const generic_list *list)
 {
     assert(sizeof(big_list *) == sizeof(small_list *));
     assert(sizeof(generic_list *) == sizeof(small_list *));
     assert(offsetof(big_list, next) == offsetof(small_list, next));
     assert(offsetof(generic_list, next) == offsetof(small_list, next));
     size_t size = 0;
-    enumeration_result res = generic_list_foreach_const(list, increment_count_callback, &size);
+    enumeration_result res = list_foreach_const(list, increment_count_callback, &size);
     assert(ENUMERATION_COMPLETE == res);
     return size;
 }
 
 static toy_bool has_null_next(void *cookie, size_t index, const generic_list *item)
 {
-    return generic_list_next_const(item) == NULL;
+    return list_next_const(item) == NULL;
 }
 
-generic_list *generic_list_last(generic_list *list, generic_list **prev)
+generic_list *list_last(generic_list *list, generic_list **prev)
 {
     generic_list *last = list_find_first(list, has_null_next, NULL, prev);
-    assert(NULL == generic_list_next_const(last));
+    assert(NULL == list_next_const(last));
     return last;
 }
 
-generic_list *generic_list_concat(generic_list *list, generic_list *new_list)
+generic_list *list_concat(generic_list *list, generic_list *new_list)
 {
-    generic_list *last = generic_list_last(list, NULL);
-    assert(NULL == generic_list_next_const(last));
+    generic_list *last = list_last(list, NULL);
+    assert(NULL == list_next_const(last));
     last->next = new_list;
     return list;
 }
 
-generic_list *generic_list_remove_first(generic_list *list, generic_list **removed)
+generic_list *list_remove_first(generic_list *list, generic_list **removed)
 {
     assert(list);
     if (removed) {
         *removed = list;
     }
-    generic_list *ret = generic_list_next(list);
+    generic_list *ret = list_next(list);
     list->next = NULL;
     return ret;
 }
 
-generic_list *generic_list_remove_last(generic_list *list, generic_list **removed)
+generic_list *list_remove_last(generic_list *list, generic_list **removed)
 {
     assert(list);
     generic_list *prev = NULL;
-    generic_list *last = generic_list_last(list, &prev);
-    assert(NULL == generic_list_next_const(last));
+    generic_list *last = list_last(list, &prev);
+    assert(NULL == list_next_const(last));
     if (prev == NULL) {
         assert(last == list);
-        assert(NULL == generic_list_next_const(list));
+        assert(NULL == list_next_const(list));
         list = NULL;
     } else {
         assert(last != list);
-        assert(generic_list_next_const(prev) != NULL);
-        assert(generic_list_next_const(prev) == last);
+        assert(list_next_const(prev) != NULL);
+        assert(list_next_const(prev) == last);
         prev->next = NULL;
     }
     if (removed) {

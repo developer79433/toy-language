@@ -18,7 +18,7 @@ item_callback_result list_visitor_visit_entry(list_visitor *visitor, size_t inde
 enumeration_result list_visitor_visit_list_default(list_visitor *visitor, generic_list *list)
 {
     for (size_t i = 0; list; i++) {
-        generic_list *next = generic_list_next(list);
+        generic_list *next = list_next(list);
         item_callback_result res = list_visitor_visit_entry(visitor, i, list);
         if (STOP_ENUMERATION == res) {
             return ENUMERATION_INTERRUPTED;
@@ -53,7 +53,7 @@ item_callback_result const_list_visitor_visit_entry(const_list_visitor *visitor,
 enumeration_result const_list_visitor_visit_list_default(const_list_visitor *visitor, const generic_list *list)
 {
     for (size_t i = 0; list; i++) {
-        const generic_list *next = generic_list_next_const(list);
+        const generic_list *next = list_next_const(list);
         item_callback_result res = const_list_visitor_visit_entry(visitor, i, list);
         if (STOP_ENUMERATION == res) {
             return ENUMERATION_INTERRUPTED;
