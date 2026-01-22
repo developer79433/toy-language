@@ -2,9 +2,10 @@
 #define TOY_LATCH_VISITOR_TYPES_H 1
 
 #include "generic-list-types.h"
+#include "list-visitor-types.h"
 
 typedef struct latch_visitor_struct {
-    list_visitor base;
+    list_visitor visitor;
     generic_list *last_seen_item;
     toy_bool stop_on_first;
 } latch_visitor;

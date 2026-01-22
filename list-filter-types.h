@@ -2,6 +2,7 @@
 #define TOY_LIST_FILTER_TYPES_H 1
 
 #include "generic-list-types.h"
+#include "list-visitor-types.h"
 
 struct my_list_filter_struct;
 typedef struct my_list_filter_struct my_list_filter;

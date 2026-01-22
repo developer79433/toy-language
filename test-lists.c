@@ -8,6 +8,7 @@
 #include "str-list.h"
 #include "log.h"
 #include "list-filter.h"
+#include "list-visitor.h"
 #include "latch-visitor.h"
 #include "latch-prev-visitor.h"
 

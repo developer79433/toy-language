@@ -2,8 +2,8 @@
 
 void latch_visitor_init(latch_visitor *latch, toy_bool stop_on_first)
 {
-    latch->base.visit_list = NULL;
-    latch->base.visit_entry = (list_entry_visit_func) latch_visitor_visit_entry;
+    latch->visitor.visit_list = NULL;
+    latch->visitor.visit_entry = (list_entry_visit_func) latch_visitor_visit_entry;
     latch->last_seen_item = NULL;
     latch->stop_on_first = stop_on_first;
 }

@@ -2,6 +2,7 @@
 
 #include "mymalloc.h"
 #include "generic-list.h"
+#include "list-visitor.h"
 #include "ptr-list.h"
 
 void *ptr_list_payload(toy_ptr_list *list)

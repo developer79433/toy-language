@@ -105,12 +105,12 @@ enumeration_result buf_list_foreach_const(const toy_buf_list *list, const_buf_li
 
 toy_bool buf_list_none_match(const toy_buf_list *list, buf_list_filter_func filter, void *cookie)
 {
-    return generic_list_none_match((const generic_list *) list, (generic_list_filter_func) filter, cookie);
+    return list_none_match((const generic_list *) list, (generic_list_filter_func) filter, cookie);
 }
 
 toy_bool buf_list_all_match(const toy_buf_list *list, buf_list_filter_func filter, void *cookie)
 {
-    return generic_list_all_match((const generic_list *) list, (generic_list_filter_func) filter, cookie);
+    return list_all_match((const generic_list *) list, (generic_list_filter_func) filter, cookie);
 }
 
 void buf_list_free(toy_buf_list *list)

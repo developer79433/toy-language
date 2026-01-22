@@ -1,6 +1,7 @@
 #include <assert.h>
 
 #include "generic-list.h"
+#include "list-visitor.h"
 #include "list-filter.h"
 
 void list_filter_init(my_list_filter *filter, generic_list_filter_func filter_func, void *filter_cookie, toy_bool inverted, list_visitor *next_visitor)
