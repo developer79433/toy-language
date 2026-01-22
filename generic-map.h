@@ -9,15 +9,14 @@
 void generic_map_init(generic_map *map);
 generic_map *generic_map_alloc(void);
 generic_map_entry_list **generic_map_get_bucket_ptr(generic_map *map, toy_str key);
+enumeration_result generic_map_enum_buckets(generic_map *map, generic_map_bucket_callback callback, void *cookie);
+enumeration_result generic_map_enum_buckets_const(const generic_map *map, const_generic_map_bucket_callback callback, void *cookie);
 void generic_map_free(generic_map *map);
 generic_map_entry *generic_map_get_entry(generic_map *map, const toy_str key);
 const generic_map_entry *generic_map_get_entry_const(const generic_map *map, const toy_str key);
 delete_result generic_map_delete(generic_map *map, const toy_str key);
-enumeration_result map_visitor_visit(map_visitor *visitor, generic_map *map);
-enumeration_result const_map_visitor_visit(const_map_visitor *visitor, const generic_map *map);
 enumeration_result generic_map_foreach(generic_map *map, generic_map_entry_callback callback, void *cookie);
 enumeration_result generic_map_foreach_const(const generic_map *map, const_generic_map_entry_callback callback, void *cookie);
-enumeration_result generic_map_filter(map_filter *visitor, generic_map *map);
 generic_map_entry *generic_map_find(generic_map *map, generic_map_filter_func filter, void *cookie);
 generic_map_entry *generic_map_find_not(generic_map *map, generic_map_filter_func filter, void *cookie);
 toy_bool generic_map_none_match(generic_map *map, generic_map_filter_func filter, void *cookie);
