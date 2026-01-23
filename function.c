@@ -41,7 +41,9 @@ void func_assert_valid(const toy_function *func)
 {
     assert(func);
     str_assert_valid(func->name);
-    if (func->param_names) {
+    if (&INFINITE_PARAMS == func->param_names) {
+        /* No parameter names to validate */
+    } else if (func->param_names) {
         str_list_assert_valid(func->param_names);
     }
     if (func->type == FUNC_USER_DECLARED) {

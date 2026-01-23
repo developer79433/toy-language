@@ -17,6 +17,7 @@
 #include "errors.h"
 #include "log.h"
 #include "var.h"
+#include "function.h"
 
 void interp_stack_assert_valid(const interp_stack *stack)
 {
@@ -125,7 +126,7 @@ interp_stack *interp_stack_push_predef_func(interp_stack *stack, const toy_funct
     interp_stack_assert_valid(stack);
     assert(FUNC_PREDEFINED == func->type);
     size_t args_len = val_list_len(actual_arguments);
-    assert(args_len == str_list_len(func->param_names));
+    assert(func->param_names == &INFINITE_PARAMS || args_len == str_list_len(func->param_names));
     toy_var *arguments;
     if (args_len) {
         arguments = var_alloc_array(args_len);

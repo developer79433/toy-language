@@ -1,0 +1,2 @@
+var name = "Mali";
+print("Hello, " + name);
