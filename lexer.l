@@ -23,7 +23,7 @@
 %x C_COMMENT
 
 DIGIT      [0-9]
-IDENTIFIER [a-z][a-z0-9A-Z_]*
+IDENTIFIER [a-zA-Z_][a-z0-9A-Z_]*
 SEMICOLON  ";"
 TRUE (?i:true)
 FALSE (?i:false)

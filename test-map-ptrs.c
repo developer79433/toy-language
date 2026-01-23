@@ -145,9 +145,12 @@ static void insert_test_data(map_ptr *map)
 static item_callback_result print_entry(map_visitor *visitor, map_ptr_entry *entry)
 {
     toy_val *val = (toy_val *) entry->ptr;
+    assert(val);
+#if 0
     log_printf("Map entry: { \"%s\" => ", entry->key);
     val_dump(val, TOY_FALSE);
     log_printf(" }\n");
+#endif
     return CONTINUE_ENUMERATION;
 }
 
@@ -186,7 +189,7 @@ static void test_find(void)
     toy_val *val = (toy_val *) found->ptr;
     assert(VAL_NUM == val->type);
     assert(3 == val->num);
-    log_printf("Found: { \"%s\" => %f }\n", found->key, val->num);
+    /* log_printf("Found: { \"%s\" => %f }\n", found->key, val->num); */
 }
 
 void test_map_ptrs(void)
