@@ -180,7 +180,7 @@ static generic_list *list_find(generic_list *list, generic_list_filter_func filt
 {
     list_latch_prev latch_prev;
     list_latch_prev_init(&latch_prev, list, stop_on_first);
-    my_list_filter filter;
+    list_filter filter;
     list_filter_init(&filter, filter_func, filter_cookie, inverted, (list_visitor *) &latch_prev);
     enumeration_result res = list_filter_visit_list(&filter, list);
     assert(ENUMERATION_COMPLETE == res || ENUMERATION_INTERRUPTED == res);
@@ -216,7 +216,7 @@ static const generic_list *list_find_const(const generic_list *list, generic_lis
 {
     list_latch latch;
     list_latch_init(&latch, stop_on_first);
-    const_my_list_filter filter;
+    const_list_filter filter;
     const_list_filter_init(&filter, filter_func, filter_cookie, inverted, (const_list_visitor *) &latch);
     enumeration_result res = const_list_filter_visit_list(&filter, list);
     assert(ENUMERATION_COMPLETE == res || ENUMERATION_INTERRUPTED == res);

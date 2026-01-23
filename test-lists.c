@@ -34,7 +34,7 @@ static void assert_some_match(const generic_list *list, generic_list_filter_func
 
 static toy_bool compare_to_second_item(void *cookie, size_t index, const toy_str_list *item)
 {
-    my_list_filter *visitor = (my_list_filter *) cookie;
+    list_filter *visitor = (list_filter *) cookie;
     assert(visitor);
     assert(visitor->filter_func);
     const toy_str str = str_list_payload_const(item);
@@ -55,7 +55,7 @@ static void test_filters(toy_str_list *list)
         .visit_list = NULL,
         .visit_entry = (const_list_entry_visit_func) receive_entry
     };
-    const_my_list_filter filter;
+    const_list_filter filter;
     const_list_filter_init(&filter, (generic_list_filter_func) compare_to_second_item, &filter, TOY_FALSE, &receiver);
     enumeration_result res = const_list_filter_visit_list(&filter, (const generic_list *) list);
     assert(ENUMERATION_COMPLETE == res || ENUMERATION_INTERRUPTED == res);

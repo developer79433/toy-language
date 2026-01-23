@@ -6,8 +6,6 @@
 
 typedef struct visitor_struct visitor;
 struct visitor_struct {
-    /* TODO: This can be replaced with 'subclassing' */
-    void *cookie; /* For using code to attach arbitrary additional data */
     void (*binop)(visitor *v, toy_binary_op *binop);
     void (*block)(visitor *v, toy_block *block);
     void (*bool)(visitor *v, toy_bool b);
