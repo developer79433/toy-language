@@ -415,7 +415,7 @@ void generic_map_dump_keys(const generic_map *map)
 {
     log_putc('[');
     dump_keys_visitor visitor = { .visit = (const_map_entry_visit_func) dump_keys_cb, .output_anything = TOY_FALSE };
-    enumeration_result res = const_map_visitor_visit((const_map_visitor *) &visitor, map);
+    enumeration_result res = const_map_visitor_visit_map((const_map_visitor *) &visitor, map);
     assert(ENUMERATION_COMPLETE == res);
     if (visitor.output_anything) {
         log_putc(' ');
