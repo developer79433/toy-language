@@ -26,9 +26,14 @@ static item_callback_result map_visitor_visit_entry_with_index(void *cookie, siz
     return map_visitor_visit_entry(visitor, entry);
 }
 
-static item_callback_result map_visitor_visit_bucket(map_visitor *visitor, generic_map_entry_list *bucket)
+typedef struct map_bucket_visitor_struct {
+    bucket_visitor bucket_vis;
+    map_visitor *map_vis;
+} map_bucket_visitor;
+
+static item_callback_result map_bucket_visitor_visit_bucket(map_bucket_visitor *map_bucket_vis, generic_map_entry_list *bucket)
 {
-    enumeration_result enum_res = generic_map_entry_list_foreach(bucket, map_visitor_visit_entry_with_index, visitor);
+    enumeration_result enum_res = generic_map_entry_list_foreach(bucket, map_visitor_visit_entry_with_index, map_bucket_vis->map_vis);
     if (enum_res == ENUMERATION_INTERRUPTED) {
         return STOP_ENUMERATION;
     }
@@ -38,7 +43,8 @@ static item_callback_result map_visitor_visit_bucket(map_visitor *visitor, gener
 
 enumeration_result map_visitor_visit_map_default(map_visitor *visitor, generic_map *map)
 {
-    return map_enum_buckets(map, (generic_map_bucket_callback) map_visitor_visit_bucket, visitor);
+    map_bucket_visitor map_bucket_vis = { .bucket_vis.visit_bucket = (bucket_visit_func) map_bucket_visitor_visit_bucket, .map_vis = visitor };
+    return bucket_visitor_visit_map((bucket_visitor *) &map_bucket_vis, map);
 }
 
 enumeration_result map_visitor_visit_map(map_visitor *visitor, generic_map *map)
@@ -70,9 +76,14 @@ static item_callback_result const_map_visitor_visit_entry_with_index(void *cooki
     return const_map_visitor_visit_entry(visitor, entry);
 }
 
-static item_callback_result const_map_visitor_visit_bucket(const_map_visitor *visitor, const generic_map_entry_list *bucket)
+typedef struct const_map_bucket_visitor_struct {
+    const_bucket_visitor bucket_vis;
+    const_map_visitor *map_vis;
+} const_map_bucket_visitor;
+
+static item_callback_result const_map_bucket_visitor_visit_bucket(const_map_bucket_visitor *map_bucket_vis, const generic_map_entry_list *bucket)
 {
-    enumeration_result enum_res = generic_map_entry_list_foreach_const(bucket, const_map_visitor_visit_entry_with_index, visitor);
+    enumeration_result enum_res = generic_map_entry_list_foreach_const(bucket, const_map_visitor_visit_entry_with_index, map_bucket_vis->map_vis);
     if (enum_res == ENUMERATION_INTERRUPTED) {
         return STOP_ENUMERATION;
     }
@@ -82,7 +93,8 @@ static item_callback_result const_map_visitor_visit_bucket(const_map_visitor *vi
 
 enumeration_result const_map_visitor_visit_map_default(const_map_visitor *visitor, const generic_map *map)
 {
-    return map_enum_buckets_const(map, (const_generic_map_bucket_callback) const_map_visitor_visit_bucket, visitor);
+    const_map_bucket_visitor map_bucket_vis = { .bucket_vis.visit_bucket = (const_bucket_visit_func) const_map_bucket_visitor_visit_bucket, .map_vis = visitor };
+    return const_bucket_visitor_visit_map((const_bucket_visitor *) &map_bucket_vis, map);
 }
 
 enumeration_result const_map_visitor_visit_map(const_map_visitor *visitor, const generic_map *map)

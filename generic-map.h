@@ -9,8 +9,8 @@
 void map_init(generic_map *map);
 generic_map *map_alloc(void);
 generic_map_entry_list **map_get_bucket_ptr(generic_map *map, toy_str key);
-enumeration_result map_enum_buckets(generic_map *map, generic_map_bucket_callback callback, void *cookie);
-enumeration_result map_enum_buckets_const(const generic_map *map, const_generic_map_bucket_callback callback, void *cookie);
+enumeration_result bucket_visitor_visit_map(bucket_visitor *visitor, generic_map *map);
+enumeration_result const_bucket_visitor_visit_map(const_bucket_visitor *visitor, const generic_map *map);
 void map_free(generic_map *map);
 generic_map_entry *map_get_entry(generic_map *map, const toy_str key);
 const generic_map_entry *map_get_entry_const(const generic_map *map, const toy_str key);

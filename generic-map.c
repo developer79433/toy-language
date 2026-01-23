@@ -43,22 +43,6 @@ enumeration_result bucket_visitor_visit_map(bucket_visitor *visitor, generic_map
     return ENUMERATION_COMPLETE;
 }
 
-enumeration_result map_enum_buckets(generic_map *map, generic_map_bucket_callback callback, void *cookie)
-{
-    /* TODO: Push this down into an array enumerator */
-    for (generic_map_entry_list * const * pbucket = &map->buckets[0]; pbucket < &map->buckets[NUM_BUCKETS]; pbucket++) {
-        assert(pbucket);
-        generic_map_entry_list *bucket = *pbucket;
-        if (bucket) {
-            item_callback_result res = callback(cookie, bucket);
-            if (res == STOP_ENUMERATION) {
-                return ENUMERATION_INTERRUPTED;
-            }
-        }
-    }
-    return ENUMERATION_COMPLETE;
-}
-
 enumeration_result const_bucket_visitor_visit_map(const_bucket_visitor *visitor, const generic_map *map)
 {
     /* TODO: Push this down into an array enumerator */
@@ -67,22 +51,6 @@ enumeration_result const_bucket_visitor_visit_map(const_bucket_visitor *visitor,
         const generic_map_entry_list *bucket = *pbucket;
         if (bucket) {
             item_callback_result res = visitor->visit_bucket(visitor, bucket);
-            if (res == STOP_ENUMERATION) {
-                return ENUMERATION_INTERRUPTED;
-            }
-        }
-    }
-    return ENUMERATION_COMPLETE;
-}
-
-enumeration_result map_enum_buckets_const(const generic_map *map, const_generic_map_bucket_callback callback, void *cookie)
-{
-    /* TODO: Push this down into an array enumerator */
-    for (generic_map_entry_list * const * pbucket = &map->buckets[0]; pbucket < &map->buckets[NUM_BUCKETS]; pbucket++) {
-        assert(pbucket);
-        const generic_map_entry_list *bucket = *pbucket;
-        if (bucket) {
-            item_callback_result res = callback(cookie, bucket);
             if (res == STOP_ENUMERATION) {
                 return ENUMERATION_INTERRUPTED;
             }
@@ -241,28 +209,27 @@ void map_dump(const generic_map *map)
     log_putc('}');
 }
 
-/* TODO: Use visitors */
-typedef struct buflist_item_cb_args_struct {
-    generic_map_entry_callback mapitem_cb;
-    void *mapitem_cookie;
-} buflist_item_cb_args;
+typedef struct map_item_cb_struct {
+    generic_map_entry_callback item_cb;
+    void *item_cookie;
+} map_item_cb;
 
-static item_callback_result buflist_item_cb(void *cookie, size_t index, generic_map_entry_list *list)
+static item_callback_result map_foreach_item_cb(void *cookie, size_t index, generic_map_entry_list *list)
 {
-    buflist_item_cb_args *args = (buflist_item_cb_args *) cookie;
+    map_item_cb *cb = (map_item_cb *) cookie;
     generic_map_entry *entry = generic_map_entry_list_payload(list);
-    return args->mapitem_cb(args->mapitem_cookie, entry);
+    return cb->item_cb(cb->item_cookie, entry);
 }
 
 typedef struct foreach_bucket_visitor_struct {
     bucket_visitor visitor;
-    buflist_item_cb_args buflist_item_args;
-    generic_map_entry_list_item_callback buflist_item_cb;
+    map_item_cb item_cb;
 } foreach_bucket_visitor;
 
 static item_callback_result map_foreach_bucket_cb(foreach_bucket_visitor *visitor, generic_map_entry_list *bucket)
 {
-    enumeration_result enum_res = generic_map_entry_list_foreach(bucket, visitor->buflist_item_cb, &visitor->buflist_item_args);
+    /* TODO: Use visitors */
+    enumeration_result enum_res = generic_map_entry_list_foreach(bucket, map_foreach_item_cb, &visitor->item_cb);
     if (enum_res == ENUMERATION_INTERRUPTED) {
         return STOP_ENUMERATION;
     }
@@ -274,34 +241,33 @@ enumeration_result map_foreach(generic_map *map, generic_map_entry_callback call
 {
     foreach_bucket_visitor visitor = {
         .visitor.visit_bucket = (bucket_visit_func) map_foreach_bucket_cb,
-        .buflist_item_args.mapitem_cb = callback,
-        .buflist_item_args.mapitem_cookie = cookie,
-        .buflist_item_cb = buflist_item_cb
+        .item_cb.item_cb = callback,
+        .item_cb.item_cookie = cookie
     };
     return bucket_visitor_visit_map((bucket_visitor *) &visitor, map);
 }
 
-typedef struct const_buflist_item_cb_args_struct {
+typedef struct const_map_item_cb_struct {
     const_generic_map_entry_callback item_cb;
-    void *item_cb_cookie;
-} const_buflist_item_cb_args;
+    void *item_cookie;
+} const_map_item_cb;
 
-static item_callback_result const_buflist_item_cb(void *cookie, size_t index, const generic_map_entry_list *list)
+static item_callback_result const_map_foreach_item_cb(void *cookie, size_t index, const generic_map_entry_list *list)
 {
-    const_buflist_item_cb_args *args = (const_buflist_item_cb_args *) cookie;
+    const_map_item_cb *cb = (const_map_item_cb *) cookie;
     const generic_map_entry *entry = generic_map_entry_list_payload_const(list);
-    return args->item_cb(args->item_cb_cookie, entry);
+    return cb->item_cb(cb->item_cookie, entry);
 }
 
 typedef struct const_foreach_bucket_visitor_struct {
     const_bucket_visitor visitor;
-    const_buflist_item_cb_args buflist_item_args;
-    const_generic_map_entry_list_item_callback buflist_item_cb;
+    const_map_item_cb item_cb;
 } const_foreach_bucket_visitor;
 
 static item_callback_result const_map_foreach_bucket_cb(const_foreach_bucket_visitor *visitor, const generic_map_entry_list *bucket)
 {
-    enumeration_result enum_res = generic_map_entry_list_foreach_const(bucket, visitor->buflist_item_cb, &visitor->buflist_item_args);
+    /* TODO: Use visitors */
+    enumeration_result enum_res = generic_map_entry_list_foreach_const(bucket, const_map_foreach_item_cb, &visitor->item_cb);
     if (enum_res == ENUMERATION_INTERRUPTED) {
         return STOP_ENUMERATION;
     }
@@ -313,9 +279,8 @@ enumeration_result map_foreach_const(const generic_map *map, const_generic_map_e
 {
     const_foreach_bucket_visitor visitor = {
         .visitor.visit_bucket = (const_bucket_visit_func) const_map_foreach_bucket_cb,
-        .buflist_item_args.item_cb = callback,
-        .buflist_item_args.item_cb_cookie = cookie,
-        .buflist_item_cb = const_buflist_item_cb
+        .item_cb.item_cb = callback,
+        .item_cb.item_cookie = cookie
     };
     return const_bucket_visitor_visit_map((const_bucket_visitor *) &visitor, map);
 }
