@@ -210,15 +210,15 @@ void map_dump(const generic_map *map)
 }
 
 typedef struct map_item_cb_struct {
-    generic_map_entry_callback item_cb;
-    void *item_cookie;
+    generic_map_entry_callback cb;
+    void *cookie;
 } map_item_cb;
 
 static item_callback_result map_foreach_item_cb(void *cookie, size_t index, generic_map_entry_list *list)
 {
-    map_item_cb *cb = (map_item_cb *) cookie;
+    map_item_cb *item_cb = (map_item_cb *) cookie;
     generic_map_entry *entry = generic_map_entry_list_payload(list);
-    return cb->item_cb(cb->item_cookie, entry);
+    return item_cb->cb(item_cb->cookie, entry);
 }
 
 typedef struct foreach_bucket_visitor_struct {
@@ -241,22 +241,22 @@ enumeration_result map_foreach(generic_map *map, generic_map_entry_callback call
 {
     foreach_bucket_visitor visitor = {
         .visitor.visit_bucket = (bucket_visit_func) map_foreach_bucket_cb,
-        .item_cb.item_cb = callback,
-        .item_cb.item_cookie = cookie
+        .item_cb.cb = callback,
+        .item_cb.cookie = cookie
     };
     return bucket_visitor_visit_map((bucket_visitor *) &visitor, map);
 }
 
 typedef struct const_map_item_cb_struct {
-    const_generic_map_entry_callback item_cb;
-    void *item_cookie;
+    const_generic_map_entry_callback cb;
+    void *cookie;
 } const_map_item_cb;
 
 static item_callback_result const_map_foreach_item_cb(void *cookie, size_t index, const generic_map_entry_list *list)
 {
-    const_map_item_cb *cb = (const_map_item_cb *) cookie;
+    const_map_item_cb *item_cb = (const_map_item_cb *) cookie;
     const generic_map_entry *entry = generic_map_entry_list_payload_const(list);
-    return cb->item_cb(cb->item_cookie, entry);
+    return item_cb->cb(item_cb->cookie, entry);
 }
 
 typedef struct const_foreach_bucket_visitor_struct {
@@ -279,8 +279,8 @@ enumeration_result map_foreach_const(const generic_map *map, const_generic_map_e
 {
     const_foreach_bucket_visitor visitor = {
         .visitor.visit_bucket = (const_bucket_visit_func) const_map_foreach_bucket_cb,
-        .item_cb.item_cb = callback,
-        .item_cb.item_cookie = cookie
+        .item_cb.cb = callback,
+        .item_cb.cookie = cookie
     };
     return const_bucket_visitor_visit_map((const_bucket_visitor *) &visitor, map);
 }
@@ -377,6 +377,41 @@ generic_map_entry *map_find_last(generic_map *map, generic_map_filter_func filte
 generic_map_entry *map_find_last_not(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie)
 {
     return map_find(map, filter_func, filter_cookie, TOY_TRUE, TOY_FALSE);
+}
+
+const generic_map_entry *map_find_const(const generic_map *map, generic_map_filter_func filter_func, void *filter_cookie, toy_bool inverted, toy_bool stop_on_first)
+{
+    const_map_filter filter;
+    map_latch latch;
+    map_latch_init(&latch, stop_on_first);
+    const_map_filter_init(&filter, filter_func, filter_cookie, inverted, (const_map_visitor *) &latch);
+    enumeration_result res = const_map_visitor_visit_map((const_map_visitor *) &filter, map);
+    assert(
+        (res == ENUMERATION_COMPLETE && map_latch_get_last_seen(&latch) == NULL)
+        ||
+        (res == ENUMERATION_INTERRUPTED && map_latch_get_last_seen(&latch) != NULL)
+    );
+    return map_latch_get_last_seen(&latch);
+}
+
+const generic_map_entry *map_find_first_const(const generic_map *map, generic_map_filter_func filter_func, void *filter_cookie)
+{
+    return map_find_const(map, filter_func, filter_cookie, TOY_FALSE, TOY_TRUE);
+}
+
+const generic_map_entry *map_find_first_not_const(const generic_map *map, generic_map_filter_func filter_func, void *filter_cookie)
+{
+    return map_find_const(map, filter_func, filter_cookie, TOY_TRUE, TOY_TRUE);
+}
+
+const generic_map_entry *map_find_last_const(const generic_map *map, generic_map_filter_func filter_func, void *filter_cookie)
+{
+    return map_find_const(map, filter_func, filter_cookie, TOY_FALSE, TOY_FALSE);
+}
+
+const generic_map_entry *map_find_last_not_const(const generic_map *map, generic_map_filter_func filter_func, void *filter_cookie)
+{
+    return map_find_const(map, filter_func, filter_cookie, TOY_TRUE, TOY_FALSE);
 }
 
 toy_bool map_all_match(generic_map *map, generic_map_filter_func filter, void *cookie)

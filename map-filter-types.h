@@ -20,6 +20,7 @@ struct const_map_filter_struct {
     const_map_visitor visitor;
     generic_map_filter_func filter_func;
     void *filter_cookie;
+    toy_bool inverted;
     const_map_visitor *next_visitor;
 };
 

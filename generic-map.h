@@ -22,6 +22,12 @@ generic_map_entry *map_find_first(generic_map *map, generic_map_filter_func filt
 generic_map_entry *map_find_first_not(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
 generic_map_entry *map_find_last(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
 generic_map_entry *map_find_last_not(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
+const generic_map_entry *map_find_const(const generic_map *map, generic_map_filter_func filter, void *cookie, toy_bool inverted, toy_bool stop_on_first);
+const generic_map_entry *map_find_first_const(const generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
+const generic_map_entry *map_find_first_not_const(const generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
+const generic_map_entry *map_find_last_const(const generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
+const generic_map_entry *map_find_last_not_const(const generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
+/* TODO: Should be const */
 toy_bool map_all_match(generic_map *map, generic_map_filter_func filter, void *cookie);
 toy_bool map_none_match(generic_map *map, generic_map_filter_func filter, void *cookie);
 toy_bool map_not_all_match(generic_map *map, generic_map_filter_func filter, void *cookie);
