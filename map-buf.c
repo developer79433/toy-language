@@ -10,41 +10,41 @@ void map_buf_init(map_buf *map)
 {
     assert(offsetof(map_buf, buckets) == offsetof(generic_map, buckets));
     assert(offsetof(map_buf, num_items) == offsetof(generic_map, num_items));
-    return generic_map_init((generic_map *) map);
+    return map_init((generic_map *) map);
 }
 
 map_buf *map_buf_alloc(void)
 {
     assert(offsetof(map_buf, buckets) == offsetof(generic_map, buckets));
     assert(offsetof(map_buf, num_items) == offsetof(generic_map, num_items));
-    return (map_buf *) generic_map_alloc();
+    return (map_buf *) map_alloc();
 }
 
 static map_buf_entry_list **map_buf_get_bucket(map_buf *map, const toy_str key)
 {
     assert(offsetof(map_buf, buckets) == offsetof(generic_map, buckets));
     assert(offsetof(map_buf, num_items) == offsetof(generic_map, num_items));
-    return (map_buf_entry_list **) generic_map_get_bucket_ptr((generic_map *) map, key);
+    return (map_buf_entry_list **) map_get_bucket_ptr((generic_map *) map, key);
 }
 
 enumeration_result map_buf_foreach(map_buf *map, map_buf_entry_callback callback, void *cookie)
 {
-    return generic_map_foreach((generic_map *) map, (generic_map_entry_callback) callback, cookie);
+    return map_foreach((generic_map *) map, (generic_map_entry_callback) callback, cookie);
 }
 
 enumeration_result map_buf_foreach_const(const map_buf *map, const_map_buf_entry_callback callback, void *cookie)
 {
-    return generic_map_foreach_const((const generic_map *) map, (const_generic_map_entry_callback) callback, cookie);
+    return map_foreach_const((const generic_map *) map, (const_generic_map_entry_callback) callback, cookie);
 }
 
 map_buf_entry *map_buf_get_entry(map_buf *map, const toy_str key)
 {
-    return (map_buf_entry *) generic_map_get_entry((generic_map *) map, key);
+    return (map_buf_entry *) map_get_entry((generic_map *) map, key);
 }
 
 const map_buf_entry *map_buf_get_entry_const(const map_buf *map, const toy_str key)
 {
-    return (const map_buf_entry *) generic_map_get_entry_const((const generic_map *) map, key);
+    return (const map_buf_entry *) map_get_entry_const((const generic_map *) map, key);
 }
 
 void *map_buf_get(map_buf *map, const toy_str key)
@@ -109,26 +109,26 @@ set_result map_buf_set(map_buf *map, const toy_str key, const void *buf, size_t 
 #ifndef NDEBUG
 void map_buf_assert_valid(const map_buf *map)
 {
-    return generic_map_assert_valid((const generic_map *) map);
+    return map_assert_valid((const generic_map *) map);
 }
 #endif /* ndef NDEBUG */
 
 void map_buf_free(map_buf *map)
 {
-    return generic_map_free((generic_map *) map);
+    return map_free((generic_map *) map);
 }
 
 size_t map_buf_size(const map_buf *map)
 {
-    return generic_map_size((const generic_map *) map);
+    return map_size((const generic_map *) map);
 }
 
 void map_buf_reset(map_buf *map)
 {
-    return generic_map_reset((generic_map *) map);
+    return map_reset((generic_map *) map);
 }
 
 delete_result map_buf_delete(map_buf *map, const toy_str key)
 {
-    return generic_map_delete((generic_map *) map, key);
+    return map_delete((generic_map *) map, key);
 }

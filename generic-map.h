@@ -6,30 +6,30 @@
 #include "generic-map-types.h"
 #include "str-types.h"
 
-void generic_map_init(generic_map *map);
-generic_map *generic_map_alloc(void);
-generic_map_entry_list **generic_map_get_bucket_ptr(generic_map *map, toy_str key);
-enumeration_result generic_map_enum_buckets(generic_map *map, generic_map_bucket_callback callback, void *cookie);
-enumeration_result generic_map_enum_buckets_const(const generic_map *map, const_generic_map_bucket_callback callback, void *cookie);
-void generic_map_free(generic_map *map);
-generic_map_entry *generic_map_get_entry(generic_map *map, const toy_str key);
-const generic_map_entry *generic_map_get_entry_const(const generic_map *map, const toy_str key);
-delete_result generic_map_delete(generic_map *map, const toy_str key);
-enumeration_result generic_map_foreach(generic_map *map, generic_map_entry_callback callback, void *cookie);
-enumeration_result generic_map_foreach_const(const generic_map *map, const_generic_map_entry_callback callback, void *cookie);
-generic_map_entry *generic_map_find(generic_map *map, generic_map_filter_func filter, void *cookie, toy_bool inverted, toy_bool stop_on_first);
-generic_map_entry *generic_map_find_first(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
-generic_map_entry *generic_map_find_first_not(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
-generic_map_entry *generic_map_find_last(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
-generic_map_entry *generic_map_find_last_not(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
-toy_bool generic_map_all_match(generic_map *map, generic_map_filter_func filter, void *cookie);
-toy_bool generic_map_none_match(generic_map *map, generic_map_filter_func filter, void *cookie);
-toy_bool generic_map_not_all_match(generic_map *map, generic_map_filter_func filter, void *cookie);
-toy_bool generic_map_some_match(generic_map *map, generic_map_filter_func filter, void *cookie);
-void generic_map_dump(const generic_map *map);
-void generic_map_dump_keys(const generic_map *map);
-size_t generic_map_size(const generic_map *map);
-void generic_map_reset(generic_map *map);
-void generic_map_assert_valid(const generic_map *map);
+void map_init(generic_map *map);
+generic_map *map_alloc(void);
+generic_map_entry_list **map_get_bucket_ptr(generic_map *map, toy_str key);
+enumeration_result map_enum_buckets(generic_map *map, generic_map_bucket_callback callback, void *cookie);
+enumeration_result map_enum_buckets_const(const generic_map *map, const_generic_map_bucket_callback callback, void *cookie);
+void map_free(generic_map *map);
+generic_map_entry *map_get_entry(generic_map *map, const toy_str key);
+const generic_map_entry *map_get_entry_const(const generic_map *map, const toy_str key);
+delete_result map_delete(generic_map *map, const toy_str key);
+enumeration_result map_foreach(generic_map *map, generic_map_entry_callback callback, void *cookie);
+enumeration_result map_foreach_const(const generic_map *map, const_generic_map_entry_callback callback, void *cookie);
+generic_map_entry *map_find(generic_map *map, generic_map_filter_func filter, void *cookie, toy_bool inverted, toy_bool stop_on_first);
+generic_map_entry *map_find_first(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
+generic_map_entry *map_find_first_not(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
+generic_map_entry *map_find_last(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
+generic_map_entry *map_find_last_not(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
+toy_bool map_all_match(generic_map *map, generic_map_filter_func filter, void *cookie);
+toy_bool map_none_match(generic_map *map, generic_map_filter_func filter, void *cookie);
+toy_bool map_not_all_match(generic_map *map, generic_map_filter_func filter, void *cookie);
+toy_bool map_some_match(generic_map *map, generic_map_filter_func filter, void *cookie);
+void map_dump(const generic_map *map);
+void map_dump_keys(const generic_map *map);
+size_t map_size(const generic_map *map);
+void map_reset(generic_map *map);
+void map_assert_valid(const generic_map *map);
 
 #endif /* TOY_GENERIC_MAP_H */

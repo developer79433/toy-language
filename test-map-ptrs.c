@@ -180,7 +180,7 @@ static void test_find(void)
 
     toy_val val_to_find = { .type = VAL_NUM, .num = 3 };
     /* TODO: Create a ptr_map wrapper */
-    map_ptr_entry *found = (map_ptr_entry *) generic_map_find_first((generic_map *) map1, (generic_map_filter_func) compare_value, &val_to_find);
+    map_ptr_entry *found = (map_ptr_entry *) map_find_first((generic_map *) map1, (generic_map_filter_func) compare_value, &val_to_find);
     assert(found);
     assert(!strcmp(found->key, "three"));
     toy_val *val = (toy_val *) found->ptr;

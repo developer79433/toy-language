@@ -38,7 +38,7 @@ static item_callback_result map_visitor_visit_bucket(map_visitor *visitor, gener
 
 enumeration_result map_visitor_visit_map_default(map_visitor *visitor, generic_map *map)
 {
-    return generic_map_enum_buckets(map, (generic_map_bucket_callback) map_visitor_visit_bucket, visitor);
+    return map_enum_buckets(map, (generic_map_bucket_callback) map_visitor_visit_bucket, visitor);
 }
 
 enumeration_result map_visitor_visit_map(map_visitor *visitor, generic_map *map)
@@ -82,7 +82,7 @@ static item_callback_result const_map_visitor_visit_bucket(const_map_visitor *vi
 
 enumeration_result const_map_visitor_visit_map_default(const_map_visitor *visitor, const generic_map *map)
 {
-    return generic_map_enum_buckets_const(map, (const_generic_map_bucket_callback) const_map_visitor_visit_bucket, visitor);
+    return map_enum_buckets_const(map, (const_generic_map_bucket_callback) const_map_visitor_visit_bucket, visitor);
 }
 
 enumeration_result const_map_visitor_visit_map(const_map_visitor *visitor, const generic_map *map)
