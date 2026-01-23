@@ -21,10 +21,9 @@ typedef enum set_result_enum {
     SET_EXISTING = 1
 } set_result;
 
-/* TODO: Re-order these */
 typedef enum delete_result_enum {
-    DELETED = 0,
-    NOT_PRESENT = 1
+    NOT_PRESENT = 0,
+    DELETED = 1
 } delete_result;
 
 #endif /* TOY_ITER_TYPES_H */

@@ -15,13 +15,14 @@ toy_bool is_resolved(const resolved_name *resolved)
         toy_func_decl_stmt *func_decl_stmt = resolved->func_decl_stmt;
         return (func_decl_stmt && func_decl_stmt->func) ? TOY_TRUE : TOY_FALSE;
     case REF_FUNC_PARAM:
-        const func_param_ref *param_ref = &resolved->func_param;
+        const closure *param_ref = &resolved->func_param;
         assert(param_ref->frames_up >= 0);
-        assert(param_ref->param_index >= 0);
+        assert(param_ref->var_index >= 0);
         return TOY_TRUE;
     case REF_VAR_DECL:
-        assert(resolved->var_decl.frames_up >= 0);
-        assert(resolved->var_decl.var_index >= 0);
+        const closure *var_ref = &resolved->var_decl;
+        assert(var_ref->frames_up >= 0);
+        assert(var_ref->var_index >= 0);
         return TOY_TRUE;
     case REF_PREDEF_CONST:
         assert(resolved->predef_const);
@@ -45,8 +46,8 @@ void resolved_name_dump(const resolved_name *resolved)
         log_printf("Function %s\n", func_decl_stmt->func->name);
         break;
     case REF_FUNC_PARAM:
-        const func_param_ref *param_ref = &resolved->func_param;
-        log_printf("Function parameter #%zd, %zd frames up\n", param_ref->param_index, param_ref->frames_up);
+        const closure *param_ref = &resolved->func_param;
+        log_printf("Function parameter #%zd, %zd frames up\n", param_ref->var_index, param_ref->frames_up);
         break;
     case REF_PREDEF_CONST:
         predef_const_dump(resolved->predef_const);

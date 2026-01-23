@@ -50,7 +50,7 @@ static void resolve_identifier_block_and_parents(toy_block *block, toy_identifie
         if (entry) {
             identifier->resolved.type = REF_FUNC_PARAM;
             identifier->resolved.func_param.frames_up = frames_up;
-            identifier->resolved.func_param.param_index = entry->index;
+            identifier->resolved.func_param.var_index = entry->index;
 #ifdef DEBUG_NAME_RESOLUTION
             log_printf("Resolved '%s' to function parameter %d, %d frames up\n", identifier->name, *i, frames_up);
 #endif /* DEBUG_NAME_RESOLUTION */

@@ -167,12 +167,12 @@ const char *resolved_name_ref_name(const resolved_name *resolved)
         toy_function *func = func_decl_stmt->func;
         return func->name;
     case REF_FUNC_PARAM:
-        const func_param_ref *param_ref = &resolved->func_param;
+        const closure *param_ref = &resolved->func_param;
         assert(param_ref);
         /* TODO */
         return "function parameter";
     case REF_VAR_DECL:
-        const var_closure *var_ref = &resolved->var_decl;
+        const closure *var_ref = &resolved->var_decl;
         assert(var_ref->frames_up >= 0);
         assert(var_ref->var_index >= 0);
         return "variable reference";

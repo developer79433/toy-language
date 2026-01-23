@@ -66,27 +66,21 @@ typedef struct toy_func_decl_stmt_struct toy_func_decl_stmt;
 struct toy_var_decl_struct;
 typedef struct toy_var_decl_struct toy_var_decl;
 
-/* TODO: These can be merged */
-typedef struct func_param_ref_struct {
-    size_t frames_up;
-    size_t param_index;
-} func_param_ref;
-
-typedef struct var_closure_struct {
+typedef struct closure_struct {
     size_t frames_up;
     size_t var_index;
-} var_closure;
+} closure;
 
 typedef struct resolved_name_struct {
     reference_type type;
     union {
         /* function parameter */
-        func_param_ref func_param;
+        closure func_param;
         /* variable declaration */
-        var_closure var_decl;
+        closure var_decl;
         /* function declaration */
         toy_func_decl_stmt *func_decl_stmt;
-        /* TODO: Can this be a var_closure too? */
+        /* TODO: Can this be a toy_val too? */
         const predefined_constant *predef_const;
         const toy_val *predef_func;
     };

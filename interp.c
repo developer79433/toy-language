@@ -279,17 +279,17 @@ static void collection_lookup(toy_interp *interp, toy_val *result, toy_identifie
     }
 }
 
-static toy_var *interp_get_param_closure(toy_interp *interp, const func_param_ref *param_ref)
+static toy_var *interp_get_param_closure(toy_interp *interp, const closure *param_ref)
 {
     interp_assert_valid(interp);
     interp_stack *stack = interp_get_stack(interp);
     interp_frame *frame = interp_stack_index(stack, param_ref->frames_up);
-    toy_var *var = interp_frame_get_func_arg(frame, param_ref->param_index);
+    toy_var *var = interp_frame_get_func_arg(frame, param_ref->var_index);
     var_assert_valid(var);
     return var;
 }
 
-static toy_var *interp_get_var_closure(toy_interp *interp, const var_closure *closure)
+static toy_var *interp_get_var_closure(toy_interp *interp, const closure *closure)
 {
     interp_assert_valid(interp);
     interp_stack *stack = interp_get_stack(interp);
@@ -319,7 +319,7 @@ toy_var *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier)
         invalid_lvalue(&identifier->resolved);
         break;
     case REF_FUNC_PARAM:
-        func_param_ref *param_ref = &identifier->resolved.func_param;
+        closure *param_ref = &identifier->resolved.func_param;
         log_debug("interp: lvalue is func param");
         toy_var *param_var = interp_get_param_closure(interp, param_ref);
         var_assert_valid(param_var);
@@ -334,7 +334,7 @@ toy_var *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier)
         assert(0);
         break;
     case REF_VAR_DECL:
-        var_closure *var_ref = &identifier->resolved.var_decl;
+        closure *var_ref = &identifier->resolved.var_decl;
         toy_var *var_decl_var = interp_get_var_closure(interp, var_ref);
         var_assert_valid(var_decl_var);
         return var_decl_var;
@@ -362,7 +362,7 @@ const toy_val *interp_get_rvalue(toy_interp *interp, const toy_identifier *ident
         val_assert_valid(func_val);
         return func_val;
     case REF_FUNC_PARAM:
-        const func_param_ref *param_ref = &identifier->resolved.func_param;
+        const closure *param_ref = &identifier->resolved.func_param;
         toy_var *func_param_var = interp_get_param_closure(interp, param_ref);
         toy_val *func_param_val = var_get(func_param_var);
         val_assert_valid(func_param_val);
@@ -380,7 +380,7 @@ const toy_val *interp_get_rvalue(toy_interp *interp, const toy_identifier *ident
         assert(0);
         break;
     case REF_VAR_DECL:
-        const var_closure *var_ref = &identifier->resolved.var_decl;
+        const closure *var_ref = &identifier->resolved.var_decl;
         toy_var *var_decl_var = interp_get_var_closure(interp, var_ref);
         toy_val *var_val = var_get(var_decl_var);
         val_assert_valid(var_val);
