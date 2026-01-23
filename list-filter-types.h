@@ -7,6 +7,7 @@
 struct my_list_filter_struct;
 typedef struct my_list_filter_struct my_list_filter;
 struct my_list_filter_struct {
+    /* FIXME: Give this a less generic name */
     list_visitor base;
     generic_list_filter_func filter_func;
     void *filter_cookie;
@@ -17,6 +18,7 @@ struct my_list_filter_struct {
 struct const_my_list_filter_struct;
 typedef struct const_my_list_filter_struct const_my_list_filter;
 struct const_my_list_filter_struct {
+    /* FIXME: Give this a less generic name */
     const_list_visitor base;
     generic_list_filter_func filter_func;
     void *filter_cookie;

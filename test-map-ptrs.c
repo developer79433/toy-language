@@ -1,11 +1,14 @@
 #include <assert.h>
 #include <string.h>
 
+#include "util.h"
 #include "str.h"
 #include "test-map-ptrs.h"
 #include "map-ptr.h"
 #include "val.h"
-#include "util.h"
+#include "map-visitor.h"
+#include "log.h"
+#include "generic-map.h"
 
 typedef struct my_filter_args_struct {
     toy_str intended_key;
@@ -45,7 +48,7 @@ void assert_one_bucket_not_null(map_ptr_entry_list **arr, size_t len)
     assert_ptr_array_one_not_null((void **) arr, len);
 }
 
-void test_map_ptrs(void)
+void test_map_ptr_basics(void)
 {
     // Test create
     map_ptr *map1 = map_ptr_alloc();
@@ -117,4 +120,78 @@ void test_map_ptrs(void)
 
     // Test free
     map_ptr_free(map1);
+}
+
+typedef struct test_tuple_struct {
+    toy_str key;
+    toy_val value;
+} test_tuple;
+
+static test_tuple test_data[] = {
+    { .key = "one", .value.type = VAL_NUM, .value.num = 1 },
+    { .key = "two", .value.type = VAL_NUM, .value.num = 2 },
+    { .key = "three", .value.type = VAL_NUM, .value.num = 3 },
+    { .key = "four", .value.type = VAL_NUM, .value.num = 4 }
+};
+
+static void insert_test_data(map_ptr *map)
+{
+    for (test_tuple *tuple = &test_data[0]; tuple < &test_data[ELEMENTSOF(test_data)]; tuple++) {
+        set_result set_res = map_ptr_set(map, tuple->key, &tuple->value);
+        assert(SET_NEW == set_res);
+    }
+}
+
+static item_callback_result print_entry(map_visitor *visitor, map_ptr_entry *entry)
+{
+    toy_val *val = (toy_val *) entry->ptr;
+    log_printf("Map entry: { \"%s\" => ", entry->key);
+    val_dump(val, TOY_FALSE);
+    log_printf(" }\n");
+    return CONTINUE_ENUMERATION;
+}
+
+static void test_visitors(void)
+{
+    map_ptr *map1 = map_ptr_alloc();
+    assert(0 == map_ptr_size(map1));
+
+    insert_test_data(map1);
+    assert(ELEMENTSOF(test_data) == map_ptr_size(map1));
+    map_visitor printer = { .visit_map = NULL, .visit_entry = (map_entry_visit_func) print_entry };
+    enumeration_result res = map_visitor_visit_map(&printer, (generic_map *) map1);
+    assert(ENUMERATION_COMPLETE == res);
+}
+
+static toy_bool compare_value(void *cookie, map_ptr_entry *entry)
+{
+    toy_val *val_to_find = (toy_val *) cookie;
+    toy_val *this_val = (toy_val *) entry->ptr;
+    return vals_equal(this_val, val_to_find);
+}
+
+static void test_find(void)
+{
+    map_ptr *map1 = map_ptr_alloc();
+    assert(0 == map_ptr_size(map1));
+
+    insert_test_data(map1);
+    assert(ELEMENTSOF(test_data) == map_ptr_size(map1));
+
+    toy_val val_to_find = { .type = VAL_NUM, .num = 3 };
+    /* TODO: Create a ptr_map wrapper */
+    map_ptr_entry *found = (map_ptr_entry *) generic_map_find_first((generic_map *) map1, (generic_map_filter_func) compare_value, &val_to_find);
+    assert(found);
+    assert(!strcmp(found->key, "three"));
+    toy_val *val = (toy_val *) found->ptr;
+    assert(VAL_NUM == val->type);
+    assert(3 == val->num);
+    log_printf("Found: { \"%s\" => %f }\n", found->key, val->num);
+}
+
+void test_map_ptrs(void)
+{
+    test_map_ptr_basics();
+    test_visitors();
+    test_find();
 }

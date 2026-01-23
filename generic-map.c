@@ -12,6 +12,7 @@
 #include "generic-map-entry-list.h"
 #include "map-visitor.h"
 #include "map-filter.h"
+#include "map-latch.h"
 
 void generic_map_init(generic_map *map)
 {
@@ -292,6 +293,7 @@ static item_callback_result generic_map_get_listentry_cb(void *cookie, size_t in
 
 static generic_map_entry *generic_map_bucket_get_key(generic_map_entry_list *bucket, const toy_str key)
 {
+    /* TODO: Use visitors */
     listentry_cb_args args = { .desired_name = key, .entry_to_find = NULL };
     enumeration_result res = generic_map_entry_list_foreach(bucket, generic_map_get_listentry_cb, &args);
     assert(
@@ -332,66 +334,61 @@ const generic_map_entry *generic_map_get_entry_const(const generic_map *map, con
     return (const generic_map_entry *) generic_map_get_entry((generic_map *) map, key);
 }
 
-typedef struct generic_map_find_one_args_struct {
-    generic_map_filter_func filter_func;
-    void *filter_cookie;
-    generic_map_entry *found_entry;
-} generic_map_find_one_args;
-
-static item_callback_result generic_map_find_first_cb(void *cookie, generic_map_entry *entry)
+generic_map_entry *generic_map_find(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie, toy_bool inverted, toy_bool stop_on_first)
 {
-    generic_map_find_one_args *args = (generic_map_find_one_args *) cookie;
-    if (args->filter_func(args->filter_cookie, entry)) {
-        args->found_entry = entry;
-        return STOP_ENUMERATION;
-    }
-    return CONTINUE_ENUMERATION;
-}
-
-generic_map_entry *generic_map_find(generic_map *map, generic_map_filter_func filter, void *cookie)
-{
-    generic_map_find_one_args find_one_args = { .filter_cookie = cookie, .filter_func = filter, .found_entry = NULL };
-    enumeration_result res = generic_map_foreach(map, generic_map_find_first_cb, &find_one_args);
+    map_filter filter;
+    map_latch latch;
+    map_latch_init(&latch, stop_on_first);
+    map_filter_init(&filter, filter_func, filter_cookie, inverted, (map_visitor *) &latch);
+    enumeration_result res = map_visitor_visit_map((map_visitor *) &filter, map);
     assert(
-        (res == ENUMERATION_COMPLETE && find_one_args.found_entry == NULL)
+        (res == ENUMERATION_COMPLETE && map_latch_get_last_seen(&latch) == NULL)
         ||
-        (res == ENUMERATION_INTERRUPTED && find_one_args.found_entry != NULL)
+        (res == ENUMERATION_INTERRUPTED && map_latch_get_last_seen(&latch) != NULL)
     );
-    return find_one_args.found_entry;
+    return map_latch_get_last_seen(&latch);
 }
 
-static item_callback_result generic_map_find_first_not_cb(void *cookie, generic_map_entry *entry)
+generic_map_entry *generic_map_find_first(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie)
 {
-    generic_map_find_one_args *args = (generic_map_find_one_args *) cookie;
-    if (!args->filter_func(args->filter_cookie, entry)) {
-        args->found_entry = entry;
-        return STOP_ENUMERATION;
-    }
-    return CONTINUE_ENUMERATION;
+    return generic_map_find(map, filter_func, filter_cookie, TOY_FALSE, TOY_TRUE);
 }
 
-generic_map_entry *generic_map_find_not(generic_map *map, generic_map_filter_func filter, void *cookie)
+generic_map_entry *generic_map_find_first_not(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie)
 {
-    generic_map_find_one_args find_one_args = { .filter_cookie = cookie, .filter_func = filter, .found_entry = NULL };
-    enumeration_result res = generic_map_foreach(map, generic_map_find_first_not_cb, &find_one_args);
-    assert(
-        (res == ENUMERATION_COMPLETE && find_one_args.found_entry == NULL)
-        ||
-        (res == ENUMERATION_INTERRUPTED && find_one_args.found_entry != NULL)
-    );
-    return find_one_args.found_entry;
+    return generic_map_find(map, filter_func, filter_cookie, TOY_TRUE, TOY_TRUE);
 }
 
-toy_bool generic_map_none_match(generic_map *map, generic_map_filter_func filter, void *cookie)
+generic_map_entry *generic_map_find_last(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie)
 {
-    generic_map_entry *entry = generic_map_find(map, filter, cookie);
-    return entry == NULL;
+    return generic_map_find(map, filter_func, filter_cookie, TOY_FALSE, TOY_FALSE);
+}
+
+generic_map_entry *generic_map_find_last_not(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie)
+{
+    return generic_map_find(map, filter_func, filter_cookie, TOY_TRUE, TOY_FALSE);
 }
 
 toy_bool generic_map_all_match(generic_map *map, generic_map_filter_func filter, void *cookie)
 {
-    generic_map_entry *entry = generic_map_find_not(map, filter, cookie);
+    generic_map_entry *entry = generic_map_find_first_not(map, filter, cookie);
     return entry == NULL;
+}
+
+toy_bool generic_map_none_match(generic_map *map, generic_map_filter_func filter, void *cookie)
+{
+    generic_map_entry *entry = generic_map_find_first(map, filter, cookie);
+    return entry == NULL;
+}
+
+toy_bool generic_map_not_all_match(generic_map *map, generic_map_filter_func filter, void *cookie)
+{
+    return !generic_map_all_match(map, filter, cookie);
+}
+
+toy_bool generic_map_some_match(generic_map *map, generic_map_filter_func filter, void *cookie)
+{
+    return !generic_map_none_match(map, filter, cookie);
 }
 
 typedef struct dump_keys_visitor_struct {

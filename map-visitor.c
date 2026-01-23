@@ -26,7 +26,7 @@ static item_callback_result map_visitor_visit_entry_with_index(void *cookie, siz
     return map_visitor_visit_entry(visitor, entry);
 }
 
-item_callback_result map_visitor_visit_bucket_default(map_visitor *visitor, generic_map_entry_list *bucket)
+static item_callback_result map_visitor_visit_bucket(map_visitor *visitor, generic_map_entry_list *bucket)
 {
     enumeration_result enum_res = generic_map_entry_list_foreach(bucket, map_visitor_visit_entry_with_index, visitor);
     if (enum_res == ENUMERATION_INTERRUPTED) {
@@ -34,14 +34,6 @@ item_callback_result map_visitor_visit_bucket_default(map_visitor *visitor, gene
     }
     assert(ENUMERATION_COMPLETE == enum_res);
     return CONTINUE_ENUMERATION;
-}
-
-item_callback_result map_visitor_visit_bucket(map_visitor *visitor, generic_map_entry_list *bucket)
-{
-    if (visitor->visit_bucket) {
-        return visitor->visit_bucket(visitor, bucket);
-    }
-    return map_visitor_visit_bucket_default(visitor, bucket);
 }
 
 enumeration_result map_visitor_visit_map_default(map_visitor *visitor, generic_map *map)
@@ -78,7 +70,7 @@ static item_callback_result const_map_visitor_visit_entry_with_index(void *cooki
     return const_map_visitor_visit_entry(visitor, entry);
 }
 
-item_callback_result const_map_visitor_visit_bucket_default(const_map_visitor *visitor, const generic_map_entry_list *bucket)
+static item_callback_result const_map_visitor_visit_bucket(const_map_visitor *visitor, const generic_map_entry_list *bucket)
 {
     enumeration_result enum_res = generic_map_entry_list_foreach_const(bucket, const_map_visitor_visit_entry_with_index, visitor);
     if (enum_res == ENUMERATION_INTERRUPTED) {
@@ -86,14 +78,6 @@ item_callback_result const_map_visitor_visit_bucket_default(const_map_visitor *v
     }
     assert(ENUMERATION_COMPLETE == enum_res);
     return CONTINUE_ENUMERATION;
-}
-
-item_callback_result const_map_visitor_visit_bucket(const_map_visitor *visitor, const generic_map_entry_list *bucket)
-{
-    if (visitor->visit_bucket) {
-        return visitor->visit_bucket(visitor, bucket);
-    }
-    return const_map_visitor_visit_bucket_default(visitor, bucket);
 }
 
 enumeration_result const_map_visitor_visit_map_default(const_map_visitor *visitor, const generic_map *map)

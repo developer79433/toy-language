@@ -9,8 +9,8 @@
 #include "log.h"
 #include "list-filter.h"
 #include "list-visitor.h"
-#include "latch-visitor.h"
-#include "latch-prev-visitor.h"
+#include "list-latch.h"
+#include "list-latch-prev.h"
 
 static void assert_all_match(const generic_list *list, generic_list_filter_func filter_func)
 {
