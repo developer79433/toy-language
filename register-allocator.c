@@ -2,7 +2,7 @@
 
 #include "register-allocator.h"
 #include "function.h"
-#include "visitor.h"
+#include "ast-visitor.h"
 #include "symbol-table.h"
 #include "str-list.h"
 #include "str.h"
@@ -11,26 +11,27 @@
 
 static toy_block *cur_block = NULL;
 
-static void handle_block(visitor *v, toy_block *block)
+static item_callback_result handle_block(ast_visitor *v, toy_block *block)
 {
     toy_block *old_block = cur_block;
     cur_block = block;
-    default_block(v, block);
+    item_callback_result res = default_block(v, block);
     cur_block = old_block;
+    return res;
 }
 
-static void handle_func_decl(visitor *v, toy_func_decl_stmt *func_decl)
+static item_callback_result handle_func_decl(ast_visitor *v, toy_func_decl_stmt *func_decl)
 {
     assert(cur_block);
     func_decl->decl_index = symbol_table_add(&cur_block->declaration_symbols, func_decl->func->name);
-    default_func_decl(v, func_decl);
+    return default_func_decl(v, func_decl);
 }
 
-static void handle_var_decl(visitor *v, toy_var_decl *var_decl)
+static item_callback_result handle_var_decl(ast_visitor *v, toy_var_decl *var_decl)
 {
     assert(cur_block);
     var_decl->decl_index = symbol_table_add(&cur_block->declaration_symbols, var_decl->name);
-    default_var_decl(v, var_decl);
+    return default_var_decl(v, var_decl);
 }
 
 typedef struct add_param_args_struct {
@@ -45,18 +46,18 @@ static item_callback_result add_param_to_symbol_table(void *cookie, size_t index
     return CONTINUE_ENUMERATION;
 }
 
-static void handle_func_expr(visitor *v, toy_function *func)
+static item_callback_result handle_func_expr(ast_visitor *v, toy_function *func)
 {
     toy_block *block = func->code;
     symbol_table *parameter_symbols = &block->parameter_symbols;
     add_param_args args = { .parameter_symbols = parameter_symbols };
     enumeration_result res = str_list_foreach(func->param_names, add_param_to_symbol_table, &args);
     assert(ENUMERATION_COMPLETE == res);
-    default_func_expr(v, func);
     /* log_printf("regalloc: function %s (%p, block %p) has %zd variables\n", func->name, func, &func->code, symbol_table_size(&func->code.variables)); */
+    return default_func_expr(v, func);
 }
 
-static visitor register_allocator = {
+static ast_visitor register_allocator = {
     .block = handle_block,
     .func_decl = handle_func_decl,
     .func_expr = handle_func_expr,

@@ -1,0 +1,7 @@
+var name = "M2";
+print("Hello, " + name);
+fun M1_M2(garden, love, food) {
+    garden = "love";
+    food = "love plus";
+    love = "garden";
+}

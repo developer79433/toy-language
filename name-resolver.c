@@ -7,7 +7,7 @@
 #include "constants.h"
 #include "predef-function.h"
 #include "errors.h"
-#include "visitor.h"
+#include "ast-visitor.h"
 #include "var-decl.h"
 
 #if 0
@@ -97,28 +97,29 @@ static void resolve_identifier(toy_block *block, toy_identifier *identifier)
 
 static toy_block *cur_block = NULL;
 
-static void handle_block(visitor *v, toy_block *block)
+static item_callback_result handle_block(ast_visitor *v, toy_block *block)
 {
 #ifdef DEBUG_NAME_RESOLUTION
     log_printf("*** BLOCK\n");
 #endif /* DEBUG_NAME_RESOLUTION */
     toy_block *old_block = cur_block;
     cur_block = block;
-    default_block(v, block);
+    item_callback_result res = default_block(v, block);
     cur_block = old_block;
+    return res;
 }
 
-static void handle_identifier(visitor *v, toy_identifier *identifier)
+static item_callback_result handle_identifier(ast_visitor *v, toy_identifier *identifier)
 {
     assert(cur_block);
 #ifdef DEBUG_NAME_RESOLUTION
     log_printf("*** IDENTIFIER: %s\n", identifier->name);
 #endif /* DEBUG_NAME_RESOLUTION */
     resolve_identifier(cur_block, identifier);
-    default_identifier(v, identifier);
+    return default_identifier(v, identifier);
 }
 
-static visitor resolver = {
+static ast_visitor resolver = {
     .block = handle_block,
     .identifier = handle_identifier
 };
