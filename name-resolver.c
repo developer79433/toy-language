@@ -130,5 +130,7 @@ static name_resolver the_name_resolver = {
 
 void resolve_names(toy_function *func)
 {
-    visit_func_expr((ast_visitor *) &the_name_resolver, func);
+    name_resolver resolver = the_name_resolver;
+    item_callback_result res = visit_func_expr((ast_visitor *) &resolver, func);
+    assert(CONTINUE_ENUMERATION == res);
 }

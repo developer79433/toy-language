@@ -85,6 +85,7 @@ static register_allocator the_register_allocator = {
 
 void allocate_registers(toy_function *func)
 {
-    item_callback_result res = visit_func_expr((ast_visitor *) &the_register_allocator, func);
+    register_allocator allocator = the_register_allocator;
+    item_callback_result res = visit_func_expr((ast_visitor *) &allocator, func);
     assert(CONTINUE_ENUMERATION == res);
 }
