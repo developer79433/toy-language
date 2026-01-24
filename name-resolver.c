@@ -14,6 +14,11 @@
 #define DEBUG_NAME_RESOLUTION
 #endif
 
+typedef struct name_resolver_struct {
+    ast_visitor ast_vis;
+    toy_block *cur_block;
+} name_resolver;
+
 typedef enum decl_ref_type_enum {
     DECL_REF_VAR,
     DECL_REF_FUNC
@@ -95,36 +100,35 @@ static void resolve_identifier(toy_block *block, toy_identifier *identifier)
     }
 }
 
-static toy_block *cur_block = NULL;
-
-static item_callback_result handle_block(ast_visitor *v, toy_block *block)
+static item_callback_result handle_block(name_resolver *nr, toy_block *block)
 {
 #ifdef DEBUG_NAME_RESOLUTION
     log_printf("*** BLOCK\n");
 #endif /* DEBUG_NAME_RESOLUTION */
-    toy_block *old_block = cur_block;
-    cur_block = block;
-    item_callback_result res = default_block(v, block);
-    cur_block = old_block;
+    toy_block *prev_block = nr->cur_block;
+    nr->cur_block = block;
+    item_callback_result res = default_block((ast_visitor *) nr, block);
+    nr->cur_block = prev_block;
     return res;
 }
 
-static item_callback_result handle_identifier(ast_visitor *v, toy_identifier *identifier)
+static item_callback_result handle_identifier(name_resolver *nr, toy_identifier *identifier)
 {
-    assert(cur_block);
+    assert(nr->cur_block);
 #ifdef DEBUG_NAME_RESOLUTION
     log_printf("*** IDENTIFIER: %s\n", identifier->name);
 #endif /* DEBUG_NAME_RESOLUTION */
-    resolve_identifier(cur_block, identifier);
-    return default_identifier(v, identifier);
+    resolve_identifier(nr->cur_block, identifier);
+    return default_identifier((ast_visitor *) nr, identifier);
 }
 
-static ast_visitor resolver = {
-    .block = handle_block,
-    .identifier = handle_identifier
+static name_resolver the_name_resolver = {
+    .ast_vis.block = (visit_block_func) handle_block,
+    .ast_vis.identifier = (visit_identifier_func) handle_identifier,
+    .cur_block = NULL
 };
 
 void resolve_names(toy_function *func)
 {
-    visit_func_expr(&resolver, func);
+    visit_func_expr((ast_visitor *) &the_name_resolver, func);
 }

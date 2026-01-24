@@ -8,30 +8,48 @@
 #include "str.h"
 #include "log.h"
 #include "block.h"
+#include "errors.h"
 
-static toy_block *cur_block = NULL;
+/* TODO: Can the symbol table(s) be moved out of the AST and into the register allocator? */
+typedef struct register_allocator_struct {
+    ast_visitor ast_vis;
+    toy_block *cur_block;
+} register_allocator;
 
-static item_callback_result handle_block(ast_visitor *v, toy_block *block)
+static item_callback_result handle_block(register_allocator *ra, toy_block *block)
 {
-    toy_block *old_block = cur_block;
-    cur_block = block;
-    item_callback_result res = default_block(v, block);
-    cur_block = old_block;
+    toy_block *prev_block = ra->cur_block;
+    ra->cur_block = block;
+    item_callback_result res = default_block((ast_visitor *) ra, block);
+    ra->cur_block = prev_block;
     return res;
 }
 
-static item_callback_result handle_func_decl(ast_visitor *v, toy_func_decl_stmt *func_decl)
+static size_t add_declaration(toy_block *block, toy_str name)
 {
-    assert(cur_block);
-    func_decl->decl_index = symbol_table_add(&cur_block->declaration_symbols, func_decl->func->name);
-    return default_func_decl(v, func_decl);
+    symbol_table_entry *parameter = symbol_table_get(&block->parameter_symbols, name);
+    if (parameter) {
+        duplicate_identifier(name);
+    }
+    symbol_table_entry *decl = symbol_table_get(&block->declaration_symbols, name);
+    if (decl) {
+        duplicate_identifier(name);
+    }
+    return symbol_table_add(&block->declaration_symbols, name);
 }
 
-static item_callback_result handle_var_decl(ast_visitor *v, toy_var_decl *var_decl)
+static item_callback_result handle_func_decl(register_allocator *ra, toy_func_decl_stmt *func_decl)
 {
-    assert(cur_block);
-    var_decl->decl_index = symbol_table_add(&cur_block->declaration_symbols, var_decl->name);
-    return default_var_decl(v, var_decl);
+    assert(ra->cur_block);
+    func_decl->decl_index = add_declaration(ra->cur_block, func_decl->func->name);
+    return default_func_decl((ast_visitor *) ra, func_decl);
+}
+
+static item_callback_result handle_var_decl(register_allocator *ra, toy_var_decl *var_decl)
+{
+    assert(ra->cur_block);
+    var_decl->decl_index = add_declaration(ra->cur_block, var_decl->name);
+    return default_var_decl((ast_visitor *) ra, var_decl);
 }
 
 typedef struct add_param_args_struct {
@@ -46,7 +64,7 @@ static item_callback_result add_param_to_symbol_table(void *cookie, size_t index
     return CONTINUE_ENUMERATION;
 }
 
-static item_callback_result handle_func_expr(ast_visitor *v, toy_function *func)
+static item_callback_result handle_func_expr(register_allocator *ra, toy_function *func)
 {
     toy_block *block = func->code;
     symbol_table *parameter_symbols = &block->parameter_symbols;
@@ -54,17 +72,19 @@ static item_callback_result handle_func_expr(ast_visitor *v, toy_function *func)
     enumeration_result res = str_list_foreach(func->param_names, add_param_to_symbol_table, &args);
     assert(ENUMERATION_COMPLETE == res);
     /* log_printf("regalloc: function %s (%p, block %p) has %zd variables\n", func->name, func, &func->code, symbol_table_size(&func->code.variables)); */
-    return default_func_expr(v, func);
+    return default_func_expr((ast_visitor *) ra, func);
 }
 
-static ast_visitor register_allocator = {
-    .block = handle_block,
-    .func_decl = handle_func_decl,
-    .func_expr = handle_func_expr,
-    .var_decl = handle_var_decl
+static register_allocator the_register_allocator = {
+    .cur_block = NULL,
+    .ast_vis.block = (visit_block_func) handle_block,
+    .ast_vis.func_decl = (visit_func_decl_func) handle_func_decl,
+    .ast_vis.func_expr = (visit_func_expr_func) handle_func_expr,
+    .ast_vis.var_decl = (visit_var_decl_func) handle_var_decl
 };
 
 void allocate_registers(toy_function *func)
 {
-    visit_func_expr(&register_allocator, func);
+    item_callback_result res = visit_func_expr((ast_visitor *) &the_register_allocator, func);
+    assert(CONTINUE_ENUMERATION == res);
 }

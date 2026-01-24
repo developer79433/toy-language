@@ -1,6 +1,6 @@
 CC=gcc
 # -DYYDEBUG=1
-CFLAGS=-Wall -g3 -std=gnu99
+CFLAGS=-Wall -Werror -g3 -std=gnu99
 # -Werror
 LD=$(CC)
 LIBS=m efence
