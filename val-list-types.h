@@ -16,6 +16,4 @@ typedef struct toy_val_list_struct {
 typedef item_callback_result (*toy_val_list_item_callback)(void *cookie, size_t index, toy_val_list *val);
 typedef item_callback_result (*const_toy_val_list_item_callback)(void *cookie, size_t index, const toy_val_list *val);
 
-typedef toy_bool (*toy_val_list_filter_func)(void *cookie, size_t index, const toy_val_list *item);
-
 #endif /* VAL_TOY_LIST_TYPES_H */

@@ -4,6 +4,7 @@
 #include "stmt-list.h"
 #include "buf-list.h"
 #include "log.h"
+#include "list-visitor.h"
 
 toy_stmt_list *stmt_list_alloc(toy_stmt *stmt)
 {
@@ -35,17 +36,7 @@ const toy_stmt *stmt_list_payload_const(const toy_stmt_list *stmt_list)
     return (const toy_stmt *) buf_list_payload_const((const toy_buf_list *) stmt_list);
 }
 
-enumeration_result stmt_list_foreach(toy_stmt_list *stmt_list, stmt_list_item_callback callback, void *cookie)
-{
-    return buf_list_foreach((toy_buf_list *) stmt_list, (buf_list_item_callback) callback, cookie);
-}
-
-enumeration_result stmt_list_foreach_const(const toy_stmt_list *stmt_list, const_stmt_list_item_callback callback, void *cookie)
-{
-    return buf_list_foreach_const((const toy_buf_list *) stmt_list, (const_buf_list_item_callback) callback, cookie);
-}
-
-static item_callback_result stmt_assert_valid_cb(void *cookie, size_t index, const toy_stmt_list *entry)
+static item_callback_result stmt_assert_valid_cb(const_list_visitor *list_vis, size_t index, const toy_stmt_list *entry)
 {
     const toy_stmt *stmt = stmt_list_payload_const(entry);
     stmt_assert_valid(stmt);
@@ -54,11 +45,12 @@ static item_callback_result stmt_assert_valid_cb(void *cookie, size_t index, con
 
 void stmt_list_assert_valid(const toy_stmt_list *stmt_list)
 {
-    enumeration_result res = stmt_list_foreach_const(stmt_list, stmt_assert_valid_cb, NULL);
+    const_list_visitor list_vis = { .visit_entry = (const_list_entry_visit_func) stmt_assert_valid_cb };
+    enumeration_result res = const_list_visitor_visit_list((const_list_visitor *) &list_vis, (const generic_list *) stmt_list);
     assert(res == ENUMERATION_COMPLETE);
 }
 
-static item_callback_result stmt_dump_callback(void *cookie, size_t index, const toy_stmt_list *item)
+static item_callback_result stmt_dump_callback(const_list_visitor *list_vis, size_t index, const toy_stmt_list *item)
 {
     const toy_stmt *stmt = stmt_list_payload_const(item);
     stmt_dump(stmt, 1);
@@ -68,6 +60,7 @@ static item_callback_result stmt_dump_callback(void *cookie, size_t index, const
 
 void stmt_list_dump(const toy_stmt_list *stmt_list)
 {
-    enumeration_result res = stmt_list_foreach_const(stmt_list, stmt_dump_callback, NULL);
-    assert(ENUMERATION_COMPLETE == res);
+    const_list_visitor list_vis = { .visit_entry = (const_list_entry_visit_func) stmt_dump_callback };
+    enumeration_result res = const_list_visitor_visit_list((const_list_visitor *) &list_vis, (const generic_list *) stmt_list);
+    assert(res == ENUMERATION_COMPLETE);
 }

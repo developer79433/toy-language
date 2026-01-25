@@ -50,13 +50,3 @@ ptr_stack *ptr_stack_pop(ptr_stack *stack, void **removed_ptr)
     ptr_list_free(removed_list);
     return (ptr_stack *) ret;
 }
-
-enumeration_result ptr_stack_foreach(ptr_stack *stack, ptr_stack_item_callback callback, void *cookie)
-{
-    return ptr_list_foreach((toy_ptr_list *) stack, (ptr_list_item_callback) callback, cookie);
-}
-
-enumeration_result ptr_stack_foreach_const(const ptr_stack *stack, const_ptr_stack_item_callback callback, void *cookie)
-{
-    return ptr_list_foreach_const((const toy_ptr_list *) stack, (const_ptr_list_item_callback) callback, cookie);
-}

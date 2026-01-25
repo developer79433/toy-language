@@ -9,6 +9,7 @@
 #include "generic-map.h"
 #include "debug.h"
 #include "log.h"
+#include "map-visitor.h"
 
 void map_val_init(map_val *map)
 {
@@ -68,30 +69,30 @@ void map_val_reset(map_val *map)
     return map_buf_reset((map_buf *) map);
 }
 
-typedef struct dump_item_cb_args_struct {
+typedef struct map_val_dump_visitor_struct {
+    const_map_visitor map_vis;
     int output_anything;
-} dump_item_cb_args;
+} map_val_dump_visitor;
 
-static item_callback_result dump_item_callback(void *cookie, const map_val_entry *entry)
+static item_callback_result dump_item_callback(map_val_dump_visitor *dump_vis, const map_val_entry *entry)
 {
-    dump_item_cb_args *args = (dump_item_cb_args *) cookie;
-    if (args->output_anything) {
+    if (dump_vis->output_anything) {
         log_puts(", ");
     } else {
         log_putc(' ');
     }
     map_val_entry_dump(entry);
-    args->output_anything = 1;
+    dump_vis->output_anything = 1;
     return CONTINUE_ENUMERATION;
 }
 
 void map_val_dump(const map_val *map)
 {
-    dump_item_cb_args cbargs = { .output_anything = 0 };
+    map_val_dump_visitor dump_vis = { .map_vis.visit_entry = (const_map_entry_visit_func) dump_item_callback, .output_anything = 0 };
     log_putc('{');
-    enumeration_result res = map_val_foreach_const(map, dump_item_callback, &cbargs);
+    enumeration_result res = const_map_visitor_visit_map((const_map_visitor *) &dump_vis, (const generic_map *) map);
     assert(res == ENUMERATION_COMPLETE);
-    if (cbargs.output_anything) {
+    if (dump_vis.output_anything) {
         log_putc(' ');
     }
     log_putc('}');
@@ -99,7 +100,7 @@ void map_val_dump(const map_val *map)
 
 #ifndef NDEBUG
 
-static item_callback_result item_assert_valid_callback(void *cookie, const map_val_entry *entry)
+static item_callback_result item_assert_valid_callback(const_map_visitor *map_vis, const map_val_entry *entry)
 {
     str_assert_valid(entry->key);
     if (valid_check_depth < VALID_CHECK_RECURSION_DEPTH) {
@@ -112,63 +113,30 @@ static item_callback_result item_assert_valid_callback(void *cookie, const map_v
 
 void map_val_assert_valid(const map_val *map)
 {
-    enumeration_result res = map_val_foreach_const(map, item_assert_valid_callback, NULL);
+    const_map_visitor map_vis = { .visit_entry = (const_map_entry_visit_func) item_assert_valid_callback };
+    enumeration_result res = const_map_visitor_visit_map(&map_vis, (const generic_map *) map);
     assert(res == ENUMERATION_COMPLETE);
     return map_buf_assert_valid((const map_buf *) map);
 }
 #endif /* ndef NDEBUG */
 
-enumeration_result map_val_foreach(map_val *map, map_val_entry_callback callback, void *cookie)
-{
-    return map_buf_foreach((map_buf *) map, (map_buf_entry_callback) callback, cookie);
-}
-
-enumeration_result map_val_foreach_const(const map_val *map, const_map_val_entry_callback callback, void *cookie)
-{
-    return map_buf_foreach_const((map_buf *) map, (const_map_buf_entry_callback) callback, cookie);
-}
-
-typedef struct insert_othermap_args_struct {
-    map_val *insert_into;
-} insert_othermap_args;
-
-static item_callback_result item_insert_othermap_callback(void *cookie, const map_val_entry *entry)
-{
-    insert_othermap_args *args = (insert_othermap_args *) cookie;
-    str_assert_valid(entry->key);
-    val_assert_valid(&entry->value);
-    map_val_assert_valid(args->insert_into);
-    map_val_set(args->insert_into, entry->key, &entry->value);
-    return CONTINUE_ENUMERATION;
-}
-
-map_val *map_val_dup(const map_val *map)
-{
-    /* TODO: Optimise this */
-    map_val *new_map = map_val_alloc();
-    insert_othermap_args args = { .insert_into = new_map };
-    enumeration_result res = map_val_foreach_const(map, item_insert_othermap_callback, &args);
-    assert(res == ENUMERATION_COMPLETE);
-    return new_map;
-}
-
-typedef struct test_entry_same_other_map_cb_args_struct {
+typedef struct compare_visitor_struct {
+    const_map_visitor map_vis;
     const map_val *other_map;
-} test_entry_same_other_map_cb_args;
+} compare_visitor;
 
-static item_callback_result test_entry_othermap_callback(void *cookie, const map_val_entry *entry)
+static item_callback_result test_entry_othermap_callback(compare_visitor *comp_vis, const map_val_entry *entry)
 {
-    test_entry_same_other_map_cb_args *args = (test_entry_same_other_map_cb_args *) cookie;
-    assert(args->other_map != NULL);
-    map_val_assert_valid(args->other_map);
-    const toy_val *other_map_val = map_val_get_const(args->other_map, entry->key);
+    assert(comp_vis->other_map != NULL);
+    map_val_assert_valid(comp_vis->other_map);
+    const toy_val *other_map_val = map_val_get_const(comp_vis->other_map, entry->key);
     if (other_map_val == NULL) {
         return STOP_ENUMERATION;
     }
-    if (vals_nequal(&entry->value, other_map_val)) {
-        return STOP_ENUMERATION;
+    if (vals_equal(&entry->value, other_map_val)) {
+        return CONTINUE_ENUMERATION;
     }
-    return CONTINUE_ENUMERATION;
+    return STOP_ENUMERATION;
 }
 
 toy_bool map_val_equal(const map_val *map1, const map_val *map2)
@@ -179,8 +147,8 @@ toy_bool map_val_equal(const map_val *map1, const map_val *map2)
     if (map_val_size(map1) != map_val_size(map2)) {
         return TOY_FALSE;
     }
-    test_entry_same_other_map_cb_args entry_exists_args = { .other_map = map2 };
-    enumeration_result res = map_val_foreach_const(map1, test_entry_othermap_callback, &entry_exists_args);
+    compare_visitor comp_vis = { .map_vis.visit_entry = (const_map_entry_visit_func) test_entry_othermap_callback, .other_map = map2 };
+    enumeration_result res = const_map_visitor_visit_map((const_map_visitor *) &comp_vis, (const generic_map *) map1);
     if (res == ENUMERATION_COMPLETE) {
         return TOY_TRUE;
     }

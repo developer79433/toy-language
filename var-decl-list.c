@@ -6,6 +6,7 @@
 #include "var-decl.h"
 #include "var-decl-list.h"
 #include "log.h"
+#include "list-visitor.h"
 
 size_t var_decl_list_len(const toy_var_decl_list *list)
 {
@@ -36,36 +37,29 @@ toy_var_decl_list *var_decl_list_alloc(toy_var_decl *decl)
     return decl_list;
 }
 
-enumeration_result var_decl_list_foreach(toy_var_decl_list *list, toy_var_decl_list_item_callback callback, void *cookie)
-{
-    return buf_list_foreach((toy_buf_list *) list, (buf_list_item_callback) callback, cookie);
-}
-
-enumeration_result var_decl_list_foreach_const(const toy_var_decl_list *list, const_toy_var_decl_list_item_callback callback, void *cookie)
-{
-    return buf_list_foreach_const((const toy_buf_list *) list, (const_buf_list_item_callback) callback, cookie);
-}
-
-typedef struct var_decl_dump_cb_args_struct {
+typedef struct var_decl_visitor_struct {
+    const_list_visitor list_vis;
     toy_bool output_something;
-} var_decl_dump_cb_args;
+} var_decl_visitor;
 
-static item_callback_result var_decl_dump_callback(void *cookie, size_t index, const toy_var_decl_list *item)
+static item_callback_result var_decl_dump_callback(var_decl_visitor *var_decl_vis, size_t index, const toy_var_decl_list *item)
 {
-    var_decl_dump_cb_args *args = (var_decl_dump_cb_args *) cookie;
     const toy_var_decl *var_decl = var_decl_list_payload_const(item);
-    if (args->output_something) {
+    if (var_decl_vis->output_something) {
         log_puts(", ");
     }
     var_decl_dump(var_decl);
-    args->output_something = TOY_TRUE;
+    var_decl_vis->output_something = TOY_TRUE;
     return CONTINUE_ENUMERATION;
 }
 
 void var_decl_list_dump(const toy_var_decl_list *list)
 {
-    var_decl_dump_cb_args args = { .output_something = TOY_FALSE };
-    enumeration_result res = var_decl_list_foreach_const(list, var_decl_dump_callback, &args);
+    var_decl_visitor var_decl_vis = {
+        .list_vis.visit_entry = (const_list_entry_visit_func) var_decl_dump_callback,
+        .output_something = TOY_FALSE
+    };
+    enumeration_result res = const_list_visitor_visit_list((const_list_visitor *) &var_decl_vis, (const generic_list *) list);
     assert(ENUMERATION_COMPLETE == res);
 }
 
@@ -89,7 +83,7 @@ toy_var_decl_list *var_decl_list_append(toy_var_decl_list *list, toy_var_decl *n
     return var_decl_list_concat(list, new_list);
 }
 
-static item_callback_result decl_assert_valid_cb(void *cookie, size_t index, const toy_var_decl_list *item)
+static item_callback_result decl_assert_valid_cb(const_list_visitor *list_vis, size_t index, const toy_var_decl_list *item)
 {
     const toy_var_decl *var_decl = var_decl_list_payload_const(item);
     var_decl_assert_valid(var_decl);
@@ -98,6 +92,7 @@ static item_callback_result decl_assert_valid_cb(void *cookie, size_t index, con
 
 void var_decl_list_assert_valid(const toy_var_decl_list *list)
 {
-    enumeration_result res = var_decl_list_foreach_const(list, decl_assert_valid_cb, NULL);
+    const_list_visitor list_vis = { .visit_entry = (const_list_entry_visit_func) decl_assert_valid_cb };
+    enumeration_result res = const_list_visitor_visit_list(&list_vis, (const generic_list *) list);
     assert(ENUMERATION_COMPLETE == res);
 }

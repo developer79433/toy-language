@@ -256,7 +256,7 @@ static run_stmt_result predefined_list_all(toy_interp *interp, const toy_var *ar
         if (arg2->type == VAL_FUNC) {
             toy_function *func = arg2->func;
             user_func_predicate val_list_pred = { .func = func, .interp = interp };
-            ret = val_list_all_match(list, (toy_val_list_filter_func) val_list_test_predicate, &val_list_pred);
+            ret = list_all_match((const generic_list *) list, (generic_list_filter_func) val_list_test_predicate, &val_list_pred);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
         }
@@ -277,7 +277,7 @@ static run_stmt_result predefined_list_not_all(toy_interp *interp, const toy_var
         if (arg2->type == VAL_FUNC) {
             toy_function *func = arg2->func;
             user_func_predicate val_list_pred = { .func = func, .interp = interp };
-            ret = val_list_not_all_match(list, (toy_val_list_filter_func) val_list_test_predicate, &val_list_pred);
+            ret = list_not_all_match((const generic_list *) list, (generic_list_filter_func) val_list_test_predicate, &val_list_pred);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
         }
@@ -298,7 +298,7 @@ static run_stmt_result predefined_list_some(toy_interp *interp, const toy_var *a
         if (arg2->type == VAL_FUNC) {
             toy_function *func = arg2->func;
             user_func_predicate val_list_pred = { .func = func, .interp = interp };
-            ret = val_list_some_match(list, (toy_val_list_filter_func) val_list_test_predicate, &val_list_pred);
+            ret = list_some_match((const generic_list *) list, (generic_list_filter_func) val_list_test_predicate, &val_list_pred);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
         }
@@ -319,7 +319,7 @@ static run_stmt_result predefined_list_none(toy_interp *interp, const toy_var *a
         if (arg2->type == VAL_FUNC) {
             toy_function *func = arg2->func;
             user_func_predicate val_list_pred = { .func = func, .interp = interp };
-            ret = val_list_none_match(list, (toy_val_list_filter_func) val_list_test_predicate, &val_list_pred);
+            ret = list_none_match((const generic_list *) list, (generic_list_filter_func) val_list_test_predicate, &val_list_pred);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
         }
@@ -393,6 +393,7 @@ static run_stmt_result predefined_list_foreach(toy_interp *interp, const toy_var
     return REACHED_BLOCK_END;
 }
 
+/* TODO: Use list_filter */
 typedef struct val_list_filter_struct {
     val_list_visitor val_list_vis;
     toy_val_list *list_to_append_to;
@@ -405,6 +406,7 @@ static item_callback_result val_list_filter_item_callback(val_list_filter *val_l
     /* TODO: This aliases the arg. Does that allow the user function to modify the value that gets appended? */
     run_stmt_result res = interp_run_func_single_arg(val_list_filt->val_list_vis.interp, val_list_filt->val_list_vis.toy_func, list_elem);
     toy_bool truthy_return;
+    /* TODO: Error if user function didn't return a value */
     if (res == REACHED_RETURN) {
         toy_val *return_value = interp_get_return_value(val_list_filt->val_list_vis.interp);
         val_assert_valid(return_value);

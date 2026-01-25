@@ -73,27 +73,7 @@ size_t ptr_list_len(const toy_ptr_list *list)
     return list_len((generic_list *) list);
 }
 
-enumeration_result ptr_list_foreach(toy_ptr_list *list, ptr_list_item_callback callback, void *cookie)
-{
-    return list_foreach((generic_list *) list, (generic_list_item_callback) callback, cookie);
-}
-
-enumeration_result ptr_list_foreach_const(const toy_ptr_list *list, const_ptr_list_item_callback callback, void *cookie)
-{
-    return list_foreach_const((generic_list *) list, (const_generic_list_item_callback) callback, cookie);
-}
-
 void ptr_list_free(toy_ptr_list *list)
 {
     list_free((generic_list *) list);
-}
-
-enumeration_result ptr_list_visitor_visit_list(ptr_list_visitor *visitor, toy_ptr_list *list)
-{
-    return list_visitor_visit_list((list_visitor *) visitor, (generic_list *) list);
-}
-
-enumeration_result const_ptr_list_visitor_visit_list(const_ptr_list_visitor *visitor, const toy_ptr_list *list)
-{
-    return const_list_visitor_visit_list((const_list_visitor *) visitor, (const generic_list *) list);
 }

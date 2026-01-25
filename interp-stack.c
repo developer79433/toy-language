@@ -18,6 +18,7 @@
 #include "log.h"
 #include "var.h"
 #include "function.h"
+#include "list-visitor.h"
 
 void interp_stack_assert_valid(const interp_stack *stack)
 {
@@ -99,25 +100,26 @@ interp_stack *interp_stack_push_loop(interp_stack *stack, const toy_block *block
     return stack;
 }
 
-typedef struct copy_arg_args_struct {
+typedef struct argument_visitor_struct {
+    const_list_visitor list_vis;
     toy_var *frame_args;
-} copy_arg_args;
+} argument_visitor;
 
-static item_callback_result copy_arg_callback(void *cookie, size_t index, const toy_val_list *item)
+static item_callback_result copy_arg_callback(argument_visitor *arg_vis, size_t index, const toy_val_list *item)
 {
-    copy_arg_args *args = (copy_arg_args *) cookie;
     const toy_val *actual_argument = val_list_payload_const(item);
-    toy_var *var = &args->frame_args[index];
-    /* FIXME: const poisoning */
-    /* FIXME: Lack of distinction between const list of values, and list of const values */
-    var_set(var, (toy_val *) actual_argument);
+    toy_var *var = &arg_vis->frame_args[index];
+    var_set(var, actual_argument);
     return CONTINUE_ENUMERATION;
 }
 
 static void copy_args_into_frame(toy_var *frame_args, const toy_val_list *actual_arguments)
 {
-    copy_arg_args args = { .frame_args = frame_args };
-    enumeration_result res = val_list_foreach_const(actual_arguments, copy_arg_callback, &args);
+    argument_visitor arg_vis = {
+        .list_vis.visit_entry = (const_list_entry_visit_func) copy_arg_callback,
+        .frame_args = frame_args
+    };
+    enumeration_result res = const_list_visitor_visit_list((const_list_visitor *) &arg_vis, (const generic_list *) actual_arguments);
     assert(ENUMERATION_COMPLETE == res);
 }
 

@@ -7,14 +7,11 @@
 
 void map_val_init(map_val *map);
 map_val *map_val_alloc(void);
-map_val *map_val_dup(const map_val *map);
 toy_bool map_val_equal(const map_val *map1, const map_val *map2);
 toy_val *map_val_get(map_val *map, const toy_str key);
 const toy_val *map_val_get_const(const map_val *map, const toy_str key);
 set_result map_val_set(map_val *map, const toy_str key, const toy_val *value);
 delete_result map_val_delete(map_val *map, const toy_str key);
-enumeration_result map_val_foreach_const(const map_val *map, const_map_val_entry_callback callback, void *cookie);
-enumeration_result map_val_foreach(map_val *map, map_val_entry_callback callback, void *cookie);
 size_t map_val_size(const map_val *map);
 #ifdef NDEBUG
 #define map_val_assert_valid(map) do {} while (0)

@@ -8,23 +8,24 @@
 #include "stmt-list.h"
 #include "generic-map.h"
 #include "map-val.h"
+#include "map-visitor.h"
 
 typedef struct test_visitor_struct {
+    const_map_visitor map_vis;
     toy_str intended_key;
     toy_val *intended_value;
 } test_visitor;
 
-static toy_bool test_map_entry(void *cookie, const toy_str key, const toy_val *value)
+static toy_bool test_map_entry(test_visitor *test_vis, const toy_str key, const toy_val *value)
 {
-    test_visitor *args = (test_visitor *) cookie;
-    assert(str_equal(key, args->intended_key));
-    assert_vals_equal(value, args->intended_value);
+    assert(str_equal(key, test_vis->intended_key));
+    assert_vals_equal(value, test_vis->intended_value);
     return TOY_TRUE;
 }
 
-static item_callback_result map_item_callback(void *cookie, const map_val_entry *entry)
+static item_callback_result map_item_callback(test_visitor *test_vis, const map_val_entry *entry)
 {
-    if (!test_map_entry(cookie, entry->key, &entry->value)) {
+    if (!test_map_entry(test_vis, entry->key, &entry->value)) {
         return STOP_ENUMERATION;
     }
     return CONTINUE_ENUMERATION;
@@ -79,8 +80,8 @@ void test_map_vals(void)
     assert(str_equal(get6->str, "new value"));
 
     // Test enumerate
-    test_visitor args = { .intended_key = "second key", .intended_value = &val3};
-    enumeration_result res = map_val_foreach_const(map1, map_item_callback, &args);
+    test_visitor test_vis = { .map_vis.visit_entry = (const_map_entry_visit_func) map_item_callback, .intended_key = "second key", .intended_value = &val3};
+    enumeration_result res = const_map_visitor_visit_map((const_map_visitor *) &test_vis, (const generic_map *) map1);
     assert(res == ENUMERATION_COMPLETE);
 
     // Test reset

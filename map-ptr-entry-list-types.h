@@ -16,7 +16,4 @@ typedef struct map_ptr_entry_list_struct {
     map_ptr_entry entry;
 } map_ptr_entry_list;
 
-typedef item_callback_result (*map_ptr_entry_list_item_callback)(void *cookie, size_t index, map_ptr_entry_list *item);
-typedef item_callback_result (*const_map_ptr_entry_list_item_callback)(void *cookie, size_t index, const map_ptr_entry_list *item);
-
 #endif /* TOY_MAP_PTR_ENTRY_LIST_TYPES_H */

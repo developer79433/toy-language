@@ -3,15 +3,14 @@
 #include "test-str-list.h"
 #include "str.h"
 #include "str-list.h"
+#include "list-visitor.h"
 
-static item_callback_result str_list_item_callback(void *cookie, size_t index, const toy_str_list *list)
+static item_callback_result str_list_item_callback(list_visitor *list_vis, size_t index, const toy_str_list *list)
 {
-    size_t *count = (size_t *) cookie;
     // log_printf("Got string '%s'\n", list->str);
-    assert(*count == 0 || *count == 1);
-    assert((*count != 0) || (str_equal(list->str, "first string")));
-    assert((*count != 1) || (str_equal(list->str, "second string")));
-    (*count)++;
+    assert(index == 0 || index == 1);
+    assert(index != 0 || str_equal(list->str, "first string"));
+    assert(index != 1 || str_equal(list->str, "second string"));
     return CONTINUE_ENUMERATION;
 }
 
@@ -29,8 +28,8 @@ void test_str_lists(void)
     assert(str_equal(retval->next->str, second_str));
     assert(NULL == retval->next->next);
     assert(2 == str_list_len(retval));
-    size_t count = 0;
-    enumeration_result res = str_list_foreach_const(str_list, str_list_item_callback, &count);
+    const_list_visitor list_vis = { .visit_entry = (const_list_entry_visit_func) str_list_item_callback };
+    enumeration_result res = const_list_visitor_visit_list((const_list_visitor *) &list_vis, (const generic_list *) str_list);
     assert(res == ENUMERATION_COMPLETE);
     str_list_free(retval);
 }

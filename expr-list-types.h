@@ -13,7 +13,4 @@ typedef struct toy_expr_list_struct {
     toy_expr *expr;
 } toy_expr_list;
 
-typedef item_callback_result (*toy_expr_list_item_callback)(void *cookie, size_t index, toy_expr_list *item);
-typedef item_callback_result (*const_toy_expr_list_item_callback)(void *cookie, size_t index, const toy_expr_list *item);
-
 #endif /* TOY_EXPR_LIST_TYPES_H */

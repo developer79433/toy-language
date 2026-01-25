@@ -27,13 +27,3 @@ void map_ptr_entry_list_payload_set(map_ptr_entry_list *list, void *ptr)
 {
     return map_buf_entry_list_payload_set((map_buf_entry_list *) list, &ptr, sizeof(ptr));
 }
-
-enumeration_result map_ptr_entry_list_foreach(map_ptr_entry_list *list, map_ptr_entry_list_item_callback callback, void *cookie)
-{
-    return map_buf_entry_list_foreach((map_buf_entry_list *) list, (map_buf_entry_list_item_callback) callback, cookie);
-}
-
-enumeration_result map_ptr_entry_list_foreach_const(const map_ptr_entry_list *list, const_map_ptr_entry_list_item_callback callback, void *cookie)
-{
-    return map_buf_entry_list_foreach_const((const map_buf_entry_list *) list, (const_map_buf_entry_list_item_callback) callback, cookie);
-}

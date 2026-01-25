@@ -8,6 +8,7 @@
 #include "str.h"
 #include "expr.h"
 #include "log.h"
+#include "list-visitor.h"
 
 toy_map_entry *map_entry_list_payload(toy_map_entry_list *list)
 {
@@ -17,16 +18,6 @@ toy_map_entry *map_entry_list_payload(toy_map_entry_list *list)
 const toy_map_entry *map_entry_list_payload_const(const toy_map_entry_list *list)
 {
     return buf_list_payload_const_typed((const toy_buf_list *) list, toy_map_entry);
-}
-
-enumeration_result map_entry_list_foreach(toy_map_entry_list *list, toy_map_entry_list_item_callback callback, void *cookie)
-{
-    return buf_list_foreach((toy_buf_list *) list, (buf_list_item_callback) callback, cookie);
-}
-
-enumeration_result map_entry_list_foreach_const(const toy_map_entry_list *list, const_toy_map_entry_list_item_callback callback, void *cookie)
-{
-    return buf_list_foreach_const((const toy_buf_list *) list, (const_buf_list_item_callback) callback, cookie);
 }
 
 toy_map_entry_list *map_entry_list_alloc_ref(toy_str first_key, toy_expr *first_value)
@@ -43,15 +34,15 @@ toy_map_entry_list *map_entry_list_concat(toy_map_entry_list *orig, toy_map_entr
     return (toy_map_entry_list *) buf_list_concat((toy_buf_list *) orig, (toy_buf_list *) new_list);
 }
 
-typedef struct map_entry_dump_cb_args_struct {
+typedef struct map_entry_dump_visitor_struct {
+    const_list_visitor list_vis;
     toy_bool printed_anything;
-} map_entry_dump_cb_args;
+} map_entry_dump_visitor;
 
-static item_callback_result map_entry_dump_callback(void *cookie, size_t index, const toy_map_entry_list *item)
+static item_callback_result map_entry_dump_callback(map_entry_dump_visitor *dump_vis, size_t index, const toy_map_entry_list *item)
 {
-    map_entry_dump_cb_args *args = (map_entry_dump_cb_args *) cookie;
     const toy_map_entry *entry = map_entry_list_payload_const(item);
-    if (args->printed_anything) {
+    if (dump_vis->printed_anything) {
         log_puts(", ");
     } else {
         log_putc(' ');
@@ -59,17 +50,17 @@ static item_callback_result map_entry_dump_callback(void *cookie, size_t index, 
     str_dump(entry->key);
     log_puts(": ");
     expr_dump(entry->expr);
-    args->printed_anything = TOY_TRUE;
+    dump_vis->printed_anything = TOY_TRUE;
     return CONTINUE_ENUMERATION;
 }
 
 void map_entry_list_dump(const toy_map_entry_list *list)
 {
     log_putc('{');
-    map_entry_dump_cb_args args = { .printed_anything = TOY_FALSE };
-    enumeration_result res = map_entry_list_foreach_const(list, map_entry_dump_callback, &args);
+    map_entry_dump_visitor dump_vis = { .list_vis.visit_entry = (const_list_entry_visit_func) map_entry_dump_callback, .printed_anything = TOY_FALSE };
+    enumeration_result res = const_list_visitor_visit_list((const_list_visitor *) &dump_vis, (const generic_list *) list);
     assert(ENUMERATION_COMPLETE == res);
-    if (args.printed_anything) {
+    if (dump_vis.printed_anything) {
         log_putc(' ');
     }
     log_putc('}');

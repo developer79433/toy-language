@@ -42,7 +42,7 @@ static toy_bool compare_to_second_item(void *cookie, size_t index, const toy_str
     return str_equal(str, "Second item");
 }
 
-static item_callback_result receive_entry(const_str_list_visitor *visitor, size_t index, const toy_str_list *entry)
+static item_callback_result receive_entry(const_list_visitor *visitor, size_t index, const toy_str_list *entry)
 {
     const toy_str str = str_list_payload_const(entry);
     assert(str_equal(str, "Second item"));

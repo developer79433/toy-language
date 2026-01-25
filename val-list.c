@@ -8,32 +8,33 @@
 #include "val-list.h"
 #include "errors.h"
 #include "log.h"
+#include "list-visitor.h"
 
-typedef struct val_dump_cb_args_struct {
+typedef struct val_dump_visitor_struct {
+    const_list_visitor list_vis;
     toy_bool printed_anything;
-} val_dump_cb_args;
+} val_dump_visitor;
 
-static item_callback_result val_dump_callback(void *cookie, size_t index, const toy_val_list *item)
+static item_callback_result val_dump_callback(val_dump_visitor *val_dump_vis, size_t index, const toy_val_list *item)
 {
-    val_dump_cb_args *args = (val_dump_cb_args *) cookie;
     const toy_val *val = val_list_payload_const(item);
-    if (args->printed_anything) {
+    if (val_dump_vis->printed_anything) {
         log_puts(", ");
     } else {
         log_putc(' ');
     }
     val_dump(val, 1);
-    args->printed_anything = TOY_TRUE;
+    val_dump_vis->printed_anything = TOY_TRUE;
     return CONTINUE_ENUMERATION;
 }
 
 void val_list_dump(const toy_val_list *list)
 {
     log_putc('[');
-    val_dump_cb_args args = { .printed_anything = TOY_FALSE };
-    enumeration_result res = val_list_foreach_const(list, val_dump_callback, &args);
+    val_dump_visitor val_dump_vis = { .list_vis.visit_entry = (const_list_entry_visit_func) val_dump_callback, .printed_anything = TOY_FALSE };
+    enumeration_result res = const_list_visitor_visit_list((const_list_visitor *) &val_dump_vis, (const generic_list *) list);
     assert(ENUMERATION_COMPLETE == res);
-    if (args.printed_anything) {
+    if (val_dump_vis.printed_anything) {
         log_putc(' ');
     }
     log_putc(']');
@@ -84,18 +85,6 @@ toy_val_list *val_list_append(toy_val_list *list, const toy_val *new_item)
     return (toy_val_list *) buf_list_append((toy_buf_list *) list, new_item, sizeof(*new_item));
 }
 
-enumeration_result val_list_foreach(toy_val_list *list, toy_val_list_item_callback callback, void *cookie)
-{
-    assert(offsetof(toy_val_list, val) == offsetof(toy_buf_list, c));
-    return buf_list_foreach((toy_buf_list *) list, (buf_list_item_callback) callback, cookie);
-}
-
-enumeration_result val_list_foreach_const(const toy_val_list *list, const_toy_val_list_item_callback callback, void *cookie)
-{
-    assert(offsetof(toy_val_list, val) == offsetof(toy_buf_list, c));
-    return buf_list_foreach_const((const toy_buf_list *) list, (const_buf_list_item_callback) callback, cookie);
-}
-
 #ifndef NDEBUG
 void val_list_assert_valid(const toy_val_list *list)
 {
@@ -137,24 +126,4 @@ void val_list_set_payload(toy_val_list *list, const toy_val *value)
 {
     val_assert_valid(value);
     return buf_list_payload_set((toy_buf_list *) list, value, sizeof(*value));
-}
-
-toy_bool val_list_all_match(const toy_val_list *list, toy_val_list_filter_func filter, void *cookie)
-{
-    return buf_list_all_match((const toy_buf_list *) list, (buf_list_filter_func) filter, cookie);
-}
-
-toy_bool val_list_none_match(const toy_val_list *list, toy_val_list_filter_func filter, void *cookie)
-{
-    return buf_list_none_match((const toy_buf_list *) list, (buf_list_filter_func) filter, cookie);
-}
-
-toy_bool val_list_not_all_match(const toy_val_list *list, toy_val_list_filter_func filter, void *cookie)
-{
-    return buf_list_not_all_match((const toy_buf_list *) list, (buf_list_filter_func) filter, cookie);
-}
-
-toy_bool val_list_some_match(const toy_val_list *list, toy_val_list_filter_func filter, void *cookie)
-{
-    return buf_list_some_match((const toy_buf_list *) list, (buf_list_filter_func) filter, cookie);
 }

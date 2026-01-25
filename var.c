@@ -48,7 +48,7 @@ const toy_val *var_get_const(const toy_var *var)
     return &var->val;
 }
 
-void var_set(toy_var *var, toy_val *new_val)
+void var_set(toy_var *var, const toy_val *new_val)
 {
     var_assert_valid(var);
     val_assert_valid(new_val);

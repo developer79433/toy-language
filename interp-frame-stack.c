@@ -8,6 +8,7 @@
 #include "interp.h"
 #include "debug.h"
 #include "buf-stack.h"
+#include "list-visitor.h"
 
 typedef struct interp_frame_stack_struct {
     struct interp_frame_stack_struct *next;
@@ -29,17 +30,7 @@ size_t interp_frame_stack_len(const interp_frame_stack *stack)
     return buf_stack_len((const buf_stack *) stack);
 }
 
-enumeration_result interp_frame_stack_foreach(interp_frame_stack *stack, interp_frame_stack_item_callback callback, void *cookie)
-{
-    return buf_stack_foreach((buf_stack *) stack, (buf_stack_item_callback) callback, cookie);
-}
-
-enumeration_result interp_frame_stack_foreach_const(const interp_frame_stack *stack, const_interp_frame_stack_item_callback callback, void *cookie)
-{
-    return buf_stack_foreach_const((const buf_stack *) stack, (const_buf_stack_item_callback) callback, cookie);
-}
-
-static item_callback_result frame_free_callback(void *cookie, size_t index, interp_frame_stack *stack)
+static item_callback_result frame_free_callback(list_visitor *list_vis, size_t index, interp_frame_stack *stack)
 {
     interp_frame *frame = interp_frame_stack_payload(stack);
     interp_frame_free(frame);
@@ -48,11 +39,12 @@ static item_callback_result frame_free_callback(void *cookie, size_t index, inte
 
 void interp_frame_stack_free(interp_frame_stack *stack)
 {
-    enumeration_result res = interp_frame_stack_foreach(stack, frame_free_callback, NULL);
+    list_visitor list_vis = { .visit_entry = (list_entry_visit_func) frame_free_callback };
+    enumeration_result res = list_visitor_visit_list(&list_vis, (generic_list *) stack);
     assert(ENUMERATION_COMPLETE == res);
 }
 
-static item_callback_result frame_assert_valid_callback(void *cookie, size_t index, const interp_frame_stack *stack)
+static item_callback_result frame_assert_valid_callback(list_visitor *list_vis, size_t index, const interp_frame_stack *stack)
 {
     const interp_frame *frame = interp_frame_stack_payload_const(stack);
     interp_frame_assert_valid(frame);
@@ -61,31 +53,25 @@ static item_callback_result frame_assert_valid_callback(void *cookie, size_t ind
 
 void interp_frame_stack_assert_valid(const interp_frame_stack *stack)
 {
-    enumeration_result res = interp_frame_stack_foreach_const(stack, frame_assert_valid_callback, NULL);
+    list_visitor list_vis = { .visit_entry = (list_entry_visit_func) frame_assert_valid_callback };
+    enumeration_result res = list_visitor_visit_list(&list_vis, (generic_list *) stack);
     assert(ENUMERATION_COMPLETE == res);
 }
 
-typedef struct frame_dump_cb_args_struct {
-    size_t *frame_num;
-} frame_dump_cb_args;
-
-static item_callback_result frame_dump_callback(void *cookie, size_t index, const interp_frame_stack *item)
+static item_callback_result frame_dump_callback(list_visitor *list_vis, size_t index, const interp_frame_stack *item)
 {
-    frame_dump_cb_args *args = (frame_dump_cb_args *) cookie;
     const interp_frame *frame = interp_frame_stack_payload_const(item);
-    fprintf(stderr, "  Frame %02zu: ", *args->frame_num);
+    fprintf(stderr, "  Frame %02zu: ", index);
     interp_frame_dump(frame);
     fprintf(stderr, "\n");
-    *args->frame_num = *args->frame_num + 1;
     return CONTINUE_ENUMERATION;
 }
 
 void interp_frame_stack_dump(const char *context, const interp_frame_stack *stack)
 {
     fprintf(stderr, "Interpreter stack %s:\n", context);
-    size_t frame_num = 0;
-    frame_dump_cb_args args = { .frame_num = &frame_num };
-    enumeration_result res = interp_frame_stack_foreach_const(stack, frame_dump_callback, &args);
+    const_list_visitor list_vis = { .visit_entry = (const_list_entry_visit_func) frame_dump_callback };
+    enumeration_result res = const_list_visitor_visit_list(&list_vis, (const generic_list *) stack);
     assert(res == ENUMERATION_COMPLETE);
 }
 

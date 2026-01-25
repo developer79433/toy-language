@@ -7,6 +7,7 @@
 #include "str.h"
 #include "str-list.h"
 #include "log.h"
+#include "list-visitor.h"
 
 toy_str str_list_payload(toy_str_list *list)
 {
@@ -69,16 +70,6 @@ void str_list_free(toy_str_list *str_list)
     ptr_list_free((toy_ptr_list *) str_list);
 }
 
-enumeration_result str_list_foreach(toy_str_list *list, toy_str_list_item_callback callback, void *cookie)
-{
-    return ptr_list_foreach((toy_ptr_list *) list, (ptr_list_item_callback) callback, cookie);
-}
-
-enumeration_result str_list_foreach_const(const toy_str_list *list, const_toy_str_list_item_callback callback, void *cookie)
-{
-    return ptr_list_foreach_const((const toy_ptr_list *) list, (const_ptr_list_item_callback) callback, cookie);
-}
-
 #ifndef NDEBUG
 static item_callback_result item_valid_callback(void *cookie, size_t index, const toy_str_list *list)
 {
@@ -89,16 +80,8 @@ static item_callback_result item_valid_callback(void *cookie, size_t index, cons
 
 void str_list_assert_valid(const toy_str_list *list)
 {
-    str_list_foreach_const(list, item_valid_callback, NULL);
+    const_list_visitor list_vis = { .visit_entry = (const_list_entry_visit_func) item_valid_callback };
+    enumeration_result res = const_list_visitor_visit_list(&list_vis, (const generic_list *) list);
+    assert(ENUMERATION_COMPLETE == res);
 }
 #endif /* ndef NDEBUG */
-
-enumeration_result str_list_visitor_visit_list(str_list_visitor *visitor, toy_str_list *list)
-{
-    return ptr_list_visitor_visit_list((ptr_list_visitor *) visitor, (toy_ptr_list *) list);
-}
-
-enumeration_result const_str_list_visitor_visit_list(const_str_list_visitor *visitor, const toy_str_list *list)
-{
-    return const_ptr_list_visitor_visit_list((const_ptr_list_visitor *) visitor, (const toy_ptr_list *) list);
-}

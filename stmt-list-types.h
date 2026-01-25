@@ -8,7 +8,4 @@ struct toy_stmt_list_struct {
     toy_stmt stmt;
 };
 
-typedef item_callback_result (*stmt_list_item_callback)(void *cookie, size_t index, toy_stmt_list *item);
-typedef item_callback_result (*const_stmt_list_item_callback)(void *cookie, size_t index, const toy_stmt_list *item);
-
 #endif /* TOY_STMT_LIST_TYPES_H */

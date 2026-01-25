@@ -7,6 +7,7 @@
 #include "expr-list.h"
 #include "expr.h"
 #include "log.h"
+#include "list-visitor.h"
 
 toy_expr *expr_list_payload(toy_expr_list *list)
 {
@@ -42,21 +43,21 @@ toy_expr_list *expr_list_append(toy_expr_list *list, toy_expr *new_expr)
     return (toy_expr_list *) ptr_list_append((toy_ptr_list *) list, new_expr);
 }
 
-typedef struct expr_dump_cb_args_struct {
+typedef struct expr_dump_visitor_struct {
+    const_list_visitor list_vis;
     toy_bool printed_anything;
-} expr_dump_cb_args;
+} expr_dump_visitor;
 
-static item_callback_result expr_dump_callback(void *cookie, size_t index, const toy_expr_list *item)
+static item_callback_result expr_dump_callback(expr_dump_visitor *expr_dump_vis, size_t index, const toy_expr_list *item)
 {
-    expr_dump_cb_args *args = (expr_dump_cb_args *) cookie;
     const toy_expr *expr = expr_list_payload_const(item);
-    if (args->printed_anything) {
+    if (expr_dump_vis->printed_anything) {
         log_puts(", ");
     } else {
         log_putc(' ');
     }
     expr_dump(expr);
-    args->printed_anything = TOY_TRUE;
+    expr_dump_vis->printed_anything = TOY_TRUE;
     return CONTINUE_ENUMERATION;
 }
 
@@ -65,12 +66,12 @@ void expr_list_dump(const toy_expr_list *list, toy_bool include_braces)
     if (include_braces) {
         log_putc('[');
     }
-    expr_dump_cb_args args = { .printed_anything = TOY_FALSE };
-    enumeration_result res = expr_list_foreach_const(list, expr_dump_callback, &args);
+    expr_dump_visitor expr_dump_vis = { .list_vis.visit_entry = (const_list_entry_visit_func) expr_dump_callback, .printed_anything = TOY_FALSE };
+    enumeration_result res = const_list_visitor_visit_list((const_list_visitor *) &expr_dump_vis, (const generic_list *) list);
     assert(ENUMERATION_COMPLETE == res);
     for (const toy_expr_list *cur = list; cur; cur = cur->next) {
     }
-    if (args.printed_anything) {
+    if (expr_dump_vis.printed_anything) {
         log_putc(' ');
     }
     if (include_braces) {
@@ -82,14 +83,4 @@ toy_expr_list *expr_list_concat(toy_expr_list *orig, toy_expr_list *new_list)
 {
     assert(offsetof(toy_expr_list, next) == offsetof(generic_list, next));
     return (toy_expr_list *) ptr_list_concat((toy_ptr_list *) orig, (toy_ptr_list *) new_list);
-}
-
-enumeration_result expr_list_foreach(toy_expr_list *list, toy_expr_list_item_callback callback, void *cookie)
-{
-    return ptr_list_foreach((toy_ptr_list *) list, (ptr_list_item_callback) callback, cookie);
-}
-
-enumeration_result expr_list_foreach_const(const toy_expr_list *list, const_toy_expr_list_item_callback callback, void *cookie)
-{
-    return ptr_list_foreach_const((const toy_ptr_list *) list, (const_ptr_list_item_callback) callback, cookie);
 }
