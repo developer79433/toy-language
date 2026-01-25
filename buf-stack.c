@@ -56,16 +56,6 @@ buf_stack *buf_stack_pop(buf_stack *stack, void **removed_buf)
     return (buf_stack *) ret;
 }
 
-enumeration_result buf_stack_foreach(buf_stack *stack, buf_stack_item_callback callback, void *cookie)
-{
-    return buf_list_foreach((toy_buf_list *) stack, (buf_list_item_callback) callback, cookie);
-}
-
-enumeration_result buf_stack_foreach_const(const buf_stack *stack, const_buf_stack_item_callback callback, void *cookie)
-{
-    return buf_list_foreach_const((const toy_buf_list *) stack, (const_buf_list_item_callback) callback, cookie);
-}
-
 void *buf_stack_index(buf_stack *stack, size_t index)
 {
     return buf_list_index((toy_buf_list *) stack, index);

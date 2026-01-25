@@ -13,6 +13,7 @@
 #include "map-visitor.h"
 #include "map-filter.h"
 #include "map-latch.h"
+#include "list-visitor.h"
 
 void map_init(generic_map *map)
 {
@@ -121,17 +122,17 @@ static toy_bool map_entry_has_desired_name(void *cookie, const generic_map_entry
     return str_equal(entry->key, args->desired_key);
 }
 
-typedef struct delete_cb_args_struct {
+typedef struct delete_visitor_struct {
+    list_visitor list_vis;
     generic_map *map;
     generic_map_filter_func filter_func;
     map_entry_has_name_args filter_func_arg;
     generic_map_entry_list **bucket;
     generic_map_entry_list *prev;
-} delete_cb_args;
+} delete_visitor;
 
-static item_callback_result delete_first_callback(void *cookie, size_t index, generic_map_entry_list *list)
+static item_callback_result delete_first_callback(delete_visitor *args, size_t index, generic_map_entry_list *list)
 {
-    delete_cb_args *args = (delete_cb_args *) cookie;
     generic_map_entry *map_entry = generic_map_entry_list_payload(list);
     item_callback_result res;
     if (args->filter_func(&args->filter_func_arg, map_entry)) {
@@ -157,8 +158,15 @@ static item_callback_result delete_first_callback(void *cookie, size_t index, ge
 static delete_result delete_from_bucket(generic_map *map, generic_map_entry_list **bucket, const toy_str key)
 {
     map_entry_has_name_args has_name_args = { .desired_key = key };
-    delete_cb_args delete_args = { .map = map, .filter_func = map_entry_has_desired_name, .filter_func_arg = has_name_args, .bucket = bucket, .prev = *bucket };
-    enumeration_result res = generic_map_entry_list_foreach(*bucket, delete_first_callback, &delete_args);
+    delete_visitor delete_vis = {
+        .list_vis.visit_entry = (list_entry_visit_func) delete_first_callback,
+        .map = map,
+        .filter_func = map_entry_has_desired_name,
+        .filter_func_arg = has_name_args,
+        .bucket = bucket,
+        .prev = *bucket
+    };
+    enumeration_result res = list_visitor_visit_list((list_visitor *) &delete_vis, (generic_list *) *bucket);
     if (res == ENUMERATION_COMPLETE) {
         return NOT_PRESENT;
     }
