@@ -31,7 +31,7 @@ enumeration_result map_entry_list_foreach_const(const toy_map_entry_list *list, 
 
 toy_map_entry_list *map_entry_list_alloc_ref(toy_str first_key, toy_expr *first_value)
 {
-    toy_map_entry entry = { .key = first_key, .value = first_value };
+    toy_map_entry entry = { .key = first_key, .expr = first_value };
     assert(offsetof(toy_map_entry_list, next) == offsetof(toy_buf_list, next));
     assert(offsetof(toy_map_entry_list, entry) == offsetof(toy_buf_list, c));
     return (toy_map_entry_list *) buf_list_alloc(&entry, sizeof(entry));
@@ -58,7 +58,7 @@ static item_callback_result map_entry_dump_callback(void *cookie, size_t index, 
     }
     str_dump(entry->key);
     log_puts(": ");
-    expr_dump(entry->value);
+    expr_dump(entry->expr);
     args->printed_anything = TOY_TRUE;
     return CONTINUE_ENUMERATION;
 }

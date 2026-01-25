@@ -362,7 +362,7 @@ static item_callback_result map_entry_cb(map_ast_visitor *v, size_t index, toy_m
     if (STOP_ENUMERATION == res) {
         return res;
     }
-    return visit_expr(ast_vis, entry->value);
+    return visit_expr(ast_vis, entry->expr);
 }
 
 item_callback_result default_map_entry_list(ast_visitor *v, toy_map_entry_list *map_entry_list)

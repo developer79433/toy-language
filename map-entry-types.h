@@ -8,7 +8,7 @@ typedef struct toy_expr_struct toy_expr;
 
 typedef struct toy_map_entry_struct {
     toy_str key;
-    toy_expr *value;
+    toy_expr *expr;
 } toy_map_entry;
 
 #endif /* TOY_MAP_ENTRY_TYPES_H */

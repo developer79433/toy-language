@@ -33,6 +33,7 @@
 #include "resolved-name.h"
 #include "block.h"
 #include "var.h"
+#include "list-visitor.h"
 
 #if 0
 #define DEBUG_STACK 1
@@ -43,7 +44,7 @@
 #endif
 
 typedef struct toy_interp_struct {
-    const toy_function * main_program;
+    const toy_function *main_program;
     interp_stack *stack;
     toy_val return_val;
 } toy_interp;
@@ -67,23 +68,32 @@ interp_frame *interp_cur_frame(toy_interp *interp)
 {
     interp_assert_valid(interp);
     interp_stack *stack = interp_get_stack(interp);
-    return interp_stack_payload(stack);
+    interp_stack_assert_valid(stack);
+    interp_frame *cur_frame = interp_stack_payload(stack);
+    interp_frame_assert_valid(cur_frame);
+    return cur_frame;
 }
 
-typedef struct append_cb_args_struct {
+typedef struct expr_list_visitor_struct {
+    list_visitor list_vis;
     toy_interp *interp;
     toy_val *result;
-} append_cb_args;
+} expr_list_visitor;
 
-static item_callback_result append_val_list_callback(void *cookie, size_t index, toy_expr_list *list)
+static item_callback_result append_val_list_callback(expr_list_visitor *expr_list_vis, size_t index, toy_expr_list *expr_list)
 {
-    append_cb_args *args = (append_cb_args *) cookie;
-    toy_expr *expr = expr_list_payload(list);
+    toy_expr *expr = expr_list_payload(expr_list);
+    toy_interp *interp = expr_list_vis->interp;
+    interp_assert_valid(interp);
     toy_val val;
-    interp_assert_valid(args->interp);
-    interp_eval_val(args->interp, &val, expr);
-    assert(args->result->type == VAL_LIST);
-    val_list_append(args->result->list, &val);
+    interp_eval_val(interp, &val, expr);
+    toy_val *result = expr_list_vis->result;
+    assert(result->type == VAL_LIST);
+    if (result->list) {
+        result->list = val_list_append(result->list, &val);
+    } else {
+        result->list = val_list_alloc(&val);
+    }
     return CONTINUE_ENUMERATION;
 }
 
@@ -91,15 +101,11 @@ static void eval_expr_list(toy_interp *interp, toy_val *result, const toy_expr_l
 {
     interp_assert_valid(interp);
     result->type = VAL_LIST;
+    result->list = NULL;
     if (expr_list) {
-        toy_val element;
-        interp_eval_val(interp, &element, expr_list->expr);
-        result->list = val_list_alloc(&element);
-        append_cb_args append_args = { .interp = interp, .result = result };
-        enumeration_result res = expr_list_foreach(expr_list->next, append_val_list_callback, &append_args);
+        expr_list_visitor expr_visitor = { .list_vis.visit_list = NULL, .list_vis.visit_entry = (list_entry_visit_func) append_val_list_callback, .interp = interp, .result = result };
+        enumeration_result res = list_visitor_visit_list((list_visitor *) &expr_visitor, (generic_list *) expr_list);
         assert(ENUMERATION_COMPLETE == res);
-    } else {
-        result->list = NULL;
     }
 }
 
@@ -443,19 +449,23 @@ static void op_prefix_increment(toy_interp *interp, toy_val *result, toy_identif
     }
 }
 
-typedef struct map_entry_cb_args_struct {
+typedef struct map_entry_visitor_struct {
+    list_visitor list_vis;
     toy_interp *interp;
     map_val *map;
-} map_entry_cb_args;
+} map_entry_visitor;
 
-static item_callback_result map_entry_callback(void *cookie, size_t index, const toy_map_entry_list *list)
+static item_callback_result map_entry_callback(map_entry_visitor *map_entry_vis, size_t index, const toy_map_entry_list *list)
 {
-    map_entry_cb_args *args = (map_entry_cb_args *) cookie;
     const toy_map_entry *map_entry = map_entry_list_payload_const(list);
     toy_val value;
-    interp_assert_valid(args->interp);
-    interp_eval_val(args->interp, &value, map_entry->value);
-    map_val_set(args->map, map_entry->key, &value);
+    interp_assert_valid(map_entry_vis->interp);
+    interp_eval_val(map_entry_vis->interp, &value, map_entry->expr);
+    if (!map_entry_vis->map) {
+        map_entry_vis->map = map_val_alloc();
+    }
+    set_result set_res = map_val_set(map_entry_vis->map, map_entry->key, &value);
+    assert(SET_NEW == set_res);
     return CONTINUE_ENUMERATION;
 }
 
@@ -463,9 +473,14 @@ static void eval_map(toy_interp *interp, toy_val *result, const toy_map_entry_li
 {
     interp_assert_valid(interp);
     result->type = VAL_MAP;
-    result->map = map_val_alloc();
-    map_entry_cb_args map_entry_args = { .interp = interp, .map = result->map };
-    enumeration_result res = map_entry_list_foreach_const(entry_list, map_entry_callback, &map_entry_args);
+    result->map = NULL;
+    map_entry_visitor map_entry_args = {
+        .list_vis.visit_list = NULL,
+        .list_vis.visit_entry = (list_entry_visit_func) map_entry_callback,
+        .interp = interp,
+        .map = result->map
+    };
+    enumeration_result res = list_visitor_visit_list((list_visitor *) &map_entry_args, (generic_list *) entry_list);
     assert(res == ENUMERATION_COMPLETE);
 }
 
@@ -665,19 +680,20 @@ toy_bool interp_condition_truthy(toy_interp *interp, toy_expr *expr)
 
 #define DEBUG_VARIABLES
 
-typedef struct set_var_cb_args_struct {
+typedef struct var_decl_visitor_struct {
+    list_visitor list_vis;
     toy_interp *interp;
-    interp_frame *cur_frame;
-} set_var_cb_args;
+} var_decl_visitor;
 
-static item_callback_result set_var_callback(void *cookie, size_t index, const toy_var_decl_list *item)
+static item_callback_result set_var_callback(var_decl_visitor *var_decl_vis, size_t index, const toy_var_decl_list *item)
 {
-    set_var_cb_args *args = (set_var_cb_args *) cookie;
     const toy_var_decl *var_decl = var_decl_list_payload_const(item);
-
+    toy_interp *interp = var_decl_vis->interp;
+    interp_assert_valid(interp);
+    interp_frame *cur_frame = interp_cur_frame(interp);
+    interp_frame_assert_valid(cur_frame);
     toy_val *initial_val = mymalloc(toy_val);
-    interp_assert_valid(args->interp);
-    interp_eval_val(args->interp, initial_val, var_decl->value);
+    interp_eval_val(interp, initial_val, var_decl->value);
 
 #ifdef DEBUG_VARIABLES
     log_printf("interp: setting frame var %d to initial val ", var_decl->decl_index);
@@ -685,7 +701,7 @@ static item_callback_result set_var_callback(void *cookie, size_t index, const t
     log_putc('\n');
 #endif /* DEBUG_VARIABLES */
 
-    toy_var *var = interp_frame_get_var(args->cur_frame, var_decl->decl_index);
+    toy_var *var = interp_frame_get_var(cur_frame, var_decl->decl_index);
     var_init(var);
     var_set(var, initial_val);
 
@@ -695,11 +711,9 @@ static item_callback_result set_var_callback(void *cookie, size_t index, const t
 static run_stmt_result var_decl_stmt(toy_interp *interp, const toy_var_decl_stmt *var_decl_stmt)
 {
     interp_assert_valid(interp);
-    interp_stack *stack = interp->stack;
-    interp_frame *cur_frame = interp_stack_payload(stack);
-    set_var_cb_args args = { .interp = interp, .cur_frame = cur_frame };
+    var_decl_visitor var_decl_vis = { .list_vis.visit_list = NULL, .list_vis.visit_entry = (list_entry_visit_func) set_var_callback, .interp = interp };
     toy_var_decl_list *var_decl_list = var_decl_stmt->var_decl_list;
-    enumeration_result res = var_decl_list_foreach_const(var_decl_list, set_var_callback, &args);
+    enumeration_result res = list_visitor_visit_list((list_visitor *) &var_decl_vis, (generic_list *) var_decl_list);
     assert(ENUMERATION_COMPLETE == res);
     interp_assert_valid(interp);
     return EXECUTED_STATEMENT;
