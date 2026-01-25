@@ -12,8 +12,6 @@ generic_list *list_alloc_size(size_t value_size);
 generic_list *list_concat(generic_list *orig_list, generic_list *new_list);
 generic_list *list_remove_first(generic_list *list, generic_list **removed);
 generic_list *list_remove_last(generic_list *list, generic_list **removed);
-enumeration_result list_foreach(generic_list *list, generic_list_item_callback callback, void *cookie);
-enumeration_result list_foreach_const(const generic_list *list, const_generic_list_item_callback callback, void *cookie);
 void list_free(generic_list *list);
 generic_list *list_index(generic_list *list, size_t index);
 const generic_list *list_index_const(const generic_list *list, size_t index);

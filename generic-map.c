@@ -217,17 +217,17 @@ void map_dump(const generic_map *map)
     log_putc('}');
 }
 
-typedef struct listentry_cb_args_struct {
+typedef struct map_get_visitor_struct {
+    list_visitor list_vis;
     toy_str desired_name;
     generic_map_entry *entry_to_find;
-} listentry_cb_args;
+} map_get_visitor;
 
-static item_callback_result map_get_listentry_cb(void *cookie, size_t index, generic_map_entry_list *list)
+static item_callback_result map_get_listentry_cb(map_get_visitor *map_get_vis, size_t index, generic_map_entry_list *list)
 {
-    listentry_cb_args *args = (listentry_cb_args *) cookie;
     generic_map_entry *map_entry = generic_map_entry_list_payload(list);
-    if (str_equal(map_entry->key, args->desired_name)) {
-        args->entry_to_find = map_entry;
+    if (str_equal(map_entry->key, map_get_vis->desired_name)) {
+        map_get_vis->entry_to_find = map_entry;
         return STOP_ENUMERATION;
     }
     return CONTINUE_ENUMERATION;
@@ -235,15 +235,15 @@ static item_callback_result map_get_listentry_cb(void *cookie, size_t index, gen
 
 static generic_map_entry *map_bucket_get_key(generic_map_entry_list *bucket, const toy_str key)
 {
-    /* TODO: Use visitors */
-    listentry_cb_args args = { .desired_name = key, .entry_to_find = NULL };
-    enumeration_result res = generic_map_entry_list_foreach(bucket, map_get_listentry_cb, &args);
+    map_get_visitor map_get_vis = { .list_vis.visit_entry = (list_entry_visit_func) map_get_listentry_cb, .desired_name = key, .entry_to_find = NULL };
+    // TODO: Use list_find_first()
+    enumeration_result res = list_visitor_visit_list((list_visitor *) &map_get_vis, (generic_list *) bucket);
     assert(
-        (res == ENUMERATION_COMPLETE && args.entry_to_find == NULL)
+        (res == ENUMERATION_COMPLETE && map_get_vis.entry_to_find == NULL)
         ||
-        (res = ENUMERATION_INTERRUPTED && args.entry_to_find != NULL)
+        (res = ENUMERATION_INTERRUPTED && map_get_vis.entry_to_find != NULL)
     );
-    return args.entry_to_find;
+    return map_get_vis.entry_to_find;
 }
 
 generic_map_entry *map_get_entry(generic_map *map, const toy_str key)

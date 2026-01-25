@@ -50,33 +50,7 @@ const generic_list *list_next_const(const generic_list *list)
     return list->next;
 }
 
-enumeration_result list_foreach(generic_list *list, generic_list_item_callback callback, void *cookie)
-{
-    for (size_t i = 0; list; i++) {
-        generic_list *next = list_next(list);
-        item_callback_result res = callback(cookie, i, list);
-        if (STOP_ENUMERATION == res) {
-            return ENUMERATION_INTERRUPTED;
-        }
-        list = next;
-    }
-    return ENUMERATION_COMPLETE;
-}
-
-enumeration_result list_foreach_const(const generic_list *list, const_generic_list_item_callback callback, void *cookie)
-{
-    for (size_t i = 0; list; i++) {
-        const generic_list *next = list_next_const(list);
-        item_callback_result res = callback(cookie, i, list);
-        if (STOP_ENUMERATION == res) {
-            return ENUMERATION_INTERRUPTED;
-        }
-        list = next;
-    }
-    return ENUMERATION_COMPLETE;
-}
-
-static item_callback_result free_item_cb(void *cookie, size_t index, generic_list *list)
+static item_callback_result free_item_cb(list_visitor *list_vis, size_t index, generic_list *list)
 {
     free(list);
     return CONTINUE_ENUMERATION;
@@ -84,7 +58,8 @@ static item_callback_result free_item_cb(void *cookie, size_t index, generic_lis
 
 void list_free(generic_list *list)
 {
-    enumeration_result res = list_foreach(list, free_item_cb, NULL);
+    list_visitor list_vis = { .visit_entry = free_item_cb };
+    enumeration_result res = list_visitor_visit_list(&list_vis, list);
     assert(res == ENUMERATION_COMPLETE);
 }
 
@@ -104,10 +79,14 @@ const generic_list *list_index_const(const generic_list *list, size_t index)
     return list_find_first_const(list, is_desired_index, &index);
 }
 
-static item_callback_result increment_count_callback(void *cookie, size_t index, const generic_list *item)
+typedef struct count_visitor_struct {
+    const_list_visitor list_vis;
+    size_t count;
+} count_visitor;
+
+static item_callback_result increment_count_callback(count_visitor *count_vis, size_t index, const generic_list *item)
 {
-    size_t *counter = (size_t *) cookie;
-    (*counter)++;
+    count_vis->count++;
     return CONTINUE_ENUMERATION;
 }
 
@@ -117,10 +96,10 @@ size_t list_len(const generic_list *list)
     assert(sizeof(generic_list *) == sizeof(small_list *));
     assert(offsetof(big_list, next) == offsetof(small_list, next));
     assert(offsetof(generic_list, next) == offsetof(small_list, next));
-    size_t size = 0;
-    enumeration_result res = list_foreach_const(list, increment_count_callback, &size);
+    count_visitor count_vis = { .list_vis.visit_entry = (const_list_entry_visit_func) increment_count_callback, .count = 0 };
+    enumeration_result res = const_list_visitor_visit_list((const_list_visitor *) &count_vis, list);
     assert(ENUMERATION_COMPLETE == res);
-    return size;
+    return count_vis.count;
 }
 
 static toy_bool has_null_next(void *cookie, size_t index, const generic_list *item)

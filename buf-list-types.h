@@ -14,9 +14,4 @@ typedef struct toy_buf_list_struct {
     uint8_t c; /* Really variable-length */
 } toy_buf_list;
 
-typedef item_callback_result (*buf_list_item_callback)(void *cookie, size_t index, toy_buf_list *list);
-typedef item_callback_result (*const_buf_list_item_callback)(void *cookie, size_t index, const toy_buf_list *list);
-
-typedef toy_bool (*buf_list_filter_func)(void *cookie, size_t index, const toy_buf_list *item);
-
 #endif /* TOY_BUF_LIST_TYPES_H */
