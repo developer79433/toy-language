@@ -27,11 +27,10 @@ const generic_map_entry *map_find_first_const(const generic_map *map, generic_ma
 const generic_map_entry *map_find_first_not_const(const generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
 const generic_map_entry *map_find_last_const(const generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
 const generic_map_entry *map_find_last_not_const(const generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
-/* TODO: Should be const */
-toy_bool map_all_match(generic_map *map, generic_map_filter_func filter, void *cookie);
-toy_bool map_none_match(generic_map *map, generic_map_filter_func filter, void *cookie);
-toy_bool map_not_all_match(generic_map *map, generic_map_filter_func filter, void *cookie);
-toy_bool map_some_match(generic_map *map, generic_map_filter_func filter, void *cookie);
+toy_bool map_all_match(const generic_map *map, generic_map_filter_func filter, void *cookie);
+toy_bool map_none_match(const generic_map *map, generic_map_filter_func filter, void *cookie);
+toy_bool map_not_all_match(const generic_map *map, generic_map_filter_func filter, void *cookie);
+toy_bool map_some_match(const generic_map *map, generic_map_filter_func filter, void *cookie);
 void map_dump(const generic_map *map);
 void map_dump_keys(const generic_map *map);
 size_t map_size(const generic_map *map);

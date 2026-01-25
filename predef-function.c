@@ -16,6 +16,8 @@
 #include "list-visitor.h"
 #include "map-visitor.h"
 #include "list-filter.h"
+#include "map-filter.h"
+#include "generic-map.h"
 
 static run_stmt_result predefined_list_len(toy_interp *interp, const toy_var *args, size_t num_args)
 {
@@ -216,8 +218,8 @@ static run_stmt_result predefined_assert(toy_interp *interp, const toy_var *args
 }
 
 /* TODO: Use list_filter */
+/* TODO: Give this a better name */
 typedef struct val_list_all_args_struct {
-    list_filter list_filt;
     toy_interp *interp;
     toy_function *func;
 } val_list_all_args;
@@ -558,6 +560,104 @@ static run_stmt_result predefined_map_filter(toy_interp *interp, const toy_var *
     return REACHED_RETURN;
 }
 
+/* TODO: Give this a better name */
+typedef struct map_val_all_args_struct {
+    toy_interp *interp;
+    toy_function *func;
+} map_val_all_args;
+
+static toy_bool map_val_predicate_callback(map_val_all_args *args, const map_val_entry *entry)
+{
+    const toy_val *value = &entry->value;
+    run_stmt_result res = interp_run_func_single_arg(args->interp, args->func, value);
+    (void) res; /* ignore reason for user function exit */
+    return val_truthy(value);
+}
+
+static run_stmt_result predefined_map_all(toy_interp *interp, const toy_var *args, size_t num_args)
+{
+    assert(num_args == 2);
+    const toy_val *arg1 = var_get_const(&args[0]);
+    const toy_val *arg2 = var_get_const(&args[1]);
+    toy_bool ret;
+    if (arg1->type == VAL_MAP) {
+        map_val *map = arg1->map;
+        if (arg2->type == VAL_FUNC) {
+            toy_function *func = arg2->func;
+            val_list_all_args args = { .func = func, .interp = interp };
+            ret = map_all_match((generic_map *) map, (generic_map_filter_func) map_val_predicate_callback, &args);
+        } else {
+            invalid_argument_type(VAL_FUNC, arg2);
+        }
+    } else {
+        invalid_argument_type(VAL_MAP, arg1);
+    }
+    return ret;
+}
+
+static run_stmt_result predefined_map_not_all(toy_interp *interp, const toy_var *args, size_t num_args)
+{
+    assert(num_args == 2);
+    const toy_val *arg1 = var_get_const(&args[0]);
+    const toy_val *arg2 = var_get_const(&args[1]);
+    toy_bool ret;
+    if (arg1->type == VAL_MAP) {
+        map_val *map = arg1->map;
+        if (arg2->type == VAL_FUNC) {
+            toy_function *func = arg2->func;
+            val_list_all_args args = { .func = func, .interp = interp };
+            ret = map_not_all_match((generic_map *) map, (generic_map_filter_func) map_val_predicate_callback, &args);
+        } else {
+            invalid_argument_type(VAL_FUNC, arg2);
+        }
+    } else {
+        invalid_argument_type(VAL_MAP, arg1);
+    }
+    return ret;
+}
+
+static run_stmt_result predefined_map_some(toy_interp *interp, const toy_var *args, size_t num_args)
+{
+    assert(num_args == 2);
+    const toy_val *arg1 = var_get_const(&args[0]);
+    const toy_val *arg2 = var_get_const(&args[1]);
+    toy_bool ret;
+    if (arg1->type == VAL_MAP) {
+        map_val *map = arg1->map;
+        if (arg2->type == VAL_FUNC) {
+            toy_function *func = arg2->func;
+            val_list_all_args args = { .func = func, .interp = interp };
+            ret = map_some_match((generic_map *) map, (generic_map_filter_func) map_val_predicate_callback, &args);
+        } else {
+            invalid_argument_type(VAL_FUNC, arg2);
+        }
+    } else {
+        invalid_argument_type(VAL_MAP, arg1);
+    }
+    return ret;
+}
+
+static run_stmt_result predefined_map_none(toy_interp *interp, const toy_var *args, size_t num_args)
+{
+    assert(num_args == 2);
+    const toy_val *arg1 = var_get_const(&args[0]);
+    const toy_val *arg2 = var_get_const(&args[1]);
+    toy_bool ret;
+    if (arg1->type == VAL_MAP) {
+        map_val *map = arg1->map;
+        if (arg2->type == VAL_FUNC) {
+            toy_function *func = arg2->func;
+            val_list_all_args args = { .func = func, .interp = interp };
+            ret = map_none_match((generic_map *) map, (generic_map_filter_func) map_val_predicate_callback, &args);
+        } else {
+            invalid_argument_type(VAL_FUNC, arg2);
+        }
+    } else {
+        invalid_argument_type(VAL_MAP, arg1);
+    }
+    return ret;
+}
+
 /* TODO: These should accept toy_exprs, so their types can be statically validated */
 const toy_str_list INFINITE_PARAMS;
 static const toy_str_list assert_binary_param_2 = { .str = "val2", .next = NULL };
@@ -576,11 +676,19 @@ static const toy_str_list list_not_all_param_2 = { .str = "func", .next = NULL }
 static const toy_str_list list_not_all_params = { .str = "list", .next = (toy_str_list *) &list_not_all_param_2 };
 static const toy_str_list list_some_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list list_some_params = { .str = "list", .next = (toy_str_list *) &list_some_param_2 };
+static const toy_str_list map_all_param_2 = { .str = "func", .next = NULL };
+static const toy_str_list map_all_params = { .str = "map", .next = (toy_str_list *) &map_all_param_2 };
 static const toy_str_list map_foreach_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list map_foreach_params = { .str = "map", .next = (toy_str_list *) &map_foreach_param_2 };
 static const toy_str_list map_filter_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list map_filter_params = { .str = "map", .next = (toy_str_list *) &map_filter_param_2 };
 static const toy_str_list map_len_params = { .str = "map", .next = NULL };
+static const toy_str_list map_none_param_2 = { .str = "func", .next = NULL };
+static const toy_str_list map_none_params = { .str = "map", .next = (toy_str_list *) &map_none_param_2 };
+static const toy_str_list map_not_all_param_2 = { .str = "func", .next = NULL };
+static const toy_str_list map_not_all_params = { .str = "map", .next = (toy_str_list *) &map_not_all_param_2 };
+static const toy_str_list map_some_param_2 = { .str = "func", .next = NULL };
+static const toy_str_list map_some_params = { .str = "map", .next = (toy_str_list *) &map_some_param_2 };
 
 static const toy_function func_assert           = { .name = "assert",           .type = FUNC_PREDEFINED, .predef = predefined_assert,           .param_names = (toy_str_list *) &assert_unary_params,  .doc = "Assert that a givel value is truthy. Fail if it is not." };
 static const toy_function func_assert_equal     = { .name = "assert_equal",     .type = FUNC_PREDEFINED, .predef = predefined_assert_equal,     .param_names = (toy_str_list *) &assert_binary_params, .doc = "Assert that two values are equal. Fail if they are not." };
@@ -600,11 +708,13 @@ static const toy_function func_list_filter      = { .name = "list_filter",      
 static const toy_function func_list_none        = { .name = "list_none",        .type = FUNC_PREDEFINED, .predef = predefined_list_none,        .param_names = (toy_str_list *) &list_none_params,     .doc = "Return true if the given function returns a falsy value when called with each item in the given list." };
 static const toy_function func_list_not_all     = { .name = "list_not_all",     .type = FUNC_PREDEFINED, .predef = predefined_list_not_all,     .param_names = (toy_str_list *) &list_not_all_params,  .doc = "Return true if the given function returns a falsy value when called with any of the items in the given list." };
 static const toy_function func_list_some        = { .name = "list_some",        .type = FUNC_PREDEFINED, .predef = predefined_list_some,        .param_names = (toy_str_list *) &list_some_params,     .doc = "Return true if the given function returns a truthy value when called with any of the items in the given list." };
-/* TODO: map_all */
+static const toy_function func_map_all          = { .name = "map_all",          .type = FUNC_PREDEFINED, .predef = predefined_map_all,          .param_names = (toy_str_list *) &map_all_params,       .doc = "Return true if the given function returns a truthy value when called with each entry in the given map." };
 static const toy_function func_map_foreach      = { .name = "map_foreach",      .type = FUNC_PREDEFINED, .predef = predefined_map_foreach,      .param_names = (toy_str_list *) &map_foreach_params,   .doc = "Call the given function once with each (name, value) entry in the given map." };
 static const toy_function func_map_filter       = { .name = "map_filter",       .type = FUNC_PREDEFINED, .predef = predefined_map_filter,       .param_names = (toy_str_list *) &map_filter_params,    .doc = "Call the first function once with each (name, value) entry in the given map. If it returns a truthy value, call the second function with the same entry." };
 static const toy_function func_map_len          = { .name = "map_len",          .type = FUNC_PREDEFINED, .predef = predefined_map_len,          .param_names = (toy_str_list *) &map_len_params,       .doc = "Count the number of entries in the given map." };
-/* TODO: map_none */
+static const toy_function func_map_none         = { .name = "map_none",         .type = FUNC_PREDEFINED, .predef = predefined_map_none,         .param_names = (toy_str_list *) &map_none_params,      .doc = "Return true if the given function returns a falsy value when called with each entry in the given map." };
+static const toy_function func_map_not_all      = { .name = "map_not_all",      .type = FUNC_PREDEFINED, .predef = predefined_map_not_all,      .param_names = (toy_str_list *) &map_not_all_params,   .doc = "Return true if the given function returns a falsy value when called with any of the entries in the given map." };
+static const toy_function func_map_some         = { .name = "map_some",         .type = FUNC_PREDEFINED, .predef = predefined_map_some,         .param_names = (toy_str_list *) &map_some_params,      .doc = "Return true if the given function returns a truthy value when called with any of the entries in the given map." };
 static const toy_function func_print            = { .name = "print",            .type = FUNC_PREDEFINED, .predef = predefined_print,            .param_names = (toy_str_list *) &INFINITE_PARAMS,      .doc = "Output the given message to the console." };
 
 static const toy_val predef_functions[] = {
@@ -621,14 +731,18 @@ static const toy_val predef_functions[] = {
     { .type = VAL_FUNC, .func = (toy_function *) &func_assert_zero },
     { .type = VAL_FUNC, .func = (toy_function *) &func_list_all },
     { .type = VAL_FUNC, .func = (toy_function *) &func_list_len },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_list_foreach },
     { .type = VAL_FUNC, .func = (toy_function *) &func_list_filter },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_list_foreach },
     { .type = VAL_FUNC, .func = (toy_function *) &func_list_none },
     { .type = VAL_FUNC, .func = (toy_function *) &func_list_not_all },
     { .type = VAL_FUNC, .func = (toy_function *) &func_list_some },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_map_foreach },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_map_all },
     { .type = VAL_FUNC, .func = (toy_function *) &func_map_filter },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_map_foreach },
     { .type = VAL_FUNC, .func = (toy_function *) &func_map_len },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_map_none },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_map_not_all },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_map_some },
     { .type = VAL_FUNC, .func = (toy_function *) &func_print }
 };
 

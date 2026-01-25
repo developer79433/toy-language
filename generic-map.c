@@ -414,24 +414,24 @@ const generic_map_entry *map_find_last_not_const(const generic_map *map, generic
     return map_find_const(map, filter_func, filter_cookie, TOY_TRUE, TOY_FALSE);
 }
 
-toy_bool map_all_match(generic_map *map, generic_map_filter_func filter, void *cookie)
+toy_bool map_all_match(const generic_map *map, generic_map_filter_func filter, void *cookie)
 {
-    generic_map_entry *entry = map_find_first_not(map, filter, cookie);
+    const generic_map_entry *entry = map_find_first_not_const(map, filter, cookie);
     return entry == NULL;
 }
 
-toy_bool map_none_match(generic_map *map, generic_map_filter_func filter, void *cookie)
+toy_bool map_none_match(const generic_map *map, generic_map_filter_func filter, void *cookie)
 {
-    generic_map_entry *entry = map_find_first(map, filter, cookie);
+    const generic_map_entry *entry = map_find_first_const(map, filter, cookie);
     return entry == NULL;
 }
 
-toy_bool map_not_all_match(generic_map *map, generic_map_filter_func filter, void *cookie)
+toy_bool map_not_all_match(const generic_map *map, generic_map_filter_func filter, void *cookie)
 {
     return !map_all_match(map, filter, cookie);
 }
 
-toy_bool map_some_match(generic_map *map, generic_map_filter_func filter, void *cookie)
+toy_bool map_some_match(const generic_map *map, generic_map_filter_func filter, void *cookie)
 {
     return !map_none_match(map, filter, cookie);
 }
