@@ -30,5 +30,6 @@ void return_outside_function(frame_type ftype);
 void invalid_lvalue(resolved_name *resolved);
 void illegal_instruction_in_for_stmt_at_start(const toy_stmt *stmt);
 void illegal_instruction_in_for_stmt_at_end(const toy_stmt *stmt);
+void no_return_value(const toy_function *func);
 
 #endif /* TOY_ERRORS_H */

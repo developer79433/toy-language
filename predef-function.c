@@ -217,20 +217,32 @@ static run_stmt_result predefined_assert(toy_interp *interp, const toy_var *args
     return REACHED_BLOCK_END;
 }
 
-/* TODO: Use list_filter */
-/* TODO: Give this a better name */
-typedef struct val_list_all_args_struct {
+typedef struct user_func_predicate_struct {
     toy_interp *interp;
     toy_function *func;
-} val_list_all_args;
+} user_func_predicate;
 
-static toy_bool val_list_predicate_callback(void *cookie, size_t index, const toy_val_list *list)
+static toy_bool val_list_test_predicate(user_func_predicate *predicate, size_t index, const toy_val_list *list)
 {
-    val_list_all_args *args = (val_list_all_args *) cookie;
     const toy_val *value = val_list_payload_const(list);
-    run_stmt_result res = interp_run_func_single_arg(args->interp, args->func, value);
-    (void) res; /* ignore reason for user function exit */
-    return val_truthy(value);
+    run_stmt_result run_res = interp_run_func_single_arg(predicate->interp, predicate->func, value);
+    switch (run_res) {
+    case REACHED_BLOCK_END:
+        no_return_value(predicate->func);
+        break;
+    case REACHED_BREAK:
+    case REACHED_CONTINUE:
+        assert(0);
+        break;
+    case REACHED_RETURN:
+        toy_val *return_value = interp_get_return_value(predicate->interp);
+        return val_truthy(return_value);
+    default:
+        assert(0);
+        break;
+    }
+    assert(0);
+    return TOY_FALSE;
 }
 
 static run_stmt_result predefined_list_all(toy_interp *interp, const toy_var *args, size_t num_args)
@@ -243,8 +255,8 @@ static run_stmt_result predefined_list_all(toy_interp *interp, const toy_var *ar
         toy_val_list *list = arg1->list;
         if (arg2->type == VAL_FUNC) {
             toy_function *func = arg2->func;
-            val_list_all_args args = { .func = func, .interp = interp };
-            ret = val_list_all_match(list, val_list_predicate_callback, &args);
+            user_func_predicate val_list_pred = { .func = func, .interp = interp };
+            ret = val_list_all_match(list, (toy_val_list_filter_func) val_list_test_predicate, &val_list_pred);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
         }
@@ -264,8 +276,8 @@ static run_stmt_result predefined_list_not_all(toy_interp *interp, const toy_var
         toy_val_list *list = arg1->list;
         if (arg2->type == VAL_FUNC) {
             toy_function *func = arg2->func;
-            val_list_all_args args = { .func = func, .interp = interp };
-            ret = val_list_not_all_match(list, val_list_predicate_callback, &args);
+            user_func_predicate val_list_pred = { .func = func, .interp = interp };
+            ret = val_list_not_all_match(list, (toy_val_list_filter_func) val_list_test_predicate, &val_list_pred);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
         }
@@ -285,8 +297,8 @@ static run_stmt_result predefined_list_some(toy_interp *interp, const toy_var *a
         toy_val_list *list = arg1->list;
         if (arg2->type == VAL_FUNC) {
             toy_function *func = arg2->func;
-            val_list_all_args args = { .func = func, .interp = interp };
-            ret = val_list_some_match(list, val_list_predicate_callback, &args);
+            user_func_predicate val_list_pred = { .func = func, .interp = interp };
+            ret = val_list_some_match(list, (toy_val_list_filter_func) val_list_test_predicate, &val_list_pred);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
         }
@@ -306,8 +318,8 @@ static run_stmt_result predefined_list_none(toy_interp *interp, const toy_var *a
         toy_val_list *list = arg1->list;
         if (arg2->type == VAL_FUNC) {
             toy_function *func = arg2->func;
-            val_list_all_args args = { .func = func, .interp = interp };
-            ret = val_list_none_match(list, val_list_predicate_callback, &args);
+            user_func_predicate val_list_pred = { .func = func, .interp = interp };
+            ret = val_list_none_match(list, (toy_val_list_filter_func) val_list_test_predicate, &val_list_pred);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
         }
@@ -381,7 +393,6 @@ static run_stmt_result predefined_list_foreach(toy_interp *interp, const toy_var
     return REACHED_BLOCK_END;
 }
 
-/* TODO: Use list_filter */
 typedef struct val_list_filter_struct {
     val_list_visitor val_list_vis;
     toy_val_list *list_to_append_to;
@@ -560,18 +571,30 @@ static run_stmt_result predefined_map_filter(toy_interp *interp, const toy_var *
     return REACHED_RETURN;
 }
 
-/* TODO: Give this a better name */
-typedef struct map_val_all_args_struct {
-    toy_interp *interp;
-    toy_function *func;
-} map_val_all_args;
-
-static toy_bool map_val_predicate_callback(map_val_all_args *args, const map_val_entry *entry)
+static toy_bool map_val_test_predicate(user_func_predicate *predicate, const map_val_entry *entry)
 {
-    const toy_val *value = &entry->value;
-    run_stmt_result res = interp_run_func_single_arg(args->interp, args->func, value);
-    (void) res; /* ignore reason for user function exit */
-    return val_truthy(value);
+    const toy_val key_val = { .type = VAL_STR, .str = entry->key };
+    toy_val_list *func_args = val_list_alloc(&key_val);
+    func_args = val_list_append(func_args, &entry->value);
+    run_stmt_result run_res = interp_run_func_val_list(predicate->interp, predicate->func, func_args);
+    val_list_free(func_args);
+    switch (run_res) {
+    case REACHED_BLOCK_END:
+        no_return_value(predicate->func);
+        break;
+    case REACHED_BREAK:
+    case REACHED_CONTINUE:
+        assert(0);
+        break;
+    case REACHED_RETURN:
+        toy_val *return_value = interp_get_return_value(predicate->interp);
+        return val_truthy(return_value);
+    default:
+        assert(0);
+        break;
+    }
+    assert(0);
+    return TOY_FALSE;
 }
 
 static run_stmt_result predefined_map_all(toy_interp *interp, const toy_var *args, size_t num_args)
@@ -584,8 +607,8 @@ static run_stmt_result predefined_map_all(toy_interp *interp, const toy_var *arg
         map_val *map = arg1->map;
         if (arg2->type == VAL_FUNC) {
             toy_function *func = arg2->func;
-            val_list_all_args args = { .func = func, .interp = interp };
-            ret = map_all_match((generic_map *) map, (generic_map_filter_func) map_val_predicate_callback, &args);
+            user_func_predicate predicate = { .func = func, .interp = interp };
+            ret = map_all_match((generic_map *) map, (generic_map_filter_func) map_val_test_predicate, &predicate);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
         }
@@ -605,8 +628,8 @@ static run_stmt_result predefined_map_not_all(toy_interp *interp, const toy_var 
         map_val *map = arg1->map;
         if (arg2->type == VAL_FUNC) {
             toy_function *func = arg2->func;
-            val_list_all_args args = { .func = func, .interp = interp };
-            ret = map_not_all_match((generic_map *) map, (generic_map_filter_func) map_val_predicate_callback, &args);
+            user_func_predicate predicate = { .func = func, .interp = interp };
+            ret = map_not_all_match((generic_map *) map, (generic_map_filter_func) map_val_test_predicate, &predicate);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
         }
@@ -626,8 +649,8 @@ static run_stmt_result predefined_map_some(toy_interp *interp, const toy_var *ar
         map_val *map = arg1->map;
         if (arg2->type == VAL_FUNC) {
             toy_function *func = arg2->func;
-            val_list_all_args args = { .func = func, .interp = interp };
-            ret = map_some_match((generic_map *) map, (generic_map_filter_func) map_val_predicate_callback, &args);
+            user_func_predicate predicate = { .func = func, .interp = interp };
+            ret = map_some_match((generic_map *) map, (generic_map_filter_func) map_val_test_predicate, &predicate);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
         }
@@ -647,8 +670,8 @@ static run_stmt_result predefined_map_none(toy_interp *interp, const toy_var *ar
         map_val *map = arg1->map;
         if (arg2->type == VAL_FUNC) {
             toy_function *func = arg2->func;
-            val_list_all_args args = { .func = func, .interp = interp };
-            ret = map_none_match((generic_map *) map, (generic_map_filter_func) map_val_predicate_callback, &args);
+            user_func_predicate predicate = { .func = func, .interp = interp };
+            ret = map_none_match((generic_map *) map, (generic_map_filter_func) map_val_test_predicate, &predicate);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
         }

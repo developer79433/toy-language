@@ -205,3 +205,8 @@ void illegal_instruction_in_for_stmt_at_end(const toy_stmt *stmt)
 {
     fatal_error("Illegal statement type %s in for statement loop end", stmt_type_name(stmt->type));
 }
+
+void no_return_value(const toy_function *func)
+{
+    fatal_error("Function %s did not return a value", func->name);
+}
