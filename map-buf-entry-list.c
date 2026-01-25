@@ -30,13 +30,3 @@ void map_buf_entry_list_payload_set(map_buf_entry_list *list, const void *buf, s
     map_buf_entry *entry = map_buf_entry_list_payload(list);
     memcpy(&entry->c, buf, buf_size);
 }
-
-enumeration_result map_buf_entry_list_foreach(map_buf_entry_list *list, map_buf_entry_list_item_callback callback, void *cookie)
-{
-    return buf_list_foreach((toy_buf_list *) list, (buf_list_item_callback) callback, cookie);
-}
-
-enumeration_result map_buf_entry_list_foreach_const(const map_buf_entry_list *list, const_map_buf_entry_list_item_callback callback, void *cookie)
-{
-    return buf_list_foreach_const((const toy_buf_list *) list, (const_buf_list_item_callback) callback, cookie);
-}

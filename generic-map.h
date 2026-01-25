@@ -15,8 +15,6 @@ void map_free(generic_map *map);
 generic_map_entry *map_get_entry(generic_map *map, const toy_str key);
 const generic_map_entry *map_get_entry_const(const generic_map *map, const toy_str key);
 delete_result map_delete(generic_map *map, const toy_str key);
-enumeration_result map_foreach(generic_map *map, generic_map_entry_callback callback, void *cookie);
-enumeration_result map_foreach_const(const generic_map *map, const_generic_map_entry_callback callback, void *cookie);
 generic_map_entry *map_find(generic_map *map, generic_map_filter_func filter, void *cookie, toy_bool inverted, toy_bool stop_on_first);
 generic_map_entry *map_find_first(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);
 generic_map_entry *map_find_first_not(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie);

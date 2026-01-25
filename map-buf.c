@@ -5,6 +5,7 @@
 #include "generic-map.h"
 #include "map-buf-entry-list.h"
 #include "str.h"
+#include "list-visitor.h"
 
 void map_buf_init(map_buf *map)
 {
@@ -25,16 +26,6 @@ static map_buf_entry_list **map_buf_get_bucket(map_buf *map, const toy_str key)
     assert(offsetof(map_buf, buckets) == offsetof(generic_map, buckets));
     assert(offsetof(map_buf, num_items) == offsetof(generic_map, num_items));
     return (map_buf_entry_list **) map_get_bucket_ptr((generic_map *) map, key);
-}
-
-enumeration_result map_buf_foreach(map_buf *map, map_buf_entry_callback callback, void *cookie)
-{
-    return map_foreach((generic_map *) map, (generic_map_entry_callback) callback, cookie);
-}
-
-enumeration_result map_buf_foreach_const(const map_buf *map, const_map_buf_entry_callback callback, void *cookie)
-{
-    return map_foreach_const((const generic_map *) map, (const_generic_map_entry_callback) callback, cookie);
 }
 
 map_buf_entry *map_buf_get_entry(map_buf *map, const toy_str key)
@@ -65,19 +56,19 @@ const void *map_buf_get_const(const map_buf *map, const toy_str key)
     return NULL;
 }
 
-typedef struct map_buf_set_entry_cb_args_struct {
+typedef struct map_buf_set_visitor_struct {
+    list_visitor list_vis;
     toy_str desired_key;
     const void *new_value;
     size_t new_value_size;
-} map_buf_set_entry_cb_args;
+} map_buf_set_visitor;
 
-static item_callback_result map_buf_set_entry_callback(void *cookie, size_t index, map_buf_entry_list *list)
+static item_callback_result map_buf_set_entry_callback(map_buf_set_visitor *set_vis, size_t index, map_buf_entry_list *list)
 {
-    map_buf_set_entry_cb_args *args = (map_buf_set_entry_cb_args *) cookie;
     map_buf_entry *entry = map_buf_entry_list_payload(list);
-    if (str_equal(entry->key, args->desired_key)) {
+    if (str_equal(entry->key, set_vis->desired_key)) {
         /* Overwrite existing entry */
-        map_buf_entry_list_payload_set(list, args->new_value, args->new_value_size);
+        map_buf_entry_list_payload_set(list, set_vis->new_value, set_vis->new_value_size);
         return STOP_ENUMERATION;
     }
     return CONTINUE_ENUMERATION;
@@ -88,8 +79,8 @@ set_result map_buf_set(map_buf *map, const toy_str key, const void *buf, size_t 
     map_buf_entry_list *new_entry;
     map_buf_entry_list **bucket = map_buf_get_bucket(map, key);
     if (*bucket) {
-        map_buf_set_entry_cb_args map_buf_entry_args = { .desired_key = key, .new_value = buf, .new_value_size = buf_size };
-        enumeration_result res = map_buf_entry_list_foreach(*bucket, map_buf_set_entry_callback, &map_buf_entry_args);
+        map_buf_set_visitor set_vis = { .list_vis.visit_entry = (list_entry_visit_func) map_buf_set_entry_callback, .desired_key = key, .new_value = buf, .new_value_size = buf_size };
+        enumeration_result res = list_visitor_visit_list((list_visitor *) &set_vis, (generic_list *) *bucket);
         if (res == ENUMERATION_INTERRUPTED) {
             return SET_EXISTING;
         }
