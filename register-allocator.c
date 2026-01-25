@@ -9,6 +9,7 @@
 #include "log.h"
 #include "block.h"
 #include "errors.h"
+#include "list-visitor.h"
 
 /* TODO: Can the symbol table(s) be moved out of the AST and into the register allocator? */
 typedef struct register_allocator_struct {
@@ -52,15 +53,15 @@ static item_callback_result handle_var_decl(register_allocator *ra, toy_var_decl
     return default_var_decl((ast_visitor *) ra, var_decl);
 }
 
-typedef struct add_param_args_struct {
+typedef struct param_add_visitor_struct {
+    list_visitor list_vis;
     symbol_table *parameter_symbols;
-} add_param_args;
+} param_add_visitor;
 
-static item_callback_result add_param_to_symbol_table(void *cookie, size_t index, toy_str_list *item)
+static item_callback_result add_param_to_symbol_table(param_add_visitor *param_add_vis, size_t index, toy_str_list *item)
 {
-    add_param_args *args = (add_param_args *) cookie;
     toy_str param_name = str_list_payload(item);
-    symbol_table_add(args->parameter_symbols, param_name);
+    symbol_table_add(param_add_vis->parameter_symbols, param_name);
     return CONTINUE_ENUMERATION;
 }
 
@@ -68,8 +69,11 @@ static item_callback_result handle_func_expr(register_allocator *ra, toy_functio
 {
     toy_block *block = func->code;
     symbol_table *parameter_symbols = &block->parameter_symbols;
-    add_param_args args = { .parameter_symbols = parameter_symbols };
-    enumeration_result res = str_list_foreach(func->param_names, add_param_to_symbol_table, &args);
+    param_add_visitor param_add_vis = {
+        .list_vis.visit_entry = (list_entry_visit_func) add_param_to_symbol_table,
+        .parameter_symbols = parameter_symbols
+    };
+    enumeration_result res = list_visitor_visit_list((list_visitor *) &param_add_vis, (generic_list *) func->param_names);
     assert(ENUMERATION_COMPLETE == res);
     /* log_printf("regalloc: function %s (%p, block %p) has %zd variables\n", func->name, func, &func->code, symbol_table_size(&func->code.variables)); */
     return default_func_expr((ast_visitor *) ra, func);

@@ -41,18 +41,10 @@ static item_callback_result map_bucket_visitor_visit_bucket(map_bucket_visitor *
     return CONTINUE_ENUMERATION;
 }
 
-enumeration_result map_visitor_visit_map_default(map_visitor *visitor, generic_map *map)
+enumeration_result map_visitor_visit_map(map_visitor *visitor, generic_map *map)
 {
     map_bucket_visitor map_bucket_vis = { .bucket_vis.visit_bucket = (bucket_visit_func) map_bucket_visitor_visit_bucket, .map_vis = visitor };
     return bucket_visitor_visit_map((bucket_visitor *) &map_bucket_vis, map);
-}
-
-enumeration_result map_visitor_visit_map(map_visitor *visitor, generic_map *map)
-{
-    if (visitor->visit_map) {
-        return visitor->visit_map(visitor, map);
-    }
-    return map_visitor_visit_map_default(visitor, map);
 }
 
 item_callback_result const_map_visitor_visit_entry_default(const_map_visitor *visitor, const generic_map_entry *entry)
@@ -91,16 +83,8 @@ static item_callback_result const_map_bucket_visitor_visit_bucket(const_map_buck
     return CONTINUE_ENUMERATION;
 }
 
-enumeration_result const_map_visitor_visit_map_default(const_map_visitor *visitor, const generic_map *map)
+enumeration_result const_map_visitor_visit_map(const_map_visitor *visitor, const generic_map *map)
 {
     const_map_bucket_visitor map_bucket_vis = { .bucket_vis.visit_bucket = (const_bucket_visit_func) const_map_bucket_visitor_visit_bucket, .map_vis = visitor };
     return const_bucket_visitor_visit_map((const_bucket_visitor *) &map_bucket_vis, map);
-}
-
-enumeration_result const_map_visitor_visit_map(const_map_visitor *visitor, const generic_map *map)
-{
-    if (visitor->visit_map) {
-        return visitor->visit_map(visitor, map);
-    }
-    return const_map_visitor_visit_map_default(visitor, map);
 }

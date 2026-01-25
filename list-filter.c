@@ -6,7 +6,6 @@
 
 void list_filter_init(list_filter *filter, generic_list_filter_func filter_func, void *filter_cookie, toy_bool inverted, list_visitor *next_visitor)
 {
-    filter->visitor.visit_list = NULL;
     filter->visitor.visit_entry = (list_entry_visit_func) list_filter_visit_entry;
     filter->filter_func = filter_func;
     filter->filter_cookie = filter_cookie;
@@ -36,7 +35,6 @@ item_callback_result list_filter_visit_entry(list_filter *filter, size_t index, 
 
 void const_list_filter_init(const_list_filter *filter, generic_list_filter_func filter_func, void *filter_cookie, toy_bool inverted, const_list_visitor *next_visitor)
 {
-    filter->visitor.visit_list = NULL;
     filter->visitor.visit_entry = (const_list_entry_visit_func) const_list_filter_visit_entry;
     filter->filter_func = filter_func;
     filter->filter_cookie = filter_cookie;

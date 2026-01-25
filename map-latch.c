@@ -8,7 +8,6 @@ static item_callback_result latch_visit_entry(map_latch *latch, generic_map_entr
 
 void map_latch_init(map_latch *latch, toy_bool stop_on_first)
 {
-    latch->visitor.visit_map = NULL;
     latch->visitor.visit_entry = (map_entry_visit_func) latch_visit_entry;
     latch->stop_on_first = stop_on_first;
     latch->last_seen_entry = NULL;

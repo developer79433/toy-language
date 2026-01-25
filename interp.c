@@ -103,7 +103,7 @@ static void eval_expr_list(toy_interp *interp, toy_val *result, const toy_expr_l
     result->type = VAL_LIST;
     result->list = NULL;
     if (expr_list) {
-        expr_list_visitor expr_visitor = { .list_vis.visit_list = NULL, .list_vis.visit_entry = (list_entry_visit_func) append_val_list_callback, .interp = interp, .result = result };
+        expr_list_visitor expr_visitor = { .list_vis.visit_entry = (list_entry_visit_func) append_val_list_callback, .interp = interp, .result = result };
         enumeration_result res = list_visitor_visit_list((list_visitor *) &expr_visitor, (generic_list *) expr_list);
         assert(ENUMERATION_COMPLETE == res);
     }
@@ -475,7 +475,6 @@ static void eval_map(toy_interp *interp, toy_val *result, const toy_map_entry_li
     result->type = VAL_MAP;
     result->map = NULL;
     map_entry_visitor map_entry_args = {
-        .list_vis.visit_list = NULL,
         .list_vis.visit_entry = (list_entry_visit_func) map_entry_callback,
         .interp = interp,
         .map = result->map
@@ -711,7 +710,7 @@ static item_callback_result set_var_callback(var_decl_visitor *var_decl_vis, siz
 static run_stmt_result var_decl_stmt(toy_interp *interp, const toy_var_decl_stmt *var_decl_stmt)
 {
     interp_assert_valid(interp);
-    var_decl_visitor var_decl_vis = { .list_vis.visit_list = NULL, .list_vis.visit_entry = (list_entry_visit_func) set_var_callback, .interp = interp };
+    var_decl_visitor var_decl_vis = { .list_vis.visit_entry = (list_entry_visit_func) set_var_callback, .interp = interp };
     toy_var_decl_list *var_decl_list = var_decl_stmt->var_decl_list;
     enumeration_result res = list_visitor_visit_list((list_visitor *) &var_decl_vis, (generic_list *) var_decl_list);
     assert(ENUMERATION_COMPLETE == res);
@@ -775,19 +774,20 @@ run_stmt_result interp_run_stmt(toy_interp *interp, const toy_stmt *stmt)
     return EXECUTED_STATEMENT;
 }
 
-typedef struct stmt_run_cb_args_struct {
+typedef struct stmt_run_visitor_struct {
+    list_visitor list_vis;
     toy_interp *interp;
-    run_stmt_result result;
-} stmt_run_cb_args;
+    run_stmt_result run_result;
+} stmt_run_visitor;
 
-static item_callback_result stmt_run_callback(void *cookie, size_t index, const toy_stmt_list *item)
+static item_callback_result stmt_run_callback(stmt_run_visitor *stmt_run_vis, size_t index, const toy_stmt_list *item)
 {
-    stmt_run_cb_args *args = (stmt_run_cb_args *) cookie;
     const toy_stmt *stmt = stmt_list_payload_const(item);
-    interp_assert_valid(args->interp);
-    args->result = interp_run_stmt(args->interp, stmt);
-    assert(args->result != REACHED_BLOCK_END);
-    switch (args->result) {
+    toy_interp *interp = stmt_run_vis->interp; 
+    interp_assert_valid(interp);
+    stmt_run_vis->run_result = interp_run_stmt(interp, stmt);
+    assert(stmt_run_vis->run_result != REACHED_BLOCK_END);
+    switch (stmt_run_vis->run_result) {
     case EXECUTED_STATEMENT:
         break;
     case REACHED_RETURN:
@@ -807,16 +807,21 @@ static item_callback_result stmt_run_callback(void *cookie, size_t index, const 
 run_stmt_result interp_run_current_block(toy_interp *interp)
 {
     interp_assert_valid(interp);
-    interp_stack *stack = interp_get_stack(interp);
-    interp_frame *cur_frame = interp_stack_payload(stack);
-    stmt_run_cb_args args = { .interp = interp };
-    enumeration_result res = stmt_list_foreach_const(cur_frame->cur_stmt, stmt_run_callback, &args);
+    interp_frame *cur_frame = interp_cur_frame(interp);
+    interp_frame_assert_valid(cur_frame);
+    toy_stmt_list *cur_stmt = cur_frame->cur_stmt;
+    stmt_list_assert_valid(cur_stmt);
+    stmt_run_visitor stmt_run_vis = {
+        .list_vis.visit_entry = (list_entry_visit_func) stmt_run_callback,
+        .interp = interp
+    };
+    enumeration_result res = list_visitor_visit_list((list_visitor *) &stmt_run_vis, (generic_list *) cur_stmt);
     if (ENUMERATION_COMPLETE == res) {
         /* Reaching the end of a function is equivalent to returning null */
         interp->return_val = null_val;
-        args.result = REACHED_BLOCK_END;
+        stmt_run_vis.run_result = REACHED_BLOCK_END;
     }
-    return args.result;
+    return stmt_run_vis.run_result;
 }
 
 static run_stmt_result block_stmt(toy_interp *interp, const toy_block *block)

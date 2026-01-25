@@ -84,14 +84,14 @@ void invalid_val_list_index(const toy_val_list *list, toy_num index)
 
 void too_few_arguments(toy_num expected, const toy_expr_list *args)
 {
-    expr_list_dump(args);
+    expr_list_dump(args, TOY_TRUE);
     log_putc('\n');
     fatal_error("Too few arguments: expected %d, received %d", expected, expr_list_len(args));
 }
 
 void too_many_arguments(toy_num expected, const toy_expr_list *args)
 {
-    expr_list_dump(args);
+    expr_list_dump(args, TOY_TRUE);
     log_putc('\n');
     fatal_error("Too many arguments: expected %d, received %d", expected, expr_list_len(args));
 }

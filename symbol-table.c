@@ -77,13 +77,3 @@ void symbol_table_dump(const symbol_table *table)
     symbol_table_assert_valid(table);
     /* TODO */
 }
-
-enumeration_result symbol_table_foreach(symbol_table *table, symbol_table_entry_callback callback, void *cookie)
-{
-    return map_buf_foreach((map_buf *) table, (map_buf_entry_callback) callback, cookie);
-}
-
-enumeration_result symbol_table_foreach_const(const symbol_table *table, const_symbol_table_entry_callback callback, void *cookie)
-{
-    return map_buf_foreach_const((const map_buf *) table, (const_map_buf_entry_callback) callback, cookie);
-}

@@ -10,27 +10,27 @@
 #include "log.h"
 #include "generic-map.h"
 
-typedef struct my_filter_args_struct {
+typedef struct test_visitor_struct {
+    map_visitor map_vis;
     toy_str intended_key;
     toy_val *intended_value;
-} my_filter_args;
+} test_visitor;
 
-static toy_bool test_map_entry(void *cookie, toy_str key, const toy_val *value)
+static toy_bool test_map_entry(test_visitor *test_vis, toy_str key, const toy_val *value)
 {
-    my_filter_args *args = (my_filter_args *) cookie;
-    assert(str_equal(key, args->intended_key));
+    assert(str_equal(key, test_vis->intended_key));
     assert(value != NULL);
-    assert(args->intended_value != NULL);
-    assert_vals_equal(value, args->intended_value);
-    assert(value == args->intended_value);
+    assert(test_vis->intended_value != NULL);
+    assert_vals_equal(value, test_vis->intended_value);
+    assert(value == test_vis->intended_value);
     return TOY_TRUE;
 }
 
-static item_callback_result map_item_callback(void *cookie, const map_ptr_entry *entry)
+static item_callback_result map_item_callback(test_visitor *test_vis, const map_ptr_entry *entry)
 {
     const toy_val *value = (toy_val *) entry->ptr;
     val_assert_valid(value);
-    if (!test_map_entry(cookie, entry->key, value)) {
+    if (!test_map_entry(test_vis, entry->key, value)) {
         return STOP_ENUMERATION;
     }
     return CONTINUE_ENUMERATION;
@@ -110,8 +110,8 @@ void test_map_ptr_basics(void)
     assert(str_equal(get6->str, "new value"));
 
     // Test enumerate
-    my_filter_args args = { .intended_key = "second key", .intended_value = &val3};
-    enumeration_result res = map_ptr_foreach_const(map1, map_item_callback, &args);
+    test_visitor map_vis = { .map_vis.visit_entry = (map_entry_visit_func) map_item_callback, .intended_key = "second key", .intended_value = &val3};
+    enumeration_result res = map_visitor_visit_map((map_visitor *) &map_vis, (generic_map *) map1);
     assert(res == ENUMERATION_COMPLETE);
 
     // Test reset
@@ -161,7 +161,7 @@ static void test_visitors(void)
 
     insert_test_data(map1);
     assert(ELEMENTSOF(test_data) == map_ptr_size(map1));
-    map_visitor printer = { .visit_map = NULL, .visit_entry = (map_entry_visit_func) print_entry };
+    map_visitor printer = { .visit_entry = (map_entry_visit_func) print_entry };
     enumeration_result res = map_visitor_visit_map(&printer, (generic_map *) map1);
     assert(ENUMERATION_COMPLETE == res);
 }

@@ -15,7 +15,7 @@ item_callback_result list_visitor_visit_entry(list_visitor *visitor, size_t inde
     return list_visitor_visit_entry_default(visitor, index, item);
 }
 
-enumeration_result list_visitor_visit_list_default(list_visitor *visitor, generic_list *list)
+enumeration_result list_visitor_visit_list(list_visitor *visitor, generic_list *list)
 {
     for (size_t i = 0; list; i++) {
         generic_list *next = list_next(list);
@@ -26,14 +26,6 @@ enumeration_result list_visitor_visit_list_default(list_visitor *visitor, generi
         list = next;
     }
     return ENUMERATION_COMPLETE;
-}
-
-enumeration_result list_visitor_visit_list(list_visitor *visitor, generic_list *list)
-{
-    if (visitor->visit_list) {
-        return visitor->visit_list(visitor, list);
-    }
-    return list_visitor_visit_list_default(visitor, list);
 }
 
 item_callback_result const_list_visitor_visit_entry_default(const_list_visitor *visitor, size_t index, const generic_list *item)
@@ -50,7 +42,7 @@ item_callback_result const_list_visitor_visit_entry(const_list_visitor *visitor,
     return const_list_visitor_visit_entry_default(visitor, index, item);
 }
 
-enumeration_result const_list_visitor_visit_list_default(const_list_visitor *visitor, const generic_list *list)
+enumeration_result const_list_visitor_visit_list(const_list_visitor *visitor, const generic_list *list)
 {
     for (size_t i = 0; list; i++) {
         const generic_list *next = list_next_const(list);
@@ -61,12 +53,4 @@ enumeration_result const_list_visitor_visit_list_default(const_list_visitor *vis
         list = next;
     }
     return ENUMERATION_COMPLETE;
-}
-
-enumeration_result const_list_visitor_visit_list(const_list_visitor *visitor, const generic_list *list)
-{
-    if (visitor->visit_list) {
-        return visitor->visit_list(visitor, list);
-    }
-    return const_list_visitor_visit_list_default(visitor, list);
 }

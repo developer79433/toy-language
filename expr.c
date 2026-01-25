@@ -175,35 +175,17 @@ static void dump_collection_lookup(const toy_str lhs, const toy_expr *rhs)
     log_putc(']');
 }
 
-typedef struct expr_dump_cb_args_struct {
-    unsigned int output_something;
-} expr_dump_cb_args;
-
-static item_callback_result expr_dump_callback(void *cookie, size_t index, const toy_expr_list *item)
-{
-    expr_dump_cb_args *args = (expr_dump_cb_args *) cookie;
-    const toy_expr *expr = expr_list_payload_const(item);
-    if (args->output_something) {
-        log_puts(", ");
-    }
-    expr_dump(expr);
-    args->output_something = 1;
-    return CONTINUE_ENUMERATION;
-}
-
 static void dump_function_call(const toy_str func_name, const toy_expr_list *func_args)
 {
     log_printf("%s(", func_name);
-    expr_dump_cb_args cb_args = { .output_something = 0 };
-    enumeration_result res = expr_list_foreach_const(func_args, expr_dump_callback, &cb_args);
-    assert(ENUMERATION_COMPLETE == res);
+    expr_list_dump(func_args, TOY_FALSE);
     log_putc(')');
 }
 
 static void dump_method_call(const toy_method_call *method_call)
 {
     log_printf("%s.%s(", method_call->id.name, method_call->method_name);
-    expr_list_dump(method_call->args);
+    expr_list_dump(method_call->args, TOY_FALSE);
     log_putc(')');
 }
 
@@ -255,7 +237,7 @@ void expr_dump(const toy_expr *expr) {
             dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " in ");
             break;
         case EXPR_LIST:
-            expr_list_dump(expr->expr_list);
+            expr_list_dump(expr->expr_list, TOY_TRUE);
             break;
         case EXPR_LITERAL:
             val_dump(expr->val, 1);

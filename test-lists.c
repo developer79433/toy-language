@@ -52,7 +52,6 @@ static item_callback_result receive_entry(const_str_list_visitor *visitor, size_
 static void test_filters(toy_str_list *list)
 {
     const_list_visitor receiver = {
-        .visit_list = NULL,
         .visit_entry = (const_list_entry_visit_func) receive_entry
     };
     const_list_filter filter;
@@ -109,7 +108,11 @@ static item_callback_result array_compare_visit_entry(array_compare_visitor *com
 
 static toy_bool str_list_equals_array(const toy_str_list *str_list, const toy_str *str_array)
 {
-    array_compare_visitor array_compare = { .visitor.visit_list = NULL, .visitor.visit_entry = (list_entry_visit_func) array_compare_visit_entry, .str_array = str_array, .result = TOY_TRUE };
+    array_compare_visitor array_compare = {
+        .visitor.visit_entry = (list_entry_visit_func) array_compare_visit_entry,
+        .str_array = str_array,
+        .result = TOY_TRUE
+    };
     enumeration_result res = list_visitor_visit_list((list_visitor *) &array_compare, (generic_list *) str_list);
     assert(ENUMERATION_COMPLETE == res || ENUMERATION_INTERRUPTED == res);
     return array_compare.result;

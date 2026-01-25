@@ -23,7 +23,6 @@ static enumeration_result map_filter_visit_entry(map_filter *filter, generic_map
 
 void map_filter_init(map_filter *filter, generic_map_filter_func filter_func, void *filter_cookie, toy_bool inverted, map_visitor *next_visitor)
 {
-    filter->visitor.visit_map = NULL;
     filter->visitor.visit_entry = (map_entry_visit_func) map_filter_visit_entry;
     filter->filter_func = filter_func;
     filter->filter_cookie = filter_cookie;
@@ -56,7 +55,6 @@ static enumeration_result const_map_filter_visit_entry(const_map_filter *filter,
 
 void const_map_filter_init(const_map_filter *filter, generic_map_filter_func filter_func, void *filter_cookie, toy_bool inverted, const_map_visitor *next_visitor)
 {
-    filter->visitor.visit_map = NULL;
     filter->visitor.visit_entry = (const_map_entry_visit_func) const_map_filter_visit_entry;
     filter->filter_func = filter_func;
     filter->filter_cookie = filter_cookie;

@@ -11,6 +11,7 @@
 #include "errors.h"
 #include "constants.h"
 #include "var.h"
+#include "list-visitor.h"
 
 void op_and(toy_interp *interp, toy_val *result, toy_expr *arg1, toy_expr *arg2)
 {
@@ -154,17 +155,17 @@ void op_lte(toy_interp *interp, toy_val *result, toy_expr *expr1, toy_expr *expr
     do_numeric_binary_op(do_op_lte, result, &val1, &val2);
 }
 
-typedef struct item_cb_args_struct {
+typedef struct op_in_visitor_struct {
+    list_visitor list_vis;
     toy_val *result;
     toy_val *needle;
-} item_cb_args;
+} op_in_visitor;
 
-static item_callback_result item_find_callback(void *cookie, size_t index, toy_val_list *list)
+static item_callback_result item_find_callback(op_in_visitor *op_in_vis, size_t index, toy_val_list *list)
 {
-    item_cb_args *args = (item_cb_args *) cookie;
     toy_val *val = val_list_payload(list);
-    if (vals_equal(val, args->needle)) {
-        args->result->boolean = TOY_TRUE;
+    if (vals_equal(val, op_in_vis->needle)) {
+        op_in_vis->result->boolean = TOY_TRUE;
         return STOP_ENUMERATION;
     }
     return CONTINUE_ENUMERATION;
@@ -183,8 +184,12 @@ void op_in(toy_interp *interp, toy_val *result, toy_expr *needle_expr, toy_expr 
     result->type = VAL_BOOL;
     result->boolean = TOY_FALSE;
     assert(haystack.type == VAL_LIST);
-    item_cb_args item_args = { .result = result, .needle = &needle };
-    enumeration_result res = val_list_foreach(haystack.list, item_find_callback, &item_args);
+    op_in_visitor op_in_vis = {
+        .list_vis.visit_entry = (list_entry_visit_func) item_find_callback,
+        .result = result,
+        .needle = &needle
+    };
+    enumeration_result res = list_visitor_visit_list((list_visitor *) &op_in_vis, (generic_list *) haystack.list);
     assert(
         (res == ENUMERATION_COMPLETE && result->boolean == TOY_FALSE)
         ||

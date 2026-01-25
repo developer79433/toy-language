@@ -148,3 +148,13 @@ toy_bool val_list_none_match(const toy_val_list *list, toy_val_list_filter_func 
 {
     return buf_list_none_match((const toy_buf_list *) list, (buf_list_filter_func) filter, cookie);
 }
+
+toy_bool val_list_not_all_match(const toy_val_list *list, toy_val_list_filter_func filter, void *cookie)
+{
+    return buf_list_not_all_match((const toy_buf_list *) list, (buf_list_filter_func) filter, cookie);
+}
+
+toy_bool val_list_some_match(const toy_val_list *list, toy_val_list_filter_func filter, void *cookie)
+{
+    return buf_list_some_match((const toy_buf_list *) list, (buf_list_filter_func) filter, cookie);
+}

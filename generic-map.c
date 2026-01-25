@@ -200,7 +200,7 @@ static item_callback_result dump_item_callback(map_dumper *dumper, const generic
 
 void map_dump(const generic_map *map)
 {
-    map_dumper dumper = { .visitor.visit_map = NULL, .visitor.visit_entry = (const_map_entry_visit_func) dump_item_callback, .output_anything = TOY_FALSE };
+    map_dumper dumper = { .visitor.visit_entry = (const_map_entry_visit_func) dump_item_callback, .output_anything = TOY_FALSE };
     log_putc('{');
     const_map_visitor_visit_map((const_map_visitor *) &dumper, map);
     if (dumper.output_anything) {

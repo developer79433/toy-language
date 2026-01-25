@@ -60,9 +60,11 @@ static item_callback_result expr_dump_callback(void *cookie, size_t index, const
     return CONTINUE_ENUMERATION;
 }
 
-void expr_list_dump(const toy_expr_list *list)
+void expr_list_dump(const toy_expr_list *list, toy_bool include_braces)
 {
-    log_putc('[');
+    if (include_braces) {
+        log_putc('[');
+    }
     expr_dump_cb_args args = { .printed_anything = TOY_FALSE };
     enumeration_result res = expr_list_foreach_const(list, expr_dump_callback, &args);
     assert(ENUMERATION_COMPLETE == res);
@@ -71,7 +73,9 @@ void expr_list_dump(const toy_expr_list *list)
     if (args.printed_anything) {
         log_putc(' ');
     }
-    log_putc(']');
+    if (include_braces) {
+        log_putc(']');
+    }
 }
 
 toy_expr_list *expr_list_concat(toy_expr_list *orig, toy_expr_list *new_list)
