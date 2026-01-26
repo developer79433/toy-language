@@ -3,7 +3,7 @@
 
 #include "str-types.h"
 #include "val-types.h"
-#include "map-entry-list-types.h"
+#include "map-expr-entry-list-types.h"
 #include "expr-list-types.h"
 #include "constant-types.h"
 
@@ -169,7 +169,7 @@ struct toy_expr_struct {
         toy_identifier id;
         /* These two hold AST expressions, as opposed to the interpreter values held in the toy_val member. */
         /* TODO: Do I really need these? */
-        toy_map_entry_list *map;
+        toy_map_expr_entry_list *map;
         toy_expr_list *expr_list;
     };
 };

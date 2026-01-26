@@ -353,10 +353,10 @@ item_callback_result visit_val(ast_visitor *v, toy_val *val)
     return default_val(v, val);
 }
 
-static item_callback_result map_entry_cb(map_ast_visitor *v, size_t index, toy_map_entry_list *list)
+static item_callback_result map_entry_cb(map_ast_visitor *v, size_t index, toy_map_expr_entry_list *list)
 {
     ast_visitor *ast_vis = v->ast_vis;
-    toy_map_entry *entry = map_entry_list_payload(list);
+    toy_map_expr_entry *entry = map_expr_entry_list_payload(list);
     item_callback_result res;
     res = visit_string(ast_vis, entry->key);
     if (STOP_ENUMERATION == res) {
@@ -365,7 +365,7 @@ static item_callback_result map_entry_cb(map_ast_visitor *v, size_t index, toy_m
     return visit_expr(ast_vis, entry->expr);
 }
 
-item_callback_result default_map_entry_list(ast_visitor *v, toy_map_entry_list *map_entry_list)
+item_callback_result default_map_entry_list(ast_visitor *v, toy_map_expr_entry_list *map_entry_list)
 {
     map_ast_visitor entry_visitor = { .map_vis.visit_entry = (map_entry_visit_func) map_entry_cb, .ast_vis = v };
     enumeration_result res = map_visitor_visit_map((map_visitor *) &entry_visitor, (generic_map *) map_entry_list);
@@ -376,7 +376,7 @@ item_callback_result default_map_entry_list(ast_visitor *v, toy_map_entry_list *
     return STOP_ENUMERATION;
 }
 
-item_callback_result visit_map_entry_list(ast_visitor *v, toy_map_entry_list *map_entry_list)
+item_callback_result visit_map_entry_list(ast_visitor *v, toy_map_expr_entry_list *map_entry_list)
 {
     if (v->map_entry_list) {
         return v->map_entry_list(v, map_entry_list);
@@ -568,7 +568,7 @@ item_callback_result default_expr(ast_visitor *v, toy_expr *expr)
     case EXPR_LTE:
         return visit_binop(v, &expr->binary_op);
     case EXPR_MAP:
-        toy_map_entry_list *entry_list = expr->map;
+        toy_map_expr_entry_list *entry_list = expr->map;
         return visit_map_entry_list(v, entry_list);
     case EXPR_METHOD_CALL:
         toy_method_call *method_call = &expr->method_call;

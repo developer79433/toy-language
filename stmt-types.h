@@ -6,7 +6,7 @@
 #include "str-list-types.h"
 #include "function-types.h"
 #include "val-list-types.h"
-#include "map-entry-list.h"
+#include "map-expr-entry-list.h"
 #include "var-decl-types.h"
 #include "var-decl-list-types.h"
 #include "if-arm-list-types.h"

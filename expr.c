@@ -249,7 +249,7 @@ void expr_dump(const toy_expr *expr) {
             dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " <= ");
             break;
         case EXPR_MAP:
-            map_entry_list_dump(expr->map);
+            map_expr_entry_list_dump(expr->map);
             break;
         case EXPR_METHOD_CALL:
             dump_method_call(&expr->method_call);

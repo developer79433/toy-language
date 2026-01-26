@@ -13,7 +13,7 @@
 #include "val-list.h"
 #include "var-decl.h"
 #include "expr-list.h"
-#include "map-entry-list.h"
+#include "map-expr-entry-list.h"
 #include "var-decl-list.h"
 #include "stmt-list.h"
 #include "if-arm-list.h"
@@ -43,7 +43,7 @@ extern toy_stmt_list *program_start;
     toy_if_arm_list *if_arm;
     toy_block *block;
     toy_str_list *str_list;
-    toy_map_entry_list *map_entry_list;
+    toy_map_expr_entry_list *map_expr_entry_list;
 }
 
 %define parse.error verbose
@@ -60,7 +60,7 @@ extern toy_stmt_list *program_start;
 %type <var_decl_list> vardecllist
 %type <expr_list> actualargs actualarglist
 %type <expr_list> listitems listitemlist
-%type <map_entry_list> mapitem mapitems mapitemlist
+%type <map_expr_entry_list> mapitem mapitems mapitemlist
 %type <block> block elsepart
 
 %left T_COMMA
@@ -360,7 +360,7 @@ mapitemlist :
     mapitem
     | mapitemlist T_COMMA mapitem {
         if ($1) {
-            map_entry_list_concat($1, $3);
+            map_expr_entry_list_concat($1, $3);
             $$ = $1;
         } else {
             $1 = $3;
@@ -371,7 +371,7 @@ mapitemlist :
 mapitem :
     T_STRING T_COLON expr_no_comma {
         /* TODO: Should $1 be an expression, or a string/identifier? */
-        $$ = map_entry_list_alloc_ref($1, $3);
+        $$ = map_expr_entry_list_alloc_ref($1, $3);
     }
 ;
 

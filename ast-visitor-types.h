@@ -25,7 +25,7 @@ typedef item_callback_result (*visit_identifier_func)(ast_visitor *v, toy_identi
 typedef item_callback_result (*visit_if_stmt_func)(ast_visitor *v, toy_if_stmt *if_stmt);
 typedef item_callback_result (*visit_if_arm_func)(ast_visitor *v, toy_if_arm *if_arm);
 typedef item_callback_result (*visit_if_arm_list_func)(ast_visitor *v, toy_if_arm_list *if_arm_list);
-typedef item_callback_result (*visit_map_entry_list_func)(ast_visitor *v, toy_map_entry_list *map_entry_list);
+typedef item_callback_result (*visit_map_entry_list_func)(ast_visitor *v, toy_map_expr_entry_list *map_entry_list);
 typedef item_callback_result (*visit_map_val_func)(ast_visitor *v, map_val *map);
 typedef item_callback_result (*visit_method_call_func)(ast_visitor *v, toy_method_call *method_call);
 typedef item_callback_result (*visit_null_stmt_func)(ast_visitor *v);

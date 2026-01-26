@@ -21,7 +21,7 @@ item_callback_result visit_identifier(ast_visitor *v, toy_identifier *identifier
 item_callback_result visit_if_arm_list(ast_visitor *v, toy_if_arm_list *if_arm_list);
 item_callback_result visit_if_arm(ast_visitor *v, toy_if_arm *if_arm);
 item_callback_result visit_if_stmt(ast_visitor *v, toy_if_stmt *if_stmt);
-item_callback_result visit_map_entry_list(ast_visitor *v, toy_map_entry_list *map_entry_list);
+item_callback_result visit_map_entry_list(ast_visitor *v, toy_map_expr_entry_list *map_entry_list);
 item_callback_result visit_map_val(ast_visitor *v, map_val *map);
 item_callback_result visit_method_call(ast_visitor *v, toy_method_call *method_call);
 item_callback_result visit_null_stmt(ast_visitor *v);
@@ -62,7 +62,7 @@ item_callback_result default_identifier(ast_visitor *v, toy_identifier *identifi
 item_callback_result default_if_arm_list(ast_visitor *v, toy_if_arm_list *if_arm_list);
 item_callback_result default_if_arm(ast_visitor *v, toy_if_arm *if_arm);
 item_callback_result default_if_stmt(ast_visitor *v, toy_if_stmt *if_stmt);
-item_callback_result default_map_entry_list(ast_visitor *v, toy_map_entry_list *map_entry_list);
+item_callback_result default_map_entry_list(ast_visitor *v, toy_map_expr_entry_list *map_entry_list);
 item_callback_result default_map_val(ast_visitor *v, map_val *map);
 item_callback_result default_method_call(ast_visitor *v, toy_method_call *method_call);
 item_callback_result default_null_stmt(ast_visitor *v);
