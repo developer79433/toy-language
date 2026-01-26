@@ -5,9 +5,14 @@
 #include "log.h"
 #include "block.h"
 
-static toy_block *cur_block = NULL;
+toy_bool parent_adder_ran = TOY_FALSE;
 
-static item_callback_result handle_block(ast_visitor *v, toy_block *block)
+typedef struct block_parent_adder_struct {
+    ast_visitor ast_vis;
+    toy_block *cur_block;
+} block_parent_adder;
+
+static item_callback_result handle_block(block_parent_adder *parent_adder, toy_block *block)
 {
 #ifdef DEBUG_BLOCK_PARENTS
     log_printf("**** Push block\n");
@@ -18,10 +23,10 @@ static item_callback_result handle_block(ast_visitor *v, toy_block *block)
     log_printf("  ** New block:\n");
     block_dump(block);
 #endif /* DEBUG_BLOCK_PARENTS */
-    block->parent = cur_block;
-    toy_block *prev_block = cur_block;
-    cur_block = block;
-    item_callback_result res = default_block(v, block);
+    block->parent = parent_adder->cur_block;
+    toy_block *prev_block = parent_adder->cur_block;
+    parent_adder->cur_block = block;
+    item_callback_result res = default_block(&parent_adder->ast_vis, block);
 #ifdef DEBUG_BLOCK_PARENTS
     log_printf("**** Pop block\n");
     log_printf("  ** Cur block:\n");
@@ -31,15 +36,16 @@ static item_callback_result handle_block(ast_visitor *v, toy_block *block)
         block_dump(backup_cur_block);
     }
 #endif /* DEBUG_BLOCK_PARENTS */
-    cur_block = prev_block;
+    parent_adder->cur_block = prev_block;
     return res;
 }
 
-static ast_visitor block_parent_adder = { .block = handle_block };
+static block_parent_adder the_block_parent_adder = { .ast_vis.block = (visit_block_func) handle_block, .cur_block = NULL };
 
 void add_block_parents(toy_function *func)
 {
-    cur_block = NULL;
-    item_callback_result res = visit_func_expr(&block_parent_adder, func);
+    block_parent_adder parent_adder = the_block_parent_adder;
+    item_callback_result res = visit_func_expr((ast_visitor *) &parent_adder, func);
     assert(CONTINUE_ENUMERATION == res);
+    parent_adder_ran = TOY_TRUE;
 }

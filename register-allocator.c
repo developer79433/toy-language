@@ -28,15 +28,22 @@ static item_callback_result handle_block(register_allocator *ra, toy_block *bloc
 
 static size_t add_declaration(toy_block *block, toy_str name)
 {
-    symbol_table_entry *parameter = symbol_table_get(&block->parameter_symbols, name);
-    if (parameter) {
-        duplicate_identifier(name);
+    if (block->parameter_symbols) {
+        symbol_table_entry *parameter = symbol_table_get(block->parameter_symbols, name);
+        if (parameter) {
+            duplicate_identifier(name);
+        }
     }
-    symbol_table_entry *decl = symbol_table_get(&block->declaration_symbols, name);
-    if (decl) {
-        duplicate_identifier(name);
+    if (block->declaration_symbols) {
+        symbol_table_entry *decl = symbol_table_get(block->declaration_symbols, name);
+        if (decl) {
+            duplicate_identifier(name);
+        }
     }
-    return symbol_table_add(&block->declaration_symbols, name);
+    if (!block->declaration_symbols) {
+        block->declaration_symbols = symbol_table_alloc();
+    }
+    return symbol_table_add(block->declaration_symbols, name);
 }
 
 static item_callback_result handle_func_decl(register_allocator *ra, toy_func_decl_stmt *func_decl)
@@ -68,7 +75,10 @@ static item_callback_result add_param_to_symbol_table(param_add_visitor *param_a
 static item_callback_result handle_func_expr(register_allocator *ra, toy_function *func)
 {
     toy_block *block = func->code;
-    symbol_table *parameter_symbols = &block->parameter_symbols;
+    if (func->param_names && !block->parameter_symbols) {
+        block->parameter_symbols = symbol_table_alloc();
+    }
+    symbol_table *parameter_symbols = block->parameter_symbols;
     param_add_visitor param_add_vis = {
         .list_vis.visit_entry = (list_entry_visit_func) add_param_to_symbol_table,
         .parameter_symbols = parameter_symbols

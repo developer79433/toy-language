@@ -13,8 +13,8 @@ typedef struct toy_block_struct toy_block;
 struct toy_block_struct {
     toy_stmt_list *stmts;
     toy_block *parent;
-    symbol_table declaration_symbols;
-    symbol_table parameter_symbols;
+    symbol_table *declaration_symbols;
+    symbol_table *parameter_symbols;
 };
 
 #endif /* TOY_BLOCK_TYPES_H */

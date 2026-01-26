@@ -58,6 +58,14 @@ toy_stmt *stmt_alloc(toy_stmt_type stmt_type)
     return stmt;
 }
 
+toy_stmt *block_stmt_alloc(toy_block *block)
+{
+    toy_stmt *stmt = mymalloc(toy_stmt);
+    stmt->type = STMT_BLOCK;
+    stmt->block_stmt.block = block;
+    return stmt;
+}
+
 toy_stmt *func_decl_stmt_alloc(toy_str name, toy_str_list *param_names, toy_block *block)
 {
     toy_stmt *stmt = malloc(sizeof(toy_stmt) + sizeof(toy_function) + sizeof(toy_val));
@@ -294,3 +302,5 @@ void stmt_dump(const toy_stmt *stmt, int append_semicolon)
         break;
     }
 }
+
+/* TODO: stmt_free */

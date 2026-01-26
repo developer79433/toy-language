@@ -10,12 +10,10 @@
 #include "buf-list-types.h"
 #include "generic-map-entry-list-types.h"
 
-/* TODO: dynamic resizing */
-#define NUM_BUCKETS 13
-
 typedef struct generic_map_struct {
     size_t num_items;
-    generic_map_entry_list *buckets[NUM_BUCKETS];
+    size_t num_buckets;
+    generic_map_entry_list **buckets;
 } generic_map;
 
 typedef item_callback_result (*generic_map_entry_callback)(void *cookie, generic_map_entry *entry);

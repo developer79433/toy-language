@@ -7,12 +7,10 @@
 #include "str-types.h"
 #include "map-buf-entry-list-types.h"
 
-/* TODO: dynamic resizing */
-#define NUM_BUCKETS 13
-
 typedef struct map_buf_struct {
     size_t num_items;
-    map_buf_entry_list *buckets[NUM_BUCKETS];
+    size_t num_buckets;
+    map_buf_entry_list **buckets;
 } map_buf;
 
 #endif /* TOY_MAP_BUF_TYPES_H */

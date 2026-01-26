@@ -61,8 +61,8 @@ void test_map_ptr_basics(void)
     assert(1 == map_ptr_size(map1));
     assert(map1->num_items == 1);
     assert(map1->buckets != NULL);
-    assert_one_bucket_not_null(map1->buckets, ELEMENTSOF(map1->buckets));
-    map_ptr_entry_list *bucket = ptr_array_get_not_null((void **) map1->buckets, ELEMENTSOF(map1->buckets));
+    assert_one_bucket_not_null(map1->buckets, map1->num_buckets);
+    map_ptr_entry_list *bucket = ptr_array_get_not_null((void **) map1->buckets, map1->num_buckets);
     assert(bucket != NULL);
     assert(bucket->next == NULL);
     assert(str_equal(bucket->entry.key, "first key"));

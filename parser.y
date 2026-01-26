@@ -19,6 +19,7 @@
 #include "if-arm-list.h"
 #include "block.h"
 #include "toy-parser.h"
+#include "symbol-table.h"
 
 extern int yylex(void);
 void yyerror(const char *s);
@@ -168,8 +169,7 @@ null_stmt:
 
 block_stmt:
     block {
-        $$ = stmt_alloc(STMT_BLOCK);
-        $$->block_stmt.block = $1;
+        $$ = block_stmt_alloc($1);
     }
 ;
 

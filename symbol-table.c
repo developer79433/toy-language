@@ -8,12 +8,14 @@
 
 void symbol_table_init(symbol_table *table)
 {
+    map_buf_init((map_buf *) table);
     symbol_table_assert_valid(table);
 }
 
 symbol_table *symbol_table_alloc(void)
 {
-    symbol_table *table = mymalloc(symbol_table);
+    assert(sizeof(symbol_table) == sizeof(map_buf));
+    symbol_table *table = (symbol_table *) map_buf_alloc();
     symbol_table_init(table);
     symbol_table_assert_valid(table);
     return table;

@@ -15,15 +15,22 @@
 #include "map-latch.h"
 #include "list-visitor.h"
 
+#define DEFAULT_NUM_BUCKETS 13
+
 void map_init(generic_map *map)
 {
-    memset(map->buckets, 0, sizeof(map->buckets));
+    assert(map->num_buckets);
+    memset(map->buckets, 0, map->num_buckets * sizeof(generic_map_entry_list *));
     map->num_items = 0;
 }
 
 generic_map *map_alloc(void)
 {
-    generic_map *map = mymalloc(generic_map);
+    size_t num_buckets = DEFAULT_NUM_BUCKETS;
+    generic_map *map = (generic_map *) malloc(sizeof(generic_map) + num_buckets * sizeof(map->buckets[0]));
+    assert(sizeof(map->buckets[0]) == sizeof(generic_map_entry_list *));
+    map->num_buckets = num_buckets;
+    map->buckets = (generic_map_entry_list **) (map + 1);
     map_init(map);
     return map;
 }
@@ -31,7 +38,7 @@ generic_map *map_alloc(void)
 enumeration_result bucket_visitor_visit_map(bucket_visitor *visitor, generic_map *map)
 {
     /* TODO: Push this down into an array enumerator */
-    for (generic_map_entry_list * const * pbucket = &map->buckets[0]; pbucket < &map->buckets[NUM_BUCKETS]; pbucket++) {
+    for (generic_map_entry_list * const * pbucket = &map->buckets[0]; pbucket < &map->buckets[map->num_buckets]; pbucket++) {
         assert(pbucket);
         generic_map_entry_list *bucket = *pbucket;
         if (bucket) {
@@ -47,7 +54,7 @@ enumeration_result bucket_visitor_visit_map(bucket_visitor *visitor, generic_map
 enumeration_result const_bucket_visitor_visit_map(const_bucket_visitor *visitor, const generic_map *map)
 {
     /* TODO: Push this down into an array enumerator */
-    for (generic_map_entry_list * const * pbucket = &map->buckets[0]; pbucket < &map->buckets[NUM_BUCKETS]; pbucket++) {
+    for (generic_map_entry_list * const * pbucket = &map->buckets[0]; pbucket < &map->buckets[map->num_buckets]; pbucket++) {
         assert(pbucket);
         const generic_map_entry_list *bucket = *pbucket;
         if (bucket) {
@@ -71,8 +78,8 @@ static void free_buckets(generic_map *map)
     bucket_visitor free_visitor = { .visit_bucket = bucket_free_cb };
     enumeration_result res = bucket_visitor_visit_map(&free_visitor, map);
     assert(ENUMERATION_COMPLETE == res);
-    memset(map->buckets, 0, sizeof(map->buckets));
-    map->num_items = 0;
+    memset(map->buckets, 0, map->num_buckets * sizeof(map->buckets[0]));
+    map->num_buckets = map->num_items = 0;
 }
 
 void map_reset(generic_map *map)
@@ -103,10 +110,10 @@ static uint32_t jenkins_one_at_a_time_hash(const uint8_t *key, size_t length) {
 generic_map_entry_list **map_get_bucket_ptr(generic_map *map, toy_str key)
 {
     uint32_t hashval = jenkins_one_at_a_time_hash((uint8_t *) key, strlen(key));
-    return &map->buckets[hashval % NUM_BUCKETS];
+    return &map->buckets[hashval % map->num_buckets];
 }
 
-generic_map_entry_list *generic_map_get_bucket(generic_map *map, toy_str key)
+generic_map_entry_list *map_get_bucket(generic_map *map, toy_str key)
 {
     generic_map_entry_list **bucket_ptr = map_get_bucket_ptr(map, key);
     return *bucket_ptr;
@@ -166,6 +173,9 @@ static delete_result delete_from_bucket(generic_map *map, generic_map_entry_list
         .bucket = bucket,
         .prev = *bucket
     };
+    /* TODO: Use list_find_first */
+    // generic_list *prev;
+    // generic_list *found = list_find_first(*bucket, map_entry_has_desired_name, &has_name_args, &prev);
     enumeration_result res = list_visitor_visit_list((list_visitor *) &delete_vis, (generic_list *) *bucket);
     if (res == ENUMERATION_COMPLETE) {
         return NOT_PRESENT;
@@ -248,7 +258,7 @@ static generic_map_entry *map_bucket_get_key(generic_map_entry_list *bucket, con
 
 generic_map_entry *map_get_entry(generic_map *map, const toy_str key)
 {
-    generic_map_entry_list *bucket = generic_map_get_bucket(map, key);
+    generic_map_entry_list *bucket = map_get_bucket(map, key);
     if (bucket) {
         generic_map_entry *existing_entry = map_bucket_get_key(bucket, key);
         if (existing_entry) {

@@ -39,27 +39,31 @@ static void resolve_identifier_block_and_parents(toy_block *block, toy_identifie
         symbol_table_entry *entry;
         /* FIXME: Never sets REF_FUNC_DECL */
         /* TODO: Just put all the declarations into an array already! */
-        symbol_table_assert_valid(&block->declaration_symbols);
-        entry = symbol_table_get(&block->declaration_symbols, identifier->name);
-        if (entry) {
-            identifier->resolved.type = REF_VAR_DECL;
-            identifier->resolved.var_decl.frames_up = frames_up;
-            identifier->resolved.var_decl.var_index = entry->index;
-#ifdef DEBUG_NAME_RESOLUTION
-            log_printf("Resolved '%s' to variable %d, %d frames up\n", identifier->name, *i, frames_up);
-#endif /* DEBUG_NAME_RESOLUTION */
-            return;
+        if (block->declaration_symbols) {
+            symbol_table_assert_valid(block->declaration_symbols);
+            entry = symbol_table_get(block->declaration_symbols, identifier->name);
+            if (entry) {
+                identifier->resolved.type = REF_VAR_DECL;
+                identifier->resolved.var_decl.frames_up = frames_up;
+                identifier->resolved.var_decl.var_index = entry->index;
+    #ifdef DEBUG_NAME_RESOLUTION
+                log_printf("Resolved '%s' to variable %d, %d frames up\n", identifier->name, *i, frames_up);
+    #endif /* DEBUG_NAME_RESOLUTION */
+                return;
+            }
         }
-        symbol_table_assert_valid(&block->parameter_symbols);
-        entry = symbol_table_get(&block->parameter_symbols, identifier->name);
-        if (entry) {
-            identifier->resolved.type = REF_FUNC_PARAM;
-            identifier->resolved.func_param.frames_up = frames_up;
-            identifier->resolved.func_param.var_index = entry->index;
-#ifdef DEBUG_NAME_RESOLUTION
-            log_printf("Resolved '%s' to function parameter %d, %d frames up\n", identifier->name, *i, frames_up);
-#endif /* DEBUG_NAME_RESOLUTION */
-            return;
+        if (block->parameter_symbols) {
+            symbol_table_assert_valid(block->parameter_symbols);
+            entry = symbol_table_get(block->parameter_symbols, identifier->name);
+            if (entry) {
+                identifier->resolved.type = REF_FUNC_PARAM;
+                identifier->resolved.func_param.frames_up = frames_up;
+                identifier->resolved.func_param.var_index = entry->index;
+    #ifdef DEBUG_NAME_RESOLUTION
+                log_printf("Resolved '%s' to function parameter %d, %d frames up\n", identifier->name, *i, frames_up);
+    #endif /* DEBUG_NAME_RESOLUTION */
+                return;
+            }
         }
         block = block->parent;
         frames_up++;
