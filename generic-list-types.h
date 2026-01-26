@@ -12,25 +12,10 @@ typedef struct generic_list_struct {
     /* user code should declare additional members in 'subclasses' here */
 } generic_list;
 
-typedef item_callback_result (*generic_list_item_callback)(void *cookie, size_t index, generic_list *item);
-typedef item_callback_result (*const_generic_list_item_callback)(void *cookie, size_t index, const generic_list *item);
-
 extern void *INDEX_OUT_OF_BOUNDS;
 
 typedef toy_bool (*generic_list_filter_func)(void *cookie, size_t index, const generic_list *item);
 
-typedef struct filter_args_struct {
-    generic_list_filter_func filter;
-    void *filter_cookie;
-    generic_list_item_callback user_callback;
-    void *user_cookie;
-} filter_args;
-
-typedef struct const_filter_args_struct {
-    generic_list_filter_func filter;
-    void *filter_cookie;
-    const_generic_list_item_callback user_callback;
-    void *user_cookie;
-} const_filter_args;
+typedef void (*list_entry_free_func)(generic_list *entry);
 
 #endif /* GENERIC_LIST_TYPES_H */

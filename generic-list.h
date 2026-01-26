@@ -39,5 +39,8 @@ toy_bool list_not_all_match(const generic_list *list, generic_list_filter_func f
 toy_bool list_some_match(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie);
 toy_bool match_always(void *cookie, size_t index, const generic_list *item);
 toy_bool match_never(void *cookie, size_t index, const generic_list *item);
+generic_list *list_delete_first(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, list_entry_free_func free_func, delete_result *del_res);
+generic_list *list_delete_last(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, list_entry_free_func free_func, delete_result *del_res);
+generic_list *list_delete_matching(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, list_entry_free_func free_func, size_t deleted);
 
 #endif /* GENERIC_LIST_H */

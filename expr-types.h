@@ -153,23 +153,37 @@ typedef struct toy_collection_lookup_struct {
 struct toy_expr_struct {
     toy_expr_type type;
     union {
+        /* map and list not used, since those contain expressions, handled below */
         toy_val *val;
+        /* Function call: str(expr1, expr2) */
         toy_func_call func_call;
+        /* Object method call: expr1.str(expr2, expr3) */
         toy_method_call method_call;
+        // Unary operation: !expr
         toy_unary_op unary_op;
+        // Binary operation: expr1 + expr2
         toy_binary_op binary_op;
+        // Assignment operation: identifier = expr
         toy_assignment assignment;
+        // Postfix decrement operation: identifier--
         toy_postfix_decrement postfix_decrement;
+        // Postfix increment operation: identifier++
         toy_postfix_increment postfix_increment;
+        // Prefix decrement operation: --identifier
         toy_prefix_decrement prefix_decrement;
+        // Prefix increment operation: ++identifier
         toy_prefix_increment prefix_increment;
+        // Ternary operation: expr1 ? expr2 : expr3
         toy_ternary ternary;
+        // Object field lookup: expr1.field_name
         toy_field_ref field_ref;
+        // Collection lookup: expr1[expr2]
         toy_collection_lookup collection_lookup;
+        // Identifier: str
         toy_identifier id;
-        /* These two hold AST expressions, as opposed to the interpreter values held in the toy_val member. */
-        /* TODO: Do I really need these? */
+        // Map expression: { str1: expr1, str2: expr2 }
         toy_map_expr_entry_list *map;
+        // List expression: [ expr1, expr2 ]
         toy_expr_list *expr_list;
     };
 };

@@ -163,6 +163,11 @@ static generic_list *list_find(generic_list *list, generic_list_filter_func filt
     list_filter_init(&filter, filter_func, filter_cookie, inverted, (list_visitor *) &latch_prev);
     enumeration_result res = list_filter_visit_list(&filter, list);
     assert(ENUMERATION_COMPLETE == res || ENUMERATION_INTERRUPTED == res);
+    assert(
+        !latch_prev.prev
+        || !latch_prev.latch.last_seen_item
+        || latch_prev.prev != latch_prev.latch.last_seen_item
+    );
     if (prev) {
         *prev = latch_prev.prev;
     }
@@ -254,4 +259,74 @@ toy_bool match_always(void *cookie, size_t index, const generic_list *item)
 toy_bool match_never(void *cookie, size_t index, const generic_list *item)
 {
     return TOY_FALSE;
+}
+
+static generic_list *list_remove_entry(generic_list *list, generic_list *to_remove, generic_list *prev)
+{
+    assert(list);
+    assert(to_remove);
+    assert(prev != to_remove);
+    generic_list *next = to_remove->next;
+    to_remove->next = NULL;
+    if (prev) {
+        prev->next = next;
+    }
+    if (to_remove == list) {
+        list = next;
+    }
+    return list;
+}
+
+typedef generic_list *(*list_find_func)(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, generic_list **prev);
+
+static generic_list *list_delete_find_func(generic_list *list, list_find_func find_func, generic_list_filter_func filter_func, void *filter_cookie, list_entry_free_func free_func, delete_result *del_res)
+{
+    generic_list *prev = NULL;
+    generic_list *found = find_func(
+        list,
+        filter_func,
+        filter_cookie,
+        (generic_list **) &prev
+    );
+    if (found) {
+        assert(prev != found);
+        *del_res = DELETED;
+        list = list_remove_entry(list, found, prev);
+        free_func(found);
+    } else {
+        *del_res = NOT_PRESENT;
+    }
+    return list;
+}
+
+generic_list *list_delete_first(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, list_entry_free_func free_func, delete_result *del_res)
+{
+    return list_delete_find_func(list, list_find_first, filter_func, filter_cookie, free_func, del_res);
+}
+
+generic_list *list_delete_last(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, list_entry_free_func free_func, delete_result *del_res)
+{
+    return list_delete_find_func(list, list_find_last, filter_func, filter_cookie, free_func, del_res);
+}
+
+typedef struct delete_visitor_struct {
+    list_visitor list_vis;
+    list_entry_free_func free_func;
+} delete_visitor;
+
+static item_callback_result visit_delete(delete_visitor *del_vis, size_t index, generic_list *item)
+{
+    /* TODO */
+    del_vis->free_func(item);
+    return CONTINUE_ENUMERATION;
+}
+
+generic_list *list_delete_matching(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, list_entry_free_func free_func, size_t deleted)
+{
+    delete_visitor delete_vis = { .list_vis.visit_entry = (list_entry_visit_func) visit_delete, .free_func = free_func };
+    list_filter filter;
+    list_filter_init(&filter, filter_func, filter_cookie, TOY_FALSE, (list_visitor *) &delete_vis);
+    enumeration_result res = list_filter_visit_list(&filter, list);
+    assert(ENUMERATION_COMPLETE == res || ENUMERATION_INTERRUPTED == res);
+    return NULL;
 }

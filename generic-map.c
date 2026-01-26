@@ -125,32 +125,22 @@ static toy_bool map_entry_has_desired_name(toy_str desired_name, size_t index, c
     return str_equal(entry->key, desired_name);
 }
 
-/* TODO: Push this down into generic_list */
 static delete_result delete_from_bucket(generic_map *map, generic_map_entry_list **bucket, const toy_str key)
 {
     assert(bucket);
     assert(*bucket);
-    generic_map_entry_list *prev;
-    generic_map_entry_list *found = (generic_map_entry_list *) list_find_first(
+    delete_result del_res;
+    *bucket = (generic_map_entry_list *) list_delete_first(
         (generic_list *) *bucket,
         (generic_list_filter_func) map_entry_has_desired_name,
         key,
-        (generic_list **) &prev
+        (list_entry_free_func) generic_map_entry_list_free,
+        &del_res
     );
-    if (found) {
-        assert(prev);
-        prev->next = found->next;
-        if (found == *bucket) {
-            assert(found->next == NULL);
-            *bucket = NULL;
-        } else {
-            found->next = NULL;
-        }
-        generic_map_entry_list_free(found);
+    if (DELETED == del_res) {
         map->num_items--;
-        return DELETED;
     }
-    return NOT_PRESENT;
+    return del_res;
 }
 
 delete_result map_delete(generic_map *map, const toy_str key)

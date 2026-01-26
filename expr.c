@@ -91,6 +91,23 @@ toy_expr *alloc_expr_literal(toy_val_type val_type)
     expr->type = EXPR_LITERAL;
     expr->val = (toy_val *) (expr + 1);
     expr->val->type = val_type;
+    switch (val_type) {
+    case VAL_BOOL:
+    case VAL_FUNC:
+        break;
+    case VAL_LIST:
+    case VAL_MAP:
+        /* These should have been handled as a list or map of expressions, not of values */
+        assert(0);
+        break;
+    case VAL_NULL:
+    case VAL_NUM:
+    case VAL_STR:
+        break;
+    default:
+        assert(0);
+        break;
+    }
     return expr;
 }
 

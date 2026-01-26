@@ -34,12 +34,19 @@ typedef struct toy_function_struct toy_function;
 typedef struct toy_val_struct {
     toy_val_type type;
     union {
+        /* Boolean value */
         toy_bool boolean;
+        /* Function value */
         toy_function *func;
+        /* List of values */
         toy_val_list *list;
+        /* Map of string keys to values */
         map_val *map;
-        // null
+        /* null */
+        /* Floating-point number */
         toy_num num;
+        /* Null-terminated string */
+        // TODO: Wide character support
         toy_str str;
     };
 } toy_val;
