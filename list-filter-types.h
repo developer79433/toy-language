@@ -11,7 +11,7 @@ struct list_filter_struct {
     generic_list_filter_func filter_func;
     void *filter_cookie;
     toy_bool inverted;
-    list_visitor *next_visitor;
+    generic_list *last_match;
 };
 
 struct const_list_filter_struct;
@@ -21,7 +21,7 @@ struct const_list_filter_struct {
     generic_list_filter_func filter_func;
     void *filter_cookie;
     toy_bool inverted;
-    const_list_visitor *next_visitor;
+    const generic_list *last_match;
 };
 
 #endif /* TOY_LIST_FILTER_TYPES_H */

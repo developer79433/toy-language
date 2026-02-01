@@ -3,6 +3,7 @@
 
 #include "generic-list-types.h"
 
+/* TODO: Rename me to ptr_list */
 typedef struct toy_ptr_list_struct {
     struct toy_ptr_list_struct *next;
     void *ptr;

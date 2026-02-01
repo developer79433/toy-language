@@ -3,7 +3,11 @@
 
 #include "list-latch-types.h"
 
-void list_latch_init(list_latch *latch, toy_bool stop_on_first);
+void list_latch_init(list_latch *latch);
 item_callback_result list_latch_visit_entry(list_latch *latch, size_t index, generic_list *item);
+generic_list *list_latch_get_last_seen(list_latch *latch);
+void const_list_latch_init(const_list_latch *latch);
+item_callback_result const_list_latch_visit_entry(const_list_latch *latch, size_t index, const generic_list *item);
+const generic_list *const_list_latch_get_last_seen(const_list_latch *latch);
 
 #endif /* TOY_LIST_LATCH_H */

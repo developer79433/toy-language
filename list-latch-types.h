@@ -7,7 +7,11 @@
 typedef struct list_latch_struct {
     list_visitor visitor;
     generic_list *last_seen_item;
-    toy_bool stop_on_first;
 } list_latch;
+
+typedef struct const_list_latch_struct {
+    const_list_visitor visitor;
+    const generic_list *last_seen_item;
+} const_list_latch;
 
 #endif /* TOY_LIST_LATCH_TYPES_H */

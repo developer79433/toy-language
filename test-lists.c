@@ -10,7 +10,6 @@
 #include "list-filter.h"
 #include "list-visitor.h"
 #include "list-latch.h"
-#include "list-latch-prev.h"
 
 static void assert_all_match(const generic_list *list, generic_list_filter_func filter_func)
 {
@@ -30,34 +29,6 @@ static void assert_not_all_match(const generic_list *list, generic_list_filter_f
 static void assert_some_match(const generic_list *list, generic_list_filter_func filter_func)
 {
     assert(list_some_match(list, filter_func, NULL));
-}
-
-static toy_bool compare_to_second_item(void *cookie, size_t index, const toy_str_list *item)
-{
-    list_filter *visitor = (list_filter *) cookie;
-    assert(visitor);
-    assert(visitor->filter_func);
-    const toy_str str = str_list_payload_const(item);
-    assert(str);
-    return str_equal(str, "Second item");
-}
-
-static item_callback_result receive_entry(const_list_visitor *visitor, size_t index, const toy_str_list *entry)
-{
-    const toy_str str = str_list_payload_const(entry);
-    assert(str_equal(str, "Second item"));
-    return CONTINUE_ENUMERATION;
-}
-
-static void test_filters(toy_str_list *list)
-{
-    const_list_visitor receiver = {
-        .visit_entry = (const_list_entry_visit_func) receive_entry
-    };
-    const_list_filter filter;
-    const_list_filter_init(&filter, (generic_list_filter_func) compare_to_second_item, &filter, TOY_FALSE, &receiver);
-    enumeration_result res = const_list_filter_visit_list(&filter, (const generic_list *) list);
-    assert(ENUMERATION_COMPLETE == res || ENUMERATION_INTERRUPTED == res);
 }
 
 static toy_bool matches_all_test_data_1(void *cookie, size_t index, const toy_str_list *item)
@@ -83,10 +54,10 @@ static toy_bool matches_proper_subset_test_data_1(void *cookie, size_t index, co
 
 static void test_set_algebra(toy_str_list *list)
 {
-    assert(list_all_match((generic_list *) list, (generic_list_filter_func) matches_all_test_data_1, NULL));
-    assert(list_none_match((generic_list *) list, (generic_list_filter_func) matches_none_test_data_1, NULL));
-    assert(list_not_all_match((generic_list *) list, (generic_list_filter_func) matches_proper_subset_test_data_1, NULL));
-    assert(list_some_match((generic_list *) list, (generic_list_filter_func) matches_proper_subset_test_data_1, NULL));
+    list_assert_all_match((const generic_list *) list, (generic_list_filter_func) matches_all_test_data_1, NULL);
+    list_assert_none_match((const generic_list *) list, (generic_list_filter_func) matches_none_test_data_1, NULL);
+    list_assert_not_all_match((const generic_list *) list, (generic_list_filter_func) matches_proper_subset_test_data_1, NULL);
+    list_assert_some_match((const generic_list *) list, (generic_list_filter_func) matches_proper_subset_test_data_1, NULL);
 }
 
 typedef struct array_compare_visitor_struct {
@@ -186,6 +157,7 @@ static void test_visitors(void)
     assert_some_match((generic_list *) list, (generic_list_filter_func) is_fruit);
     assert_not_all_match((generic_list *) list, (generic_list_filter_func) is_fruit);
     /* TODO: Remove list elements */
+    list = (toy_str_list *) list_delete_filter((generic_list *) list, (generic_list_filter_func) is_edible, NULL, TOY_FALSE, TOY_FALSE, (list_entry_free_func) str_list_free);
 }
 
 void test_lists(void)
@@ -195,8 +167,7 @@ void test_lists(void)
     list = str_list_append(list, "Third item");
     list = str_list_append(list, "Fourth item");
     list = str_list_append(list, "Fifth item");
-    test_filters(list);
     test_set_algebra(list);
-    test_visitors();
     str_list_free(list);
+    test_visitors();
 }

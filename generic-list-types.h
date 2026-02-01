@@ -16,6 +16,7 @@ extern void *INDEX_OUT_OF_BOUNDS;
 
 typedef toy_bool (*generic_list_filter_func)(void *cookie, size_t index, const generic_list *item);
 
+/* TODO: Should be called list_free_func */
 typedef void (*list_entry_free_func)(generic_list *entry);
 
 #endif /* GENERIC_LIST_TYPES_H */
