@@ -18,7 +18,7 @@ static const char *toy_val_type_names[] = {
     "boolean",
     "function",
     "list",
-    "map",
+    "object",
     "null",
     "numeric",
     "string"
@@ -43,7 +43,7 @@ void val_dump(const toy_val *val, toy_bool verbose)
             val_list_dump(val->list);
             break;
         case VAL_MAP:
-            map_val_dump(val->map);
+            map_val_dump(val->obj);
             break;
         case VAL_NULL:
             log_puts("null");
@@ -73,7 +73,7 @@ toy_bool val_truthy(const toy_val *val)
     case VAL_LIST:
         return val_list_len(val->list) != 0;
     case VAL_MAP:
-        return map_val_size(val->map) != 0;
+        return map_val_size(val->obj) != 0;
     case VAL_NULL:
         return TOY_FALSE;
     case VAL_NUM:
@@ -119,7 +119,7 @@ toy_bool vals_equal(const toy_val *val1, const toy_val *val2)
             return val_list_equal(val1->list, val2->list);
             break;
         case VAL_MAP:
-            return map_val_equal(val1->map, val2->map);
+            return map_val_equal(val1->obj, val2->obj);
             break;
         case VAL_NULL:
             return TOY_TRUE;
@@ -237,8 +237,8 @@ void val_assert_valid(const toy_val *val)
     case VAL_MAP:
         if (valid_check_depth < VALID_CHECK_RECURSION_DEPTH) {
             valid_check_depth++;
-            if (val->map) {
-                map_val_assert_valid(val->map);
+            if (val->obj) {
+                map_val_assert_valid(val->obj);
             }
             valid_check_depth--;
         }
@@ -278,7 +278,7 @@ void val_free(toy_val *val)
         val_list_free(val->list);
         break;
     case VAL_MAP:
-        map_val_free(val->map);
+        map_val_free(val->obj);
         break;
     case VAL_NULL:
         break;

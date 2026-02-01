@@ -181,8 +181,8 @@ struct toy_expr_struct {
         toy_collection_lookup collection_lookup;
         // Identifier: str
         toy_identifier id;
-        // Map expression: { str1: expr1, str2: expr2 }
-        toy_map_expr_entry_list *map;
+        // Object expression: { str1: expr1, str2: expr2 }
+        toy_map_expr_entry_list *obj_expr;
         // List expression: [ expr1, expr2 ]
         toy_expr_list *expr_list;
     };

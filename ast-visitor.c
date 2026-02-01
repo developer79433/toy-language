@@ -332,7 +332,7 @@ item_callback_result default_val(ast_visitor *v, toy_val *val)
     case VAL_LIST:
         return visit_val_list(v, val->list);
     case VAL_MAP:
-        return visit_map_val(v, val->map);
+        return visit_map_val(v, val->obj);
     case VAL_NULL:
         return visit_null_val(v);
     case VAL_NUM:
@@ -573,7 +573,7 @@ item_callback_result default_expr(ast_visitor *v, toy_expr *expr)
     case EXPR_LTE:
         return visit_binop(v, &expr->binary_op);
     case EXPR_MAP:
-        toy_map_expr_entry_list *entry_list = expr->map;
+        toy_map_expr_entry_list *entry_list = expr->obj_expr;
         return visit_map_entry_list(v, entry_list);
     case EXPR_METHOD_CALL:
         toy_method_call *method_call = &expr->method_call;

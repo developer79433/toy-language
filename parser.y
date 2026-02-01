@@ -567,7 +567,7 @@ listexpr: T_LBRACKET listitems T_RBRACKET {
 
 map_expr: T_LBRACE mapitems T_RBRACE {
         $$ = alloc_expr(EXPR_MAP);
-        $$->map = $2;
+        $$->obj_expr = $2;
     }
 ;
 

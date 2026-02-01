@@ -277,7 +277,7 @@ static void collection_lookup(toy_interp *interp, toy_val *result, toy_identifie
     if (collection_val->type == VAL_LIST) {
         list_lookup(interp, result, collection_val->list, &index_result);
     } else if (collection_val->type == VAL_MAP) {
-        map_lookup(interp, result, collection_val->map, &index_result);
+        map_lookup(interp, result, collection_val->obj, &index_result);
     } else if (collection_val->type == VAL_STR) {
         str_lookup(interp, result, collection_val->str, &index_result);
     } else {
@@ -480,7 +480,7 @@ static void eval_map(toy_interp *interp, toy_val *result, const toy_map_expr_ent
     enumeration_result res = list_visitor_visit_list((list_visitor *) &map_entry_vis, (generic_list *) entry_list);
     assert(res == ENUMERATION_COMPLETE);
     result->type = VAL_MAP;
-    result->map = map_entry_vis.map;
+    result->obj = map_entry_vis.map;
 }
 
 static void op_func_call(toy_interp *interp, toy_val *result, toy_func_call *call)
@@ -583,7 +583,7 @@ void interp_eval_val(toy_interp *interp, toy_val *result, toy_expr *expr)
         op_lte(interp, result, expr->binary_op.arg1, expr->binary_op.arg2);
         break;
     case EXPR_MAP:
-        eval_map(interp, result, expr->map);
+        eval_map(interp, result, expr->obj_expr);
         break;
     case EXPR_METHOD_CALL:
         op_method_call(interp, result, &expr->method_call);

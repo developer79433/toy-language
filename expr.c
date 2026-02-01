@@ -36,7 +36,7 @@ static const char *toy_expr_type_names[] = {
     "literal",
     "less than",
     "less than or equal to",
-    "map",
+    "object",
     "method call",
     "subtraction",
     "modulus",
@@ -266,7 +266,7 @@ void expr_dump(const toy_expr *expr) {
             dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " <= ");
             break;
         case EXPR_MAP:
-            map_expr_entry_list_dump(expr->map);
+            map_expr_entry_list_dump(expr->obj_expr);
             break;
         case EXPR_METHOD_CALL:
             dump_method_call(&expr->method_call);

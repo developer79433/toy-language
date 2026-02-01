@@ -40,8 +40,8 @@ typedef struct toy_val_struct {
         toy_function *func;
         /* List of values */
         toy_val_list *list;
-        /* Map of string keys to values */
-        map_val *map;
+        /* Object mapping string keys to values */
+        map_val *obj;
         /* null */
         /* Floating-point number */
         toy_num num;
