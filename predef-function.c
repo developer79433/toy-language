@@ -522,14 +522,14 @@ static run_stmt_result predefined_list_filter(toy_interp *interp, const toy_var 
     return REACHED_RETURN;
 }
 
-typedef struct map_val_visitor_struct {
+typedef struct map_val_foreach_visitor_struct {
     const_map_visitor map_vis;
     toy_interp *interp;
     toy_function *func;
     size_t num_seen;
-} map_val_visitor;
+} map_val_foreach_visitor;
 
-static item_callback_result map_foreach_callback(map_val_visitor *map_val_vis, const map_val_entry *entry)
+static item_callback_result map_foreach_callback(map_val_foreach_visitor *map_val_vis, const map_val_entry *entry)
 {
     map_val_vis->num_seen++;
     const toy_val key_val = { .type = VAL_STR, .str = entry->key };
@@ -554,7 +554,7 @@ static run_stmt_result predefined_map_foreach(toy_interp *interp, const toy_var 
         map_val *map = arg1->map;
         if (arg2->type == VAL_FUNC) {
             toy_function *func = arg2->func;
-            map_val_visitor map_val_vis = {
+            map_val_foreach_visitor map_val_vis = {
                 .map_vis.visit_entry = (const_map_entry_visit_func) map_foreach_callback,
                 .func = func,
                 .interp = interp,
@@ -573,8 +573,62 @@ static run_stmt_result predefined_map_foreach(toy_interp *interp, const toy_var 
     return REACHED_BLOCK_END;
 }
 
+typedef struct map_val_map_visitor_struct {
+    const_map_visitor map_vis;
+    toy_interp *interp;
+    toy_function *func;
+    map_val *result;
+} map_val_map_visitor;
+
+static item_callback_result map_map_callback(map_val_map_visitor *map_val_vis, const map_val_entry *entry)
+{
+    const toy_val key_val = { .type = VAL_STR, .str = entry->key };
+    const toy_val_list value_arg = { .val = entry->value, .next = NULL };
+    const toy_val_list func_args = { .val = key_val, .next = (toy_val_list *) &value_arg };
+    run_stmt_result run_result = interp_run_func_val_list(map_val_vis->interp, map_val_vis->func, &func_args);
+    const toy_val *return_value;
+    if (run_result == REACHED_RETURN) {
+        return_value = interp_get_return_value(map_val_vis->interp);
+    } else {
+        return_value = &null_val;
+    }
+    if (!map_val_vis->result) {
+        map_val_vis->result = map_val_alloc();
+    }
+    map_val_set(map_val_vis->result, entry->key, return_value);
+    return CONTINUE_ENUMERATION;
+}
+
+static run_stmt_result predefined_map_map(toy_interp *interp, const toy_var *args, size_t num_args)
+{
+    assert(num_args == 2);
+    const toy_val *arg1 = var_get_const(&args[0]);
+    const toy_val *arg2 = var_get_const(&args[1]);
+    if (arg1->type == VAL_MAP) {
+        map_val *map = arg1->map;
+        if (arg2->type == VAL_FUNC) {
+            toy_function *func = arg2->func;
+            map_val_map_visitor map_val_vis = {
+                .map_vis.visit_entry = (const_map_entry_visit_func) map_map_callback,
+                .func = func,
+                .interp = interp,
+                .result = NULL
+            };
+            enumeration_result res = const_map_visitor_visit_map((const_map_visitor *) &map_val_vis, (const generic_map *) map);
+            assert(res == ENUMERATION_COMPLETE);
+            toy_val return_value = { .type = VAL_MAP, .map = map_val_vis.result };
+            interp_set_return_value(interp, &return_value);
+        } else {
+            invalid_argument_type(VAL_FUNC, arg2);
+        }
+    } else {
+        invalid_argument_type(VAL_LIST, arg1);
+    }
+    return REACHED_BLOCK_END;
+}
+
 typedef struct map_filter_cb_args_struct {
-    map_val_visitor map_val_vis;
+    map_val_foreach_visitor map_val_vis;
     map_val *map_to_insert_into;
 } map_filter_cb_args;
 
@@ -814,6 +868,8 @@ static const toy_str_list map_foreach_params = { .str = "map", .next = (toy_str_
 static const toy_str_list map_filter_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list map_filter_params = { .str = "map", .next = (toy_str_list *) &map_filter_param_2 };
 static const toy_str_list map_len_params = { .str = "map", .next = NULL };
+static const toy_str_list map_map_param_2 = { .str = "func", .next = NULL };
+static const toy_str_list map_map_params = { .str = "map", .next = (toy_str_list *) &map_map_param_2 };
 static const toy_str_list map_none_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list map_none_params = { .str = "map", .next = (toy_str_list *) &map_none_param_2 };
 static const toy_str_list map_not_all_param_2 = { .str = "func", .next = NULL };
@@ -822,6 +878,7 @@ static const toy_str_list map_some_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list map_some_params = { .str = "map", .next = (toy_str_list *) &map_some_param_2 };
 static const toy_str_list num_params = { .str = "value", .next = NULL };
 
+/* TODO: Some of these have predictable return types. Can/should we encode that in this typeless toy language? */
 static const toy_function func_assert           = { .name = "assert",           .type = FUNC_PREDEFINED, .predef = predefined_assert,           .param_names = (toy_str_list *) &assert_unary_params,  .doc = "Assert that a givel value is truthy. Fail if it is not." };
 static const toy_function func_assert_equal     = { .name = "assert_equal",     .type = FUNC_PREDEFINED, .predef = predefined_assert_equal,     .param_names = (toy_str_list *) &assert_binary_params, .doc = "Assert that two values are equal. Fail if they are not." };
 static const toy_function func_assert_gt        = { .name = "assert_gt",        .type = FUNC_PREDEFINED, .predef = predefined_assert_gt,        .param_names = (toy_str_list *) &assert_binary_params, .doc = "Assert that the first value is strictly greater than the second. Fail if it is not." };
@@ -845,6 +902,8 @@ static const toy_function func_map_all          = { .name = "map_all",          
 static const toy_function func_map_foreach      = { .name = "map_foreach",      .type = FUNC_PREDEFINED, .predef = predefined_map_foreach,      .param_names = (toy_str_list *) &map_foreach_params,   .doc = "Call the given function once with each (name, value) entry in the given map." };
 static const toy_function func_map_filter       = { .name = "map_filter",       .type = FUNC_PREDEFINED, .predef = predefined_map_filter,       .param_names = (toy_str_list *) &map_filter_params,    .doc = "Call the first function once with each (name, value) entry in the given map. If it returns a truthy value, call the second function with the same entry." };
 static const toy_function func_map_len          = { .name = "map_len",          .type = FUNC_PREDEFINED, .predef = predefined_map_len,          .param_names = (toy_str_list *) &map_len_params,       .doc = "Count the number of entries in the given map." };
+/* FIXME: Give this a less terrible name */
+static const toy_function func_map_map          = { .name = "map_map",          .type = FUNC_PREDEFINED, .predef = predefined_map_map,          .param_names = (toy_str_list *) &map_map_params,       .doc = "Call the given function with each (name, value) entry in the given map. Return a map of names to return values of the function." };
 static const toy_function func_map_none         = { .name = "map_none",         .type = FUNC_PREDEFINED, .predef = predefined_map_none,         .param_names = (toy_str_list *) &map_none_params,      .doc = "Return true if the given function returns a falsy value when called with each entry in the given map." };
 static const toy_function func_map_not_all      = { .name = "map_not_all",      .type = FUNC_PREDEFINED, .predef = predefined_map_not_all,      .param_names = (toy_str_list *) &map_not_all_params,   .doc = "Return true if the given function returns a falsy value when called with any of the entries in the given map." };
 static const toy_function func_map_some         = { .name = "map_some",         .type = FUNC_PREDEFINED, .predef = predefined_map_some,         .param_names = (toy_str_list *) &map_some_params,      .doc = "Return true if the given function returns a truthy value when called with any of the entries in the given map." };
@@ -875,6 +934,7 @@ static const toy_val predef_functions[] = {
     { .type = VAL_FUNC, .func = (toy_function *) &func_map_filter },
     { .type = VAL_FUNC, .func = (toy_function *) &func_map_foreach },
     { .type = VAL_FUNC, .func = (toy_function *) &func_map_len },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_map_map },
     { .type = VAL_FUNC, .func = (toy_function *) &func_map_none },
     { .type = VAL_FUNC, .func = (toy_function *) &func_map_not_all },
     { .type = VAL_FUNC, .func = (toy_function *) &func_map_some },
