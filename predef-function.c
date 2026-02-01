@@ -329,14 +329,14 @@ static run_stmt_result predefined_list_none(toy_interp *interp, const toy_var *a
     return ret;
 }
 
-typedef struct val_list_visitor_struct {
+typedef struct val_list_foreach_visitor_struct {
     const_list_visitor list_vis;
     toy_interp *interp;
     toy_function *toy_func;
     size_t num_seen;
-} val_list_visitor;
+} val_list_foreach_visitor;
 
-static item_callback_result val_list_foreach_item_callback(val_list_visitor *val_list_vis, size_t index, const toy_val_list *list)
+static item_callback_result val_list_foreach_item_callback(val_list_foreach_visitor *val_list_vis, size_t index, const toy_val_list *list)
 {
     const toy_val *value = val_list_payload_const(list);
     val_list_vis->num_seen++;
@@ -374,7 +374,7 @@ static run_stmt_result predefined_list_foreach(toy_interp *interp, const toy_var
         const toy_val_list *list = arg1->list;
         if (arg2->type == VAL_FUNC) {
             toy_function *func = arg2->func;
-            val_list_visitor val_list_vis = {
+            val_list_foreach_visitor val_list_vis = {
                 .list_vis.visit_entry = (const_list_entry_visit_func) val_list_foreach_item_callback,
                 .toy_func = func,
                 .interp = interp,
@@ -393,9 +393,74 @@ static run_stmt_result predefined_list_foreach(toy_interp *interp, const toy_var
     return REACHED_BLOCK_END;
 }
 
+typedef struct val_list_map_visitor_struct {
+    const_list_visitor list_vis;
+    toy_interp *interp;
+    toy_function *toy_func;
+    toy_val_list *result;
+} val_list_map_visitor;
+
+static item_callback_result val_list_map_item_callback(val_list_map_visitor *val_list_vis, size_t index, const toy_val_list *list)
+{
+    const toy_val *value = val_list_payload_const(list);
+    run_stmt_result run_result = interp_run_func_single_arg(val_list_vis->interp, val_list_vis->toy_func, value);
+    if (run_result == REACHED_RETURN) {
+    }
+    switch (run_result) {
+    case REACHED_BLOCK_END:
+        /* Continue enumerating by default */
+        return CONTINUE_ENUMERATION;
+    case REACHED_BREAK:
+    case REACHED_CONTINUE:
+        assert(0);
+        break;
+    case REACHED_RETURN:
+        toy_val *return_value = interp_get_return_value(val_list_vis->interp);
+        if (val_list_vis->result) {
+            val_list_vis->result = val_list_append(val_list_vis->result, return_value);
+        } else {
+            val_list_vis->result = val_list_alloc(return_value);
+        }
+        return CONTINUE_ENUMERATION;
+    default:
+        assert(0);
+        break;
+    }
+    assert(0);
+    return CONTINUE_ENUMERATION;
+}
+
+static run_stmt_result predefined_list_map(toy_interp *interp, const toy_var *args, size_t num_args)
+{
+    assert(num_args == 2);
+    const toy_val *arg1 = var_get_const(&args[0]);
+    const toy_val *arg2 = var_get_const(&args[1]);
+    if (arg1->type == VAL_LIST) {
+        const toy_val_list *list = arg1->list;
+        if (arg2->type == VAL_FUNC) {
+            toy_function *func = arg2->func;
+            val_list_map_visitor val_list_vis = {
+                .list_vis.visit_entry = (const_list_entry_visit_func) val_list_map_item_callback,
+                .toy_func = func,
+                .interp = interp,
+                .result = NULL
+            };
+            enumeration_result res = const_list_visitor_visit_list((const_list_visitor *) &val_list_vis, (const generic_list *) list);
+            assert(res == ENUMERATION_COMPLETE || res == ENUMERATION_INTERRUPTED);
+            toy_val return_value = { .type = VAL_LIST, .list = val_list_vis.result };
+            interp_set_return_value(interp, &return_value);
+        } else {
+            invalid_argument_type(VAL_FUNC, arg2);
+        }
+    } else {
+        invalid_argument_type(VAL_LIST, arg1);
+    }
+    return REACHED_BLOCK_END;
+}
+
 /* TODO: Use list_filter */
 typedef struct val_list_filter_struct {
-    val_list_visitor val_list_vis;
+    val_list_foreach_visitor val_list_vis;
     toy_val_list *list_to_append_to;
 } val_list_filter;
 
@@ -734,6 +799,8 @@ static const toy_str_list list_foreach_params = { .str = "list", .next = (toy_st
 static const toy_str_list list_filter_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list list_filter_params = { .str = "list", .next = (toy_str_list *) &list_filter_param_2 };
 static const toy_str_list list_len_params = { .str = "list", .next = NULL };
+static const toy_str_list list_map_param_2 = { .str = "func", .next = NULL };
+static const toy_str_list list_map_params = { .str = "list", .next = (toy_str_list *) &list_map_param_2 };
 static const toy_str_list list_none_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list list_none_params = { .str = "list", .next = (toy_str_list *) &list_none_param_2 };
 static const toy_str_list list_not_all_param_2 = { .str = "func", .next = NULL };
@@ -770,6 +837,7 @@ static const toy_function func_list_all         = { .name = "list_all",         
 static const toy_function func_list_len         = { .name = "list_len",         .type = FUNC_PREDEFINED, .predef = predefined_list_len,         .param_names = (toy_str_list *) &list_len_params,      .doc = "Count the number of items in the given list." };
 static const toy_function func_list_foreach     = { .name = "list_foreach",     .type = FUNC_PREDEFINED, .predef = predefined_list_foreach,     .param_names = (toy_str_list *) &list_foreach_params,  .doc = "Call the given function once with each item of the given list." };
 static const toy_function func_list_filter      = { .name = "list_filter",      .type = FUNC_PREDEFINED, .predef = predefined_list_filter,      .param_names = (toy_str_list *) &list_filter_params,   .doc = "Call the first function once with each item of the given list. If it returns a truthy value, call the second function with it." };
+static const toy_function func_list_map         = { .name = "list_map",         .type = FUNC_PREDEFINED, .predef = predefined_list_map,         .param_names = (toy_str_list *) &list_map_params,      .doc = "Call the given function with each item in the given list. Return the list of return values of the function." };
 static const toy_function func_list_none        = { .name = "list_none",        .type = FUNC_PREDEFINED, .predef = predefined_list_none,        .param_names = (toy_str_list *) &list_none_params,     .doc = "Return true if the given function returns a falsy value when called with each item in the given list." };
 static const toy_function func_list_not_all     = { .name = "list_not_all",     .type = FUNC_PREDEFINED, .predef = predefined_list_not_all,     .param_names = (toy_str_list *) &list_not_all_params,  .doc = "Return true if the given function returns a falsy value when called with any of the items in the given list." };
 static const toy_function func_list_some        = { .name = "list_some",        .type = FUNC_PREDEFINED, .predef = predefined_list_some,        .param_names = (toy_str_list *) &list_some_params,     .doc = "Return true if the given function returns a truthy value when called with any of the items in the given list." };
@@ -799,6 +867,7 @@ static const toy_val predef_functions[] = {
     { .type = VAL_FUNC, .func = (toy_function *) &func_list_len },
     { .type = VAL_FUNC, .func = (toy_function *) &func_list_filter },
     { .type = VAL_FUNC, .func = (toy_function *) &func_list_foreach },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_list_map },
     { .type = VAL_FUNC, .func = (toy_function *) &func_list_none },
     { .type = VAL_FUNC, .func = (toy_function *) &func_list_not_all },
     { .type = VAL_FUNC, .func = (toy_function *) &func_list_some },
