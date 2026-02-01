@@ -1,0 +1,6 @@
+var list = [ 2, 4, 6, 8 ];
+fun square(x) {
+    return x * x;
+}
+var squared = list_map(list, square);
+assert_equal(squared, [ 4, 16, 36, 64 ]);

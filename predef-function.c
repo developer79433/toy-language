@@ -18,6 +18,8 @@
 #include "list-filter.h"
 #include "map-filter.h"
 #include "generic-map.h"
+#include "function.h"
+#include "str-list.h"
 
 static run_stmt_result predefined_list_len(toy_interp *interp, const toy_var *args, size_t num_args)
 {
@@ -74,14 +76,12 @@ static run_stmt_result predefined_map_keys(toy_interp *interp, const toy_var *ar
         invalid_argument_type(VAL_MAP, arg);
     }
     map_val *map = arg->map;
-    toy_val return_val = { .type = VAL_LIST, .list = NULL };
-    map_keys_visitor map_keys_vis = { .map_vis.visit_entry = (const_map_entry_visit_func) map_keys_visit_entry, .result = return_val.list };
+    map_keys_visitor map_keys_vis = { .map_vis.visit_entry = (const_map_entry_visit_func) map_keys_visit_entry, .result = NULL };
     enumeration_result res = const_map_visitor_visit_map((const_map_visitor *) &map_keys_vis, (const generic_map *) map);
     assert(ENUMERATION_COMPLETE == res);
-    return_val.list = map_keys_vis.result;
+    toy_val return_val = { .type = VAL_LIST, .list = map_keys_vis.result };
     interp_set_return_value(interp, &return_val);
     return REACHED_RETURN;
-
 }
 
 static run_stmt_result predefined_print(toy_interp *interp, const toy_var *args, size_t num_args)
@@ -438,30 +438,26 @@ typedef struct val_list_map_visitor_struct {
 static item_callback_result val_list_map_item_callback(val_list_map_visitor *val_list_vis, size_t index, const toy_val_list *list)
 {
     const toy_val *value = val_list_payload_const(list);
-    run_stmt_result run_result = interp_run_func_single_arg(val_list_vis->interp, val_list_vis->toy_func, value);
-    if (run_result == REACHED_RETURN) {
-    }
-    switch (run_result) {
-    case REACHED_BLOCK_END:
-        /* Continue enumerating by default */
-        return CONTINUE_ENUMERATION;
-    case REACHED_BREAK:
-    case REACHED_CONTINUE:
-        assert(0);
-        break;
-    case REACHED_RETURN:
-        toy_val *return_value = interp_get_return_value(val_list_vis->interp);
-        if (val_list_vis->result) {
-            val_list_vis->result = val_list_append(val_list_vis->result, return_value);
-        } else {
-            val_list_vis->result = val_list_alloc(return_value);
+
+    toy_function *func = val_list_vis->toy_func;
+    if (func->param_names && func->param_names != &INFINITE_PARAMS) {
+        size_t params_len = str_list_len(func->param_names);
+        if (params_len != 1) {
+            incorrect_function_num_args(func, 1);
         }
-        return CONTINUE_ENUMERATION;
-    default:
-        assert(0);
-        break;
     }
-    assert(0);
+    run_stmt_result run_result = interp_run_func_single_arg(val_list_vis->interp, func, value);
+    const toy_val *return_value;
+    if (run_result == REACHED_RETURN) {
+        return_value = interp_get_return_value(val_list_vis->interp);
+    } else {
+        return_value = &null_val;
+    }
+    if (val_list_vis->result) {
+        val_list_vis->result = val_list_append(val_list_vis->result, return_value);
+    } else {
+        val_list_vis->result = val_list_alloc(return_value);
+    }
     return CONTINUE_ENUMERATION;
 }
 
@@ -480,8 +476,10 @@ static run_stmt_result predefined_list_map(toy_interp *interp, const toy_var *ar
                 .interp = interp,
                 .result = NULL
             };
-            enumeration_result res = const_list_visitor_visit_list((const_list_visitor *) &val_list_vis, (const generic_list *) list);
-            assert(res == ENUMERATION_COMPLETE || res == ENUMERATION_INTERRUPTED);
+            if (list) {
+                enumeration_result res = const_list_visitor_visit_list((const_list_visitor *) &val_list_vis, (const generic_list *) list);
+                assert(res == ENUMERATION_COMPLETE || res == ENUMERATION_INTERRUPTED);
+            }
             toy_val return_value = { .type = VAL_LIST, .list = val_list_vis.result };
             interp_set_return_value(interp, &return_value);
         } else {
@@ -490,7 +488,7 @@ static run_stmt_result predefined_list_map(toy_interp *interp, const toy_var *ar
     } else {
         invalid_argument_type(VAL_LIST, arg1);
     }
-    return REACHED_BLOCK_END;
+    return REACHED_RETURN;
 }
 
 /* TODO: Use list_filter */
@@ -620,7 +618,14 @@ static item_callback_result map_map_callback(map_val_map_visitor *map_val_vis, c
     const toy_val key_val = { .type = VAL_STR, .str = entry->key };
     const toy_val_list value_arg = { .val = entry->value, .next = NULL };
     const toy_val_list func_args = { .val = key_val, .next = (toy_val_list *) &value_arg };
-    run_stmt_result run_result = interp_run_func_val_list(map_val_vis->interp, map_val_vis->func, &func_args);
+    toy_function *func = map_val_vis->func;
+    if (func->param_names && func->param_names != &INFINITE_PARAMS) {
+        size_t params_len = str_list_len(func->param_names);
+        if (params_len != 2) {
+            incorrect_function_num_args(func, 2);
+        }
+    }
+    run_stmt_result run_result = interp_run_func_val_list(map_val_vis->interp, func, &func_args);
     const toy_val *return_value;
     if (run_result == REACHED_RETURN) {
         return_value = interp_get_return_value(map_val_vis->interp);
@@ -649,8 +654,10 @@ static run_stmt_result predefined_map_map(toy_interp *interp, const toy_var *arg
                 .interp = interp,
                 .result = NULL
             };
-            enumeration_result res = const_map_visitor_visit_map((const_map_visitor *) &map_val_vis, (const generic_map *) map);
-            assert(res == ENUMERATION_COMPLETE);
+            if (map) {
+                enumeration_result res = const_map_visitor_visit_map((const_map_visitor *) &map_val_vis, (const generic_map *) map);
+                assert(res == ENUMERATION_COMPLETE);
+            }
             toy_val return_value = { .type = VAL_MAP, .map = map_val_vis.result };
             interp_set_return_value(interp, &return_value);
         } else {
@@ -659,7 +666,7 @@ static run_stmt_result predefined_map_map(toy_interp *interp, const toy_var *arg
     } else {
         invalid_argument_type(VAL_LIST, arg1);
     }
-    return REACHED_BLOCK_END;
+    return REACHED_RETURN;
 }
 
 typedef struct map_filter_cb_args_struct {

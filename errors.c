@@ -12,6 +12,7 @@
 #include "interp.h"
 #include "interp-frame.h"
 #include "log.h"
+#include "str-list.h"
 
 void fatal_error(const char *fmt, ...)
 {
@@ -209,4 +210,9 @@ void illegal_instruction_in_for_stmt_at_end(const toy_stmt *stmt)
 void no_return_value(const toy_function *func)
 {
     fatal_error("Function %s did not return a value", func->name);
+}
+
+void incorrect_function_num_args(toy_function *func, size_t required_num_args)
+{
+    fatal_error("Function %s must take %zu arguments, but actually takes %zu", func->name, required_num_args, str_list_len(func->param_names));
 }

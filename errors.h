@@ -31,5 +31,6 @@ void invalid_lvalue(resolved_name *resolved);
 void illegal_instruction_in_for_stmt_at_start(const toy_stmt *stmt);
 void illegal_instruction_in_for_stmt_at_end(const toy_stmt *stmt);
 void no_return_value(const toy_function *func);
+void incorrect_function_num_args(toy_function *func, size_t required_num_args);
 
 #endif /* TOY_ERRORS_H */

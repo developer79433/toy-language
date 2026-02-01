@@ -472,15 +472,15 @@ static item_callback_result map_entry_callback(map_entry_visitor *map_entry_vis,
 static void eval_map(toy_interp *interp, toy_val *result, const toy_map_expr_entry_list *entry_list)
 {
     interp_assert_valid(interp);
-    result->type = VAL_MAP;
-    result->map = NULL;
-    map_entry_visitor map_entry_args = {
+    map_entry_visitor map_entry_vis = {
         .list_vis.visit_entry = (list_entry_visit_func) map_entry_callback,
         .interp = interp,
-        .map = result->map
+        .map = NULL
     };
-    enumeration_result res = list_visitor_visit_list((list_visitor *) &map_entry_args, (generic_list *) entry_list);
+    enumeration_result res = list_visitor_visit_list((list_visitor *) &map_entry_vis, (generic_list *) entry_list);
     assert(res == ENUMERATION_COMPLETE);
+    result->type = VAL_MAP;
+    result->map = map_entry_vis.map;
 }
 
 static void op_func_call(toy_interp *interp, toy_val *result, toy_func_call *call)

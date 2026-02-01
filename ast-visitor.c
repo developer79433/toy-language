@@ -353,7 +353,12 @@ item_callback_result visit_val(ast_visitor *v, toy_val *val)
     return default_val(v, val);
 }
 
-static item_callback_result map_entry_cb(map_ast_visitor *v, size_t index, toy_map_expr_entry_list *list)
+typedef struct map_entry_ast_visitor_struct {
+    list_visitor list_vis;
+    ast_visitor *ast_vis;
+} map_entry_ast_visitor;
+
+static item_callback_result map_entry_cb(map_entry_ast_visitor *v, size_t index, toy_map_expr_entry_list *list)
 {
     ast_visitor *ast_vis = v->ast_vis;
     toy_map_expr_entry *entry = map_expr_entry_list_payload(list);
@@ -367,8 +372,8 @@ static item_callback_result map_entry_cb(map_ast_visitor *v, size_t index, toy_m
 
 item_callback_result default_map_entry_list(ast_visitor *v, toy_map_expr_entry_list *map_entry_list)
 {
-    map_ast_visitor entry_visitor = { .map_vis.visit_entry = (map_entry_visit_func) map_entry_cb, .ast_vis = v };
-    enumeration_result res = map_visitor_visit_map((map_visitor *) &entry_visitor, (generic_map *) map_entry_list);
+    map_entry_ast_visitor entry_visitor = { .list_vis.visit_entry = (list_entry_visit_func) map_entry_cb, .ast_vis = v };
+    enumeration_result res = list_visitor_visit_list((list_visitor *) &entry_visitor, (generic_list *) map_entry_list);
     if (ENUMERATION_COMPLETE == res) {
         return CONTINUE_ENUMERATION;
     }

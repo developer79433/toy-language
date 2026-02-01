@@ -90,8 +90,10 @@ void map_val_dump(const map_val *map)
 {
     map_val_dump_visitor dump_vis = { .map_vis.visit_entry = (const_map_entry_visit_func) dump_item_callback, .output_anything = 0 };
     log_putc('{');
-    enumeration_result res = const_map_visitor_visit_map((const_map_visitor *) &dump_vis, (const generic_map *) map);
-    assert(res == ENUMERATION_COMPLETE);
+    if (map) {
+        enumeration_result res = const_map_visitor_visit_map((const_map_visitor *) &dump_vis, (const generic_map *) map);
+        assert(res == ENUMERATION_COMPLETE);
+    }
     if (dump_vis.output_anything) {
         log_putc(' ');
     }

@@ -237,7 +237,9 @@ void val_assert_valid(const toy_val *val)
     case VAL_MAP:
         if (valid_check_depth < VALID_CHECK_RECURSION_DEPTH) {
             valid_check_depth++;
-            map_val_assert_valid(val->map);
+            if (val->map) {
+                map_val_assert_valid(val->map);
+            }
             valid_check_depth--;
         }
         break;
