@@ -49,6 +49,41 @@ static run_stmt_result predefined_map_len(toy_interp *interp, const toy_var *arg
     return REACHED_RETURN;
 }
 
+typedef struct map_keys_visitor_struct {
+    const_map_visitor map_vis;
+    toy_val_list *result;
+} map_keys_visitor;
+
+static item_callback_result map_keys_visit_entry(map_keys_visitor *map_keys_vis, const generic_map_entry *entry)
+{
+    toy_val val = { .type = VAL_STR, .str = entry->key };
+    if (map_keys_vis->result) {
+        map_keys_vis->result = val_list_append(map_keys_vis->result, &val);
+    } else {
+        map_keys_vis->result = val_list_alloc(&val);
+    }
+    return CONTINUE_ENUMERATION;
+}
+
+static run_stmt_result predefined_map_keys(toy_interp *interp, const toy_var *args, size_t num_args)
+{
+    assert(args);
+    assert(num_args == 1);
+    const toy_val *arg = var_get_const(&args[0]);
+    if (arg->type != VAL_MAP) {
+        invalid_argument_type(VAL_MAP, arg);
+    }
+    map_val *map = arg->map;
+    toy_val return_val = { .type = VAL_LIST, .list = NULL };
+    map_keys_visitor map_keys_vis = { .map_vis.visit_entry = (const_map_entry_visit_func) map_keys_visit_entry, .result = return_val.list };
+    enumeration_result res = const_map_visitor_visit_map((const_map_visitor *) &map_keys_vis, (const generic_map *) map);
+    assert(ENUMERATION_COMPLETE == res);
+    return_val.list = map_keys_vis.result;
+    interp_set_return_value(interp, &return_val);
+    return REACHED_RETURN;
+
+}
+
 static run_stmt_result predefined_print(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     for (const toy_var *var = args; var < &args[num_args]; var++) {
@@ -867,6 +902,7 @@ static const toy_str_list map_foreach_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list map_foreach_params = { .str = "map", .next = (toy_str_list *) &map_foreach_param_2 };
 static const toy_str_list map_filter_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list map_filter_params = { .str = "map", .next = (toy_str_list *) &map_filter_param_2 };
+static const toy_str_list map_keys_params = { .str = "map", .next = NULL };
 static const toy_str_list map_len_params = { .str = "map", .next = NULL };
 static const toy_str_list map_map_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list map_map_params = { .str = "map", .next = (toy_str_list *) &map_map_param_2 };
@@ -901,6 +937,7 @@ static const toy_function func_list_some        = { .name = "list_some",        
 static const toy_function func_map_all          = { .name = "map_all",          .type = FUNC_PREDEFINED, .predef = predefined_map_all,          .param_names = (toy_str_list *) &map_all_params,       .doc = "Return true if the given function returns a truthy value when called with each entry in the given map." };
 static const toy_function func_map_foreach      = { .name = "map_foreach",      .type = FUNC_PREDEFINED, .predef = predefined_map_foreach,      .param_names = (toy_str_list *) &map_foreach_params,   .doc = "Call the given function once with each (name, value) entry in the given map." };
 static const toy_function func_map_filter       = { .name = "map_filter",       .type = FUNC_PREDEFINED, .predef = predefined_map_filter,       .param_names = (toy_str_list *) &map_filter_params,    .doc = "Call the first function once with each (name, value) entry in the given map. If it returns a truthy value, call the second function with the same entry." };
+static const toy_function func_map_keys         = { .name = "map_keys",         .type = FUNC_PREDEFINED, .predef = predefined_map_keys,         .param_names = (toy_str_list *) &map_keys_params,      .doc = "Return a list of keys in the given map." };
 static const toy_function func_map_len          = { .name = "map_len",          .type = FUNC_PREDEFINED, .predef = predefined_map_len,          .param_names = (toy_str_list *) &map_len_params,       .doc = "Count the number of entries in the given map." };
 /* FIXME: Give this a less terrible name */
 static const toy_function func_map_map          = { .name = "map_map",          .type = FUNC_PREDEFINED, .predef = predefined_map_map,          .param_names = (toy_str_list *) &map_map_params,       .doc = "Call the given function with each (name, value) entry in the given map. Return a map of names to return values of the function." };
@@ -933,6 +970,7 @@ static const toy_val predef_functions[] = {
     { .type = VAL_FUNC, .func = (toy_function *) &func_map_all },
     { .type = VAL_FUNC, .func = (toy_function *) &func_map_filter },
     { .type = VAL_FUNC, .func = (toy_function *) &func_map_foreach },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_map_keys },
     { .type = VAL_FUNC, .func = (toy_function *) &func_map_len },
     { .type = VAL_FUNC, .func = (toy_function *) &func_map_map },
     { .type = VAL_FUNC, .func = (toy_function *) &func_map_none },
