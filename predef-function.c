@@ -617,6 +617,7 @@ static run_stmt_result predefined_map_all(toy_interp *interp, const toy_var *arg
     } else {
         invalid_argument_type(VAL_MAP, arg1);
     }
+    /* FIXME: Returning toy_bool converted to run_stmt_result */
     return ret;
 }
 
@@ -638,6 +639,7 @@ static run_stmt_result predefined_map_not_all(toy_interp *interp, const toy_var 
     } else {
         invalid_argument_type(VAL_MAP, arg1);
     }
+    /* FIXME: Returning toy_bool converted to run_stmt_result */
     return ret;
 }
 
@@ -659,6 +661,7 @@ static run_stmt_result predefined_map_some(toy_interp *interp, const toy_var *ar
     } else {
         invalid_argument_type(VAL_MAP, arg1);
     }
+    /* FIXME: Returning toy_bool converted to run_stmt_result */
     return ret;
 }
 
@@ -680,7 +683,43 @@ static run_stmt_result predefined_map_none(toy_interp *interp, const toy_var *ar
     } else {
         invalid_argument_type(VAL_MAP, arg1);
     }
+    /* FIXME: Returning toy_bool converted to run_stmt_result */
     return ret;
+}
+
+double to_num(const toy_val *val)
+{
+    switch (val->type) {
+    case VAL_BOOL:
+        return val->boolean ? 0 : 1;
+    case VAL_FUNC:
+        invalid_argument_type(VAL_NUM, val);
+        break;
+    case VAL_LIST:
+        return list_len((const generic_list *) val->list);
+    case VAL_MAP:
+        return map_size((const generic_map *) val->map);
+    case VAL_NULL:
+        return 0;
+    case VAL_NUM:
+        return val->num;
+    case VAL_STR:
+        return atof(val->str);
+    default:
+        assert(0);
+        break;
+    }
+    assert(0);
+    return 0;
+}
+
+static run_stmt_result predefined_num(toy_interp *interp, const toy_var *args, size_t num_args)
+{
+    assert(num_args == 1);
+    const toy_val *arg = var_get_const(&args[0]);
+    toy_val return_value = { .type = VAL_NUM, .num = to_num(arg) };
+    interp_set_return_value(interp, &return_value);
+    return REACHED_RETURN;
 }
 
 /* TODO: These should accept toy_exprs, so their types can be statically validated */
@@ -714,6 +753,7 @@ static const toy_str_list map_not_all_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list map_not_all_params = { .str = "map", .next = (toy_str_list *) &map_not_all_param_2 };
 static const toy_str_list map_some_param_2 = { .str = "func", .next = NULL };
 static const toy_str_list map_some_params = { .str = "map", .next = (toy_str_list *) &map_some_param_2 };
+static const toy_str_list num_params = { .str = "value", .next = NULL };
 
 static const toy_function func_assert           = { .name = "assert",           .type = FUNC_PREDEFINED, .predef = predefined_assert,           .param_names = (toy_str_list *) &assert_unary_params,  .doc = "Assert that a givel value is truthy. Fail if it is not." };
 static const toy_function func_assert_equal     = { .name = "assert_equal",     .type = FUNC_PREDEFINED, .predef = predefined_assert_equal,     .param_names = (toy_str_list *) &assert_binary_params, .doc = "Assert that two values are equal. Fail if they are not." };
@@ -740,6 +780,7 @@ static const toy_function func_map_len          = { .name = "map_len",          
 static const toy_function func_map_none         = { .name = "map_none",         .type = FUNC_PREDEFINED, .predef = predefined_map_none,         .param_names = (toy_str_list *) &map_none_params,      .doc = "Return true if the given function returns a falsy value when called with each entry in the given map." };
 static const toy_function func_map_not_all      = { .name = "map_not_all",      .type = FUNC_PREDEFINED, .predef = predefined_map_not_all,      .param_names = (toy_str_list *) &map_not_all_params,   .doc = "Return true if the given function returns a falsy value when called with any of the entries in the given map." };
 static const toy_function func_map_some         = { .name = "map_some",         .type = FUNC_PREDEFINED, .predef = predefined_map_some,         .param_names = (toy_str_list *) &map_some_params,      .doc = "Return true if the given function returns a truthy value when called with any of the entries in the given map." };
+static const toy_function func_num              = { .name = "num",              .type = FUNC_PREDEFINED, .predef = predefined_num,              .param_names = (toy_str_list *) &num_params,           .doc = "Convert the argument to a number." };
 static const toy_function func_print            = { .name = "print",            .type = FUNC_PREDEFINED, .predef = predefined_print,            .param_names = (toy_str_list *) &INFINITE_PARAMS,      .doc = "Output the given message to the console." };
 
 static const toy_val predef_functions[] = {
@@ -768,6 +809,7 @@ static const toy_val predef_functions[] = {
     { .type = VAL_FUNC, .func = (toy_function *) &func_map_none },
     { .type = VAL_FUNC, .func = (toy_function *) &func_map_not_all },
     { .type = VAL_FUNC, .func = (toy_function *) &func_map_some },
+    { .type = VAL_FUNC, .func = (toy_function *) &func_num },
     { .type = VAL_FUNC, .func = (toy_function *) &func_print }
 };
 
