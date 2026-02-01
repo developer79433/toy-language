@@ -7,7 +7,11 @@
 typedef struct map_latch_struct {
     map_visitor visitor;
     generic_map_entry *last_seen_entry;
-    toy_bool stop_on_first;
 } map_latch;
+
+typedef struct const_map_latch_struct {
+    const_map_visitor visitor;
+    const generic_map_entry *last_seen_entry;
+} const_map_latch;
 
 #endif /* TOY_MAP_LATCH_TYPES_H */

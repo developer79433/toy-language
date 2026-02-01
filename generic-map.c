@@ -14,6 +14,7 @@
 #include "map-filter.h"
 #include "map-latch.h"
 #include "list-visitor.h"
+#include "map-pipeline.h"
 
 #define DEFAULT_NUM_BUCKETS 13
 
@@ -229,14 +230,35 @@ generic_map_entry *map_get_entry(generic_map *map, const toy_str key)
     return NULL;
 }
 
+typedef struct count_visitor_struct {
+    const_bucket_visitor bucket_vis;
+    size_t count;
+} count_visitor;
+
+static item_callback_result map_count_items_visit_bucket(count_visitor *count_vis, generic_map_entry_list *bucket)
+{
+    count_vis->count += list_len((generic_list *) bucket);
+    return CONTINUE_ENUMERATION;
+}
+
+static size_t map_count_items(const generic_map *map)
+{
+    count_visitor count_vis = { .bucket_vis.visit_bucket = (const_bucket_visit_func) map_count_items_visit_bucket, .count = 0 };
+    enumeration_result res = const_bucket_visitor_visit_map((const_bucket_visitor *) &count_vis, map);
+    assert(ENUMERATION_COMPLETE == res);
+    return count_vis.count;
+}
+
 size_t map_size(const generic_map *map)
 {
+    map_assert_valid(map);
     return map->num_items;
 }
 
 void map_assert_valid(const generic_map *map)
 {
     assert(map);
+    assert(map_count_items(map) == map->num_items);
     /* TODO */
 }
 
@@ -245,19 +267,84 @@ const generic_map_entry *map_get_entry_const(const generic_map *map, const toy_s
     return (const generic_map_entry *) map_get_entry((generic_map *) map, key);
 }
 
+typedef struct map_stop_filter_visitor_struct {
+    map_visitor map_vis;
+    map_filter *filter;
+    toy_bool stop_on_match;
+} map_stop_filter_visitor;
+
+static item_callback_result stop_visitor_visit_entry(map_stop_filter_visitor *stop_filt_vis, generic_map_entry *entry)
+{
+    map_filter *filter = stop_filt_vis->filter;
+    if (map_filter_last_match(filter) && stop_filt_vis->stop_on_match) {
+        return STOP_ENUMERATION;
+    }
+    return CONTINUE_ENUMERATION;
+}
+
+static void map_stop_filter_visitor_init(map_stop_filter_visitor *stop_filt_vis, map_filter *filter, toy_bool stop_on_match)
+{
+    stop_filt_vis->map_vis.visit_entry = (map_entry_visit_func) stop_visitor_visit_entry;
+    stop_filt_vis->filter = filter;
+    stop_filt_vis->stop_on_match = stop_on_match;
+}
+
+typedef struct map_latch_filter_struct {
+    map_latch latch;
+    map_filter *filter;
+} map_latch_filter;
+
+/* #define DEBUG_MAP_LATCH_FILTER */
+
+static item_callback_result map_latch_filter_visit_entry(map_latch_filter *latch_filt, generic_map_entry *entry)
+{
+    map_filter *filter = latch_filt->filter;
+    if (map_filter_last_match(filter)) {
+        map_latch *latch = &latch_filt->latch;
+#ifdef DEBUG_MAP_LATCH_FILTER
+    log_printf_file(__FILE__, "filter succeeded, so letting latch visit entry %p\n", item);
+#endif /* DEBUG_MAP_LATCH_FILTER */
+        return map_latch_visit_entry(latch, entry);
+    }
+#ifdef DEBUG_MAP_LATCH_FILTER
+    log_printf_file(__FILE__, "filter failed, so continuing\n");
+#endif /* DEBUG_MAP_LATCH_FILTER */
+    return CONTINUE_ENUMERATION;
+}
+
+void map_latch_filter_init(map_latch_filter *latch_filt, map_filter *filter)
+{
+    map_latch *latch = &latch_filt->latch;
+    latch_filt->filter = filter;
+    map_latch_init(latch);
+    latch->visitor.visit_entry = (map_entry_visit_func) map_latch_filter_visit_entry;
+}
+
+generic_map_entry *map_latch_filter_get_last_seen(map_latch_filter *latch_filt)
+{
+    map_filter *filter = latch_filt->filter;
+    return map_filter_last_match(filter);
+}
+
 generic_map_entry *map_find(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie, toy_bool inverted, toy_bool stop_on_first)
 {
     map_filter filter;
-    map_latch latch;
-    map_latch_init(&latch, stop_on_first);
-    map_filter_init(&filter, filter_func, filter_cookie, inverted, (map_visitor *) &latch);
-    enumeration_result res = map_visitor_visit_map((map_visitor *) &filter, map);
+    map_filter_init(&filter, filter_func, filter_cookie, inverted);
+    map_stop_filter_visitor stop_filt_vis;
+    map_stop_filter_visitor_init(&stop_filt_vis, &filter, stop_on_first);
+    map_latch_filter save_match_vis;
+    map_latch_filter_init(&save_match_vis, &filter);
+    map_pipeline stop_step = { .visitor = (map_visitor *) &stop_filt_vis, .next = NULL };
+    map_pipeline save_match_step = { .visitor = (map_visitor *) &save_match_vis, .next = &stop_step };
+    map_pipeline filter_step = { .visitor = (map_visitor *) &filter, .next = &save_match_step };
+    map_pipeline *pipeline = &filter_step;
+    enumeration_result res = map_pipeline_visit_map(pipeline, map);
     assert(
-        (res == ENUMERATION_COMPLETE && map_latch_get_last_seen(&latch) == NULL)
+        (res == ENUMERATION_COMPLETE && map_latch_filter_get_last_seen(&save_match_vis) == NULL)
         ||
-        (res == ENUMERATION_INTERRUPTED && map_latch_get_last_seen(&latch) != NULL)
+        (res == ENUMERATION_INTERRUPTED && map_latch_filter_get_last_seen(&save_match_vis) != NULL)
     );
-    return map_latch_get_last_seen(&latch);
+    return map_latch_filter_get_last_seen(&save_match_vis);
 }
 
 generic_map_entry *map_find_first(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie)
@@ -280,19 +367,84 @@ generic_map_entry *map_find_last_not(generic_map *map, generic_map_filter_func f
     return map_find(map, filter_func, filter_cookie, TOY_TRUE, TOY_FALSE);
 }
 
+typedef struct const_map_stop_filter_visitor_struct {
+    const_map_visitor map_vis;
+    const_map_filter *filter;
+    toy_bool stop_on_match;
+} const_map_stop_filter_visitor;
+
+static item_callback_result const_stop_visitor_visit_entry(const_map_stop_filter_visitor *stop_filt_vis, const generic_map_entry *entry)
+{
+    const_map_filter *filter = stop_filt_vis->filter;
+    if (const_map_filter_last_match(filter) && stop_filt_vis->stop_on_match) {
+        return STOP_ENUMERATION;
+    }
+    return CONTINUE_ENUMERATION;
+}
+
+static void const_map_stop_filter_visitor_init(const_map_stop_filter_visitor *stop_filt_vis, const_map_filter *filter, toy_bool stop_on_match)
+{
+    stop_filt_vis->map_vis.visit_entry = (const_map_entry_visit_func) const_stop_visitor_visit_entry;
+    stop_filt_vis->filter = filter;
+    stop_filt_vis->stop_on_match = stop_on_match;
+}
+
+typedef struct const_map_latch_filter_struct {
+    const_map_latch latch;
+    const_map_filter *filter;
+} const_map_latch_filter;
+
+/* #define DEBUG_MAP_LATCH_FILTER */
+
+static item_callback_result const_map_latch_filter_visit_entry(const_map_latch_filter *latch_filt, const generic_map_entry *entry)
+{
+    const_map_filter *filter = latch_filt->filter;
+    if (const_map_filter_last_match(filter)) {
+        const_map_latch *latch = &latch_filt->latch;
+#ifdef DEBUG_MAP_LATCH_FILTER
+    log_printf_file(__FILE__, "filter succeeded, so letting latch visit entry %p\n", item);
+#endif /* DEBUG_MAP_LATCH_FILTER */
+        return const_map_latch_visit_entry(latch, entry);
+    }
+#ifdef DEBUG_MAP_LATCH_FILTER
+    log_printf_file(__FILE__, "filter failed, so continuing\n");
+#endif /* DEBUG_MAP_LATCH_FILTER */
+    return CONTINUE_ENUMERATION;
+}
+
+void const_map_latch_filter_init(const_map_latch_filter *latch_filt, const_map_filter *filter)
+{
+    const_map_latch *latch = &latch_filt->latch;
+    latch_filt->filter = filter;
+    const_map_latch_init(latch);
+    latch->visitor.visit_entry = (const_map_entry_visit_func) const_map_latch_filter_visit_entry;
+}
+
+const generic_map_entry *const_map_latch_filter_get_last_seen(const_map_latch_filter *latch_filt)
+{
+    const_map_filter *filter = latch_filt->filter;
+    return const_map_filter_last_match(filter);
+}
+
 const generic_map_entry *map_find_const(const generic_map *map, generic_map_filter_func filter_func, void *filter_cookie, toy_bool inverted, toy_bool stop_on_first)
 {
     const_map_filter filter;
-    map_latch latch;
-    map_latch_init(&latch, stop_on_first);
-    const_map_filter_init(&filter, filter_func, filter_cookie, inverted, (const_map_visitor *) &latch);
-    enumeration_result res = const_map_visitor_visit_map((const_map_visitor *) &filter, map);
+    const_map_filter_init(&filter, filter_func, filter_cookie, inverted);
+    const_map_stop_filter_visitor stop_filt_vis;
+    const_map_stop_filter_visitor_init(&stop_filt_vis, &filter, stop_on_first);
+    const_map_latch_filter save_match_vis;
+    const_map_latch_filter_init(&save_match_vis, &filter);
+    const_map_pipeline stop_step = { .visitor = (const_map_visitor *) &stop_filt_vis, .next = NULL };
+    const_map_pipeline save_match_step = { .visitor = (const_map_visitor *) &save_match_vis, .next = &stop_step };
+    const_map_pipeline filter_step = { .visitor = (const_map_visitor *) &filter, .next = &save_match_step };
+    const_map_pipeline *pipeline = &filter_step;
+    enumeration_result res = const_map_pipeline_visit_map(pipeline, map);
     assert(
-        (res == ENUMERATION_COMPLETE && map_latch_get_last_seen(&latch) == NULL)
+        (res == ENUMERATION_COMPLETE && const_map_latch_filter_get_last_seen(&save_match_vis) == NULL)
         ||
-        (res == ENUMERATION_INTERRUPTED && map_latch_get_last_seen(&latch) != NULL)
+        (res == ENUMERATION_INTERRUPTED && const_map_latch_filter_get_last_seen(&save_match_vis) != NULL)
     );
-    return map_latch_get_last_seen(&latch);
+    return const_map_latch_filter_get_last_seen(&save_match_vis);
 }
 
 const generic_map_entry *map_find_first_const(const generic_map *map, generic_map_filter_func filter_func, void *filter_cookie)

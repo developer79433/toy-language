@@ -11,7 +11,7 @@ struct map_filter_struct {
     generic_map_filter_func filter_func;
     void *filter_cookie;
     toy_bool inverted;
-    map_visitor *next_visitor;
+    generic_map_entry *last_match;
 };
 
 struct const_map_filter_struct;
@@ -21,7 +21,7 @@ struct const_map_filter_struct {
     generic_map_filter_func filter_func;
     void *filter_cookie;
     toy_bool inverted;
-    const_map_visitor *next_visitor;
+    const generic_map_entry *last_match;
 };
 
 #endif /* TOY_MAP_FILTER_TYPES_H */
