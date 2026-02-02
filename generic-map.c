@@ -156,7 +156,7 @@ delete_result map_delete(generic_map *map, const toy_str key)
 static void dump_map_entry(const generic_map_entry *entry)
 {
     str_dump(entry->key, TOY_FALSE);
-    log_printf(": %p", entry + 1);
+    log_debug(": %p", entry + 1);
 }
 
 typedef struct map_dumper_struct {
@@ -167,9 +167,9 @@ typedef struct map_dumper_struct {
 static item_callback_result dump_item_callback(map_dumper *dumper, const generic_map_entry *entry)
 {
     if (dumper->output_anything) {
-        log_puts(", ");
+        log_puts(LOG_DEBUG, ", ");
     } else {
-        log_putc(' ');
+        log_putc(LOG_DEBUG, ' ');
     }
     dump_map_entry(entry);
     dumper->output_anything = TOY_TRUE;
@@ -179,12 +179,12 @@ static item_callback_result dump_item_callback(map_dumper *dumper, const generic
 void map_dump(const generic_map *map)
 {
     map_dumper dumper = { .visitor.visit_entry = (const_map_entry_visit_func) dump_item_callback, .output_anything = TOY_FALSE };
-    log_putc('{');
+    log_putc(LOG_DEBUG, '{');
     const_map_visitor_visit_map((const_map_visitor *) &dumper, map);
     if (dumper.output_anything) {
-        log_putc(' ');
+        log_putc(LOG_DEBUG, ' ');
     }
-    log_putc('}');
+    log_putc(LOG_DEBUG, '}');
 }
 
 typedef struct map_get_visitor_struct {
@@ -497,9 +497,9 @@ typedef struct dump_keys_visitor_struct {
 static item_callback_result dump_keys_cb(dump_keys_visitor *visitor, const generic_map_entry *entry)
 {
     if (visitor->output_anything) {
-        log_puts(", ");
+        log_puts(LOG_DEBUG, ", ");
     } else {
-        log_putc(' ');
+        log_putc(LOG_DEBUG, ' ');
     }
     str_dump(entry->key, TOY_FALSE);
     visitor->output_anything = TOY_TRUE;
@@ -508,12 +508,12 @@ static item_callback_result dump_keys_cb(dump_keys_visitor *visitor, const gener
 
 void map_dump_keys(const generic_map *map)
 {
-    log_putc('[');
+    log_putc(LOG_DEBUG, '[');
     dump_keys_visitor visitor = { .visit = (const_map_entry_visit_func) dump_keys_cb, .output_anything = TOY_FALSE };
     enumeration_result res = const_map_visitor_visit_map((const_map_visitor *) &visitor, map);
     assert(ENUMERATION_COMPLETE == res);
     if (visitor.output_anything) {
-        log_putc(' ');
+        log_putc(LOG_DEBUG, ' ');
     }
-    log_putc(']');
+    log_putc(LOG_DEBUG, ']');
 }

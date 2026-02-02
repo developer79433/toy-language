@@ -46,7 +46,7 @@ static item_callback_result var_decl_dump_callback(var_decl_visitor *var_decl_vi
 {
     const toy_var_decl *var_decl = var_decl_list_payload_const(item);
     if (var_decl_vis->output_something) {
-        log_puts(", ");
+        log_debug(", ");
     }
     var_decl_dump(var_decl);
     var_decl_vis->output_something = TOY_TRUE;

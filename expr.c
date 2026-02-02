@@ -170,40 +170,40 @@ void expr_assert_valid(const toy_expr *expr)
 
 static void dump_binary_op(const toy_expr *arg1, const toy_expr *arg2, const char *op)
 {
-    log_putc('(');
+    log_putc(LOG_DEBUG, '(');
     expr_dump(arg1);
-    log_puts(op);
+    log_debug(op);
     expr_dump(arg2);
-    log_putc(')');
+    log_putc(LOG_DEBUG, ')');
 }
 
 static void dump_assignment(const toy_str lhs, const toy_expr *rhs)
 {
     str_dump(lhs, TOY_FALSE);
-    log_puts(" = ");
+    log_debug(" = ");
     expr_dump(rhs);
 }
 
 static void dump_collection_lookup(const toy_str lhs, const toy_expr *rhs)
 {
     str_dump(lhs, TOY_FALSE);
-    log_putc('[');
+    log_putc(LOG_DEBUG, '[');
     expr_dump(rhs);
-    log_putc(']');
+    log_putc(LOG_DEBUG, ']');
 }
 
 static void dump_function_call(const toy_str func_name, const toy_expr_list *func_args)
 {
-    log_printf("%s(", func_name);
+    log_debug("%s(", func_name);
     expr_list_dump(func_args, TOY_FALSE);
-    log_putc(')');
+    log_putc(LOG_DEBUG, ')');
 }
 
 static void dump_method_call(const toy_method_call *method_call)
 {
-    log_printf("%s.%s(", method_call->id.name, method_call->method_name);
+    log_debug("%s.%s(", method_call->id.name, method_call->method_name);
     expr_list_dump(method_call->args, TOY_FALSE);
-    log_putc(')');
+    log_putc(LOG_DEBUG, ')');
 }
 
 static void dump_identifier(const toy_str id)
@@ -248,7 +248,7 @@ void expr_dump(const toy_expr *expr) {
             dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " >= ");
             break;
         case EXPR_IDENTIFIER:
-            log_printf("%s", expr->id.name);
+            log_debug("%s", expr->id.name);
             break;
         case EXPR_IN:
             dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " in ");
@@ -284,9 +284,9 @@ void expr_dump(const toy_expr *expr) {
             dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " != ");
             break;
         case EXPR_NOT:
-            log_puts("not (");
+            log_puts(LOG_DEBUG, "not (");
             expr_dump(expr->unary_op.arg);
-            log_puts(")");
+            log_puts(LOG_DEBUG, ")");
             break;
         case EXPR_OR:
             dump_binary_op(expr->binary_op.arg1, expr->binary_op.arg2, " or ");
@@ -296,29 +296,29 @@ void expr_dump(const toy_expr *expr) {
             break;
         case EXPR_POSTFIX_DECREMENT:
             dump_identifier(expr->postfix_decrement.id.name);
-            log_puts("--");
+            log_puts(LOG_DEBUG, "--");
             break;
         case EXPR_POSTFIX_INCREMENT:
             dump_identifier(expr->postfix_increment.id.name);
-            log_puts("++");
+            log_puts(LOG_DEBUG, "++");
             break;
         case EXPR_PREFIX_DECREMENT:
-            log_puts("--");
+            log_puts(LOG_DEBUG, "--");
             dump_identifier(expr->prefix_decrement.id.name);
             break;
         case EXPR_PREFIX_INCREMENT:
-            log_puts("++");
+            log_puts(LOG_DEBUG, "++");
             dump_identifier(expr->prefix_increment.id.name);
             break;
         case EXPR_TERNARY:
             expr_dump(expr->ternary.condition);
-            log_puts(" ? ");
+            log_puts(LOG_DEBUG, " ? ");
             expr_dump(expr->ternary.if_true);
-            log_puts(" : ");
+            log_puts(LOG_DEBUG, " : ");
             expr_dump(expr->ternary.if_false);
             break;
         case EXPR_UNEG:
-            log_puts("-");
+            log_puts(LOG_DEBUG, "-");
             expr_dump(expr->unary_op.arg);
             break;
         default:
@@ -327,6 +327,6 @@ void expr_dump(const toy_expr *expr) {
         }
     } else {
         /* TODO: Use null_expr */
-        log_puts("null");
+        log_debug("null");
     }
 }

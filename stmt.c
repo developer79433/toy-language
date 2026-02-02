@@ -195,107 +195,107 @@ void stmt_dump(const toy_stmt *stmt, int append_semicolon)
 {
     switch (stmt->type) {
     case STMT_BLOCK:
-        log_puts("{\n");
+        log_debug("{\n");
         const toy_block_stmt *block_stmt = &stmt->block_stmt;
         stmt_list_dump(block_stmt->block->stmts);
-        log_puts("}\n");
+        log_debug("}\n");
         break;
     case STMT_BREAK:
-        log_puts("break");
+        log_debug("break");
         if (append_semicolon) {
-            log_putc(';');
+            log_putc(LOG_DEBUG, ';');
         }
         break;
     case STMT_CONTINUE:
-        log_puts("continue");
+        log_debug("continue");
         if (append_semicolon) {
-            log_putc(';');
+            log_putc(LOG_DEBUG, ';');
         }
         break;
     case STMT_EXPR:
         const toy_expr_stmt *expr_stmt = &stmt->expr_stmt;
         expr_dump(expr_stmt->expr);
         if (append_semicolon) {
-            log_putc(';');
+            log_putc(LOG_DEBUG, ';');
         }
         break;
     case STMT_FOR:
-        log_puts("for (");
+        log_debug("for (");
         const toy_for_stmt *for_stmt = &stmt->for_stmt;
         if (for_stmt->at_start) {
             stmt_dump(for_stmt->at_start, 1);
         }
-        log_putc(' ');
+        log_putc(LOG_DEBUG, ' ');
         if (for_stmt->condition) {
             expr_dump(for_stmt->condition);
         } else {
-            log_puts("true");
+            log_debug("true");
         }
-        log_puts("; ");
+        log_debug("; ");
         if (for_stmt->at_end) {
             stmt_dump(for_stmt->at_end, 0);
         }
-        log_puts(") {\n");
+        log_debug(") {\n");
         if (for_stmt->body->stmts) {
             stmt_list_dump(for_stmt->body->stmts);
         }
-        log_puts("}");
+        log_debug("}");
         break;
     case STMT_FUNC_DECL:
         const toy_func_decl_stmt *func_decl_stmt = &stmt->func_decl_stmt;
         const toy_function *func = func_decl_stmt->func;
-        log_printf("fun %s(", func->name);
+        log_debug("fun %s(", func->name);
         str_list_dump(func->param_names, TOY_FALSE);
-        log_puts(") {\n");
+        log_debug(") {\n");
         stmt_list_dump(func->code->stmts);
-        log_puts("}");
+        log_debug("}");
         break;
     case STMT_IF:
         const toy_if_stmt *if_stmt = &stmt->if_stmt;
         for (toy_if_arm_list *arm_list = if_stmt->arms; arm_list; arm_list = arm_list->next) {
             if (arm_list == if_stmt->arms) {
-                log_puts("if (");
+                log_debug("if (");
             } else {
-                log_puts(" elseif (");
+                log_debug(" elseif (");
             }
             expr_dump(arm_list->arm.condition);
-            log_puts(") {\n");
+            log_debug(") {\n");
             stmt_list_dump(arm_list->arm.code->stmts);
-            log_puts("}");
+            log_debug("}");
         }
         if (if_stmt->elsepart->stmts) {
-            log_puts(" else {\n");
+            log_debug(" else {\n");
             stmt_list_dump(if_stmt->elsepart->stmts);
-            log_puts("}");
+            log_debug("}");
         }
         break;
     case STMT_NULL:
         if (append_semicolon) {
-            log_putc(';');
+            log_putc(LOG_DEBUG, ';');
         }
         break;
     case STMT_RETURN:
-        log_puts("return ");
+        log_debug("return ");
         expr_dump(stmt->return_stmt.expr);
         if (append_semicolon) {
-            log_putc(';');
+            log_putc(LOG_DEBUG, ';');
         }
         break;
     case STMT_VAR_DECL:
-        log_puts("var ");
+        log_debug("var ");
         var_decl_list_dump(stmt->var_decl_stmt.var_decl_list);
         if (append_semicolon) {
-            log_putc(';');
+            log_putc(LOG_DEBUG, ';');
         }
         break;
     case STMT_WHILE:
         const toy_while_stmt *while_stmt = &stmt->while_stmt;
-        log_puts("while (\n");
+        log_debug("while (\n");
         expr_dump(while_stmt->condition);
-        log_puts(") {\n");
+        log_debug(") {\n");
         stmt_list_dump(while_stmt->body->stmts);
         /* TODO: block_dump(while_stmt->body.parent); */
-        log_puts("}");
+        log_debug("}");
         break;
     default:
         invalid_stmt_type(stmt->type);

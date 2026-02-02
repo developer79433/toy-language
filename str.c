@@ -10,20 +10,20 @@ void print_str(const toy_str str)
 {
     for (const char *p = str; *p; p++) {
         if (*p == '\'' || *p == '"' || *p == '\\') {
-            log_putc('\\');
+            log_putc(LOG_DEBUG, '\\');
         }
-        log_putc(*p);
+        log_putc(LOG_DEBUG, *p);
     }
 }
 
 void str_dump(const toy_str str, toy_bool quoted)
 {
     if (quoted) {
-        log_putc('"');
+        log_putc(LOG_DEBUG, '"');
     }
     print_str(str);
     if (quoted) {
-        log_putc('"');
+        log_putc(LOG_DEBUG, '"');
     }
 }
 

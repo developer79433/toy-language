@@ -52,9 +52,9 @@ static item_callback_result expr_dump_callback(expr_dump_visitor *expr_dump_vis,
 {
     const toy_expr *expr = expr_list_payload_const(item);
     if (expr_dump_vis->printed_anything) {
-        log_puts(", ");
+        log_puts(LOG_DEBUG, ", ");
     } else {
-        log_putc(' ');
+        log_putc(LOG_DEBUG, ' ');
     }
     expr_dump(expr);
     expr_dump_vis->printed_anything = TOY_TRUE;
@@ -64,7 +64,7 @@ static item_callback_result expr_dump_callback(expr_dump_visitor *expr_dump_vis,
 void expr_list_dump(const toy_expr_list *list, toy_bool include_braces)
 {
     if (include_braces) {
-        log_putc('[');
+        log_putc(LOG_DEBUG, '[');
     }
     expr_dump_visitor expr_dump_vis = { .list_vis.visit_entry = (const_list_entry_visit_func) expr_dump_callback, .printed_anything = TOY_FALSE };
     enumeration_result res = const_list_visitor_visit_list((const_list_visitor *) &expr_dump_vis, (const generic_list *) list);
@@ -72,10 +72,10 @@ void expr_list_dump(const toy_expr_list *list, toy_bool include_braces)
     for (const toy_expr_list *cur = list; cur; cur = cur->next) {
     }
     if (expr_dump_vis.printed_anything) {
-        log_putc(' ');
+        log_putc(LOG_DEBUG, ' ');
     }
     if (include_braces) {
-        log_putc(']');
+        log_putc(LOG_DEBUG, ']');
     }
 }
 

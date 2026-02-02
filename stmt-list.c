@@ -54,7 +54,7 @@ static item_callback_result stmt_dump_callback(const_list_visitor *list_vis, siz
 {
     const toy_stmt *stmt = stmt_list_payload_const(item);
     stmt_dump(stmt, 1);
-    log_putc('\n');
+    log_putc(LOG_DEBUG, '\n');
     return CONTINUE_ENUMERATION;
 }
 

@@ -77,9 +77,9 @@ typedef struct map_val_dump_visitor_struct {
 static item_callback_result dump_item_callback(map_val_dump_visitor *dump_vis, const map_val_entry *entry)
 {
     if (dump_vis->output_anything) {
-        log_puts(", ");
+        log_debug(", ");
     } else {
-        log_putc(' ');
+        log_putc(LOG_DEBUG, ' ');
     }
     map_val_entry_dump(entry);
     dump_vis->output_anything = 1;
@@ -89,15 +89,15 @@ static item_callback_result dump_item_callback(map_val_dump_visitor *dump_vis, c
 void map_val_dump(const map_val *map)
 {
     map_val_dump_visitor dump_vis = { .map_vis.visit_entry = (const_map_entry_visit_func) dump_item_callback, .output_anything = 0 };
-    log_putc('{');
+    log_putc(LOG_DEBUG, '{');
     if (map) {
         enumeration_result res = const_map_visitor_visit_map((const_map_visitor *) &dump_vis, (const generic_map *) map);
         assert(res == ENUMERATION_COMPLETE);
     }
     if (dump_vis.output_anything) {
-        log_putc(' ');
+        log_putc(LOG_DEBUG, ' ');
     }
-    log_putc('}');
+    log_putc(LOG_DEBUG, '}');
 }
 
 #ifndef NDEBUG

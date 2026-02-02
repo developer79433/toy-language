@@ -23,9 +23,9 @@ void var_decl_assert_valid(const toy_var_decl *decl)
 
 void var_decl_dump(const toy_var_decl *decl)
 {
-    log_puts(decl->name);
+    log_debug(decl->name);
     if (decl->value) {
-        log_puts(" = ");
+        log_debug(" = ");
         expr_dump(decl->value);
     }
 }

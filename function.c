@@ -16,23 +16,23 @@
 void func_dump(const toy_function *func, toy_bool verbose)
 {
     func_assert_valid(func);
-    log_printf("fun %s(", func->name);
+    log_debug("fun %s(", func->name);
     if (func->param_names == &INFINITE_PARAMS) {
-        log_puts("*");
+        log_debug("*");
     } else {
         str_list_dump(func->param_names, TOY_FALSE);
     }
-    log_puts(")");
+    log_debug(")");
     if (verbose) {
-        log_puts(" {\n");
+        log_debug(" {\n");
         if (func->type == FUNC_PREDEFINED) {
-            log_printf("/* Pre-defined function code at %p */\n", func->predef);
+            log_debug("/* Pre-defined function code at %p */\n", func->predef);
         } else if (func->type == FUNC_USER_DECLARED) {
             stmt_list_dump(func->code->stmts);
         } else {
             invalid_function_type(func->type);
         }
-        log_puts("}\n");
+        log_debug("}\n");
     }
 }
 

@@ -1,9 +1,35 @@
+#include <assert.h>
 #include <stdio.h>
 
 #include "str.h"
 #include "log.h"
 
 static FILE *logfile = NULL;
+
+static const char *log_level_names[LOG_LEVEL_MAX + 1] = {
+    "Debug",
+    "Info",
+    "Warning",
+    "Error"
+};
+
+const char *log_level_name(log_level level)
+{
+    assert(level >= 0 && level <= LOG_LEVEL_MAX);
+    return log_level_names[level];
+}
+
+static log_level threshold = LOG_DEBUG;
+
+void log_set_level(log_level new_level)
+{
+    threshold = new_level;
+}
+
+log_level log_get_level(void)
+{
+    return threshold;
+}
 
 static void openlog(void)
 {
@@ -12,46 +38,116 @@ static void openlog(void)
     }
 }
 
-void log_debug(const char *str)
+void log_to_file(const char *filename)
 {
     openlog();
-    fputs(str, logfile);
-    fputc('\n', logfile);
+    FILE *f = fopen(filename, "w");
+    if (f) {
+        log_info_file(__FILE__, "Switching to new log file '%s'\n", filename);
+        logfile = f;
+        log_info_file(__FILE__, "Switched to new log file '%s'\n", filename);
+    } else {
+        perror("fopen");
+        log_warn_file(__FILE__, "Failed to open new log file '%s'\n");
+    }
 }
 
-int log_vprintf(const char *fmt, va_list argptr)
+/* TODO: Make these static */
+
+void log_putc(log_level level, int c)
+{
+    if (level >= threshold) {
+        openlog();
+        fputc(c, logfile);
+    }
+}
+
+void log_puts(log_level level, const char *str)
+{
+    if (level >= threshold) {
+        openlog();
+        fputs(str, logfile);
+    }
+}
+
+void log_vprintf(log_level level, const char *fmt, va_list argptr)
 {
     openlog();
-    return vfprintf(logfile, fmt, argptr);
+    vfprintf(logfile, fmt, argptr);
 }
 
-int log_printf(const char *fmt, ...)
+void log_printf(log_level level, const char *fmt, ...)
 {
     va_list argptr;
     va_start(argptr, fmt);
-    int retval = log_vprintf(fmt, argptr);
+    log_vprintf(level, fmt, argptr);
     va_end(argptr);
-    return retval;
 }
 
-int log_printf_file(const char *filename, const char *fmt, ...)
+void log_debug(const char *fmt, ...)
 {
     va_list argptr;
     va_start(argptr, fmt);
-    log_printf("%s: ", filename);
-    int retval = log_vprintf(fmt, argptr);
+    log_vprintf(LOG_DEBUG, fmt, argptr);
     va_end(argptr);
-    return retval;
 }
 
-int log_putc(int c)
+void log_info(const char *fmt, ...)
 {
-    openlog();
-    return fputc(c, logfile);
+    va_list argptr;
+    va_start(argptr, fmt);
+    log_vprintf(LOG_INFO, fmt, argptr);
+    va_end(argptr);
 }
 
-int log_puts(const char *str)
+void log_warn(const char *fmt, ...)
 {
-    openlog();
-    return fputs(str, logfile);
+    va_list argptr;
+    va_start(argptr, fmt);
+    log_vprintf(LOG_WARN, fmt, argptr);
+    va_end(argptr);
+}
+
+void log_error(const char *fmt, ...)
+{
+    va_list argptr;
+    va_start(argptr, fmt);
+    log_vprintf(LOG_ERROR, fmt, argptr);
+    va_end(argptr);
+}
+
+void log_debug_file(const char *filename, const char *fmt, ...)
+{
+    va_list argptr;
+    va_start(argptr, fmt);
+    log_debug("%s: ", filename);
+    log_vprintf(LOG_DEBUG, fmt, argptr);
+    va_end(argptr);
+}
+
+void log_info_file(const char *filename, const char *fmt, ...)
+{
+    va_list argptr;
+    va_start(argptr, fmt);
+    log_info("%s: ", filename);
+    log_vprintf(LOG_INFO, fmt, argptr);
+    va_end(argptr);
+}
+
+void log_warn_file(const char *filename, const char *fmt, ...)
+{
+    va_list argptr;
+    va_start(argptr, fmt);
+    log_warn("%s: ", filename);
+    log_vprintf(LOG_WARN, fmt, argptr);
+    va_end(argptr);
+}
+
+void log_error_file(const char *filename, const char *fmt, ...)
+{
+    va_list argptr;
+    va_start(argptr, fmt);
+    log_error("%s: ", filename);
+    log_vprintf(LOG_ERROR, fmt, argptr);
+    va_end(argptr);
 }

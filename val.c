@@ -46,10 +46,10 @@ void val_dump(const toy_val *val, toy_bool verbose)
             map_val_dump(val->obj);
             break;
         case VAL_NULL:
-            log_puts("null");
+            log_debug("null");
             break;
         case VAL_NUM:
-            log_printf("%f", val->num);
+            log_debug("%f", val->num);
             break;
         case VAL_STR:
             str_dump(val->str, TOY_TRUE);
@@ -325,7 +325,7 @@ void val_array_dump(const toy_val *vals, size_t size)
     toy_bool printed_anything = TOY_FALSE;
     for (const toy_val *val = vals; val < &vals[size]; val++) {
         if (printed_anything) {
-            log_puts(", ");
+            log_debug(", ");
         }
         val_dump(val, 1);
         printed_anything = TOY_TRUE;

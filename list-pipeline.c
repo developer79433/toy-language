@@ -153,14 +153,14 @@ enumeration_result const_list_pipeline_visit_list(const_list_pipeline *pipeline,
 static item_callback_result print_entry_1(list_visitor *list_vis, size_t index, const toy_str_list *item)
 {
     toy_str str = str_list_payload_const(item);
-    log_printf("list-pipeline: item 1: %s\n", str);
+    log_debug("list-pipeline: item 1: %s\n", str);
     return CONTINUE_ENUMERATION;
 }
 
 static item_callback_result print_entry_2(list_visitor *list_vis, size_t index, const toy_str_list *item)
 {
     toy_str str = str_list_payload_const(item);
-    log_printf("list-pipeline: item 2: %s\n", str);
+    log_debug("list-pipeline: item 2: %s\n", str);
     return CONTINUE_ENUMERATION;
 }
 

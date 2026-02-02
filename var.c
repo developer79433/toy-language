@@ -80,11 +80,11 @@ void var_array_assert_valid(const toy_var *vars, size_t count)
 void var_dump(const toy_var *var, toy_bool verbose)
 {
     if (verbose) {
-        log_printf("var {\n");
-        log_printf("num_refs: %d\n", var->num_refs);
-        log_printf("val:\n");
+        log_debug("var {\n");
+        log_debug("num_refs: %d\n", var->num_refs);
+        log_debug("val:\n");
         val_dump(&var->val, verbose);
-        log_printf("} var\n");
+        log_debug("} var\n");
     } else {
         const toy_val *val = var_get_const(var);
         val_dump(val, verbose);
@@ -96,7 +96,7 @@ void var_array_dump(const toy_var *vars, size_t size, toy_bool verbose)
     toy_bool printed_anything = TOY_FALSE;
     for (const toy_var *var = vars; var < &vars[size]; var++) {
         if (printed_anything) {
-            log_puts(", ");
+            log_debug(", ");
         }
         var_dump(var, verbose);
         printed_anything = TOY_TRUE;

@@ -43,11 +43,11 @@ void resolved_name_dump(const resolved_name *resolved)
     switch (resolved->type) {
     case REF_FUNC_DECL:
         toy_func_decl_stmt *func_decl_stmt = resolved->func_decl_stmt;
-        log_printf("Function %s\n", func_decl_stmt->func->name);
+        log_debug("Function %s\n", func_decl_stmt->func->name);
         break;
     case REF_FUNC_PARAM:
         const closure *param_ref = &resolved->func_param;
-        log_printf("Function parameter #%zd, %zd frames up\n", param_ref->var_index, param_ref->frames_up);
+        log_debug("Function parameter #%zd, %zd frames up\n", param_ref->var_index, param_ref->frames_up);
         break;
     case REF_PREDEF_CONST:
         predef_const_dump(resolved->predef_const);
@@ -56,10 +56,10 @@ void resolved_name_dump(const resolved_name *resolved)
         val_dump(resolved->predef_func, 0);
         break;
     case REF_UNDEFINED:
-        log_puts("Undefined reference\n");
+        log_debug("Undefined reference\n");
         break;
     case REF_VAR_DECL:
-        log_printf("Variable, declaration #%zd, %zd frames up\n", resolved->var_decl.var_index, resolved->var_decl.frames_up);
+        log_debug("Variable, declaration #%zd, %zd frames up\n", resolved->var_decl.var_index, resolved->var_decl.frames_up);
         break;
     default:
         assert(0);

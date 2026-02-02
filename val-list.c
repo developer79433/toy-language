@@ -19,9 +19,9 @@ static item_callback_result val_dump_callback(val_dump_visitor *val_dump_vis, si
 {
     const toy_val *val = val_list_payload_const(item);
     if (val_dump_vis->printed_anything) {
-        log_puts(", ");
+        log_debug(", ");
     } else {
-        log_putc(' ');
+        log_putc(LOG_DEBUG, ' ');
     }
     val_dump(val, 1);
     val_dump_vis->printed_anything = TOY_TRUE;
@@ -30,14 +30,14 @@ static item_callback_result val_dump_callback(val_dump_visitor *val_dump_vis, si
 
 void val_list_dump(const toy_val_list *list)
 {
-    log_putc('[');
+    log_putc(LOG_DEBUG, '[');
     val_dump_visitor val_dump_vis = { .list_vis.visit_entry = (const_list_entry_visit_func) val_dump_callback, .printed_anything = TOY_FALSE };
     enumeration_result res = const_list_visitor_visit_list((const_list_visitor *) &val_dump_vis, (const generic_list *) list);
     assert(ENUMERATION_COMPLETE == res);
     if (val_dump_vis.printed_anything) {
-        log_putc(' ');
+        log_putc(LOG_DEBUG, ' ');
     }
-    log_putc(']');
+    log_putc(LOG_DEBUG, ']');
 }
 
 size_t val_list_len(const toy_val_list *list)

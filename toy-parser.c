@@ -40,7 +40,7 @@ void parser_init(toy_parser *parser)
 
 void yyerror(const char *s)
 {  
-    log_printf("\nError: %s\n", s);  
+    log_debug("\nError: %s\n", s);  
 }
 
 toy_stmt_list *program_start;
@@ -53,7 +53,7 @@ toy_function *parser_parse(toy_parser *parser, FILE *in)
     if (0 == parse_res) {
         parser->toplevel_function.code->stmts = program_start;
     } else {
-        fprintf(stderr, "yyparse() returned %d\n", parse_res);
+        log_error("yyparse() returned %d\n", parse_res);
         parser->toplevel_function.code->stmts = NULL;
     }
     program_start = NULL;

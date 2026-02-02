@@ -26,7 +26,7 @@ void str_list_dump(const toy_str_list *list, toy_bool quoted)
         int output_something = 0;
         for (cur = list; cur; cur = cur->next) {
             if (output_something) {
-                log_puts(", ");
+                log_debug(", ");
             }
             str_dump(cur->str, quoted);
             output_something = 1;

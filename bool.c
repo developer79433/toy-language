@@ -5,7 +5,7 @@
 
 void dump_bool(toy_bool b)
 {
-    log_puts(b ? "True" : "False");
+    log_debug(b ? "True" : "False");
 }
 
 void bool_assert_valid(toy_bool b)

@@ -88,12 +88,13 @@ static run_stmt_result predefined_print(toy_interp *interp, const toy_var *args,
 {
     for (const toy_var *var = args; var < &args[num_args]; var++) {
         const toy_val *val = var_get_const(var);
+        /* TODO: This should output to stdout, not the log stream going to stderr */
         if (val->type == VAL_STR) {
             print_str(val->str);
         } else {
             val_dump(val, 1);
         }
-        log_putc('\n');
+        log_putc(LOG_DEBUG, '\n');
     }
     return REACHED_BLOCK_END;
 }
@@ -105,7 +106,7 @@ static void toy_assert_fail(const char * msg, size_t num_vals, ...)
     while (num_vals--) {
         const toy_val *val = va_arg(argptr, const toy_val *);
         val_dump(val, 1);
-        log_putc('\n');
+        log_putc(LOG_DEBUG, '\n');
     }
     va_end(argptr);
     fatal_error("Assertion failed: %s", msg);
