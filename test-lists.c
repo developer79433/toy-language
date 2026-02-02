@@ -10,6 +10,8 @@
 #include "list-filter.h"
 #include "list-visitor.h"
 #include "list-latch.h"
+#include "rev-list-visitor.h"
+#include "rev-list-subset-visitor.h"
 
 static void assert_all_match(const generic_list *list, generic_list_filter_func filter_func)
 {
@@ -129,6 +131,78 @@ static toy_bool is_fruit(void *cookie, size_t index, const toy_str_list *item)
     assert(0);
 }
 
+#if 0
+static item_callback_result print_entry(rev_list_visitor *rev_list_vis, size_t index, toy_str_list *item)
+{
+    toy_str str = str_list_payload(item);
+    log_debug("Backwards: Item %zu is %s\n", index, str);
+    return CONTINUE_ENUMERATION;
+}
+#endif
+
+typedef struct rev_list_compare_visitor_struct {
+    rev_list_subset_visitor rev_list_sub_vis;
+    toy_str_list *other_list;
+} rev_list_compare_visitor;
+
+void rev_list_compare_visitor_init(rev_list_compare_visitor *rev_list_comp_vis, list_entry_visit_func visit_func, generic_list *stop_at, toy_str_list *other_list)
+{
+    rev_list_subset_visitor *rev_list_stop_vis = &rev_list_comp_vis->rev_list_sub_vis;
+    rev_list_subset_visitor_init(rev_list_stop_vis, visit_func, stop_at);
+    rev_list_comp_vis->other_list = other_list;
+}
+
+static item_callback_result compare_to_other_list(rev_list_compare_visitor *rev_list_comp_vis, size_t index, toy_str_list *my_item)
+{
+    toy_str my_str = str_list_payload(my_item);
+    toy_str other_str = str_list_index(rev_list_comp_vis->other_list, index);
+    assert(str_equal(my_str, other_str));
+    return CONTINUE_ENUMERATION;
+}
+
+static item_callback_result test_entry_valid(list_visitor *list, size_t index, toy_str_list *item)
+{
+    assert(index >= 0 && index < 1000000);
+    str_list_assert_valid(item);
+    toy_str str = str_list_payload(item);
+    str_assert_valid(str);
+    return CONTINUE_ENUMERATION;
+}
+
+static void test_backwards_visitors()
+{
+    toy_str_list *list = str_list_alloc("First item");
+    list = str_list_append(list, "Second item");
+    list = str_list_append(list, "Third item");
+    list = str_list_append(list, "Fourth item");
+    list = str_list_append(list, "Fifth item");
+
+    toy_str_list *reversed = str_list_alloc("Fifth item");
+    reversed = str_list_append(reversed, "Fourth item");
+    reversed = str_list_append(reversed, "Third item");
+    reversed = str_list_append(reversed, "Second item");
+    reversed = str_list_append(reversed, "First item");
+    rev_list_compare_visitor rev_list_comp_vis_1;
+    rev_list_compare_visitor_init(&rev_list_comp_vis_1, (list_entry_visit_func) compare_to_other_list, NULL, list);
+    rev_list_subset_visitor_visit_list((rev_list_subset_visitor *) &rev_list_comp_vis_1, (generic_list *) list);
+
+    rev_list_visitor rev_list_vis_1;
+    rev_list_visitor_init(&rev_list_vis_1, (list_entry_visit_func) test_entry_valid );
+    rev_list_visitor_visit_list(&rev_list_vis_1, (generic_list *) list);
+
+    rev_list_subset_visitor rev_list_vis_2;
+    rev_list_subset_visitor_init(&rev_list_vis_2, (list_entry_visit_func) test_entry_valid, (generic_list *) list->next->next->next);
+    rev_list_subset_visitor_visit_list(&rev_list_vis_2, (generic_list *) list);
+
+    toy_str_list *shorter = str_list_alloc("First item");
+    shorter = str_list_append(shorter, "Second item");
+    shorter = str_list_append(shorter, "Third item");
+    shorter = str_list_append(shorter, "Fourth item");
+    rev_list_compare_visitor rev_list_comp_vis_2;
+    rev_list_compare_visitor_init(&rev_list_comp_vis_2, (list_entry_visit_func) compare_to_other_list, (generic_list *) list->next->next->next, shorter);
+    rev_list_subset_visitor_visit_list((rev_list_subset_visitor *) &rev_list_comp_vis_2, (generic_list *) list);
+}
+
 static void test_visitors(void)
 {
     toy_str_list *list = str_list_alloc("Apples");
@@ -158,6 +232,7 @@ static void test_visitors(void)
     assert_not_all_match((generic_list *) list, (generic_list_filter_func) is_fruit);
     /* TODO: Remove list elements */
     list = (toy_str_list *) list_delete_filter((generic_list *) list, (generic_list_filter_func) is_edible, NULL, TOY_FALSE, TOY_FALSE, (list_entry_free_func) str_list_free);
+    /* TODO: Test result */
 }
 
 void test_lists(void)
@@ -167,6 +242,7 @@ void test_lists(void)
     list = str_list_append(list, "Third item");
     list = str_list_append(list, "Fourth item");
     list = str_list_append(list, "Fifth item");
+    test_backwards_visitors();
     test_set_algebra(list);
     str_list_free(list);
     test_visitors();
