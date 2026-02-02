@@ -1,3 +1,18 @@
-// FIXME: Fails due to parser.y setting object entries too early:
-// var myval = [ 345.6, {"blah": (42, 3)}, "foo"];
-var myval = [ 345.6, {"blah": 42}, "foo"];
+var myval = [ 345.6, {"blah": (42, 3)}, "foo" ];
+assert_equal(myval, [ 345.6, {"blah": 3}, "foo" ]);
+var myval2 = [ 345.6, {"blah": 42}, "foo" ];
+assert_equal(myval2, [ 345.6, {"blah": 42}, "foo" ]);
+var myval3 = {
+    "alist": [
+        345.6,
+        {
+            "blah": 42
+        },
+        "foo"
+    ],
+    "anobj":
+    {
+        "hi": "mum"
+    }
+};
+assert_equal(myval3, { "alist": [ 345.6, { "blah": 42 }, "foo" ], "anobj": { "hi": "mum" } });
