@@ -1,6 +1,7 @@
 #ifndef TOY_MAP_VAL_H
 #define TOY_MAP_VAL_H 1
 
+#include "iter-types.h"
 #include "map-val-types.h"
 #include "val-types.h"
 #include "map-val-entry-list-types.h"

@@ -3,9 +3,6 @@
 
 #include <stddef.h>
 
-#include "str-types.h"
-#include "val-types.h"
-#include "iter-types.h"
 #include "map-val-entry-list-types.h"
 
 typedef struct map_val_struct {

@@ -1,6 +1,6 @@
-var mymap = { "two": 2, "three": 3, "four": 4 };
+var myobj = { "two": 2, "three": 3, "four": 4 };
 fun square(key, val) {
     return val * val;
 }
-var squared = obj_map(mymap, square);
+var squared = obj_map(myobj, square);
 assert_equal(squared, { "two": 4, "three": 9, "four": 16 });

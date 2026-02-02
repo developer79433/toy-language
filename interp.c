@@ -267,7 +267,7 @@ static void str_lookup(toy_interp *interp, toy_val *result, toy_str str, toy_val
     }
 }
 
-static void collection_lookup(toy_interp *interp, toy_val *result, toy_identifier *collection_identifier, toy_expr *index)
+void collection_lookup(toy_interp *interp, toy_val *result, const toy_identifier *collection_identifier, toy_expr *index)
 {
     interp_assert_valid(interp);
     toy_val index_result;

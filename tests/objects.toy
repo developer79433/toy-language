@@ -1,6 +1,6 @@
-var mymap = { "mykey": 123, "myotherkey": "myothervalue" };
-print(mymap);
-var indexed_into_map = mymap["mykey"];
-print(indexed_into_map);
-assert_equal(indexed_into_map, 123);
-assert_equal(map_len(mymap), 2);
+var myobj = { "mykey": 123, "myotherkey": "myothervalue" };
+var indexed_into_obj = myobj["mykey"];
+assert_equal(indexed_into_obj, 123);
+assert_equal(obj_len(myobj), 2);
+var property_on_obj = myobj.mykey;
+assert_equal(property_on_obj, 123);

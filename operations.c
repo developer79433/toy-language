@@ -343,23 +343,19 @@ void op_ternary(toy_interp *interp, toy_val *result, toy_expr *condition, toy_ex
     }
 }
 
-static void lookup_field(toy_interp *interp, toy_val *result, const toy_val *object, toy_str field_name)
-{
-    /* TODO */
-    assert(0);
-}
-
 void op_field_ref(toy_interp *interp, toy_val *result, toy_identifier *identifier, toy_str field_name)
 {
-    const toy_val *object = interp_get_rvalue(interp, identifier);
-    lookup_field(interp, result, object, field_name);
+    toy_val val = { .type = VAL_STR, .str = field_name };
+    toy_expr expr = { .type = EXPR_LITERAL, .val = &val };
+    collection_lookup(interp, result, identifier, &expr);
 }
 
 void op_method_call(toy_interp *interp, toy_val *result, const toy_method_call *method_call)
 {
-    const toy_val *object = interp_get_rvalue(interp, &method_call->id);
+    toy_val val = { .type = VAL_STR, .str = method_call->method_name };
+    toy_expr expr = { .type = EXPR_LITERAL, .val = &val };
     toy_val method;
-    lookup_field(interp, result, object, method_call->method_name);
+    collection_lookup(interp, &method, &method_call->id, &expr);
     if (method.type == VAL_FUNC) {
         run_stmt_result res = interp_run_func_expr_list(interp, method.func, method_call->args);
         if (res == REACHED_RETURN) {
