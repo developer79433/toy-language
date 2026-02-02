@@ -20,7 +20,7 @@ void func_dump(const toy_function *func, toy_bool verbose)
     if (func->param_names == &INFINITE_PARAMS) {
         log_puts("*");
     } else {
-        str_list_dump(func->param_names);
+        str_list_dump(func->param_names, TOY_FALSE);
     }
     log_puts(")");
     if (verbose) {

@@ -298,7 +298,9 @@ static run_stmt_result predefined_list_all(toy_interp *interp, const toy_var *ar
     } else {
         invalid_argument_type(VAL_LIST, arg1);
     }
-    return ret;
+    toy_val return_val = { .type = VAL_BOOL, .boolean = ret };
+    interp_set_return_value(interp, &return_val);
+    return REACHED_RETURN; 
 }
 
 static run_stmt_result predefined_list_not_all(toy_interp *interp, const toy_var *args, size_t num_args)
@@ -319,7 +321,9 @@ static run_stmt_result predefined_list_not_all(toy_interp *interp, const toy_var
     } else {
         invalid_argument_type(VAL_LIST, arg1);
     }
-    return ret;
+    toy_val return_val = { .type = VAL_BOOL, .boolean = ret };
+    interp_set_return_value(interp, &return_val);
+    return REACHED_RETURN; 
 }
 
 static run_stmt_result predefined_list_some(toy_interp *interp, const toy_var *args, size_t num_args)
@@ -340,7 +344,9 @@ static run_stmt_result predefined_list_some(toy_interp *interp, const toy_var *a
     } else {
         invalid_argument_type(VAL_LIST, arg1);
     }
-    return ret;
+    toy_val return_val = { .type = VAL_BOOL, .boolean = ret };
+    interp_set_return_value(interp, &return_val);
+    return REACHED_RETURN; 
 }
 
 static run_stmt_result predefined_list_none(toy_interp *interp, const toy_var *args, size_t num_args)
@@ -361,7 +367,9 @@ static run_stmt_result predefined_list_none(toy_interp *interp, const toy_var *a
     } else {
         invalid_argument_type(VAL_LIST, arg1);
     }
-    return ret;
+    toy_val return_val = { .type = VAL_BOOL, .boolean = ret };
+    interp_set_return_value(interp, &return_val);
+    return REACHED_RETURN; 
 }
 
 typedef struct val_list_foreach_visitor_struct {
@@ -778,8 +786,9 @@ static run_stmt_result predefined_obj_all(toy_interp *interp, const toy_var *arg
     } else {
         invalid_argument_type(VAL_MAP, arg1);
     }
-    /* FIXME: Returning toy_bool converted to run_stmt_result */
-    return ret;
+    toy_val return_val = { .type = VAL_BOOL, .boolean = ret };
+    interp_set_return_value(interp, &return_val);
+    return REACHED_RETURN;
 }
 
 static run_stmt_result predefined_obj_not_all(toy_interp *interp, const toy_var *args, size_t num_args)
@@ -800,8 +809,9 @@ static run_stmt_result predefined_obj_not_all(toy_interp *interp, const toy_var 
     } else {
         invalid_argument_type(VAL_MAP, arg1);
     }
-    /* FIXME: Returning toy_bool converted to run_stmt_result */
-    return ret;
+    toy_val return_val = { .type = VAL_BOOL, .boolean = ret };
+    interp_set_return_value(interp, &return_val);
+    return REACHED_RETURN;
 }
 
 static run_stmt_result predefined_obj_some(toy_interp *interp, const toy_var *args, size_t num_args)
@@ -822,8 +832,9 @@ static run_stmt_result predefined_obj_some(toy_interp *interp, const toy_var *ar
     } else {
         invalid_argument_type(VAL_MAP, arg1);
     }
-    /* FIXME: Returning toy_bool converted to run_stmt_result */
-    return ret;
+    toy_val return_val = { .type = VAL_BOOL, .boolean = ret };
+    interp_set_return_value(interp, &return_val);
+    return REACHED_RETURN;
 }
 
 static run_stmt_result predefined_obj_none(toy_interp *interp, const toy_var *args, size_t num_args)
@@ -844,8 +855,9 @@ static run_stmt_result predefined_obj_none(toy_interp *interp, const toy_var *ar
     } else {
         invalid_argument_type(VAL_MAP, arg1);
     }
-    /* FIXME: Returning toy_bool converted to run_stmt_result */
-    return ret;
+    toy_val return_val = { .type = VAL_BOOL, .boolean = ret };
+    interp_set_return_value(interp, &return_val);
+    return REACHED_RETURN;
 }
 
 double to_num(const toy_val *val)

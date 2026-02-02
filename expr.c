@@ -179,14 +179,14 @@ static void dump_binary_op(const toy_expr *arg1, const toy_expr *arg2, const cha
 
 static void dump_assignment(const toy_str lhs, const toy_expr *rhs)
 {
-    str_dump(lhs);
+    str_dump(lhs, TOY_FALSE);
     log_puts(" = ");
     expr_dump(rhs);
 }
 
 static void dump_collection_lookup(const toy_str lhs, const toy_expr *rhs)
 {
-    str_dump(lhs);
+    str_dump(lhs, TOY_FALSE);
     log_putc('[');
     expr_dump(rhs);
     log_putc(']');

@@ -44,7 +44,7 @@ toy_bool is_predefined(toy_str name)
 
 void predef_const_dump(const predefined_constant *predef_const)
 {
-    str_dump(predef_const->name);
+    str_dump(predef_const->name, TOY_FALSE);
     val_dump(&predef_const->value, 1);
 }
 

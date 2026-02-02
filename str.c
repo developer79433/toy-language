@@ -16,11 +16,15 @@ void print_str(const toy_str str)
     }
 }
 
-void str_dump(const toy_str str)
+void str_dump(const toy_str str, toy_bool quoted)
 {
-    log_putc('"');
+    if (quoted) {
+        log_putc('"');
+    }
     print_str(str);
-    log_putc('"');
+    if (quoted) {
+        log_putc('"');
+    }
 }
 
 toy_bool str_equal(const toy_str s1, const toy_str s2)

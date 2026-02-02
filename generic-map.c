@@ -155,7 +155,7 @@ delete_result map_delete(generic_map *map, const toy_str key)
 
 static void dump_map_entry(const generic_map_entry *entry)
 {
-    str_dump(entry->key);
+    str_dump(entry->key, TOY_FALSE);
     log_printf(": %p", entry + 1);
 }
 
@@ -501,7 +501,7 @@ static item_callback_result dump_keys_cb(dump_keys_visitor *visitor, const gener
     } else {
         log_putc(' ');
     }
-    str_dump(entry->key);
+    str_dump(entry->key, TOY_FALSE);
     visitor->output_anything = TOY_TRUE;
     return CONTINUE_ENUMERATION;
 }

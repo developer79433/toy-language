@@ -245,7 +245,7 @@ void stmt_dump(const toy_stmt *stmt, int append_semicolon)
         const toy_func_decl_stmt *func_decl_stmt = &stmt->func_decl_stmt;
         const toy_function *func = func_decl_stmt->func;
         log_printf("fun %s(", func->name);
-        str_list_dump(func->param_names);
+        str_list_dump(func->param_names, TOY_FALSE);
         log_puts(") {\n");
         stmt_list_dump(func->code->stmts);
         log_puts("}");

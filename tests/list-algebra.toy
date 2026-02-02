@@ -1,0 +1,53 @@
+var ints = [ 1, 2, 3, 4, 5, 6 ];
+var evens = [ 2, 4, 6, 8 ];
+var odds = [ 3, 5, 9, 11 ];
+
+fun is_even(x) {
+    return (x % 2) == 0;
+}
+fun is_odd(x) {
+    return !is_even(x);
+}
+fun is_less_than_four(x) {
+    return x < 4;
+}
+fun is_less_than_a_million(x) {
+    return x < 1000000;
+}
+fun is_greater_than_a_million(x) {
+    return x > 1000000;
+}
+
+print("************************* HERE 1");
+
+assert(list_all     (ints, is_less_than_a_million));
+assert(list_some    (ints, is_less_than_four));
+
+print("************************* HERE 1.25");
+assert(list_not_all (ints, is_less_than_four));
+print("************************* HERE 1.26");
+assert(list_some    (ints, is_even));
+print("************************* HERE 1.27");
+assert(list_some    (ints, is_odd));
+
+print("************************* HERE 1.5");
+
+assert(list_none    (ints, is_greater_than_a_million));
+assert(list_some    (ints, is_even));
+assert(list_not_all (ints, is_even));
+assert(list_some    (ints, is_odd));
+assert(list_not_all (ints, is_odd));
+
+print("************************* HERE 2");
+
+assert(list_all     (evens, is_even));
+assert(list_some    (evens, is_even));
+assert(list_none    (evens, is_odd));
+assert(list_not_all (evens, is_odd));
+
+print("************************* HERE 3");
+
+assert(list_all     (odds, is_odd));
+assert(list_some    (odds, is_odd));
+assert(list_none    (odds, is_even));
+assert(list_not_all (odds, is_even));

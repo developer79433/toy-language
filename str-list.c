@@ -19,7 +19,7 @@ const toy_str str_list_payload_const(const toy_str_list *list)
     return list->str;
 }
 
-void str_list_dump(const toy_str_list *list)
+void str_list_dump(const toy_str_list *list, toy_bool quoted)
 {
     const toy_str_list *cur;
     if (list) {
@@ -28,7 +28,7 @@ void str_list_dump(const toy_str_list *list)
             if (output_something) {
                 log_puts(", ");
             }
-            str_dump(cur->str);
+            str_dump(cur->str, quoted);
             output_something = 1;
         }
     }

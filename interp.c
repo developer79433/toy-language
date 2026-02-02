@@ -304,7 +304,7 @@ static toy_var *interp_get_var_closure(toy_interp *interp, const closure *closur
     toy_var *var = interp_frame_get_var(frame, closure->var_index);
     var_assert_valid(var);
 #ifdef DEBUG_INTERP_LOOKUPS
-    log_printf("interp: var retrieved: ");
+    log_printf_file(__FILE__, "var retrieved: ");
     var_dump(var, TOY_FALSE);
     log_putc('\n');
 #endif /* DEBUG_INTERP_LOOKUPS */

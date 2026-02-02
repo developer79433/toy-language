@@ -52,7 +52,7 @@ void val_dump(const toy_val *val, toy_bool verbose)
             log_printf("%f", val->num);
             break;
         case VAL_STR:
-            str_dump(val->str);
+            str_dump(val->str, TOY_TRUE);
             break;
         default:
             invalid_value_type(val->type);

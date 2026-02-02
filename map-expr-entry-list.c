@@ -47,7 +47,7 @@ static item_callback_result map_entry_dump_callback(map_entry_dump_visitor *dump
     } else {
         log_putc(' ');
     }
-    str_dump(entry->key);
+    str_dump(entry->key, TOY_FALSE);
     log_puts(": ");
     expr_dump(entry->expr);
     dump_vis->printed_anything = TOY_TRUE;
