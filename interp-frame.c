@@ -26,12 +26,21 @@ const char *interp_frame_type_name(frame_type type)
     return frame_type_names[type];
 }
 
-static void frame_dump_variables(const interp_frame *frame)
+size_t interp_frame_num_vars(const interp_frame *frame)
 {
-    interp_frame_assert_valid(frame);
-    log_debug("variables [");
+    return frame->num_variables;
+}
+
+size_t interp_frame_num_closures(const interp_frame *frame)
+{
+    return frame->num_closures;
+}
+
+static void frame_dump_var_array(toy_var *var_array, size_t num_vars, toy_str name)
+{
+    log_debug("%s [", name);
     toy_bool printed_anything = TOY_FALSE;
-    for (toy_var *var = &frame->variables[0]; var < &frame->variables[frame->num_variables]; var++) {
+    for (toy_var *var = &var_array[0]; var < &var_array[num_vars]; var++) {
         if (printed_anything) {
             log_debug(", ");
         }
@@ -39,7 +48,17 @@ static void frame_dump_variables(const interp_frame *frame)
         val_dump(val, TOY_FALSE);
         printed_anything = TOY_TRUE;
     }
-    log_debug("]");
+    log_debug("] ");
+}
+
+static void frame_dump_vars(const interp_frame *frame)
+{
+    return frame_dump_var_array(frame->variables, frame->num_variables, "variables");
+}
+
+static void frame_dump_closures(const interp_frame *frame)
+{
+    return frame_dump_var_array(frame->closures, frame->num_closures, "closures");
 }
 
 void interp_frame_dump(const interp_frame *frame)
@@ -47,29 +66,37 @@ void interp_frame_dump(const interp_frame *frame)
     interp_frame_assert_valid(frame);
     switch (frame->type) {
     case FRAME_BLOCK_STMT:
-        log_debug_file(__FILE__, "block_stmt %p", frame->block_stmt.block);
+        log_debug("Block_stmt %p ", frame->block_stmt.block);
+        frame_dump_vars(frame);
+        frame_dump_closures(frame);
         break;
     case FRAME_IF_BODY:
-        log_debug_file(__FILE__, "if_body %p", frame->block_stmt.block);
+        log_debug("If_body %p ", frame->block_stmt.block);
+        frame_dump_vars(frame);
+        frame_dump_closures(frame);
         break;
     case FRAME_LOOP_BODY:
-        log_debug_file(__FILE__, "loop_body %p", frame->block_stmt.block);
+        log_debug("Loop_body %p ", frame->block_stmt.block);
+        frame_dump_vars(frame);
+        frame_dump_closures(frame);
         break;
     case FRAME_PRE_DEF_FUNC:
         const func_call_frame *predef_func_inv = &frame->func_call;
         const toy_function *predef_func = predef_func_inv->func;
-        log_debug_file(__FILE__, "Predefined function %s(", predef_func->name);
+        log_debug("Predefined function %s(", predef_func->name);
         var_array_dump(predef_func_inv->arguments, predef_func_inv->num_arguments, TOY_FALSE);
         log_debug(") ");
-        frame_dump_variables(frame);
+        frame_dump_vars(frame);
+        frame_dump_closures(frame);
         break;
     case FRAME_USER_DEF_FUNC:
         const func_call_frame *user_func_inv = &frame->func_call;
         const toy_function *user_func = user_func_inv->func;
-        log_debug_file(__FILE__, "User-defined function %s(", user_func->name);
+        log_debug("User-defined function %s(", user_func->name);
         var_array_dump(user_func_inv->arguments, user_func_inv->num_arguments, TOY_FALSE);
         log_debug(") ");
-        frame_dump_variables(frame);
+        frame_dump_vars(frame);
+        frame_dump_closures(frame);
         break;
     default:
         assert(0);

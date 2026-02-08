@@ -18,5 +18,6 @@ void ptr_list_set_payload(toy_ptr_list *list, void *new_payload);
 #define ptr_list_payload_typed(list, type) ((type *) ptr_list_payload(list))
 #define ptr_list_payload_const_typed(list, type) ((const type *) ptr_list_payload_const(list))
 void ptr_list_free(toy_ptr_list *list);
+toy_ptr_list *ptr_list_reverse(const toy_ptr_list *list);
 
 #endif /* TOY_PTR_LIST_H */

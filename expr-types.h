@@ -49,47 +49,19 @@ enum toy_expr_type_enum {
 
 typedef enum toy_expr_type_enum toy_expr_type;
 
-/* TODO: Belongs elsewhere */
-
-typedef enum reference_type_enum {
-    REF_UNDEFINED    = 0,
-    REF_FUNC_DECL    = 1,
-    REF_FUNC_PARAM   = 2,
-    REF_VAR_DECL     = 3,
-    REF_PREDEF_CONST = 4,
-    REF_PREDEF_FUNC  = 5
-} reference_type;
-
 struct toy_func_decl_stmt_struct;
 typedef struct toy_func_decl_stmt_struct toy_func_decl_stmt;
 
 struct toy_var_decl_struct;
 typedef struct toy_var_decl_struct toy_var_decl;
 
-typedef struct closure_struct {
-    size_t frames_up;
-    size_t var_index;
-} closure;
-
-typedef struct resolved_name_struct {
-    reference_type type;
-    union {
-        /* function parameter */
-        closure func_param;
-        /* variable declaration */
-        closure var_decl;
-        /* function declaration */
-        toy_func_decl_stmt *func_decl_stmt;
-        /* TODO: Can this be a toy_val too? */
-        const predefined_constant *predef_const;
-        const toy_val *predef_func;
-    };
-} resolved_name;
+struct decl_ref_struct;
+typedef struct decl_ref_struct decl_ref;
 
 typedef struct toy_identifier_struct {
     toy_str name;
     /* TODO: This is leakage of the name resolution phase into the parse tree */
-    resolved_name resolved;
+    decl_ref *decl;
 } toy_identifier;
 
 typedef struct toy_unary_op_struct {

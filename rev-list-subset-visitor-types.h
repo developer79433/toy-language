@@ -6,12 +6,12 @@
 
 typedef struct rev_list_subset_visitor_struct {
     rev_list_visitor rev_list_vis;
-    generic_list *stop_at;
+    generic_list *start_at;
 } rev_list_subset_visitor;
 
 typedef struct const_rev_list_subset_visitor_struct {
     const_rev_list_visitor rev_list_vis;
-    const generic_list *stop_at;
+    const generic_list *start_at;
 } const_rev_list_subset_visitor;
 
 #endif /* TOY_REV_LIST_SUBSET_VISITOR_TYPES_H */

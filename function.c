@@ -16,7 +16,7 @@
 void func_dump(const toy_function *func, toy_bool verbose)
 {
     func_assert_valid(func);
-    log_debug("fun %s(", func->name);
+    log_debug("func %s(", func->name);
     if (func->param_names == &INFINITE_PARAMS) {
         log_debug("*");
     } else {

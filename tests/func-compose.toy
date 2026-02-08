@@ -1,0 +1,15 @@
+fun double(x) {
+    return 2 * x;
+}
+fun square(x) {
+    return x * x;
+}
+fun compose(f1, f2) {
+    fun composed(x) {
+        return f1(f2(x));
+    }
+    return composed;
+}
+var sqdbl = compose(square, double);
+var y = sqdbl(3);
+assert_equal(y, 36);

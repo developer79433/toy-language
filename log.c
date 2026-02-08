@@ -6,7 +6,7 @@
 
 static FILE *logfile = NULL;
 
-static const char *log_level_names[LOG_LEVEL_MAX + 1] = {
+static const char *log_level_names[LOG_LEVEL_MAX - LOG_LEVEL_MIN + 1] = {
     "Debug",
     "Info",
     "Warning",
@@ -15,8 +15,8 @@ static const char *log_level_names[LOG_LEVEL_MAX + 1] = {
 
 const char *log_level_name(log_level level)
 {
-    assert(level >= 0 && level <= LOG_LEVEL_MAX);
-    return log_level_names[level];
+    assert(level >= LOG_LEVEL_MIN && level <= LOG_LEVEL_MAX);
+    return log_level_names[level - LOG_LEVEL_MIN];
 }
 
 static log_level threshold = LOG_DEBUG;
@@ -35,20 +35,6 @@ static void openlog(void)
 {
     if (NULL == logfile) {
         logfile = stderr;
-    }
-}
-
-void log_to_file(const char *filename)
-{
-    openlog();
-    FILE *f = fopen(filename, "w");
-    if (f) {
-        log_info_file(__FILE__, "Switching to new log file '%s'\n", filename);
-        logfile = f;
-        log_info_file(__FILE__, "Switched to new log file '%s'\n", filename);
-    } else {
-        perror("fopen");
-        log_warn_file(__FILE__, "Failed to open new log file '%s'\n");
     }
 }
 
@@ -72,8 +58,10 @@ void log_puts(log_level level, const char *str)
 
 void log_vprintf(log_level level, const char *fmt, va_list argptr)
 {
-    openlog();
-    vfprintf(logfile, fmt, argptr);
+    if (level >= threshold) {
+        openlog();
+        vfprintf(logfile, fmt, argptr);
+    }
 }
 
 void log_printf(log_level level, const char *fmt, ...)
@@ -116,38 +104,16 @@ void log_error(const char *fmt, ...)
     va_end(argptr);
 }
 
-void log_debug_file(const char *filename, const char *fmt, ...)
+void log_to_file(const char *filename)
 {
-    va_list argptr;
-    va_start(argptr, fmt);
-    log_debug("%s: ", filename);
-    log_vprintf(LOG_DEBUG, fmt, argptr);
-    va_end(argptr);
-}
-
-void log_info_file(const char *filename, const char *fmt, ...)
-{
-    va_list argptr;
-    va_start(argptr, fmt);
-    log_info("%s: ", filename);
-    log_vprintf(LOG_INFO, fmt, argptr);
-    va_end(argptr);
-}
-
-void log_warn_file(const char *filename, const char *fmt, ...)
-{
-    va_list argptr;
-    va_start(argptr, fmt);
-    log_warn("%s: ", filename);
-    log_vprintf(LOG_WARN, fmt, argptr);
-    va_end(argptr);
-}
-
-void log_error_file(const char *filename, const char *fmt, ...)
-{
-    va_list argptr;
-    va_start(argptr, fmt);
-    log_error("%s: ", filename);
-    log_vprintf(LOG_ERROR, fmt, argptr);
-    va_end(argptr);
+    openlog();
+    FILE *f = fopen(filename, "w");
+    if (f) {
+        log_info_file("Switching to new log file '%s'\n", filename);
+        logfile = f;
+        log_info_file("Switched to new log file '%s'\n", filename);
+    } else {
+        perror("fopen");
+        log_warn_file("Failed to open new log file '%s'\n");
+    }
 }

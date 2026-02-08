@@ -35,6 +35,8 @@ typedef struct interp_frame_struct {
     toy_stmt_list *cur_stmt;
     size_t num_variables;
     toy_var *variables;
+    size_t num_closures;
+    toy_var *closures;
 } interp_frame;
 
 #endif /* TOY_INTERP_FRAME_TYPES_H */

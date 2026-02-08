@@ -14,7 +14,7 @@ item_callback_result list_latch_visit_entry(list_latch *latch, size_t index, gen
 {
     latch->last_seen_item = item;
 #ifdef DEBUG_LIST_LATCH
-    log_printf_file(__FILE__, "remembered last-seen item %p\n", latch->last_seen_item);
+    log_printf_file(__, "remembered last-seen item %p\n", latch->last_seen_item);
 #endif /* DEBUG_LIST_LATCH */
     return CONTINUE_ENUMERATION;
 }
@@ -35,7 +35,7 @@ item_callback_result const_list_latch_visit_entry(const_list_latch *latch, size_
 {
     latch->last_seen_item = item;
 #ifdef DEBUG_LIST_LATCH
-    log_printf_file(__FILE__, "remembered last-seen item %p\n", latch->last_seen_item);
+    log_printf_file(__, "remembered last-seen item %p\n", latch->last_seen_item);
 #endif /* DEBUG_LIST_LATCH */
     return CONTINUE_ENUMERATION;
 }

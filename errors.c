@@ -13,6 +13,8 @@
 #include "interp-frame.h"
 #include "log.h"
 #include "str-list.h"
+#include "var-decl.h"
+#include "decl-ref.h"
 
 void fatal_error(const char *fmt, ...)
 {
@@ -142,59 +144,9 @@ void return_outside_function(frame_type ftype)
     fatal_error("Encountered return statement outside function, in frame of type %s", interp_frame_type_name(ftype));
 }
 
-/* TODO: Belongs elsewhere */
-
-static const char *reference_type_names[] = {
-    "undefined reference",
-    "function declaration",
-    "function parameter",
-    "local variable",
-    "predefined constant",
-    "predefined function"
-};
-
-const char *resolved_name_type_name(reference_type reftype)
+void invalid_lvalue(decl_ref *ref)
 {
-    return reference_type_names[(int) reftype];
-}
-
-const char *resolved_name_ref_name(const resolved_name *resolved)
-{
-    switch (resolved->type) {
-    case REF_UNDEFINED:
-        return "null";
-    case REF_FUNC_DECL:
-        const toy_func_decl_stmt *func_decl_stmt = resolved->func_decl_stmt;
-        toy_function *func = func_decl_stmt->func;
-        return func->name;
-    case REF_FUNC_PARAM:
-        const closure *param_ref = &resolved->func_param;
-        assert(param_ref);
-        /* TODO */
-        return "function parameter";
-    case REF_VAR_DECL:
-        const closure *var_ref = &resolved->var_decl;
-        assert(var_ref->frames_up >= 0);
-        assert(var_ref->var_index >= 0);
-        return "variable reference";
-    case REF_PREDEF_CONST:
-        const predefined_constant *predef_const = resolved->predef_const;
-        assert(predef_const);
-        return predef_const->name;
-    case REF_PREDEF_FUNC:
-        const toy_val *predef_func_val = resolved->predef_func;
-        assert(VAL_FUNC == predef_func_val->type);
-        const toy_function *predef_func = predef_func_val->func;
-        return predef_func->name;
-    default:
-        assert(0);
-        break;
-    }
-}
-
-void invalid_lvalue(resolved_name *resolved)
-{
-    fatal_error("Cannot assign to %s", resolved_name_type_name(resolved->type), resolved_name_ref_name(resolved));
+    fatal_error("Cannot assign to %s", decl_ref_type_name(ref->type));
 }
 
 void illegal_instruction_in_for_stmt_at_start(const toy_stmt *stmt)

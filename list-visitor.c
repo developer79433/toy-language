@@ -27,7 +27,7 @@ enumeration_result list_visitor_visit_list(list_visitor *visitor, generic_list *
 {
     visitor->previous_item = NULL;
 #ifdef DEBUG_LIST_VISITOR
-    log_printf_file(__FILE__, "set previous_item to %p\n", visitor->previous_item);
+    log_printf_file("set previous_item to %p\n", visitor->previous_item);
 #endif /* DEBUG_LIST_VISITOR */
     for (size_t index = 0; list; index++) {
         generic_list *next = list_next(list);
@@ -37,7 +37,7 @@ enumeration_result list_visitor_visit_list(list_visitor *visitor, generic_list *
         }
         visitor->previous_item = list;
 #ifdef DEBUG_LIST_VISITOR
-    log_printf_file(__FILE__, "set previous_item to %p\n", visitor->previous_item);
+    log_printf_file("set previous_item to %p\n", visitor->previous_item);
 #endif /* DEBUG_LIST_VISITOR */
         list = next;
     }

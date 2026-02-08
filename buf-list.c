@@ -57,7 +57,7 @@ toy_buf_list *buf_list_append(toy_buf_list *list, const void *buf, size_t buf_si
 toy_buf_list *buf_list_prepend(toy_buf_list *list, const void *buf, size_t buf_size)
 {
     toy_buf_list *new_list = buf_list_alloc(buf, buf_size);
-    return (toy_buf_list *) list_concat((generic_list *) new_list, (generic_list *) list);
+    return buf_list_concat(new_list, list);
 }
 
 toy_buf_list *buf_list_remove_first(toy_buf_list *list, toy_buf_list **removed)

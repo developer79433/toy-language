@@ -6,7 +6,7 @@
 #include "val.h"
 #include "map-val.h"
 #include "function.h"
-#include "constants.h"
+#include "constant.h"
 #include "predef-function.h"
 #include "errors.h"
 #include "str.h"

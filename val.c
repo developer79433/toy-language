@@ -9,7 +9,7 @@
 #include "val-list.h"
 #include "generic-map.h"
 #include "errors.h"
-#include "constants.h"
+#include "constant.h"
 #include "map-val.h"
 #include "debug.h"
 #include "log.h"

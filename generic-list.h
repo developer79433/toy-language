@@ -48,5 +48,7 @@ void list_assert_all_match(const generic_list *list, generic_list_filter_func fi
 void list_assert_none_match(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie);
 void list_assert_not_all_match(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie);
 void list_assert_some_match(const generic_list *list, generic_list_filter_func filter_func, void *filter_cookie);
+toy_bool list_contains(const generic_list *list, const generic_list *entry);
+void list_assert_contains(const generic_list *list, const generic_list *entry);
 
 #endif /* GENERIC_LIST_H */

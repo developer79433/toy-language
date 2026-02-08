@@ -31,7 +31,6 @@ item_callback_result list_filter_visit_entry(list_filter *filter, size_t index, 
     }
 #ifdef DEBUG_LIST_FILTER
     log_printf_file(
-        __FILE__,
         "filter %s, we are %sinverted, last match is now %p\n",
         filter_res ? "succeeded" : "failed",
         filter->inverted ? "" : "not ",
@@ -70,7 +69,6 @@ item_callback_result const_list_filter_visit_entry(const_list_filter *filter, si
     }
 #ifdef DEBUG_LIST_FILTER
     log_printf_file(
-        __FILE__,
         "filter %s, we are %sinverted, last match is now %p\n",
         filter_res ? "succeeded" : "failed",
         filter->inverted ? "" : "not ",

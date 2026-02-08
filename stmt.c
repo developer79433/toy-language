@@ -87,6 +87,9 @@ void func_decl_stmt_dump(const toy_func_decl_stmt *func_decl)
 {
     func_assert_valid(func_decl->func);
     val_assert_valid(func_decl->val);
+    log_debug("func_decl_stmt { index %d, ", func_decl->decl_index);
+    func_dump(func_decl->func, TOY_FALSE);
+    log_debug(" }");
 }
 
 toy_stmt *var_decl_stmt_alloc(toy_var_decl_list *var_decl_list)

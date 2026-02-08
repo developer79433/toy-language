@@ -7,7 +7,7 @@
 #include "mymalloc.h"
 #include "symbol-table.h"
 #include "predef-function.h"
-#include "constants.h"
+#include "constant.h"
 #include "interp-frame.h"
 #include "val-list.h"
 #include "str-list.h"
@@ -19,6 +19,8 @@
 #include "var.h"
 #include "function.h"
 #include "list-visitor.h"
+
+#define DEBUG_INTERP_STACK
 
 void interp_stack_assert_valid(const interp_stack *stack)
 {
@@ -55,11 +57,20 @@ void interp_stack_free(interp_stack *stack)
     return interp_frame_stack_free(stack);
 }
 
-static toy_var *init_variables(const toy_block *block, size_t *num_declarations)
+static toy_var *init_variables(const toy_block *block, size_t *num_vars)
 {
-    *num_declarations = block_num_declarations(block);
-    if (*num_declarations) {
-        return var_alloc_array(*num_declarations);
+    *num_vars = list_len((generic_list *) block->decls_rev);
+    if (*num_vars) {
+        return var_alloc_array(*num_vars);
+    }
+    return NULL;
+}
+
+static toy_var *init_closures(const toy_block *block, size_t *num_closures)
+{
+    *num_closures = block_num_closures(block);
+    if (*num_closures) {
+        return var_alloc_array(*num_closures);
     }
     return NULL;
 }
@@ -69,16 +80,22 @@ interp_stack *interp_stack_push_if(interp_stack *stack, const toy_block *block)
     interp_stack_assert_valid(stack);
     size_t num_variables;
     toy_var *variables = init_variables(block, &num_variables);
+    size_t num_closures;
+    toy_var *closures = init_closures(block, &num_closures);
     interp_frame frame = {
         .type = FRAME_IF_BODY,
         .block_stmt.block = block,
         .variables = variables,
         .num_variables = num_variables,
-        .cur_stmt = block->stmts
+        .cur_stmt = block->stmts,
+        .num_closures = num_closures,
+        .closures = closures
     };
     stack = interp_frame_stack_push(stack, &frame);
     interp_stack_assert_valid(stack);
+#ifdef DEBUG_INTERP_STACK
     interp_frame_stack_dump("after push if body", stack);
+#endif /* DEBUG_INTERP_STACK */
     return stack;
 }
 
@@ -87,16 +104,22 @@ interp_stack *interp_stack_push_loop(interp_stack *stack, const toy_block *block
     interp_stack_assert_valid(stack);
     size_t num_variables;
     toy_var *variables = init_variables(block, &num_variables);
+    size_t num_closures;
+    toy_var *closures = init_closures(block, &num_closures);
     interp_frame frame = {
         .type = FRAME_LOOP_BODY,
         .block_stmt.block = block,
         .variables = variables,
         .num_variables = num_variables,
-        .cur_stmt = block->stmts
+        .cur_stmt = block->stmts,
+        .num_closures = num_closures,
+        .closures = closures
     };
     stack = interp_frame_stack_push(stack, &frame);
     interp_stack_assert_valid(stack);
+#ifdef DEBUG_INTERP_STACK
     interp_frame_stack_dump("after push loop body", stack);
+#endif /* DEBUG_INTERP_STACK */
     return stack;
 }
 
@@ -143,11 +166,15 @@ interp_stack *interp_stack_push_predef_func(interp_stack *stack, const toy_funct
         .func_call.func = func,
         .func_call.arguments = arguments,
         .func_call.num_arguments = args_len,
-        .cur_stmt = func->code->stmts
+        .cur_stmt = func->code->stmts,
+        .num_closures = 0,
+        .closures = NULL
     };
     stack = interp_frame_stack_push(stack, &frame);
     interp_stack_assert_valid(stack);
+#ifdef DEBUG_INTERP_STACK
     interp_frame_stack_dump("after push predef func", stack);
+#endif /* DEBUG_INTERP_STACK */
     return stack;
 }
 
@@ -166,6 +193,8 @@ interp_stack *interp_stack_push_user_func(interp_stack *stack, const toy_functio
     copy_args_into_frame(arguments, actual_arguments);
     size_t num_variables;
     toy_var *variables = init_variables(func->code, &num_variables);
+    size_t num_closures;
+    toy_var *closures = init_closures(func->code, &num_closures);
     interp_frame frame = {
         .type = FRAME_USER_DEF_FUNC,
         .variables = variables,
@@ -173,11 +202,15 @@ interp_stack *interp_stack_push_user_func(interp_stack *stack, const toy_functio
         .func_call.func = func,
         .func_call.arguments = arguments,
         .func_call.num_arguments = args_len,
-        .cur_stmt = func->code->stmts
+        .cur_stmt = func->code->stmts,
+        .num_closures = num_closures,
+        .closures = closures
     };
     stack = interp_frame_stack_push(stack, &frame);
     interp_stack_assert_valid(stack);
+#ifdef DEBUG_INTERP_STACK
     interp_frame_stack_dump("after push user func", stack);
+#endif /* DEBUG_INTERP_STACK */
     return stack;
 }
 
@@ -186,16 +219,22 @@ interp_stack *interp_stack_push_block(interp_stack *stack, const toy_block *bloc
     interp_stack_assert_valid(stack);
     size_t num_variables;
     toy_var *variables = init_variables(block, &num_variables);
+    size_t num_closures;
+    toy_var *closures = init_closures(block, &num_closures);
     interp_frame frame = {
         .type = FRAME_BLOCK_STMT,
         .variables = variables,
         .num_variables = num_variables,
         .block_stmt.block = block,
-        .cur_stmt = block->stmts
+        .cur_stmt = block->stmts,
+        .num_closures = num_closures,
+        .closures = closures
     };
     stack = interp_frame_stack_push(stack, &frame);
     interp_stack_assert_valid(stack);
+#ifdef DEBUG_INTERP_STACK
     interp_frame_stack_dump("after push block stmt", stack);
+#endif /* DEBUG_INTERP_STACK */
     return stack;
 }
 

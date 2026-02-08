@@ -64,3 +64,23 @@ void stmt_list_dump(const toy_stmt_list *stmt_list)
     enumeration_result res = const_list_visitor_visit_list((const_list_visitor *) &list_vis, (const generic_list *) stmt_list);
     assert(res == ENUMERATION_COMPLETE);
 }
+
+static toy_bool is_desired_stmt(const toy_stmt *desired_stmt, size_t index, const toy_stmt_list *item)
+{
+    const toy_stmt *stmt = stmt_list_payload_const(item);
+    return (stmt == desired_stmt);
+}
+
+void stmt_list_assert_contains_stmt(toy_stmt_list *stmt_list, toy_stmt *stmt)
+{
+    const toy_stmt_list *match = (toy_stmt_list *) list_find_first_const((const generic_list *) stmt_list, (generic_list_filter_func) is_desired_stmt, stmt);
+    if (!match) {
+        log_error_file("Statement should be in stmt_list. stmt:\n");
+        stmt_dump(stmt, TOY_TRUE);
+        log_error("\n");
+        log_error_file("stmt_list:\n");
+        stmt_list_dump(stmt_list);
+    }
+    assert(match);
+    assert(stmt == &match->stmt);
+}

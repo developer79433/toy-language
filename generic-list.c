@@ -193,12 +193,12 @@ static item_callback_result list_latch_filter_visit_entry(list_latch_filter *lat
     if (list_filter_last_match(filter)) {
         list_latch *latch = &latch_filt->latch;
 #ifdef DEBUG_LIST_LATCH_FILTER
-    log_printf_file(__FILE__, "filter succeeded, so letting latch visit entry %p\n", item);
+    log_printf_file("filter succeeded, so letting latch visit entry %p\n", item);
 #endif /* DEBUG_LIST_LATCH_FILTER */
         return list_latch_visit_entry(latch, index, item);
     }
 #ifdef DEBUG_LIST_LATCH_FILTER
-    log_printf_file(__FILE__, "filter failed, so continuing\n");
+    log_printf_file("filter failed, so continuing\n");
 #endif /* DEBUG_LIST_LATCH_FILTER */
     return CONTINUE_ENUMERATION;
 }
@@ -217,17 +217,17 @@ generic_list *list_latch_filter_get_last_seen(list_latch_filter *latch_filt)
     return list_filter_last_match(filter);
 }
 
-static toy_bool item_equals(generic_list *compare_to, size_t index, generic_list *entry)
+static toy_bool item_equals(const generic_list *compare_to, size_t index, const generic_list *entry)
 {
     return compare_to == entry;
 }
 
-static toy_bool list_contains(generic_list *list, generic_list *entry)
+toy_bool list_contains(const generic_list *list, const generic_list *entry)
 {
-    return list_some_match(list, (generic_list_filter_func) item_equals, entry);
+    return list_some_match(list, (generic_list_filter_func) item_equals, (void *) entry);
 }
 
-static void list_assert_contains(generic_list *list, generic_list *entry)
+void list_assert_contains(const generic_list *list, const generic_list *entry)
 {
     assert(list_contains(list, entry));
 }
@@ -318,12 +318,12 @@ static item_callback_result const_list_latch_filter_visit_entry(const_list_latch
     if (const_list_filter_last_match(filter)) {
         const_list_latch *latch = &latch_filt->latch;
 #ifdef DEBUG_LIST_LATCH_FILTER
-    log_printf_file(__FILE__, "filter succeeded, so letting latch visit entry %p\n", item);
+    log_printf_file("filter succeeded, so letting latch visit entry %p\n", item);
 #endif /* DEBUG_LIST_LATCH_FILTER */
         return const_list_latch_visit_entry(latch, index, item);
     }
 #ifdef DEBUG_LIST_LATCH_FILTER
-    log_printf_file(__FILE__, "filter failed, so continuing\n");
+    log_printf_file("filter failed, so continuing\n");
 #endif /* DEBUG_LIST_LATCH_FILTER */
     return CONTINUE_ENUMERATION;
 }

@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <stdio.h>
 
 #include "interp-frame-stack.h"
 #include "interp-frame.h"
@@ -9,6 +8,7 @@
 #include "debug.h"
 #include "buf-stack.h"
 #include "list-visitor.h"
+#include "log.h"
 
 typedef struct interp_frame_stack_struct {
     struct interp_frame_stack_struct *next;
@@ -61,9 +61,9 @@ void interp_frame_stack_assert_valid(const interp_frame_stack *stack)
 static item_callback_result frame_dump_callback(list_visitor *list_vis, size_t index, const interp_frame_stack *item)
 {
     const interp_frame *frame = interp_frame_stack_payload_const(item);
-    fprintf(stderr, "  Frame %02zu: ", index);
+    log_debug("  Frame %02zu: ", index);
     interp_frame_dump(frame);
-    fprintf(stderr, "\n");
+    log_debug("\n");
     return CONTINUE_ENUMERATION;
 }
 

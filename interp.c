@@ -16,7 +16,7 @@
 #include "generic-map.h"
 #include "util.h"
 #include "operations.h"
-#include "constants.h"
+#include "constant.h"
 #include "function.h"
 #include "errors.h"
 #include "stmt-list.h"
@@ -30,10 +30,10 @@
 #include "predef-function.h"
 #include "interp-stack.h"
 #include "interp-frame.h"
-#include "resolved-name.h"
 #include "block.h"
 #include "var.h"
 #include "list-visitor.h"
+#include "decl-ref.h"
 
 #if 0
 #define DEBUG_STACK 1
@@ -285,120 +285,44 @@ void collection_lookup(toy_interp *interp, toy_val *result, const toy_identifier
     }
 }
 
-static toy_var *interp_get_param_closure(toy_interp *interp, const closure *param_ref)
-{
-    interp_assert_valid(interp);
-    interp_stack *stack = interp_get_stack(interp);
-    interp_frame *frame = interp_stack_index(stack, param_ref->frames_up);
-    toy_var *var = interp_frame_get_func_arg(frame, param_ref->var_index);
-    var_assert_valid(var);
-    return var;
-}
-
-#if 0
-static const toy_block *frame_get_block(interp_frame *frame)
-{
-    const toy_block *block;
-    switch (frame->type) {
-    case FRAME_BLOCK_STMT:
-    case FRAME_IF_BODY:
-    case FRAME_LOOP_BODY:
-        const block_frame *blockf = &frame->block_stmt;
-        block = blockf->block;
-        break;
-    case FRAME_PRE_DEF_FUNC:
-        assert(0); /* Doesn't have a block */
-        break;
-    case FRAME_USER_DEF_FUNC:
-        func_call_frame *call_frame = &frame->func_call;
-        const toy_function *func = call_frame->func;
-        assert(FUNC_USER_DECLARED == func->type);
-        block = func->code;
-        break;
-    default:
-        break;
-    }
-    return block;
-}
-
-static const toy_block *lookup_block_grandparents(const toy_block *block, size_t frames_up)
-{
-    while (frames_up--) {
-        assert(block->parent);
-        block = block->parent;
-    }
-    return block;
-}
-
-static const toy_block *lookup_block(toy_interp *interp, size_t frames_up)
-{
-    interp_frame *frame = interp_cur_frame(interp);
-    const toy_block *this_block = frame_get_block(frame);
-    const toy_block *grandparent_block = lookup_block_grandparents(this_block, frames_up);
-    return grandparent_block;
-}
-#endif
-
-static toy_var *interp_get_var_closure(toy_interp *interp, const closure *closure)
-{
-    interp_assert_valid(interp);
-    /* TODO: Need to look up parents in lexical scope stack not runtime invocation stack */
-#if 0
-    const toy_block *block = lookup_block(interp, closure->frames_up);
-    toy_var *var = block_get_var(block, closure->var_index);
-#endif
-   interp_stack *stack = interp_get_stack(interp);
-    interp_frame *frame = interp_stack_index(stack, closure->frames_up);
-    toy_var *var = interp_frame_get_var(frame, closure->var_index);
-    var_assert_valid(var);
-#ifdef DEBUG_INTERP_LOOKUPS
-    log_debug_file(__FILE__, "var retrieved: ");
-    var_dump(var, TOY_FALSE);
-    log_putc(LOG_DEBUG, '\n');
-#endif /* DEBUG_INTERP_LOOKUPS */
-    return var;
-}
-
 toy_var *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier)
 {
     interp_assert_valid(interp);
+    decl_ref *ref = identifier->decl;
 #ifdef DEBUG_INTERP_LOOKUPS
-    log_debug_file(__FILE__, "retrieving lvalue");
-    resolved_name_dump(&identifier->resolved);
+    log_debug_file("retrieving lvalue: ");
+    decl_ref_dump(ref);
 #endif /* DEBUG_INTERP_LOOKUPS */
 
-    switch (identifier->resolved.type) {
-    case REF_FUNC_DECL:
+    /* FIXME: Need not be the current frame */
+    interp_frame *cur_frame = interp_cur_frame(interp);
+
+    switch (ref->type) {
+    case DECL_REF_FUNC:
         /* Function declarations are immutable */
-        invalid_lvalue(&identifier->resolved);
+        invalid_lvalue(ref);
         break;
-    case REF_FUNC_PARAM:
+    case DECL_REF_PARAM:
 #ifdef DEBUG_INTERP_LOOKUPS
-        log_debug_file(__FILE__, "lvalue is func param");
+        log_debug_file("lvalue is func param\n");
 #endif /* DEBUG_INTERP_LOOKUPS */
-        closure *param_ref = &identifier->resolved.func_param;
-        toy_var *param_var = interp_get_param_closure(interp, param_ref);
+        func_param_ref *param_ref = &ref->func_param;
+        toy_var *param_var = interp_frame_get_func_arg(cur_frame, param_ref->param_index);
         var_assert_valid(param_var);
         return param_var;
-    case REF_PREDEF_CONST:
-    case REF_PREDEF_FUNC:
+    case DECL_REF_PREDEF:
 #ifdef DEBUG_INTERP_LOOKUPS
-        log_debug_file(__FILE__, "lvalue is predef const or func");
+        log_debug_file("lvalue is predef const or func\n");
 #endif /* DEBUG_INTERP_LOOKUPS */
-        invalid_lvalue(&identifier->resolved);
+        invalid_lvalue(ref);
         break;
-    case REF_UNDEFINED:
+    case DECL_REF_VAR:
 #ifdef DEBUG_INTERP_LOOKUPS
-        log_debug_file(__FILE__, "lvalue is undefined reference to name '%s'\n", identifier->name);
+        log_debug_file("lvalue is var\n");
 #endif /* DEBUG_INTERP_LOOKUPS */
-        assert(0);
-        break;
-    case REF_VAR_DECL:
-#ifdef DEBUG_INTERP_LOOKUPS
-        log_debug_file(__FILE__, "lvalue is var decl\n");
-#endif /* DEBUG_INTERP_LOOKUPS */
-        closure *var_ref = &identifier->resolved.var_decl;
-        toy_var *var_decl_var = interp_get_var_closure(interp, var_ref);
+        toy_var_decl *var_decl = ref->var_decl;
+        assert(var_decl->decl_index < cur_frame->num_variables);
+        toy_var *var_decl_var = interp_frame_get_var(cur_frame, var_decl->decl_index);
         var_assert_valid(var_decl_var);
         return var_decl_var;
     default:
@@ -412,57 +336,47 @@ toy_var *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier)
 const toy_val *interp_get_rvalue(toy_interp *interp, const toy_identifier *identifier)
 {
     interp_assert_valid(interp);
+    decl_ref *ref = identifier->decl;
 #ifdef DEBUG_INTERP_LOOKUPS
-    log_debug_file(__FILE__, "interp: retrieving rvalue\n");
-    resolved_name_dump(&identifier->resolved);
+    log_debug_file("retrieving rvalue: ");
+    decl_ref_dump(ref);
 #endif /* DEBUG_INTERP_LOOKUPS */
 
-    switch (identifier->resolved.type) {
-    case REF_FUNC_DECL:
+    /* FIXME: Need not be the current frame */
+    interp_frame *cur_frame = interp_cur_frame(interp);
+
+    switch (ref->type) {
+    case DECL_REF_FUNC:
 #ifdef DEBUG_INTERP_LOOKUPS
-        log_debug_file(__FILE__, "rvalue is func decl\n");
+        log_debug_file("rvalue is func decl\n");
 #endif /* DEBUG_INTERP_LOOKUPS */
-        const toy_func_decl_stmt *func_decl_stmt = identifier->resolved.func_decl_stmt;
+        const toy_func_decl_stmt *func_decl_stmt = ref->func_decl;
         toy_val *func_val = func_decl_stmt->val;
         assert(VAL_FUNC == func_val->type);
         val_assert_valid(func_val);
         return func_val;
-    case REF_FUNC_PARAM:
+    case DECL_REF_PARAM:
 #ifdef DEBUG_INTERP_LOOKUPS
-        log_debug_file(__FILE__, "rvalue is func param\n");
+        log_debug_file("rvalue is func param\n");
 #endif /* DEBUG_INTERP_LOOKUPS */
-        const closure *param_ref = &identifier->resolved.func_param;
-        toy_var *func_param_var = interp_get_param_closure(interp, param_ref);
-        toy_val *func_param_val = var_get(func_param_var);
-        val_assert_valid(func_param_val);
-        return func_param_val;
-    case REF_PREDEF_CONST:
+        const func_param_ref *param_ref = &ref->func_param;
+        toy_var *param_var = interp_frame_get_func_arg(cur_frame, param_ref->param_index);
+        toy_val *param_val = var_get(param_var);
+        val_assert_valid(param_val);
+        return param_val;
+    case DECL_REF_PREDEF:
 #ifdef DEBUG_INTERP_LOOKUPS
-        log_debug_file(__FILE__, "rvalue is predef const\n");
+        log_debug_file("rvalue is predef const or func\n");
 #endif /* DEBUG_INTERP_LOOKUPS */
-        const predefined_constant *predef_const = identifier->resolved.predef_const;
-        const toy_val *predef_const_val = &predef_const->value;
+        const toy_val *predef_const_val = ref->predef;
         val_assert_valid(predef_const_val);
         return predef_const_val;
-    case REF_PREDEF_FUNC:
+    case DECL_REF_VAR:
 #ifdef DEBUG_INTERP_LOOKUPS
-        log_debug_file(__FILE__, "rvalue is predef func\n");
+        log_debug_file("rvalue is var\n");
 #endif /* DEBUG_INTERP_LOOKUPS */
-        const toy_val *predef_func_val = identifier->resolved.predef_func;
-        val_assert_valid(predef_func_val);
-        return predef_func_val;
-    case REF_UNDEFINED:
-#ifdef DEBUG_INTERP_LOOKUPS
-        log_debug_file(__FILE__, "rvalue is undefined\n");
-#endif /* DEBUG_INTERP_LOOKUPS */
-        assert(0);
-        break;
-    case REF_VAR_DECL:
-#ifdef DEBUG_INTERP_LOOKUPS
-        log_debug_file(__FILE__, "rvalue is var decl\n");
-#endif /* DEBUG_INTERP_LOOKUPS */
-        const closure *var_ref = &identifier->resolved.var_decl;
-        toy_var *var_decl_var = interp_get_var_closure(interp, var_ref);
+        toy_var_decl *var_decl = ref->var_decl;
+        toy_var *var_decl_var = interp_frame_get_var(cur_frame, var_decl->decl_index);
         toy_val *var_val = var_get(var_decl_var);
         val_assert_valid(var_val);
         return var_val;
@@ -588,9 +502,7 @@ void interp_eval_var(toy_interp *interp, toy_var *result, toy_expr *expr)
 static void expr_identifier(toy_interp *interp, toy_val *result, toy_identifier *identifier)
 {
     interp_assert_valid(interp);
-    toy_var *referenced_var = interp_get_lvalue(interp, identifier);
-    var_assert_valid(referenced_var);
-    toy_val *referenced_val = var_get(referenced_var);
+    const toy_val *referenced_val = interp_get_rvalue(interp, identifier);
     val_assert_valid(referenced_val);
     *result = *referenced_val;
     val_assert_valid(result);
@@ -770,7 +682,7 @@ static item_callback_result set_var_callback(var_decl_visitor *var_decl_vis, siz
     interp_eval_val(interp, initial_val, var_decl->value);
 
 #ifdef DEBUG_VARIABLES
-    log_debug_file(__FILE__, "interp: setting frame var %d to initial val ", var_decl->decl_index);
+    log_debug_file("Setting frame var %d to initial val ", var_decl->decl_index);
     val_dump(initial_val, 0);
     log_putc(LOG_DEBUG, '\n');
 #endif /* DEBUG_VARIABLES */
@@ -801,7 +713,7 @@ static run_stmt_result func_decl_stmt(toy_interp *interp, const toy_func_decl_st
     assert(func_decl->val->type == VAL_FUNC);
     assert(func_decl->val->func == func_decl->func);
 #ifdef DEBUG_VARIABLES
-    log_debug_file(__FILE__, "interp: setting frame var %d to initial function ", func_decl->decl_index);
+    log_debug_file("interp: setting frame var %d to initial function ", func_decl->decl_index);
     val_dump(func_decl->val, 0);
     log_debug("\n");
 #endif /* DEBUG_VARIABLES */

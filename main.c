@@ -33,8 +33,8 @@ int main(int argc, char **argv)
     add_block_parents(program);
     func_dump(program, TOY_TRUE);
 
-    allocate_registers(program);
     resolve_names(program);
+    allocate_registers(program);
 
     toy_interp *interp = interp_alloc(program);
     interp_run_current_block(interp);

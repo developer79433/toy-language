@@ -10,6 +10,7 @@ void stmt_dump(const toy_stmt *stmt, int append_semicolon);
 toy_stmt *stmt_alloc(toy_stmt_type type);
 toy_stmt *block_stmt_alloc(toy_block *block);
 toy_stmt *func_decl_stmt_alloc(toy_str name, toy_str_list *param_names, toy_block *block);
+void func_decl_stmt_assert_valid(const toy_func_decl_stmt *func_decl_stmt);
 void stmt_assert_valid(const toy_stmt *stmt);
 void func_decl_stmt_dump(const toy_func_decl_stmt *func_decl);
 toy_stmt *var_decl_stmt_alloc(toy_var_decl_list *var_decl_list);

@@ -302,12 +302,12 @@ static item_callback_result map_latch_filter_visit_entry(map_latch_filter *latch
     if (map_filter_last_match(filter)) {
         map_latch *latch = &latch_filt->latch;
 #ifdef DEBUG_MAP_LATCH_FILTER
-    log_printf_file(__FILE__, "filter succeeded, so letting latch visit entry %p\n", item);
+    log_printf_file("filter succeeded, so letting latch visit entry %p\n", item);
 #endif /* DEBUG_MAP_LATCH_FILTER */
         return map_latch_visit_entry(latch, entry);
     }
 #ifdef DEBUG_MAP_LATCH_FILTER
-    log_printf_file(__FILE__, "filter failed, so continuing\n");
+    log_printf_file("filter failed, so continuing\n");
 #endif /* DEBUG_MAP_LATCH_FILTER */
     return CONTINUE_ENUMERATION;
 }
@@ -402,12 +402,12 @@ static item_callback_result const_map_latch_filter_visit_entry(const_map_latch_f
     if (const_map_filter_last_match(filter)) {
         const_map_latch *latch = &latch_filt->latch;
 #ifdef DEBUG_MAP_LATCH_FILTER
-    log_printf_file(__FILE__, "filter succeeded, so letting latch visit entry %p\n", item);
+    log_printf_file("filter succeeded, so letting latch visit entry %p\n", item);
 #endif /* DEBUG_MAP_LATCH_FILTER */
         return const_map_latch_visit_entry(latch, entry);
     }
 #ifdef DEBUG_MAP_LATCH_FILTER
-    log_printf_file(__FILE__, "filter failed, so continuing\n");
+    log_printf_file("filter failed, so continuing\n");
 #endif /* DEBUG_MAP_LATCH_FILTER */
     return CONTINUE_ENUMERATION;
 }

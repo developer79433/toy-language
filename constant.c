@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "str.h"
-#include "constants.h"
+#include "constant.h"
 #include "util.h"
 #include "predef-function.h"
 #include "val.h"
@@ -25,15 +25,24 @@ static int compare_constant_names(const void *p1, const void *p2)
     return strcmp(name1, name2);
 }
 
-const predefined_constant *lookup_predefined_constant(toy_str name)
+const predefined_constant *constant_get(toy_str name)
 {
     predefined_constant look_for_const = { .name = name };
     return bsearch(&look_for_const, predefined_constants, ELEMENTSOF(predefined_constants), sizeof(predefined_constants[0]), compare_constant_names);
 }
 
-toy_bool is_predefined(toy_str name)
+const toy_val *constant_get_val(toy_str name)
 {
-    if (lookup_predefined_constant(name)) {
+    const predefined_constant *constant = constant_get(name);
+    if (constant) {
+        return &constant->value;
+    }
+    return NULL;
+}
+
+toy_bool is_constant(toy_str name)
+{
+    if (constant_get(name)) {
         return TOY_TRUE;
     }
     if (predef_func_lookup_name(name)) {
@@ -42,13 +51,13 @@ toy_bool is_predefined(toy_str name)
     return TOY_FALSE;
 }
 
-void predef_const_dump(const predefined_constant *predef_const)
+void constant_dump(const predefined_constant *predef_const)
 {
     str_dump(predef_const->name, TOY_FALSE);
     val_dump(&predef_const->value, 1);
 }
 
-void predef_const_assert_valid(const predefined_constant *predef_const)
+void constant_assert_valid(const predefined_constant *predef_const)
 {
     str_assert_valid(predef_const->name);
     val_assert_valid(&predef_const->value);
