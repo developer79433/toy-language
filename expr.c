@@ -17,6 +17,7 @@
 #include "if-arm-list.h"
 #include "expr-list.h"
 #include "log.h"
+#include "func-closure-types.h"
 
 static const char *toy_expr_type_names[] = {
     "logical and",
@@ -114,15 +115,18 @@ toy_expr *alloc_expr_literal(toy_val_type val_type)
 toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_block *block)
 {
     toy_expr *expr;
-    expr = (toy_expr *) malloc(sizeof(toy_expr) + sizeof(toy_val) + sizeof(toy_function));
+    expr = (toy_expr *) malloc(sizeof(toy_expr) + sizeof(toy_val) + sizeof(func_closure) + sizeof(toy_function));
     expr->type = EXPR_LITERAL;
     expr->val = (toy_val *) (expr + 1);
     expr->val->type = VAL_FUNC;
-    expr->val->func = (toy_function *) (expr->val + 1);
-    expr->val->func->type = FUNC_USER_DECLARED;
-    expr->val->func->name = ""; /* TODO: generated unique name */
-    expr->val->func->code->stmts = block->stmts;
-    expr->val->func->param_names = formalparams;
+    expr->val->closure = (func_closure *) (expr->val + 1);
+    expr->val->closure->num_closures = 0;
+    expr->val->closure->closures = NULL;
+    expr->val->closure->func = (toy_function *) (expr->val->closure + 1);
+    expr->val->closure->func->type = FUNC_USER_DECLARED;
+    expr->val->closure->func->name = ""; /* TODO: generated unique name */
+    expr->val->closure->func->code->stmts = block->stmts;
+    expr->val->closure->func->param_names = formalparams;
     return expr;
 }
 

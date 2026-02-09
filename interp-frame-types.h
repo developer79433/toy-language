@@ -17,7 +17,7 @@ enum frame_type_enum {
 typedef enum frame_type_enum frame_type;
 
 typedef struct func_call_frame_struct {
-    const toy_function *func;
+    const func_closure *closure;
     size_t num_arguments;
     toy_var *arguments;
 } func_call_frame;
@@ -35,8 +35,6 @@ typedef struct interp_frame_struct {
     toy_stmt_list *cur_stmt;
     size_t num_variables;
     toy_var *variables;
-    size_t num_closures;
-    toy_var *closures;
 } interp_frame;
 
 #endif /* TOY_INTERP_FRAME_TYPES_H */

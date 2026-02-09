@@ -19,6 +19,7 @@ typedef item_callback_result (*visit_expr_list_func)(ast_visitor *v, toy_expr_li
 typedef item_callback_result (*visit_field_ref_func)(ast_visitor *v, toy_field_ref *field_ref);
 typedef item_callback_result (*visit_for_stmt_func)(ast_visitor *v, toy_for_stmt *for_stmt);
 typedef item_callback_result (*visit_func_call_func)(ast_visitor *v, toy_func_call *func_call);
+typedef item_callback_result (*visit_func_closure_func)(ast_visitor *v, func_closure *closure);
 typedef item_callback_result (*visit_func_decl_func)(ast_visitor *v, toy_func_decl_stmt *func_decl);
 typedef item_callback_result (*visit_func_expr_func)(ast_visitor *v, toy_function *func);
 typedef item_callback_result (*visit_identifier_func)(ast_visitor *v, toy_identifier *identifier);
@@ -65,6 +66,7 @@ struct ast_visitor_struct {
     visit_func_call_func func_call;
     visit_func_decl_func func_decl;
     visit_func_expr_func func_expr;
+    visit_func_closure_func func_closure;
     visit_identifier_func identifier;
     visit_if_stmt_func if_stmt;
     visit_if_arm_func if_arm;

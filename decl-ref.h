@@ -5,6 +5,7 @@
 #include "bool-types.h"
 #include "str-types.h"
 
+decl_ref *decl_ref_alloc_predef(const toy_val *val);
 const char *decl_ref_type_name(decl_ref_type type);
 void decl_ref_dump(const decl_ref *ref);
 void decl_ref_assert_valid(const decl_ref *ref);

@@ -30,43 +30,21 @@ typedef struct name_resolver_struct {
     ast_visitor ast_vis;
     toy_block *cur_block;
     size_t symbol_index;
-    size_t frames_up;
 } name_resolver;
-
-static void add_decl_ref(toy_block *block, decl_ref *ref)
-{
-    block_assert_valid(block);
-    decl_ref_assert_valid(ref);
-#ifdef DEBUG_NAME_RESOLUTION
-    log_debug_file("Adding declaration:\n");
-    decl_ref_dump(ref);
-#endif /* DEBUG_NAME_RESOLUTION */
-    if (block->decls_rev) {
-        block->decls_rev = decl_ref_list_prepend(block->decls_rev, ref);
-    } else {
-        block->decls_rev = decl_ref_list_alloc(ref);
-    }
-}
-
-static void resolve_identifier_block(toy_block *block, toy_identifier *identifier)
-{
-    identifier->decl = decl_ref_list_find_name(block->decls_rev, identifier->name);
-    if (identifier->decl) {
-        decl_ref_assert_valid(identifier->decl);
-    }
-}
 
 static void resolve_identifier_block_and_parents(name_resolver *resolver, toy_identifier *identifier)
 {
-    resolver->frames_up = 0;
+    size_t frames_up = 0;
     toy_block *block = resolver->cur_block;
     do {
-        resolve_identifier_block(block, identifier);
+        identifier->decl = block_resolve_identifier(block, identifier->name);
         if (identifier->decl) {
+            identifier->decl->frames_up = frames_up;
+            identifier->decl->block = block;
             return;
         }
-        block = block->parent;
-        resolver->frames_up++;
+        block = block_parent(block);
+        frames_up++;
     } while (block);
 }
 
@@ -77,19 +55,39 @@ static void resolve_identifier(name_resolver *resolver, toy_identifier *identifi
 #endif /* DEBUG_NAME_RESOLUTION */
     resolve_identifier_block_and_parents(resolver, identifier);
     if (identifier->decl) {
+        decl_ref *ref = identifier->decl;
 #ifdef DEBUG_NAME_RESOLUTION
         log_debug("Resolved '%s' to %s\n", identifier->name, decl_ref_type_name(ref->type));
 #endif /* DEBUG_NAME_RESOLUTION */
-        if (resolver->frames_up != 0) {
+        if (ref->frames_up != 0) {
+            switch (ref->type) {
+            case DECL_REF_FUNC:
+                /* Function declarations are immutable, so no need for a closure */
+                break;
+            case DECL_REF_PARAM:
+                /* Closure over a function parameter in an enclosing block */
+                func_param_ref *param_ref = &ref->func_param;
+                log_debug_file("Closure over parameter #%zu to function %s, %zu frames up\n", param_ref->param_index, param_ref->func->name, ref->frames_up);
+                break;
+            case DECL_REF_PREDEF:
+                /* Predefined constant and functions are immutable, so no need for a closure */
+                break;
+            case DECL_REF_VAR:
+                /* Closure over a variable in an enclosing block */
+                toy_var_decl *var_decl = ref->var_decl;
+                log_debug_file("Closure over variable %s, %zu frames up\n", var_decl->name, ref->frames_up);
+                break;
+            default:
+                assert(0);
+                break;
+            }
             resolver->cur_block->num_closures++;
         }
     }
     if (!identifier->decl) {
         const toy_val *val = constant_get_val(identifier->name);
         if (val) {
-            decl_ref *ref = identifier->decl = mymalloc(decl_ref);
-            ref->type = DECL_REF_PREDEF;
-            ref->predef = val;
+            identifier->decl = decl_ref_alloc_predef(val);
 #ifdef DEBUG_NAME_RESOLUTION
             log_debug_file("Resolved '%s' to predef constant\n", identifier->name);
 #endif /* DEBUG_NAME_RESOLUTION */
@@ -98,9 +96,7 @@ static void resolve_identifier(name_resolver *resolver, toy_identifier *identifi
     if (!identifier->decl) {
         const toy_val *val = predef_func_lookup_name(identifier->name);
         if (val) {
-            decl_ref *ref = identifier->decl = mymalloc(decl_ref);
-            ref->type = DECL_REF_PREDEF;
-            ref->predef = val;
+            identifier->decl = decl_ref_alloc_predef(val);
 #ifdef DEBUG_NAME_RESOLUTION
             log_debug_file("Resolved '%s' to predef function\n", identifier->name);
 #endif /* DEBUG_NAME_RESOLUTION */
@@ -114,8 +110,12 @@ static void resolve_identifier(name_resolver *resolver, toy_identifier *identifi
 static item_callback_result handle_func_decl(name_resolver *resolver, toy_func_decl_stmt *func_decl)
 {
     block_assert_valid(resolver->cur_block);
-    decl_ref ref = { .type = DECL_REF_FUNC, .func_decl = func_decl };
-    add_decl_ref(resolver->cur_block, &ref);
+    decl_ref ref = { .type = DECL_REF_FUNC, .func_decl = func_decl, .frames_up = 0, .block = resolver->cur_block };
+#ifdef DEBUG_NAME_RESOLUTION
+    log_debug_file("Adding func declaration:\n");
+    decl_ref_dump(&ref);
+#endif /* DEBUG_NAME_RESOLUTION */
+    block_add_decl_ref(resolver->cur_block, &ref);
     func_decl->decl_index = resolver->symbol_index;
     resolver->symbol_index++;
     return default_func_decl((ast_visitor *) resolver, func_decl);
@@ -124,9 +124,13 @@ static item_callback_result handle_func_decl(name_resolver *resolver, toy_func_d
 static item_callback_result handle_var_decl(name_resolver *resolver, toy_var_decl *var_decl)
 {
     block_assert_valid(resolver->cur_block);
-    decl_ref ref = { .type = DECL_REF_VAR, .var_decl = var_decl };
+    decl_ref ref = { .type = DECL_REF_VAR, .var_decl = var_decl, .frames_up = 0, .block = resolver->cur_block };
     decl_ref_assert_valid(&ref);
-    add_decl_ref(resolver->cur_block, &ref);
+#ifdef DEBUG_NAME_RESOLUTION
+    log_debug_file("Adding var declaration:\n");
+    decl_ref_dump(&ref);
+#endif /* DEBUG_NAME_RESOLUTION */
+    block_add_decl_ref(resolver->cur_block, &ref);
     var_decl->decl_index = resolver->symbol_index;
     resolver->symbol_index++;
     return default_var_decl(&resolver->ast_vis, var_decl);
@@ -140,15 +144,21 @@ typedef struct param_add_visitor_struct {
 
 static item_callback_result add_param_ref(param_add_visitor *param_add_vis, size_t index, toy_str_list *item)
 {
+    name_resolver *resolver = param_add_vis->resolver;
+    toy_block *cur_block = resolver->cur_block;
     decl_ref ref = {
         .type = DECL_REF_PARAM,
         .func_param.func = param_add_vis->func,
         .func_param.param_index = index,
-        .func_param.func = param_add_vis->func
+        .func_param.func = param_add_vis->func,
+        .frames_up = 0,
+        .block = cur_block
     };
-    name_resolver *resolver = param_add_vis->resolver;
-    toy_block *cur_block = resolver->cur_block;
-    add_decl_ref(cur_block, &ref);
+#ifdef DEBUG_NAME_RESOLUTION
+    log_debug_file("Adding parameter:\n");
+    decl_ref_dump(&ref);
+#endif /* DEBUG_NAME_RESOLUTION */
+    block_add_decl_ref(cur_block, &ref);
     resolver->symbol_index++;
     return CONTINUE_ENUMERATION;
 }

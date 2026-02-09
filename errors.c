@@ -123,22 +123,6 @@ void divide_by_zero(void)
     fatal_error("Divide by zero");
 }
 
-static const char *func_type_names[] = {
-    "Predefined",
-    "User-defined"
-};
-
-/* TODO: Belongs elsewhere */
-static const char *function_type_name(enum toy_func_type func_type)
-{
-    return func_type_names[func_type];
-}
-
-void invalid_function_type(enum toy_func_type func_type)
-{
-    fatal_error("Invalid function type %s (%d)", function_type_name(func_type), (int) func_type);
-}
-
 void return_outside_function(frame_type ftype)
 {
     fatal_error("Encountered return statement outside function, in frame of type %s", interp_frame_type_name(ftype));

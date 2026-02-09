@@ -15,6 +15,7 @@ item_callback_result visit_expr_list(ast_visitor *v, toy_expr_list *expr_list);
 item_callback_result visit_expr(ast_visitor *v, toy_expr *expr);
 item_callback_result visit_field_ref(ast_visitor *v, toy_field_ref *field_ref);
 item_callback_result visit_for_stmt(ast_visitor *v, toy_for_stmt *for_stmt);
+item_callback_result visit_func_closure(ast_visitor *v, func_closure *closure);
 item_callback_result visit_func_decl(ast_visitor *v, toy_func_decl_stmt *func_decl);
 item_callback_result visit_func_expr(ast_visitor *v, toy_function *func);
 item_callback_result visit_identifier(ast_visitor *v, toy_identifier *identifier);
@@ -56,6 +57,7 @@ item_callback_result default_expr_list(ast_visitor *v, toy_expr_list *expr_list)
 item_callback_result default_expr(ast_visitor *v, toy_expr *expr);
 item_callback_result default_field_ref(ast_visitor *v, toy_field_ref *field_ref);
 item_callback_result default_for_stmt(ast_visitor *v, toy_for_stmt *for_stmt);
+item_callback_result default_func_closure(ast_visitor *v, func_closure *closure);
 item_callback_result default_func_decl(ast_visitor *v, toy_func_decl_stmt *func_decl);
 item_callback_result default_func_expr(ast_visitor *v, toy_function *func);
 item_callback_result default_identifier(ast_visitor *v, toy_identifier *identifier);

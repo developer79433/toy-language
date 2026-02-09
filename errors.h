@@ -25,7 +25,6 @@ void too_many_arguments(toy_num expected, const toy_expr_list *args);
 void invalid_argument_type(toy_val_type expected_type, const toy_val *actual_arg);
 void invalid_value_type(toy_val_type value_type);
 void divide_by_zero(void);
-void invalid_function_type(enum toy_func_type func_type);
 void return_outside_function(frame_type ftype);
 void invalid_lvalue(decl_ref *ref);
 void illegal_instruction_in_for_stmt_at_start(const toy_stmt *stmt);

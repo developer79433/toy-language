@@ -34,6 +34,7 @@
 #include "var.h"
 #include "list-visitor.h"
 #include "decl-ref.h"
+#include "func-closure.h"
 
 #if 0
 #define DEBUG_STACK 1
@@ -118,15 +119,16 @@ static run_stmt_result run_predefined_func_val_list(toy_interp *interp, predefin
     return predef(interp, func_inv->arguments, func_inv->num_arguments);
 }
 
-run_stmt_result interp_run_func_expr_list(toy_interp *interp, const toy_function *func, const toy_expr_list *args)
+run_stmt_result interp_run_func_expr_list(toy_interp *interp, const func_closure *closure, const toy_expr_list *args)
 {
     interp_assert_valid(interp);
     toy_val actual_args;
     eval_expr_list(interp, &actual_args, args);
     assert(VAL_LIST == actual_args.type);
+    toy_function *func = closure->func;
     switch (func->type) {
     case FUNC_PREDEFINED:
-        interp->stack = interp_stack_push_predef_func(interp->stack, func, actual_args.list);
+        interp->stack = interp_stack_push_predef_func(interp->stack, closure, actual_args.list);
         run_stmt_result res1 = run_predefined_func_val_list(interp, func->predef);
         interp->stack = interp_stack_pop(interp->stack);
         if (res1 == REACHED_RETURN) {
@@ -134,7 +136,7 @@ run_stmt_result interp_run_func_expr_list(toy_interp *interp, const toy_function
         }
         return res1;
     case FUNC_USER_DECLARED:
-        interp->stack = interp_stack_push_user_func(interp->stack, func, actual_args.list);
+        interp->stack = interp_stack_push_user_func(interp->stack, closure, actual_args.list);
         run_stmt_result res2 = interp_run_current_block(interp);
         interp->stack = interp_stack_pop(interp->stack);
         if (res2 == REACHED_RETURN) {
@@ -142,7 +144,7 @@ run_stmt_result interp_run_func_expr_list(toy_interp *interp, const toy_function
         }
         return res2;
     default:
-        invalid_function_type(func->type);
+        assert(0);
         break;
     }
     assert(0);
@@ -164,43 +166,45 @@ void interp_set_return_value(toy_interp *interp, toy_val *val)
     interp->return_val = *val;
 }
 
-run_stmt_result interp_run_func_val_list(toy_interp *interp, toy_function *def, const toy_val_list *args)
+run_stmt_result interp_run_func_val_list(toy_interp *interp, func_closure *closure, const toy_val_list *args)
 {
     interp_assert_valid(interp);
     val_list_assert_valid(args);
-    switch (def->type) {
+    toy_function *func = closure->func;
+    switch (func->type) {
     case FUNC_PREDEFINED:
-        interp->stack = interp_stack_push_predef_func(interp->stack, def, args);
-        run_stmt_result res1 = run_predefined_func_val_list(interp, def->predef);
+        interp->stack = interp_stack_push_predef_func(interp->stack, closure, args);
+        run_stmt_result res1 = run_predefined_func_val_list(interp, func->predef);
         interp->stack = interp_stack_pop(interp->stack);
         return res1;
     case FUNC_USER_DECLARED:
-        interp->stack = interp_stack_push_user_func(interp->stack, def, args);
+        interp->stack = interp_stack_push_user_func(interp->stack, closure, args);
         run_stmt_result res2 = interp_run_current_block(interp);
         interp->stack = interp_stack_pop(interp->stack);
         return res2;
     default:
-        invalid_function_type(def->type);
+        assert(0);
         break;
     }
     assert(0);
     return REACHED_BLOCK_END;
 }
 
-run_stmt_result interp_run_func_single_arg(toy_interp *interp, toy_function *def, const toy_val *arg)
+run_stmt_result interp_run_func_single_arg(toy_interp *interp, func_closure *closure, const toy_val *arg)
 {
     interp_assert_valid(interp);
     toy_val_list func_args = { .val = *arg, .next = NULL };
-    return interp_run_func_val_list(interp, def, &func_args);
+    return interp_run_func_val_list(interp, closure, &func_args);
 }
 
-run_stmt_result interp_call_func(toy_interp *interp, const toy_function *func, const toy_expr_list *args)
+run_stmt_result interp_call_func(toy_interp *interp, const func_closure *closure, const toy_expr_list *args)
 {
     interp_assert_valid(interp);
-    func_assert_valid(func);
+    func_closure_assert_valid(closure);
+    toy_function *func = closure->func;
     run_stmt_result res;
     if (func->param_names == &INFINITE_PARAMS) {
-        res = interp_run_func_expr_list(interp, func, args);
+        res = interp_run_func_expr_list(interp, closure, args);
     } else {
         size_t num_params = str_list_len(func->param_names);
         size_t num_args = expr_list_len(args);
@@ -209,7 +213,7 @@ run_stmt_result interp_call_func(toy_interp *interp, const toy_function *func, c
         } else if (num_args > num_params) {
             too_many_arguments(num_params, args);
         } else {
-            res = interp_run_func_expr_list(interp, func, args);
+            res = interp_run_func_expr_list(interp, closure, args);
         }
     }
     if (res == REACHED_RETURN) {
@@ -296,6 +300,12 @@ toy_var *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier)
 
     /* FIXME: Need not be the current frame */
     interp_frame *cur_frame = interp_cur_frame(interp);
+
+    toy_block *ref_block = ref->block;
+    size_t frames_up = ref->frames_up;
+#ifdef DEBUG_INTERP_LOOKUPS
+    log_debug_file("Reference to block %p, %zu frames up\n", ref_block, frames_up);
+#endif /* DEBUG_INTERP_LOOKUPS */
 
     switch (ref->type) {
     case DECL_REF_FUNC:
@@ -477,8 +487,8 @@ static void op_func_call(toy_interp *interp, toy_val *result, toy_func_call *cal
     interp_assert_valid(interp);
     const toy_val *referenced_val = interp_get_rvalue(interp, &call->id);
     if (VAL_FUNC == referenced_val->type) {
-        const toy_function *func = referenced_val->func;
-        run_stmt_result res = interp_call_func(interp, func, call->args);
+        const func_closure *closure = referenced_val->closure;
+        run_stmt_result res = interp_call_func(interp, closure, call->args);
         if (res == REACHED_RETURN) {
             *result = *interp_get_return_value(interp);
         } else {
@@ -711,7 +721,8 @@ static run_stmt_result func_decl_stmt(toy_interp *interp, const toy_func_decl_st
     interp_stack *stack = interp->stack;
     interp_frame *cur_frame = interp_stack_payload(stack);
     assert(func_decl->val->type == VAL_FUNC);
-    assert(func_decl->val->func == func_decl->func);
+    func_closure *closure = func_decl->val->closure;
+    assert(closure->func == func_decl->func);
 #ifdef DEBUG_VARIABLES
     log_debug_file("interp: setting frame var %d to initial function ", func_decl->decl_index);
     val_dump(func_decl->val, 0);
@@ -828,7 +839,8 @@ toy_interp *interp_alloc(const toy_function *program)
     toy_interp *interp;
     interp = mymalloc(toy_interp);
     interp->main_program = program;
-    interp->stack = interp_stack_push_user_func(interp->stack, interp->main_program, NULL);
+    const func_closure closure = { .num_closures = 0, .closures = NULL, .func = (toy_function *) program };
+    interp->stack = interp_stack_push_user_func(interp->stack, &closure, NULL);
     /* interp_stack_dump("at program start", interp->stack); */
     interp_assert_valid(interp);
     return interp;

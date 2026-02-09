@@ -1,6 +1,8 @@
 #ifndef TOY_VAL_TYPES_H
 #define TOY_VAL_TYPES_H 1
 
+#include <stddef.h>
+
 #include "bool-types.h"
 #include "str-types.h"
 #include "num-types.h"
@@ -31,13 +33,19 @@ typedef struct toy_val_list_struct toy_val_list;
 struct toy_function_struct;
 typedef struct toy_function_struct toy_function;
 
+struct toy_var_struct;
+typedef struct toy_var_struct toy_var;
+
+struct func_closure_struct;
+typedef struct func_closure_struct func_closure;
+
 typedef struct toy_val_struct {
     toy_val_type type;
     union {
         /* Boolean value */
         toy_bool boolean;
         /* Function value */
-        toy_function *func;
+        func_closure *closure;
         /* List of values */
         toy_val_list *list;
         /* Object mapping string keys to values */

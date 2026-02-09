@@ -10,6 +10,7 @@
 #include "str-list.h"
 #include "list-visitor.h"
 #include "map-visitor.h"
+#include "func-closure-types.h"
 
 typedef struct list_ast_visitor_struct {
     list_visitor list_vis;
@@ -328,7 +329,7 @@ item_callback_result default_val(ast_visitor *v, toy_val *val)
     case VAL_BOOL:
         return visit_bool(v, val->boolean);
     case VAL_FUNC:
-        return visit_func_expr(v, val->func);
+        return visit_func_closure(v, val->closure);
     case VAL_LIST:
         return visit_val_list(v, val->list);
     case VAL_MAP:
@@ -889,4 +890,17 @@ item_callback_result visit_func_expr(ast_visitor *v, toy_function *func)
         return v->func_expr(v, func);
     }
     return default_func_expr(v, func);
+}
+
+item_callback_result default_func_closure(ast_visitor *v, func_closure *closure)
+{
+    return visit_func_expr(v, closure->func);
+}
+
+item_callback_result visit_func_closure(ast_visitor *v, func_closure *closure)
+{
+    if (v->func_closure) {
+        return v->func_closure(v, closure);
+    }
+    return default_func_closure(v, closure);
 }

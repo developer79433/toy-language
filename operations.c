@@ -357,7 +357,7 @@ void op_method_call(toy_interp *interp, toy_val *result, const toy_method_call *
     toy_val method;
     collection_lookup(interp, &method, &method_call->id, &expr);
     if (method.type == VAL_FUNC) {
-        run_stmt_result res = interp_run_func_expr_list(interp, method.func, method_call->args);
+        run_stmt_result res = interp_run_func_expr_list(interp, method.closure, method_call->args);
         if (res == REACHED_RETURN) {
             *result = *interp_get_return_value(interp);
         } else {

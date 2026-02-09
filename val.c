@@ -13,6 +13,7 @@
 #include "map-val.h"
 #include "debug.h"
 #include "log.h"
+#include "func-closure.h"
 
 static const char *toy_val_type_names[] = {
     "boolean",
@@ -37,7 +38,7 @@ void val_dump(const toy_val *val, toy_bool verbose)
             dump_bool(val->boolean);
             break;
         case VAL_FUNC:
-            func_dump(val->func, verbose);
+            func_closure_dump(val->closure, verbose);
             break;
         case VAL_LIST:
             val_list_dump(val->list);
@@ -113,7 +114,7 @@ toy_bool vals_equal(const toy_val *val1, const toy_val *val2)
         case VAL_BOOL:
             return (val1->boolean == val2->boolean);
         case VAL_FUNC:
-            return (val1->func == val2->func);
+            return (val1->closure == val2->closure);
             break;
         case VAL_LIST:
             return val_list_equal(val1->list, val2->list);
@@ -223,7 +224,7 @@ void val_assert_valid(const toy_val *val)
     case VAL_FUNC:
         if (valid_check_depth < VALID_CHECK_RECURSION_DEPTH) {
             valid_check_depth++;
-            func_assert_valid(val->func);
+            func_closure_assert_valid(val->closure);
             valid_check_depth--;
         }
         break;
@@ -272,7 +273,7 @@ void val_free(toy_val *val)
     case VAL_BOOL:
         break;
     case VAL_FUNC:
-        func_free(val->func);
+        func_closure_free(val->closure);
         break;
     case VAL_LIST:
         val_list_free(val->list);
@@ -310,13 +311,16 @@ void assert_vals_equal(const toy_val *val1, const toy_val *val2)
 toy_val *val_alloc_func_decl(toy_str_list *formalparams, toy_block *body)
 {
     toy_val *val;
-    val = (toy_val *) malloc(sizeof(toy_val) + sizeof(toy_function));
+    val = (toy_val *) malloc(sizeof(toy_val) + sizeof(func_closure) + sizeof(toy_function));
     val->type = VAL_FUNC;
-    val->func = (toy_function *) (val + 1);
-    val->func->type = FUNC_USER_DECLARED;
-    val->func->name = ""; /* TODO: generated unique name */
-    val->func->param_names = formalparams;
-    val->func->code->stmts = body->stmts;
+    val->closure = (func_closure *) (val + 1);
+    val->closure->num_closures = 0;
+    val->closure->closures = NULL;
+    val->closure->func = (toy_function *) (val->closure + 1);
+    val->closure->func->type = FUNC_USER_DECLARED;
+    val->closure->func->name = ""; /* TODO: generated unique name */
+    val->closure->func->param_names = formalparams;
+    val->closure->func->code->stmts = body->stmts;
     return val;
 }
 

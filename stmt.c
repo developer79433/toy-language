@@ -18,6 +18,7 @@
 #include "block.h"
 #include "toy-parser.h"
 #include "if-arm-list.h"
+#include "func-closure.h"
 
 static const char *toy_stmt_type_names[] = {
     "block statement",
@@ -68,7 +69,7 @@ toy_stmt *block_stmt_alloc(toy_block *block)
 
 toy_stmt *func_decl_stmt_alloc(toy_str name, toy_str_list *param_names, toy_block *block)
 {
-    toy_stmt *stmt = malloc(sizeof(toy_stmt) + sizeof(toy_function) + sizeof(toy_val));
+    toy_stmt *stmt = malloc(sizeof(toy_stmt) + sizeof(toy_function) + sizeof(toy_val) + sizeof(func_closure));
     stmt->type = STMT_FUNC_DECL;
     toy_func_decl_stmt *func_decl = &stmt->func_decl_stmt;
     toy_function *func = func_decl->func = (toy_function *) (stmt + 1);
@@ -78,8 +79,11 @@ toy_stmt *func_decl_stmt_alloc(toy_str name, toy_str_list *param_names, toy_bloc
     func->param_names = param_names;
     func_decl->val = (toy_val *) (func + 1);
     func_decl->val->type = VAL_FUNC;
-    func_decl->val->func = func;
-    assert(func_decl->val->func == func_decl->func);
+    func_decl->val->closure = (func_closure *) (func_decl->val + 1);
+    func_decl->val->closure->num_closures = 0;
+    func_decl->val->closure->closures = NULL;
+    func_decl->val->closure->func = func;
+    assert(func_decl->val->closure->func == func_decl->func);
     return stmt;
 }
 

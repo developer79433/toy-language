@@ -12,8 +12,6 @@ toy_block *interp_frame_get_block(interp_frame *frame);
 const toy_block *interp_frame_get_block_const(const interp_frame *frame);
 size_t interp_frame_num_vars(const interp_frame *frame);
 toy_var *interp_frame_get_var(interp_frame *frame, size_t var_index);
-size_t interp_frame_num_closures(const interp_frame *frame);
-toy_var *interp_frame_get_closure(interp_frame *frame, size_t closure_index);
 toy_var *interp_frame_get_func_arg(interp_frame *frame, size_t param_index);
 
 #endif /* TOY_INTERP_FRAME_H */

@@ -13,6 +13,18 @@
 #include "log.h"
 #include "block.h"
 
+static const char *func_type_names[FUNC_MAX - FUNC_MIN + 1] = {
+    "Predefined",
+    "User-defined"
+};
+
+const char *function_type_name(toy_func_type func_type)
+{
+    return func_type_names[func_type - FUNC_MIN];
+}
+
+const toy_str_list INFINITE_PARAMS = { .next = NULL, .str = NULL };
+
 void func_dump(const toy_function *func, toy_bool verbose)
 {
     func_assert_valid(func);
@@ -25,12 +37,16 @@ void func_dump(const toy_function *func, toy_bool verbose)
     log_debug(")");
     if (verbose) {
         log_debug(" {\n");
-        if (func->type == FUNC_PREDEFINED) {
-            log_debug("/* Pre-defined function code at %p */\n", func->predef);
-        } else if (func->type == FUNC_USER_DECLARED) {
+        switch (func->type) {
+        case FUNC_PREDEFINED:
+            log_debug("/* Pre-defined function, code at %p */\n", func->predef);
+            break;
+        case FUNC_USER_DECLARED:
             stmt_list_dump(func->code->stmts);
-        } else {
-            invalid_function_type(func->type);
+            break;
+        default:
+            assert(0);
+            break;
         }
         log_debug("}\n");
     }

@@ -8,9 +8,6 @@
 
 typedef struct toy_buf_list_struct {
     struct toy_buf_list_struct *next;
-    /* TODO: Keep track of current length:
-    size_t buf_size
-    */
     uint8_t c; /* Really variable-length */
 } toy_buf_list;
 

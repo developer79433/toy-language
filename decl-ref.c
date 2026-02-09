@@ -8,6 +8,8 @@
 #include "log.h"
 #include "function.h"
 #include "val.h"
+#include "block.h"
+#include "mymalloc.h"
 
 static const char *type_names[DECL_REF_MAX - DECL_REF_MIN + 1] = {
     "function",
@@ -21,13 +23,25 @@ const char *decl_ref_type_name(decl_ref_type type)
     return type_names[type - DECL_REF_MIN];
 }
 
+decl_ref *decl_ref_alloc_predef(const toy_val *val)
+{
+    decl_ref *ref = mymalloc(decl_ref);
+    ref->type = DECL_REF_PREDEF;
+    ref->predef = val;
+    ref->frames_up = 0;
+    ref->block = NULL;
+    return ref;
+}
+
 void decl_ref_dump(const decl_ref *ref)
 {
-    log_debug("decl_ref { ");
+    log_debug("decl_ref { %zu frames up, ", ref->frames_up);
     switch (ref->type) {
     case DECL_REF_FUNC:
         toy_func_decl_stmt *func_decl_stmt = ref->func_decl;
         func_decl_stmt_dump(func_decl_stmt);
+        // block_dump(ref->block);
+        assert(ref->block);
         break;
     case DECL_REF_PARAM:
         const func_param_ref *param_ref = &ref->func_param;
@@ -35,15 +49,20 @@ void decl_ref_dump(const decl_ref *ref)
         toy_str param_name = str_list_index(func->param_names, param_ref->param_index);
         log_debug("Function parameter #%zd '%s' to function ", param_ref->param_index, param_name);
         func_dump(func, TOY_FALSE);
+        // block_dump(ref->block);
+        assert(ref->block);
         break;
     case DECL_REF_PREDEF:
         const toy_val *predef = ref->predef;
         log_debug("Predefined %s", (VAL_FUNC == predef->type) ? "" : "const ");
         val_dump(predef, TOY_FALSE);
+        assert(NULL == ref->block);
         break;
     case DECL_REF_VAR:
         toy_var_decl *var_decl = ref->var_decl;
         var_decl_dump(var_decl);
+        // block_dump(ref->block);
+        assert(ref->block);
         break;
     default:
         assert(0);
@@ -58,6 +77,7 @@ void decl_ref_assert_valid(const decl_ref *ref)
     case DECL_REF_FUNC:
         toy_func_decl_stmt *func_decl_stmt = ref->func_decl;
         func_decl_stmt_assert_valid(func_decl_stmt);
+        assert(ref->block);
         break;
     case DECL_REF_PARAM:
         const func_param_ref *param_ref = &ref->func_param;
@@ -65,14 +85,17 @@ void decl_ref_assert_valid(const decl_ref *ref)
         func_assert_valid(func);
         assert(param_ref->param_index >= 0);
         assert(param_ref->param_index < list_len((generic_list *) func->param_names));
+        assert(ref->block);
         break;
     case DECL_REF_PREDEF:
         const toy_val *predef = ref->predef;
         val_assert_valid(predef);
+        assert(NULL == ref->block);
         break;
     case DECL_REF_VAR:
         toy_var_decl *var_decl = ref->var_decl;
         var_decl_assert_valid(var_decl);
+        assert(ref->block);
         break;
     default:
         assert(0);

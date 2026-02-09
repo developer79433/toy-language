@@ -23,6 +23,8 @@ struct toy_function_struct;
 typedef struct toy_function_struct toy_function;
 struct toy_val_struct;
 typedef struct toy_val_struct toy_val;
+struct toy_block_struct;
+typedef struct toy_block_struct toy_block;
 
 typedef struct func_param_ref_struct {
     toy_function *func;
@@ -37,6 +39,8 @@ typedef struct decl_ref_struct {
         toy_var_decl *var_decl;
         const toy_val *predef;
     };
+    size_t frames_up;
+    toy_block *block;
 } decl_ref;
 
 #endif /* TOY_DECL_REF_TYPES_H */

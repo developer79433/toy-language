@@ -20,6 +20,7 @@
 #include "generic-map.h"
 #include "function.h"
 #include "str-list.h"
+#include "func-closure.h"
 
 static run_stmt_result predefined_list_len(toy_interp *interp, const toy_var *args, size_t num_args)
 {
@@ -255,16 +256,16 @@ static run_stmt_result predefined_assert(toy_interp *interp, const toy_var *args
 
 typedef struct user_func_predicate_struct {
     toy_interp *interp;
-    toy_function *func;
+    func_closure *closure;
 } user_func_predicate;
 
 static toy_bool val_list_test_predicate(user_func_predicate *predicate, size_t index, const toy_val_list *list)
 {
     const toy_val *value = val_list_payload_const(list);
-    run_stmt_result run_res = interp_run_func_single_arg(predicate->interp, predicate->func, value);
+    run_stmt_result run_res = interp_run_func_single_arg(predicate->interp, predicate->closure, value);
     switch (run_res) {
     case REACHED_BLOCK_END:
-        no_return_value(predicate->func);
+        no_return_value(predicate->closure->func);
         break;
     case REACHED_BREAK:
     case REACHED_CONTINUE:
@@ -281,6 +282,8 @@ static toy_bool val_list_test_predicate(user_func_predicate *predicate, size_t i
     return TOY_FALSE;
 }
 
+/* TODO: Merge these */
+
 static run_stmt_result predefined_list_all(toy_interp *interp, const toy_var *args, size_t num_args)
 {
     assert(num_args == 2);
@@ -290,8 +293,8 @@ static run_stmt_result predefined_list_all(toy_interp *interp, const toy_var *ar
     if (arg1->type == VAL_LIST) {
         toy_val_list *list = arg1->list;
         if (arg2->type == VAL_FUNC) {
-            toy_function *func = arg2->func;
-            user_func_predicate val_list_pred = { .func = func, .interp = interp };
+            func_closure *closure = arg2->closure;
+            user_func_predicate val_list_pred = { .closure = closure, .interp = interp };
             ret = list_all_match((const generic_list *) list, (generic_list_filter_func) val_list_test_predicate, &val_list_pred);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
@@ -313,8 +316,8 @@ static run_stmt_result predefined_list_not_all(toy_interp *interp, const toy_var
     if (arg1->type == VAL_LIST) {
         toy_val_list *list = arg1->list;
         if (arg2->type == VAL_FUNC) {
-            toy_function *func = arg2->func;
-            user_func_predicate val_list_pred = { .func = func, .interp = interp };
+            func_closure *closure = arg2->closure;
+            user_func_predicate val_list_pred = { .closure = closure, .interp = interp };
             ret = list_not_all_match((const generic_list *) list, (generic_list_filter_func) val_list_test_predicate, &val_list_pred);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
@@ -336,8 +339,8 @@ static run_stmt_result predefined_list_some(toy_interp *interp, const toy_var *a
     if (arg1->type == VAL_LIST) {
         toy_val_list *list = arg1->list;
         if (arg2->type == VAL_FUNC) {
-            toy_function *func = arg2->func;
-            user_func_predicate val_list_pred = { .func = func, .interp = interp };
+            func_closure *closure = arg2->closure;
+            user_func_predicate val_list_pred = { .closure = closure, .interp = interp };
             ret = list_some_match((const generic_list *) list, (generic_list_filter_func) val_list_test_predicate, &val_list_pred);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
@@ -359,8 +362,8 @@ static run_stmt_result predefined_list_none(toy_interp *interp, const toy_var *a
     if (arg1->type == VAL_LIST) {
         toy_val_list *list = arg1->list;
         if (arg2->type == VAL_FUNC) {
-            toy_function *func = arg2->func;
-            user_func_predicate val_list_pred = { .func = func, .interp = interp };
+            func_closure *closure = arg2->closure;
+            user_func_predicate val_list_pred = { .closure = closure, .interp = interp };
             ret = list_none_match((const generic_list *) list, (generic_list_filter_func) val_list_test_predicate, &val_list_pred);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
@@ -376,7 +379,7 @@ static run_stmt_result predefined_list_none(toy_interp *interp, const toy_var *a
 typedef struct val_list_foreach_visitor_struct {
     const_list_visitor list_vis;
     toy_interp *interp;
-    toy_function *toy_func;
+    func_closure *closure;
     size_t num_seen;
 } val_list_foreach_visitor;
 
@@ -384,7 +387,7 @@ static item_callback_result val_list_foreach_item_callback(val_list_foreach_visi
 {
     const toy_val *value = val_list_payload_const(list);
     val_list_vis->num_seen++;
-    run_stmt_result run_result = interp_run_func_single_arg(val_list_vis->interp, val_list_vis->toy_func, value);
+    run_stmt_result run_result = interp_run_func_single_arg(val_list_vis->interp, val_list_vis->closure, value);
     if (run_result == REACHED_RETURN) {
     }
     switch (run_result) {
@@ -417,10 +420,10 @@ static run_stmt_result predefined_list_foreach(toy_interp *interp, const toy_var
     if (arg1->type == VAL_LIST) {
         const toy_val_list *list = arg1->list;
         if (arg2->type == VAL_FUNC) {
-            toy_function *func = arg2->func;
+            func_closure *closure = arg2->closure;
             val_list_foreach_visitor val_list_vis = {
                 .list_vis.visit_entry = (const_list_entry_visit_func) val_list_foreach_item_callback,
-                .toy_func = func,
+                .closure = closure,
                 .interp = interp,
                 .num_seen = 0
             };
@@ -440,7 +443,7 @@ static run_stmt_result predefined_list_foreach(toy_interp *interp, const toy_var
 typedef struct val_list_map_visitor_struct {
     const_list_visitor list_vis;
     toy_interp *interp;
-    toy_function *toy_func;
+    func_closure *closure;
     toy_val_list *result;
 } val_list_map_visitor;
 
@@ -448,14 +451,15 @@ static item_callback_result val_list_map_item_callback(val_list_map_visitor *val
 {
     const toy_val *value = val_list_payload_const(list);
 
-    toy_function *func = val_list_vis->toy_func;
+    func_closure *closure = val_list_vis->closure;
+    toy_function *func = closure->func;
     if (func->param_names && func->param_names != &INFINITE_PARAMS) {
         size_t params_len = str_list_len(func->param_names);
         if (params_len != 1) {
             incorrect_function_num_args(func, 1);
         }
     }
-    run_stmt_result run_result = interp_run_func_single_arg(val_list_vis->interp, func, value);
+    run_stmt_result run_result = interp_run_func_single_arg(val_list_vis->interp, closure, value);
     const toy_val *return_value;
     if (run_result == REACHED_RETURN) {
         return_value = interp_get_return_value(val_list_vis->interp);
@@ -478,10 +482,10 @@ static run_stmt_result predefined_list_map(toy_interp *interp, const toy_var *ar
     if (arg1->type == VAL_LIST) {
         const toy_val_list *list = arg1->list;
         if (arg2->type == VAL_FUNC) {
-            toy_function *func = arg2->func;
+            func_closure *closure = arg2->closure;
             val_list_map_visitor val_list_vis = {
                 .list_vis.visit_entry = (const_list_entry_visit_func) val_list_map_item_callback,
-                .toy_func = func,
+                .closure = closure,
                 .interp = interp,
                 .result = NULL
             };
@@ -511,7 +515,7 @@ static item_callback_result val_list_filter_item_callback(val_list_filter *val_l
     const toy_val *list_elem = val_list_payload_const(list);
     val_assert_valid(list_elem);
     /* TODO: This aliases the arg. Does that allow the user function to modify the value that gets appended? */
-    run_stmt_result res = interp_run_func_single_arg(val_list_filt->val_list_vis.interp, val_list_filt->val_list_vis.toy_func, list_elem);
+    run_stmt_result res = interp_run_func_single_arg(val_list_filt->val_list_vis.interp, val_list_filt->val_list_vis.closure, list_elem);
     toy_bool truthy_return;
     /* TODO: Error if user function didn't return a value */
     if (res == REACHED_RETURN) {
@@ -541,12 +545,12 @@ static run_stmt_result predefined_list_filter(toy_interp *interp, const toy_var 
     if (arg1->type == VAL_LIST) {
         toy_val_list *list = arg1->list;
         if (arg2->type == VAL_FUNC) {
-            toy_function *user_func = arg2->func;
+            func_closure *closure = arg2->closure;
             toy_val list_to_return = { .type = VAL_LIST, .list = NULL };
             val_list_filter val_list_filt = {
                 .val_list_vis.list_vis.visit_entry = (const_list_entry_visit_func) val_list_filter_item_callback,
                 .val_list_vis.interp = interp,
-                .val_list_vis.toy_func = user_func,
+                .val_list_vis.closure = closure,
                 .val_list_vis.num_seen = 0,
                 .list_to_append_to = list_to_return.list
             };
@@ -567,7 +571,7 @@ static run_stmt_result predefined_list_filter(toy_interp *interp, const toy_var 
 typedef struct map_val_foreach_visitor_struct {
     const_map_visitor map_vis;
     toy_interp *interp;
-    toy_function *func;
+    func_closure *closure;
     size_t num_seen;
 } map_val_foreach_visitor;
 
@@ -577,7 +581,7 @@ static item_callback_result obj_foreach_callback(map_val_foreach_visitor *map_va
     const toy_val key_val = { .type = VAL_STR, .str = entry->key };
     const toy_val_list value_arg = { .val = entry->value, .next = NULL };
     const toy_val_list func_args = { .val = key_val, .next = (toy_val_list *) &value_arg };
-    run_stmt_result run_result = interp_run_func_val_list(map_val_vis->interp, map_val_vis->func, &func_args);
+    run_stmt_result run_result = interp_run_func_val_list(map_val_vis->interp, map_val_vis->closure, &func_args);
     if (run_result == REACHED_RETURN) {
         toy_val *return_value = interp_get_return_value(map_val_vis->interp);
         if (val_falsey(return_value)) {
@@ -595,10 +599,10 @@ static run_stmt_result predefined_obj_foreach(toy_interp *interp, const toy_var 
     if (arg1->type == VAL_MAP) {
         map_val *map = arg1->obj;
         if (arg2->type == VAL_FUNC) {
-            toy_function *func = arg2->func;
+            func_closure *closure = arg2->closure;
             map_val_foreach_visitor map_val_vis = {
                 .map_vis.visit_entry = (const_map_entry_visit_func) obj_foreach_callback,
-                .func = func,
+                .closure = closure,
                 .interp = interp,
                 .num_seen = 0
             };
@@ -618,7 +622,7 @@ static run_stmt_result predefined_obj_foreach(toy_interp *interp, const toy_var 
 typedef struct map_val_map_visitor_struct {
     const_map_visitor map_vis;
     toy_interp *interp;
-    toy_function *func;
+    func_closure *closure;
     map_val *result;
 } map_val_map_visitor;
 
@@ -627,14 +631,15 @@ static item_callback_result obj_map_callback(map_val_map_visitor *map_val_vis, c
     const toy_val key_val = { .type = VAL_STR, .str = entry->key };
     const toy_val_list value_arg = { .val = entry->value, .next = NULL };
     const toy_val_list func_args = { .val = key_val, .next = (toy_val_list *) &value_arg };
-    toy_function *func = map_val_vis->func;
+    func_closure *closure = map_val_vis->closure;
+    toy_function *func = closure->func;
     if (func->param_names && func->param_names != &INFINITE_PARAMS) {
         size_t params_len = str_list_len(func->param_names);
         if (params_len != 2) {
             incorrect_function_num_args(func, 2);
         }
     }
-    run_stmt_result run_result = interp_run_func_val_list(map_val_vis->interp, func, &func_args);
+    run_stmt_result run_result = interp_run_func_val_list(map_val_vis->interp, closure, &func_args);
     const toy_val *return_value;
     if (run_result == REACHED_RETURN) {
         return_value = interp_get_return_value(map_val_vis->interp);
@@ -656,10 +661,10 @@ static run_stmt_result predefined_obj_map(toy_interp *interp, const toy_var *arg
     if (arg1->type == VAL_MAP) {
         map_val *map = arg1->obj;
         if (arg2->type == VAL_FUNC) {
-            toy_function *func = arg2->func;
+            func_closure *closure = arg2->closure;
             map_val_map_visitor map_val_vis = {
                 .map_vis.visit_entry = (const_map_entry_visit_func) obj_map_callback,
-                .func = func,
+                .closure = closure,
                 .interp = interp,
                 .result = NULL
             };
@@ -692,7 +697,7 @@ static item_callback_result obj_filter_callback(void *cookie, const map_val_entr
     /* TODO: This aliases the args. Does that allow the user function to modify the value that gets inserted? */
     const toy_val_list func_arg_2 = { .val = entry->value, .next = NULL };
     const toy_val_list func_args = { .val = key_val, .next = (toy_val_list *) &func_arg_2 };
-    run_stmt_result res = interp_run_func_val_list(args->map_val_vis.interp, args->map_val_vis.func, &func_args);
+    run_stmt_result res = interp_run_func_val_list(args->map_val_vis.interp, args->map_val_vis.closure, &func_args);
     toy_bool truthy_return;
     if (res == REACHED_RETURN) {
         toy_val *return_value = interp_get_return_value(args->map_val_vis.interp);
@@ -719,13 +724,13 @@ static run_stmt_result predefined_obj_filter(toy_interp *interp, const toy_var *
         map_val *map = arg1->obj;
         map_val_assert_valid(map);
         if (arg2->type == VAL_FUNC) {
-            toy_function *func = arg2->func;
+            func_closure *closure = arg2->closure;
             toy_val map_to_return = { .type = VAL_MAP, .obj = map_val_alloc() };
             map_val_assert_valid(map_to_return.obj);
             map_filter_cb_args filter_args = {
                 .map_val_vis.map_vis.visit_entry = (const_map_entry_visit_func) obj_filter_callback,
                 .map_val_vis.num_seen = 0,
-                .map_val_vis.func = func,
+                .map_val_vis.closure = closure,
                 .map_val_vis.interp = interp,
                 .obj_to_insert_into = map_to_return.obj
             };
@@ -748,11 +753,11 @@ static toy_bool obj_val_test_predicate(user_func_predicate *predicate, const map
     const toy_val key_val = { .type = VAL_STR, .str = entry->key };
     toy_val_list *func_args = val_list_alloc(&key_val);
     func_args = val_list_append(func_args, &entry->value);
-    run_stmt_result run_res = interp_run_func_val_list(predicate->interp, predicate->func, func_args);
+    run_stmt_result run_res = interp_run_func_val_list(predicate->interp, predicate->closure, func_args);
     val_list_free(func_args);
     switch (run_res) {
     case REACHED_BLOCK_END:
-        no_return_value(predicate->func);
+        no_return_value(predicate->closure->func);
         break;
     case REACHED_BREAK:
     case REACHED_CONTINUE:
@@ -778,8 +783,8 @@ static run_stmt_result predefined_obj_all(toy_interp *interp, const toy_var *arg
     if (arg1->type == VAL_MAP) {
         map_val *map = arg1->obj;
         if (arg2->type == VAL_FUNC) {
-            toy_function *func = arg2->func;
-            user_func_predicate predicate = { .func = func, .interp = interp };
+            func_closure *closure = arg2->closure;
+            user_func_predicate predicate = { .closure = closure, .interp = interp };
             ret = map_all_match((generic_map *) map, (generic_map_filter_func) obj_val_test_predicate, &predicate);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
@@ -801,8 +806,8 @@ static run_stmt_result predefined_obj_not_all(toy_interp *interp, const toy_var 
     if (arg1->type == VAL_MAP) {
         map_val *map = arg1->obj;
         if (arg2->type == VAL_FUNC) {
-            toy_function *func = arg2->func;
-            user_func_predicate predicate = { .func = func, .interp = interp };
+            func_closure *closure = arg2->closure;
+            user_func_predicate predicate = { .closure = closure, .interp = interp };
             ret = map_not_all_match((generic_map *) map, (generic_map_filter_func) obj_val_test_predicate, &predicate);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
@@ -824,8 +829,8 @@ static run_stmt_result predefined_obj_some(toy_interp *interp, const toy_var *ar
     if (arg1->type == VAL_MAP) {
         map_val *map = arg1->obj;
         if (arg2->type == VAL_FUNC) {
-            toy_function *func = arg2->func;
-            user_func_predicate predicate = { .func = func, .interp = interp };
+            func_closure *closure = arg2->closure;
+            user_func_predicate predicate = { .closure = closure, .interp = interp };
             ret = map_some_match((generic_map *) map, (generic_map_filter_func) obj_val_test_predicate, &predicate);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
@@ -847,8 +852,8 @@ static run_stmt_result predefined_obj_none(toy_interp *interp, const toy_var *ar
     if (arg1->type == VAL_MAP) {
         map_val *map = arg1->obj;
         if (arg2->type == VAL_FUNC) {
-            toy_function *func = arg2->func;
-            user_func_predicate predicate = { .func = func, .interp = interp };
+            func_closure *closure = arg2->closure;
+            user_func_predicate predicate = { .closure = closure, .interp = interp };
             ret = map_none_match((generic_map *) map, (generic_map_filter_func) obj_val_test_predicate, &predicate);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
@@ -897,7 +902,6 @@ static run_stmt_result predefined_num(toy_interp *interp, const toy_var *args, s
 }
 
 /* TODO: These should accept toy_exprs, so their types can be statically validated */
-const toy_str_list INFINITE_PARAMS;
 static const toy_str_list assert_binary_param_2 = { .str = "val2", .next = NULL };
 static const toy_str_list assert_binary_params = { .str = "val1", .next = (toy_str_list *) &assert_binary_param_2 };
 static const toy_str_list assert_unary_params = { .str = "val", .next = NULL };
@@ -966,48 +970,80 @@ static const toy_function func_obj_not_all      = { .name = "obj_not_all",      
 static const toy_function func_obj_some         = { .name = "obj_some",         .type = FUNC_PREDEFINED, .predef = predefined_obj_some,         .param_names = (toy_str_list *) &obj_some_params,      .doc = "Return true if the given function returns a truthy value when called with any of the entries in the given object." };
 static const toy_function func_print            = { .name = "print",            .type = FUNC_PREDEFINED, .predef = predefined_print,            .param_names = (toy_str_list *) &INFINITE_PARAMS,      .doc = "Output the given message to the console." };
 
+static const func_closure closure_assert           = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_assert };
+static const func_closure closure_assert_equal     = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_assert_equal };
+static const func_closure closure_assert_gt        = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_assert_gt };
+static const func_closure closure_assert_gte       = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_assert_gte };
+static const func_closure closure_assert_lt        = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_assert_lt };
+static const func_closure closure_assert_lte       = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_assert_lte };
+static const func_closure closure_assert_not_equal = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_assert_not_equal };
+static const func_closure closure_assert_not_null  = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_assert_not_null };
+static const func_closure closure_assert_not_zero  = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_assert_not_zero };
+static const func_closure closure_assert_null      = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_assert_null };
+static const func_closure closure_assert_zero      = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_assert_zero };
+static const func_closure closure_list_all         = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_list_all };
+static const func_closure closure_list_len         = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_list_len };
+static const func_closure closure_list_foreach     = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_list_foreach };
+static const func_closure closure_list_filter      = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_list_filter };
+static const func_closure closure_list_map         = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_list_map };
+static const func_closure closure_list_none        = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_list_none };
+static const func_closure closure_list_not_all     = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_list_not_all };
+static const func_closure closure_list_some        = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_list_some };
+static const func_closure closure_num              = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_num };
+static const func_closure closure_obj_all          = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_obj_all };
+static const func_closure closure_obj_foreach      = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_obj_foreach };
+static const func_closure closure_obj_filter       = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_obj_filter };
+static const func_closure closure_obj_keys         = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_obj_keys };
+static const func_closure closure_obj_len          = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_obj_len };
+static const func_closure closure_obj_map          = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_obj_map };
+static const func_closure closure_obj_none         = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_obj_none };
+static const func_closure closure_obj_not_all      = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_obj_not_all };
+static const func_closure closure_obj_some         = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_obj_some };
+static const func_closure closure_print            = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_print };
+
 static const toy_val predef_functions[] = {
-    { .type = VAL_FUNC, .func = (toy_function *) &func_assert },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_equal },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_gt },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_gte },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_lt },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_lte },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_not_equal },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_not_null },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_not_zero },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_null },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_assert_zero },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_list_all },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_list_len },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_list_filter },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_list_foreach },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_list_map },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_list_none },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_list_not_all },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_list_some },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_num },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_obj_all },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_obj_filter },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_obj_foreach },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_obj_keys },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_obj_len },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_obj_map },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_obj_none },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_obj_not_all },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_obj_some },
-    { .type = VAL_FUNC, .func = (toy_function *) &func_print }
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_assert },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_assert_equal },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_assert_gt },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_assert_gte },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_assert_lt },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_assert_lte },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_assert_not_equal },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_assert_not_null },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_assert_not_zero },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_assert_null },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_assert_zero },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_list_all },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_list_len },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_list_filter },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_list_foreach },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_list_map },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_list_none },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_list_not_all },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_list_some },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_num },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_obj_all },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_obj_filter },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_obj_foreach },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_obj_keys },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_obj_len },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_obj_map },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_obj_none },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_obj_not_all },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_obj_some },
+    { .type = VAL_FUNC, .closure = (func_closure *) &closure_print }
 };
 
 static int compare_function_names(const void *p1, const void *p2)
 {
     const toy_val *val1 = p1, *val2 = p2;
-    return strcmp(val1->func->name, val2->func->name);
+    return strcmp(val1->closure->func->name, val2->closure->func->name);
 }
 
 const toy_val *predef_func_lookup_name(const toy_str name)
 {
-    toy_function look_for_func = { .name = name };
-    toy_val look_for_val = { .func = &look_for_func };
+    const toy_function look_for_func = { .name = name };
+    const func_closure closure = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &look_for_func };
+    toy_val look_for_val = { .type = VAL_FUNC, .closure = (func_closure *) &closure };
     return bsearch(&look_for_val, predef_functions, ELEMENTSOF(predef_functions), sizeof(predef_functions[0]), compare_function_names);
 }

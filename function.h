@@ -8,6 +8,7 @@
 
 extern const toy_str_list INFINITE_PARAMS;
 
+const char *function_type_name(toy_func_type func_type);
 void func_dump(const toy_function *func, toy_bool verbose);
 #ifdef NDEBUG
 #define func_assert_valid(func) do {} while (0)

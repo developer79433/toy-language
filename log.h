@@ -5,7 +5,7 @@
 
 #include "log-types.h"
 
-#define log_file(level, ...) do { log_printf(level, "%s:%4u: ", __FILE__, __LINE__); log_printf(level, __VA_ARGS__); } while (0)
+#define log_file(level, ...) do { log_printf(level, "%s:%-4u: ", __FILE__, __LINE__); log_printf(level, __VA_ARGS__); } while (0)
 #define log_debug_file(...) log_file(LOG_DEBUG, __VA_ARGS__)
 #define log_info_file(...)  log_file(LOG_INFO,  __VA_ARGS__)
 #define log_warn_file(...)  log_file(LOG_WARN,  __VA_ARGS__)

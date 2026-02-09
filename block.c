@@ -8,6 +8,7 @@
 #include "mymalloc.h"
 #include "add-block-parents.h"
 #include "decl-ref-list.h"
+#include "decl-ref.h"
 
 toy_block toplevel_block = {
     .stmts = NULL,
@@ -69,4 +70,20 @@ void block_free(toy_block *block)
     block->stmts = NULL;
     /* TODO: Free decls_rev */
     free(block);
+}
+
+void block_add_decl_ref(toy_block *block, decl_ref *ref)
+{
+    block_assert_valid(block);
+    decl_ref_assert_valid(ref);
+    if (block->decls_rev) {
+        block->decls_rev = decl_ref_list_prepend(block->decls_rev, ref);
+    } else {
+        block->decls_rev = decl_ref_list_alloc(ref);
+    }
+}
+
+decl_ref *block_resolve_identifier(toy_block *block, toy_str name)
+{
+    return decl_ref_list_find_name(block->decls_rev, name);
 }
