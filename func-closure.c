@@ -16,31 +16,46 @@ void func_closure_assert_valid(const func_closure *closure)
 {
     func_assert_valid(closure->func);
     assert(closure->num_closures >= 0);
+    assert(
+        (0 == closure->num_closures && NULL == closure->closures) ||
+        (0 != closure->num_closures && NULL != closure->closures)
+    );
     assert_closures_valid(closure->closures, closure->num_closures);
 }
 
 static void dump_closures(const toy_var *vars, size_t count)
 {
-    for (const toy_var *var = &vars[0]; var < &vars[count]; var++) {
-        var_dump(var, TOY_FALSE);
+    if (count) {
+        log_debug(" closed_vars [ ");
+        for (const toy_var *var = &vars[0]; var < &vars[count]; var++) {
+            var_dump(var, TOY_FALSE);
+        }
+        log_debug("]");
     }
 }
 
 void func_closure_dump(const func_closure *closure, toy_bool verbose)
 {
-    log_debug("closure { ");
-    func_dump(closure->func, verbose);
-    dump_closures(closure->closures, closure->num_closures);
-    log_debug(" }");
-}
-
-static void free_closures(toy_var *vars, size_t count)
-{
-    /* TODO */
+    if (closure->num_closures) {
+        log_debug("closure { ");
+        func_dump(closure->func, verbose);
+        dump_closures(closure->closures, closure->num_closures);
+        log_debug(" }");
+    } else {
+        func_dump(closure->func, verbose);
+    }
 }
 
 void func_closure_free(func_closure *closure)
 {
-    free_closures(closure->closures, closure->num_closures);
+    for (
+        toy_var *var = &closure->closures[0];
+        var < &closure->closures[closure->num_closures];
+        var++
+    ) {
+        var_free(var);
+    }
+    closure->num_closures = 0;
+    closure->closures = NULL;
     func_free(closure->func);
 }

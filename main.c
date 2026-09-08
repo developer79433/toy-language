@@ -36,8 +36,9 @@ int main(int argc, char **argv)
     resolve_names(program);
     allocate_registers(program);
 
-    toy_interp *interp = interp_alloc(program);
-    interp_run_current_block(interp);
+    toy_interp *interp = interp_alloc();
+    func_closure closure = { .func = program, .num_closures = 0, .closures = NULL };
+    interp_call_func(interp, &closure, NULL);
     interp_free(interp);
 
     return EXIT_SUCCESS;

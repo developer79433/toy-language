@@ -10,10 +10,11 @@
 #include "interp-types.h"
 #include "stmt-types.h"
 #include "interp-stack-types.h"
+#include "func-closure-types.h"
 
 void interp_assert_valid(const toy_interp *interp);
 toy_bool interp_is_control_result(run_stmt_result stmt_result);
-toy_interp *interp_alloc(const toy_function *program);
+toy_interp *interp_alloc(void);
 void interp_free(toy_interp *interp);
 interp_stack *interp_get_stack(toy_interp *interp);
 interp_frame *interp_cur_frame(toy_interp *interp);

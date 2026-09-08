@@ -8,13 +8,16 @@
 #include "var-types.h"
 
 enum frame_type_enum {
-    FRAME_LOOP_BODY,
-    FRAME_IF_BODY,
-    FRAME_PRE_DEF_FUNC,
-    FRAME_USER_DEF_FUNC,
-    FRAME_BLOCK_STMT
+    FRAME_BLOCK_STMT    = 0,
+    FRAME_IF_BODY       = 1,
+    FRAME_LOOP_BODY     = 2,
+    FRAME_PRE_DEF_FUNC  = 3,
+    FRAME_USER_DEF_FUNC = 4
 };
 typedef enum frame_type_enum frame_type;
+
+#define FRAME_MIN FRAME_BLOCK_STMT
+#define FRAME_MAX FRAME_USER_DEF_FUNC
 
 typedef struct func_call_frame_struct {
     const func_closure *closure;

@@ -133,6 +133,7 @@ static void copy_args_into_frame(toy_var *frame_args, const toy_val_list *actual
 interp_stack *interp_stack_push_predef_func(interp_stack *stack, const func_closure *closure, const toy_val_list *actual_arguments)
 {
     interp_stack_assert_valid(stack);
+    func_closure_assert_valid(closure);
     const toy_function *func = closure->func;
     assert(FUNC_PREDEFINED == func->type);
     size_t args_len = val_list_len(actual_arguments);
@@ -164,6 +165,7 @@ interp_stack *interp_stack_push_predef_func(interp_stack *stack, const func_clos
 interp_stack *interp_stack_push_user_func(interp_stack *stack, const func_closure *closure, const toy_val_list *actual_arguments)
 {
     interp_stack_assert_valid(stack);
+    func_closure_assert_valid(closure);
     const toy_function *func = closure->func;
     assert(FUNC_USER_DECLARED == func->type);
     size_t args_len = val_list_len(actual_arguments);
@@ -191,12 +193,14 @@ interp_stack *interp_stack_push_user_func(interp_stack *stack, const func_closur
 #ifdef DEBUG_INTERP_STACK
     interp_frame_stack_dump("after push user func", stack);
 #endif /* DEBUG_INTERP_STACK */
+    interp_stack_assert_valid(stack);
     return stack;
 }
 
 interp_stack *interp_stack_push_block(interp_stack *stack, const toy_block *block)
 {
     interp_stack_assert_valid(stack);
+    block_assert_valid(block);
     size_t num_variables;
     toy_var *variables = init_variables(block, &num_variables);
     interp_frame frame = {
@@ -217,7 +221,11 @@ interp_stack *interp_stack_push_block(interp_stack *stack, const toy_block *bloc
 interp_stack *interp_stack_pop(interp_stack *stack)
 {
     interp_stack_assert_valid(stack);
-    return interp_frame_stack_pop(stack, NULL);
+    stack = interp_frame_stack_pop(stack, NULL);
+#ifdef DEBUG_INTERP_STACK
+    interp_frame_stack_dump("after pop", stack);
+#endif /* DEBUG_INTERP_STACK */
+    return stack;
 }
 
 interp_frame *interp_stack_index(interp_stack *stack, size_t index)

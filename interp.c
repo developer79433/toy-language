@@ -44,15 +44,17 @@
 #define DEBUG_INTERP_LOOKUPS
 #endif
 
+#if 0
+#define DEBUG_VARIABLES
+#endif
+
 typedef struct toy_interp_struct {
-    const toy_function *main_program;
     interp_stack *stack;
     toy_val return_val;
 } toy_interp;
 
 void interp_assert_valid(const toy_interp *interp)
 {
-    func_assert_valid(interp->main_program);
     val_assert_valid(&interp->return_val);
     interp_stack_assert_valid(interp->stack);
 }
@@ -331,10 +333,15 @@ toy_var *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier)
         log_debug_file("lvalue is var\n");
 #endif /* DEBUG_INTERP_LOOKUPS */
         toy_var_decl *var_decl = ref->var_decl;
-        assert(var_decl->decl_index < cur_frame->num_variables);
-        toy_var *var_decl_var = interp_frame_get_var(cur_frame, var_decl->decl_index);
-        var_assert_valid(var_decl_var);
-        return var_decl_var;
+        if (frames_up) {
+            assert(0); /* TODO */
+        } else {
+            assert(var_decl->decl_index < cur_frame->num_variables);
+            toy_var *var_decl_var = interp_frame_get_var(cur_frame, var_decl->decl_index);
+            var_assert_valid(var_decl_var);
+            return var_decl_var;
+        }
+        break;
     default:
         assert(0);
         break;
@@ -674,8 +681,6 @@ toy_bool interp_condition_truthy(toy_interp *interp, toy_expr *expr)
     return TOY_TRUE;
 }
 
-#define DEBUG_VARIABLES
-
 typedef struct var_decl_visitor_struct {
     list_visitor list_vis;
     toy_interp *interp;
@@ -735,6 +740,14 @@ static run_stmt_result func_decl_stmt(toy_interp *interp, const toy_func_decl_st
     return EXECUTED_STATEMENT;
 }
 
+static run_stmt_result expr_stmt(toy_interp *interp, const toy_expr_stmt *expr_stmt)
+{
+    toy_val result;
+    interp_eval_val(interp, &result, expr_stmt->expr);
+    /* throw result away */
+    return EXECUTED_STATEMENT;
+}
+
 run_stmt_result interp_run_stmt(toy_interp *interp, const toy_stmt *stmt)
 {
     interp_assert_valid(interp);
@@ -746,10 +759,7 @@ run_stmt_result interp_run_stmt(toy_interp *interp, const toy_stmt *stmt)
     case STMT_CONTINUE:
         return REACHED_CONTINUE;
     case STMT_EXPR:
-        toy_val result;
-        interp_eval_val(interp, &result, stmt->expr_stmt.expr);
-        /* throw result away */
-        return EXECUTED_STATEMENT;
+        return expr_stmt(interp, &stmt->expr_stmt);
     case STMT_FOR:
         return for_stmt(interp, &stmt->for_stmt);
     case STMT_FUNC_DECL:
@@ -787,7 +797,7 @@ static item_callback_result stmt_run_callback(stmt_run_visitor *stmt_run_vis, si
     assert(stmt_run_vis->run_result != REACHED_BLOCK_END);
     switch (stmt_run_vis->run_result) {
     case EXECUTED_STATEMENT:
-        break;
+        return CONTINUE_ENUMERATION;
     case REACHED_RETURN:
     case REACHED_BREAK:
     case REACHED_CONTINUE:
@@ -799,7 +809,8 @@ static item_callback_result stmt_run_callback(stmt_run_visitor *stmt_run_vis, si
         assert(0);
         break;
     }
-    return CONTINUE_ENUMERATION;
+    assert(0); /* Shouldn't reach here */
+    return STOP_ENUMERATION;
 }
 
 run_stmt_result interp_run_current_block(toy_interp *interp)
@@ -811,8 +822,11 @@ run_stmt_result interp_run_current_block(toy_interp *interp)
     stmt_list_assert_valid(cur_stmt);
     stmt_run_visitor stmt_run_vis = {
         .list_vis.visit_entry = (list_entry_visit_func) stmt_run_callback,
-        .interp = interp
+        .list_vis.previous_item = NULL,
+        .interp = interp,
+        .run_result = REACHED_BLOCK_END
     };
+    interp_assert_valid(stmt_run_vis.interp);
     enumeration_result res = list_visitor_visit_list((list_visitor *) &stmt_run_vis, (generic_list *) cur_stmt);
     if (ENUMERATION_COMPLETE == res) {
         /* Reaching the end of a function is equivalent to returning null */
@@ -834,14 +848,11 @@ static run_stmt_result block_stmt(toy_interp *interp, const toy_block *block)
     return res;
 }
 
-toy_interp *interp_alloc(const toy_function *program)
+toy_interp *interp_alloc(void)
 {
     toy_interp *interp;
     interp = mymalloc(toy_interp);
-    interp->main_program = program;
-    const func_closure closure = { .num_closures = 0, .closures = NULL, .func = (toy_function *) program };
-    interp->stack = interp_stack_push_user_func(interp->stack, &closure, NULL);
-    /* interp_stack_dump("at program start", interp->stack); */
+    interp->stack = NULL;
     interp_assert_valid(interp);
     return interp;
 }
@@ -849,7 +860,6 @@ toy_interp *interp_alloc(const toy_function *program)
 void interp_free(toy_interp *interp)
 {
     interp_assert_valid(interp);
-    interp->stack = interp_stack_pop(interp->stack);
     interp_stack_free(interp->stack);
     free(interp);
 }

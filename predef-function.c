@@ -1001,6 +1001,7 @@ static const func_closure closure_obj_not_all      = { .num_closures = 0, .closu
 static const func_closure closure_obj_some         = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_obj_some };
 static const func_closure closure_print            = { .num_closures = 0, .closures = NULL, .func = (toy_function *) &func_print };
 
+/* TODO: Merge this into the list of predefined constants */
 static const toy_val predef_functions[] = {
     { .type = VAL_FUNC, .closure = (func_closure *) &closure_assert },
     { .type = VAL_FUNC, .closure = (func_closure *) &closure_assert_equal },

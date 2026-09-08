@@ -60,27 +60,6 @@ static void resolve_identifier(name_resolver *resolver, toy_identifier *identifi
         log_debug("Resolved '%s' to %s\n", identifier->name, decl_ref_type_name(ref->type));
 #endif /* DEBUG_NAME_RESOLUTION */
         if (ref->frames_up != 0) {
-            switch (ref->type) {
-            case DECL_REF_FUNC:
-                /* Function declarations are immutable, so no need for a closure */
-                break;
-            case DECL_REF_PARAM:
-                /* Closure over a function parameter in an enclosing block */
-                func_param_ref *param_ref = &ref->func_param;
-                log_debug_file("Closure over parameter #%zu to function %s, %zu frames up\n", param_ref->param_index, param_ref->func->name, ref->frames_up);
-                break;
-            case DECL_REF_PREDEF:
-                /* Predefined constant and functions are immutable, so no need for a closure */
-                break;
-            case DECL_REF_VAR:
-                /* Closure over a variable in an enclosing block */
-                toy_var_decl *var_decl = ref->var_decl;
-                log_debug_file("Closure over variable %s, %zu frames up\n", var_decl->name, ref->frames_up);
-                break;
-            default:
-                assert(0);
-                break;
-            }
             resolver->cur_block->num_closures++;
         }
     }

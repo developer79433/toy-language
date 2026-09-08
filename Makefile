@@ -60,4 +60,4 @@ tests: $(BINARY)
 
 .PHONY: debug
 debug: $(BINARY)
-	gdb $(BINARY) --eval-command='run tests/closures.toy'
+	gdb $(BINARY) --eval-command='run tests/arithmetic.toy'

@@ -15,11 +15,11 @@
 #include "func-closure.h"
 
 static const char *frame_type_names[] = {
-    "Loop body",
+    "Block statement",
     "If body",
+    "Loop body",
     "Pre-defined function",
-    "User-defined function",
-    "Block statement"
+    "User-defined function"
 };
 
 const char *interp_frame_type_name(frame_type type)
@@ -34,22 +34,28 @@ size_t interp_frame_num_vars(const interp_frame *frame)
 
 static void frame_dump_var_array(toy_var *var_array, size_t num_vars, toy_str name)
 {
-    log_debug("%s [", name);
-    toy_bool printed_anything = TOY_FALSE;
-    for (toy_var *var = &var_array[0]; var < &var_array[num_vars]; var++) {
-        if (printed_anything) {
-            log_debug(", ");
+    if (num_vars) {
+        log_debug(" %s [", name);
+        toy_bool printed_anything = TOY_FALSE;
+        for (toy_var *var = &var_array[0]; var < &var_array[num_vars]; var++) {
+            if (printed_anything) {
+                log_debug(", ");
+            }
+            toy_val *val = var_get(var);
+            val_dump(val, TOY_FALSE);
+            printed_anything = TOY_TRUE;
         }
-        toy_val *val = var_get(var);
-        val_dump(val, TOY_FALSE);
-        printed_anything = TOY_TRUE;
+        log_debug("] ");
     }
-    log_debug("] ");
 }
 
 static void frame_dump_vars(const interp_frame *frame)
 {
     return frame_dump_var_array(frame->variables, frame->num_variables, "variables");
+}
+
+static void frame_dump_args(const func_call_frame *call_frame) {
+    return frame_dump_var_array(call_frame->arguments, call_frame->num_arguments, "arguments");
 }
 
 void interp_frame_dump(const interp_frame *frame)
@@ -73,21 +79,18 @@ void interp_frame_dump(const interp_frame *frame)
         const func_closure *predef_closure = predef_func_inv->closure;
         assert(0 == predef_closure->num_closures);
         assert(NULL == predef_closure->closures);
-        const toy_function *predef_func = predef_closure->func;
-        log_debug("Predefined function %s(", predef_func->name);
-        var_array_dump(predef_func_inv->arguments, predef_func_inv->num_arguments, TOY_FALSE);
-        log_debug(") ");
+        log_debug("Call to predefined ");
+        func_closure_dump(predef_closure, TOY_FALSE);
+        frame_dump_args(predef_func_inv);
         frame_dump_vars(frame);
         break;
     case FRAME_USER_DEF_FUNC:
         const func_call_frame *user_func_inv = &frame->func_call;
         const func_closure *user_closure = user_func_inv->closure;
-        const toy_function *user_func = user_closure->func;
-        log_debug("User-defined function %s(", user_func->name);
-        var_array_dump(user_func_inv->arguments, user_func_inv->num_arguments, TOY_FALSE);
-        log_debug(") ");
+        log_debug("Call to user-defined ");
+        func_closure_dump(user_closure, TOY_FALSE);
+        frame_dump_args(user_func_inv);
         frame_dump_vars(frame);
-        /* TODO: Dump closures from user_closure */
         break;
     default:
         assert(0);
