@@ -34,6 +34,7 @@ generic_map *map_alloc(void)
     assert(sizeof(map->buckets[0]) == sizeof(generic_map_entry_list *));
     map->num_buckets = num_buckets;
     map->buckets = (generic_map_entry_list **) (map + 1);
+    memset(map->buckets, 0, map->num_buckets * sizeof(map->buckets[0]));
     map->num_items = 0;
     return map;
 }

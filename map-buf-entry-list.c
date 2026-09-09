@@ -8,13 +8,16 @@
 #include "buf-list.h"
 #include "str.h"
 
-map_buf_entry_list *map_buf_entry_list_alloc(const toy_str key, const void *buf, size_t buf_size)
+map_buf_entry_list *map_buf_entry_list_alloc(const void *key, size_t key_len, const void *buf, size_t buf_size)
 {
-    map_buf_entry_list *entry_list = (map_buf_entry_list *) malloc(sizeof(map_buf_entry_list) + strlen(key) + 1 + buf_size);
+    map_buf_entry_list *entry_list = (map_buf_entry_list *) malloc(sizeof(map_buf_entry_list) + buf_size + key_len);
     entry_list->next = NULL;
-    entry_list->entry.key = key;
-    entry_list->entry.key_len = strlen(key) + 1;
+    entry_list->entry.key = ((char *) (entry_list + 1)) + buf_size;
+    entry_list->entry.key_len = key_len;
+    memcpy(entry_list->entry.key, key, key_len);
     memcpy(&entry_list->entry.c, buf, buf_size);
+    assert(0 == memcmp(entry_list->entry.key, key, key_len));
+    assert(0 == memcmp(&entry_list->entry.c, buf, buf_size));
     return entry_list;
 }
 

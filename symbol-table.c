@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <string.h>
 
 #include "symbol-table.h"
 #include "map-buf.h"
@@ -30,21 +31,21 @@ symbol_table_entry *symbol_table_get(symbol_table *table, const toy_str name)
 {
     symbol_table_assert_valid(table);
     str_assert_valid(name);
-    return map_buf_get((map_buf *) table, name);
+    return map_buf_get((map_buf *) table, name, strlen(name) + 1);
 }
 
 const symbol_table_entry *symbol_table_get_const(const symbol_table *table, const toy_str name)
 {
     symbol_table_assert_valid(table);
     str_assert_valid(name);
-    return map_buf_get_const((const map_buf *) table, name);
+    return map_buf_get_const((const map_buf *) table, name, strlen(name) + 1);
 }
 
 set_result symbol_table_set(symbol_table *table, const toy_str name, symbol_table_entry *entry)
 {
     symbol_table_assert_valid(table);
     str_assert_valid(name);
-    return map_buf_set((map_buf *) table, name, entry, sizeof(*entry));
+    return map_buf_set((map_buf *) table, name, strlen(name) + 1, entry, sizeof(*entry));
 }
 
 size_t symbol_table_add(symbol_table *table, const toy_str name)
@@ -53,7 +54,7 @@ size_t symbol_table_add(symbol_table *table, const toy_str name)
     str_assert_valid(name);
     size_t num_variables = symbol_table_size(table);
     symbol_table_entry entry = { .index = num_variables, .key = name };
-    set_result res = map_buf_set((map_buf *) table, name, &entry, sizeof(entry));
+    set_result res = map_buf_set((map_buf *) table, name, strlen(name) + 1, &entry, sizeof(entry));
     assert(SET_NEW == res);
     return num_variables;
 }

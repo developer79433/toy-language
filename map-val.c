@@ -30,21 +30,21 @@ set_result map_val_set(map_val *map, const toy_str key, const toy_val *value)
     map_val_assert_valid(map);
     str_assert_valid(key);
     val_assert_valid(value);
-    return map_buf_set((map_buf *) map, key, value, sizeof(*value));
+    return map_buf_set((map_buf *) map, key, strlen(key) + 1, value, sizeof(*value));
 }
 
 toy_val *map_val_get(map_val *map, const toy_str key)
 {
     map_val_assert_valid(map);
     str_assert_valid(key);
-    toy_val *value = (toy_val *) map_buf_get((map_buf *) map, key);
+    toy_val *value = (toy_val *) map_buf_get((map_buf *) map, key, strlen(key) + 1);
     val_assert_valid_or_null(value);
     return value;
 }
 
 const toy_val *map_val_get_const(const map_val *map, const toy_str key)
 {
-    const toy_val *value = (const toy_val *) map_buf_get_const((const map_buf *) map, key);
+    const toy_val *value = (const toy_val *) map_buf_get_const((const map_buf *) map, key, strlen(key) + 1);
     val_assert_valid_or_null(value);
     return value;
 }
@@ -61,7 +61,7 @@ size_t map_val_size(const map_val *map)
 
 delete_result map_val_delete(map_val *map, const toy_str key)
 {
-    return map_buf_delete((map_buf *) map, key);
+    return map_buf_delete((map_buf *) map, key, strlen(key) + 1);
 }
 
 void map_val_reset(map_val *map)

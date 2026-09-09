@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <string.h>
 
 #include "str.h"
 #include "map-ptr-entry-list.h"
@@ -6,7 +7,7 @@
 
 map_ptr_entry_list *map_ptr_entry_list_alloc(const toy_str key, void *ptr)
 {
-    map_ptr_entry_list *entry_list = (map_ptr_entry_list *) map_buf_entry_list_alloc(key, &ptr, sizeof(ptr));
+    map_ptr_entry_list *entry_list = (map_ptr_entry_list *) map_buf_entry_list_alloc(key, strlen(key) + 1, &ptr, sizeof(ptr));
     assert(entry_list->entry.key == key);
     assert(entry_list->entry.ptr == ptr);
     assert(NULL == entry_list->next);
