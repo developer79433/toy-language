@@ -11,6 +11,7 @@
 #include "test-val-lists.h"
 #include "test-var-decl-lists.h"
 #include "test-stmt-lists.h"
+#include "test-str-sets.h"
 
 static void test_expr_lists()
 {
@@ -29,4 +30,5 @@ void run_tests(void)
     test_var_decl_lists();
     test_expr_lists();
     test_stmt_lists();
+    test_str_sets();
 }
