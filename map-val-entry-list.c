@@ -3,8 +3,8 @@
 
 #include "str.h"
 #include "map-val-entry-list.h"
-#include "map-buf.h"
-#include "map-buf-entry-list.h"
+#include "map-buf-buf.h"
+#include "map-buf-buf-entry-list.h"
 #include "val.h"
 #include "log.h"
 

@@ -5,7 +5,7 @@
 #include "map-val-entry-list.h"
 #include "str.h"
 #include "val.h"
-#include "map-buf.h"
+#include "map-buf-buf.h"
 #include "generic-map.h"
 #include "debug.h"
 #include "log.h"
@@ -15,14 +15,14 @@ void map_val_init(map_val *map)
 {
     assert(offsetof(map_val, buckets) == offsetof(generic_map, buckets));
     assert(offsetof(map_val, num_items) == offsetof(generic_map, num_items));
-    return map_buf_init((map_buf *) map);
+    return map_buf_buf_init((map_buf_buf *) map);
 }
 
 map_val *map_val_alloc(void)
 {
     assert(offsetof(map_val, buckets) == offsetof(generic_map, buckets));
     assert(offsetof(map_val, num_items) == offsetof(generic_map, num_items));
-    return (map_val *) map_buf_alloc();
+    return (map_val *) map_buf_buf_alloc();
 }
 
 set_result map_val_set(map_val *map, const toy_str key, const toy_val *value)
@@ -30,43 +30,43 @@ set_result map_val_set(map_val *map, const toy_str key, const toy_val *value)
     map_val_assert_valid(map);
     str_assert_valid(key);
     val_assert_valid(value);
-    return map_buf_set((map_buf *) map, key, strlen(key) + 1, value, sizeof(*value));
+    return map_buf_buf_set((map_buf_buf *) map, key, strlen(key) + 1, value, sizeof(*value));
 }
 
 toy_val *map_val_get(map_val *map, const toy_str key)
 {
     map_val_assert_valid(map);
     str_assert_valid(key);
-    toy_val *value = (toy_val *) map_buf_get((map_buf *) map, key, strlen(key) + 1);
+    toy_val *value = (toy_val *) map_buf_buf_get((map_buf_buf *) map, key, strlen(key) + 1);
     val_assert_valid_or_null(value);
     return value;
 }
 
 const toy_val *map_val_get_const(const map_val *map, const toy_str key)
 {
-    const toy_val *value = (const toy_val *) map_buf_get_const((const map_buf *) map, key, strlen(key) + 1);
+    const toy_val *value = (const toy_val *) map_buf_buf_get_const((const map_buf_buf *) map, key, strlen(key) + 1);
     val_assert_valid_or_null(value);
     return value;
 }
 
 void map_val_free(map_val *map)
 {
-    return map_buf_free((map_buf *) map);
+    return map_buf_buf_free((map_buf_buf *) map);
 }
 
 size_t map_val_size(const map_val *map)
 {
-    return map_buf_size((const map_buf *) map);
+    return map_buf_buf_size((const map_buf_buf *) map);
 }
 
 delete_result map_val_delete(map_val *map, const toy_str key)
 {
-    return map_buf_delete((map_buf *) map, key, strlen(key) + 1);
+    return map_buf_buf_delete((map_buf_buf *) map, key, strlen(key) + 1);
 }
 
 void map_val_reset(map_val *map)
 {
-    return map_buf_reset((map_buf *) map);
+    return map_buf_buf_reset((map_buf_buf *) map);
 }
 
 typedef struct map_val_dump_visitor_struct {
@@ -118,7 +118,7 @@ void map_val_assert_valid(const map_val *map)
     const_map_visitor map_vis = { .visit_entry = (const_map_entry_visit_func) item_assert_valid_callback };
     enumeration_result res = const_map_visitor_visit_map(&map_vis, (const generic_map *) map);
     assert(res == ENUMERATION_COMPLETE);
-    return map_buf_assert_valid((const map_buf *) map);
+    return map_buf_buf_assert_valid((const map_buf_buf *) map);
 }
 #endif /* ndef NDEBUG */
 

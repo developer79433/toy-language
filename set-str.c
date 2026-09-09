@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "set-str.h"
-#include "map-buf.h"
+#include "map-buf-buf.h"
 #include "mymalloc.h"
 #include "map-visitor.h"
 #include "log.h"
@@ -19,7 +19,7 @@ set_str *set_str_alloc(void)
 
 void set_str_init(set_str *set)
 {
-    map_buf_init(&set->map);
+    map_buf_buf_init(&set->map);
 }
 
 typedef struct set_str_dump_vis_struct {
@@ -49,7 +49,7 @@ void set_str_dump(set_str *set)
 
 toy_bool set_str_contains(const set_str *set, const toy_str str)
 {
-    int *val = (int *) map_buf_get_const(&set->map, str, strlen(str) + 1);
+    int *val = (int *) map_buf_buf_get_const(&set->map, str, strlen(str) + 1);
     if (val) {
         assert(dummy_value == *val);
         return TOY_TRUE;
@@ -60,17 +60,17 @@ toy_bool set_str_contains(const set_str *set, const toy_str str)
 void set_str_add(set_str *set, const toy_str str)
 {
     assert(!set_str_contains(set, str));
-    set_result set_res = map_buf_set(&set->map, str, strlen(str) + 1, &dummy_value, sizeof(dummy_value));
+    set_result set_res = map_buf_buf_set(&set->map, str, strlen(str) + 1, &dummy_value, sizeof(dummy_value));
     assert(SET_NEW == set_res);
 }
 
 void set_str_remove(set_str *set, const toy_str str)
 {
-    delete_result del_res = map_buf_delete(&set->map, str, strlen(str) + 1);
+    delete_result del_res = map_buf_buf_delete(&set->map, str, strlen(str) + 1);
     assert(DELETED == del_res);
 }
 
 void set_str_free(set_str *set)
 {
-    return map_buf_free(&set->map);
+    return map_buf_buf_free(&set->map);
 }
