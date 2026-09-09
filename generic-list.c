@@ -158,13 +158,16 @@ generic_list *list_remove_last(generic_list *list, generic_list **removed)
     return list;
 }
 
+/**
+ * A list_stop_filter_visitor visits a list, stopping when a referenced list_filter succeeds.
+ */
 typedef struct list_stop_filter_visitor_struct {
     list_visitor list_vis;
     list_filter *filter;
     toy_bool stop_on_match;
 } list_stop_filter_visitor;
 
-static item_callback_result stop_visitor_visit_entry(list_stop_filter_visitor *stop_filt_vis, generic_list *item)
+static item_callback_result list_stop_visitor_visit_entry(list_stop_filter_visitor *stop_filt_vis, size_t index, generic_list *item)
 {
     list_filter *filter = stop_filt_vis->filter;
     if (list_filter_last_match(filter) && stop_filt_vis->stop_on_match) {
@@ -175,46 +178,10 @@ static item_callback_result stop_visitor_visit_entry(list_stop_filter_visitor *s
 
 static void list_stop_filter_visitor_init(list_stop_filter_visitor *stop_filt_vis, list_filter *filter, toy_bool stop_on_match)
 {
-    stop_filt_vis->list_vis.visit_entry = (list_entry_visit_func) stop_visitor_visit_entry;
+    stop_filt_vis->list_vis.prev_item = NULL;
+    stop_filt_vis->list_vis.visit_entry = (list_entry_visit_func) list_stop_visitor_visit_entry;
     stop_filt_vis->filter = filter;
     stop_filt_vis->stop_on_match = stop_on_match;
-}
-
-/* #define DEBUG_LIST_LATCH_FILTER */
-
-typedef struct list_latch_filter_struct {
-    list_latch latch;
-    list_filter *filter;
-} list_latch_filter;
-
-static item_callback_result list_latch_filter_visit_entry(list_latch_filter *latch_filt, size_t index, generic_list *item)
-{
-    list_filter *filter = latch_filt->filter;
-    if (list_filter_last_match(filter)) {
-        list_latch *latch = &latch_filt->latch;
-#ifdef DEBUG_LIST_LATCH_FILTER
-    log_printf_file("filter succeeded, so letting latch visit entry %p\n", item);
-#endif /* DEBUG_LIST_LATCH_FILTER */
-        return list_latch_visit_entry(latch, index, item);
-    }
-#ifdef DEBUG_LIST_LATCH_FILTER
-    log_printf_file("filter failed, so continuing\n");
-#endif /* DEBUG_LIST_LATCH_FILTER */
-    return CONTINUE_ENUMERATION;
-}
-
-void list_latch_filter_init(list_latch_filter *latch_filt, list_filter *filter)
-{
-    list_latch *latch = &latch_filt->latch;
-    latch_filt->filter = filter;
-    list_latch_init(latch);
-    latch->visitor.visit_entry = (list_entry_visit_func) list_latch_filter_visit_entry;
-}
-
-generic_list *list_latch_filter_get_last_seen(list_latch_filter *latch_filt)
-{
-    list_filter *filter = latch_filt->filter;
-    return list_filter_last_match(filter);
 }
 
 static toy_bool item_equals(const generic_list *compare_to, size_t index, const generic_list *entry)
@@ -232,32 +199,66 @@ void list_assert_contains(const generic_list *list, const generic_list *entry)
     assert(list_contains(list, entry));
 }
 
+typedef struct list_find_visitor_struct {
+    list_visitor list_vis;
+    generic_list_filter_func filter_func;
+    void *filter_cookie;
+    toy_bool stop_on_match;
+    toy_bool inverted;
+    generic_list *last_match;
+} list_find_visitor;
+
+static item_callback_result list_find_visitor_visit_entry(list_find_visitor *find_vis, size_t index, generic_list *item)
+{
+    toy_bool filter_res = find_vis->filter_func(find_vis->filter_cookie, index, item);
+    if (find_vis->inverted) {
+        filter_res = !filter_res;
+    }
+    if (filter_res) {
+        find_vis->last_match = item;
+        if (find_vis->stop_on_match) {
+            return STOP_ENUMERATION;
+        }
+    }
+    find_vis->list_vis.prev_item = item;
+    return CONTINUE_ENUMERATION;
+}
+
+void list_find_visitor_init(list_find_visitor *find_vis, generic_list_filter_func filter_func, void *filter_cookie, toy_bool stop_on_match, toy_bool inverted)
+{
+    find_vis->list_vis.prev_item = NULL;
+    find_vis->list_vis.visit_entry = (list_entry_visit_func) list_find_visitor_visit_entry;
+    find_vis->filter_func = filter_func;
+    find_vis->filter_cookie = filter_cookie;
+    find_vis->stop_on_match = stop_on_match;
+    find_vis->inverted = inverted;
+}
+
 static generic_list *list_find(generic_list *list, generic_list_filter_func filter_func, void *filter_cookie, toy_bool stop_on_first, toy_bool inverted, generic_list **pprev)
 {
-    list_filter filter;
-    list_filter_init(&filter, filter_func, filter_cookie, inverted);
-    assert(NULL == list_visitor_prev_item((list_visitor *) &filter));
-    list_stop_filter_visitor stop_filt_vis;
-    list_stop_filter_visitor_init(&stop_filt_vis, &filter, stop_on_first);
-    list_latch_filter save_match_vis;
-    list_latch_filter_init(&save_match_vis, &filter);
-    list_pipeline stop_step = { .visitor = (list_visitor *) &stop_filt_vis, .next = NULL };
-    list_pipeline save_match_step = { .visitor = (list_visitor *) &save_match_vis, .next = &stop_step };
-    list_pipeline filter_step = { .visitor = (list_visitor *) &filter, .next = &save_match_step };
-    list_pipeline *pipeline = &filter_step;
-    enumeration_result res = list_pipeline_visit_list(pipeline, list);
-    assert(ENUMERATION_COMPLETE == res || ENUMERATION_INTERRUPTED == res);
-    generic_list *prev_item = list_visitor_prev_item((list_visitor *) &filter);
-    list_assert_contains(list, list);
-    if (prev_item) {
-        list_assert_contains(list, prev_item);
+    list_find_visitor find_vis;
+    list_find_visitor_init(&find_vis, filter_func, filter_cookie, stop_on_first, inverted);
+    enumeration_result enum_res = list_visitor_visit_list(&find_vis.list_vis, list);
+    assert(ENUMERATION_COMPLETE == enum_res || ENUMERATION_INTERRUPTED == enum_res);
+    generic_list *match = find_vis.last_match;
+    generic_list *prev_item = find_vis.list_vis.prev_item;
+    if (match) {
+        list_assert_contains(list, match);
     }
-    generic_list *match = list_latch_filter_get_last_seen(&save_match_vis);
-    assert(
-        !prev_item
-        || !match
-        || prev_item != match
-    );
+    if (list) {
+        if (match) {
+            if (match == list) {
+                assert(!prev_item);
+            } else {
+                assert(prev_item);
+                assert(prev_item->next == match);
+            }
+        } else {
+            assert(!prev_item);
+        }
+    } else {
+        assert(!match && !prev_item);
+    }
     if (pprev) {
         *pprev = prev_item;
     }
@@ -443,6 +444,10 @@ static generic_list *list_delete_find_func(generic_list *list, list_find_func fi
     );
     if (found) {
         assert(prev != found);
+        assert(
+            (found == list && prev == NULL)
+            || (found != list && prev != NULL && prev != found)
+        );
         *del_res = DELETED;
         list = list_remove_entry(list, found, prev);
         free_func(found);

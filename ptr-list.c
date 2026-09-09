@@ -98,7 +98,7 @@ static item_callback_result ptr_list_reverse_visitor_visit_entry(ptr_list_revers
 
 toy_ptr_list *ptr_list_reverse(const toy_ptr_list *list)
 {
-    ptr_list_reverse_visitor rev_vis = { .list_vis.visit_entry = (const_list_entry_visit_func) ptr_list_reverse_visitor_visit_entry, .list_vis.previous_item = NULL, .reversed = NULL };
+    ptr_list_reverse_visitor rev_vis = { .list_vis.visit_entry = (const_list_entry_visit_func) ptr_list_reverse_visitor_visit_entry, .list_vis.prev_item = NULL, .reversed = NULL };
     enumeration_result res = const_list_visitor_visit_list(&rev_vis.list_vis, (const generic_list *) list);
     assert(ENUMERATION_COMPLETE == res);
     return rev_vis.reversed;

@@ -8,7 +8,7 @@ void rev_list_visitor_init(rev_list_visitor *rev_list_vis, list_entry_visit_func
 {
     rev_list_vis->index = 0;
     rev_list_vis->list_vis.visit_entry = visit_func;
-    rev_list_vis->list_vis.previous_item = NULL;
+    rev_list_vis->list_vis.prev_item = NULL;
 }
 
 enumeration_result rev_list_visitor_visit_list(rev_list_visitor *rev_list_vis, generic_list *list)
@@ -36,7 +36,7 @@ void const_rev_list_visitor_init(const_rev_list_visitor *rev_list_vis, const_lis
 {
     rev_list_vis->index = 0;
     rev_list_vis->list_vis.visit_entry = visit_func;
-    rev_list_vis->list_vis.previous_item = NULL;
+    rev_list_vis->list_vis.prev_item = NULL;
 }
 
 enumeration_result const_rev_list_visitor_visit_list(const_rev_list_visitor *rev_list_vis, const generic_list *list)

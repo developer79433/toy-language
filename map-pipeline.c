@@ -73,7 +73,7 @@ static item_callback_result map_entry_visit_pipeline(map_pipeline_visitor *map_p
 {
     map_pipeline_item_visitor pipeline_item_vis = {
         .list_vis.visit_entry = (list_entry_visit_func) visit_pipeline_entry,
-        .list_vis.previous_item = NULL,
+        .list_vis.prev_item = NULL,
         .entry = entry
     };
     enumeration_result res = list_visitor_visit_list((list_visitor *) &pipeline_item_vis, (generic_list *) map_pipeline_vis->pipeline);
@@ -113,7 +113,7 @@ static item_callback_result const_map_entry_visit_pipeline(const_map_pipeline_vi
 {
     const_map_pipeline_item_visitor pipeline_item_vis = {
         .list_vis.visit_entry = (const_list_entry_visit_func) const_visit_pipeline_entry,
-        .list_vis.previous_item = NULL,
+        .list_vis.prev_item = NULL,
         .entry = entry
     };
     enumeration_result res = const_list_visitor_visit_list((const_list_visitor *) &pipeline_item_vis, (const generic_list *) map_pipeline_vis->pipeline);

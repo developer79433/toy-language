@@ -2,11 +2,13 @@
 #include "generic-list.h"
 #include "log.h"
 
-/* #define DEBUG_LIST_VISITOR */
+#if 0
+#define DEBUG_LIST_VISITOR
+#endif
 
-generic_list *list_visitor_prev_item(list_visitor *visitor)
+generic_list *list_visitor_prev_item(const list_visitor *visitor)
 {
-    return visitor->previous_item;
+    return visitor->prev_item;
 }
 
 item_callback_result list_visitor_visit_entry_default(list_visitor *visitor, size_t index, generic_list *item)
@@ -17,36 +19,39 @@ item_callback_result list_visitor_visit_entry_default(list_visitor *visitor, siz
 
 item_callback_result list_visitor_visit_entry(list_visitor *visitor, size_t index, generic_list *item)
 {
+    item_callback_result res;
     if (visitor->visit_entry) {
-        return visitor->visit_entry(visitor, index, item);
+        res = visitor->visit_entry(visitor, index, item);
+    } else {
+        res = list_visitor_visit_entry_default(visitor, index, item);
     }
-    return list_visitor_visit_entry_default(visitor, index, item);
+    return res;
 }
 
 enumeration_result list_visitor_visit_list(list_visitor *visitor, generic_list *list)
 {
-    visitor->previous_item = NULL;
-#ifdef DEBUG_LIST_VISITOR
-    log_printf_file("set previous_item to %p\n", visitor->previous_item);
-#endif /* DEBUG_LIST_VISITOR */
+    visitor->prev_item = NULL;
     for (size_t index = 0; list; index++) {
         generic_list *next = list_next(list);
         item_callback_result res = list_visitor_visit_entry(visitor, index, list);
         if (STOP_ENUMERATION == res) {
             return ENUMERATION_INTERRUPTED;
         }
-        visitor->previous_item = list;
+        /* FIXME: If subclasses call visit_entry repeatedly, and never call this visit_list (eg because they override it),
+        then the below prev_item tracking won't be done.
+        */
+        visitor->prev_item = list;
 #ifdef DEBUG_LIST_VISITOR
-    log_printf_file("set previous_item to %p\n", visitor->previous_item);
+    log_debug("List visitor %p set previous_item to %p\n", visitor, visitor->prev_item);
 #endif /* DEBUG_LIST_VISITOR */
         list = next;
     }
     return ENUMERATION_COMPLETE;
 }
 
-const generic_list *const_list_visitor_previous_item(const_list_visitor *visitor)
+const generic_list *const_list_visitor_prev_item(const const_list_visitor *visitor)
 {
-    return visitor->previous_item;
+    return visitor->prev_item;
 }
 
 item_callback_result const_list_visitor_visit_entry_default(const_list_visitor *visitor, size_t index, const generic_list *item)
@@ -65,14 +70,14 @@ item_callback_result const_list_visitor_visit_entry(const_list_visitor *visitor,
 
 enumeration_result const_list_visitor_visit_list(const_list_visitor *visitor, const generic_list *list)
 {
-    visitor->previous_item = NULL;
+    visitor->prev_item = NULL;
     for (size_t i = 0; list; i++) {
         const generic_list *next = list_next_const(list);
         item_callback_result res = const_list_visitor_visit_entry(visitor, i, list);
         if (STOP_ENUMERATION == res) {
             return ENUMERATION_INTERRUPTED;
         }
-        visitor->previous_item = list;
+        visitor->prev_item = list;
         list = next;
     }
     return ENUMERATION_COMPLETE;

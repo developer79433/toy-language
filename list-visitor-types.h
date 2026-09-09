@@ -12,7 +12,7 @@ typedef item_callback_result (*list_entry_visit_func)(list_visitor *visitor, siz
 struct list_visitor_struct {
     list_entry_visit_func visit_entry;
     /* TODO: Move this into a list_prev_visitor */
-    generic_list *previous_item;
+    generic_list *prev_item;
     /* TODO: Track index here in the visitor instead of in callback arguments */
 };
 
@@ -22,7 +22,7 @@ typedef item_callback_result (*const_list_entry_visit_func)(const_list_visitor *
 struct const_list_visitor_struct {
     const_list_entry_visit_func visit_entry;
     /* TODO: Move this into a list_prev_visitor */
-    const generic_list *previous_item;
+    const generic_list *prev_item;
     /* TODO: Track index here in the visitor instead of in callback arguments */
 };
 

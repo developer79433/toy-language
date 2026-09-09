@@ -308,6 +308,14 @@ void assert_vals_equal(const toy_val *val1, const toy_val *val2)
     assert(0);
 }
 
+toy_val *val_alloc(void)
+{
+    toy_val *val = mymalloc(toy_val);
+    val->type = VAL_BOOL;
+    val->boolean = TOY_FALSE;
+    return val;
+}
+
 toy_val *val_alloc_func_decl(toy_str_list *formalparams, toy_block *body)
 {
     toy_val *val;

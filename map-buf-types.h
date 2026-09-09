@@ -1,7 +1,7 @@
 #ifndef TOY_MAP_BUF_TYPES_H
 #define TOY_MAP_BUF_TYPES_H
 
-#include <inttypes.h>
+#include <stddef.h>
 
 #include "iter-types.h"
 #include "str-types.h"

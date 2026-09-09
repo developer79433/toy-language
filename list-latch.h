@@ -3,6 +3,7 @@
 
 #include "list-latch-types.h"
 
+/* TODO: Now that list iterators remember the last-seen entry, do we still need this? */
 void list_latch_init(list_latch *latch);
 item_callback_result list_latch_visit_entry(list_latch *latch, size_t index, generic_list *item);
 generic_list *list_latch_get_last_seen(list_latch *latch);

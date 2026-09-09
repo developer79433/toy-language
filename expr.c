@@ -117,6 +117,7 @@ toy_expr *alloc_expr_func_decl(toy_str_list *formalparams, toy_block *block)
     toy_expr *expr;
     expr = (toy_expr *) malloc(sizeof(toy_expr) + sizeof(toy_val) + sizeof(func_closure) + sizeof(toy_function));
     expr->type = EXPR_LITERAL;
+    /* FIXME: Does this need a runtime value yet? And even worse a runtime closure? */
     expr->val = (toy_val *) (expr + 1);
     expr->val->type = VAL_FUNC;
     expr->val->closure = (func_closure *) (expr->val + 1);

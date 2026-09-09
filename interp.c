@@ -35,6 +35,7 @@
 #include "list-visitor.h"
 #include "decl-ref.h"
 #include "func-closure.h"
+#include "stmt-list.h"
 
 #if 0
 #define DEBUG_STACK 1
@@ -350,6 +351,18 @@ toy_var *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier)
     return NULL;
 }
 
+static toy_val *closure_create(toy_function *func)
+{
+    toy_val *val = malloc(sizeof(toy_val) + sizeof(func_closure));
+    val->type = VAL_FUNC;
+    func_closure *closure = val->closure = (func_closure *) (val + 1);
+    closure->func = func;
+    closure->num_closures = 0;
+    closure->closures = NULL;
+    val_assert_valid(val);
+    return val;
+}
+
 const toy_val *interp_get_rvalue(toy_interp *interp, const toy_identifier *identifier)
 {
     interp_assert_valid(interp);
@@ -368,10 +381,7 @@ const toy_val *interp_get_rvalue(toy_interp *interp, const toy_identifier *ident
         log_debug_file("rvalue is func decl\n");
 #endif /* DEBUG_INTERP_LOOKUPS */
         const toy_func_decl_stmt *func_decl_stmt = ref->func_decl;
-        toy_val *func_val = func_decl_stmt->val;
-        assert(VAL_FUNC == func_val->type);
-        val_assert_valid(func_val);
-        return func_val;
+        return closure_create(func_decl_stmt->func);
     case DECL_REF_PARAM:
 #ifdef DEBUG_INTERP_LOOKUPS
         log_debug_file("rvalue is func param\n");
@@ -822,7 +832,7 @@ run_stmt_result interp_run_current_block(toy_interp *interp)
     stmt_list_assert_valid(cur_stmt);
     stmt_run_visitor stmt_run_vis = {
         .list_vis.visit_entry = (list_entry_visit_func) stmt_run_callback,
-        .list_vis.previous_item = NULL,
+        .list_vis.prev_item = NULL,
         .interp = interp,
         .run_result = REACHED_BLOCK_END
     };

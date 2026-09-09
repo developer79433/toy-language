@@ -12,6 +12,7 @@ struct list_filter_struct {
     void *filter_cookie;
     toy_bool inverted;
     generic_list *last_match;
+    toy_bool last_filter_res;
 };
 
 struct const_list_filter_struct;
@@ -22,6 +23,7 @@ struct const_list_filter_struct {
     void *filter_cookie;
     toy_bool inverted;
     const generic_list *last_match;
+    toy_bool last_filter_res;
 };
 
 #endif /* TOY_LIST_FILTER_TYPES_H */

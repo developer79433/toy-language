@@ -6,7 +6,7 @@
 void list_latch_init(list_latch *latch)
 {
     latch->visitor.visit_entry = (list_entry_visit_func) list_latch_visit_entry;
-    latch->visitor.previous_item = NULL;
+    latch->visitor.prev_item = NULL;
     latch->last_seen_item = NULL;
 }
 
@@ -27,7 +27,7 @@ generic_list *list_latch_get_last_seen(list_latch *latch)
 void const_list_latch_init(const_list_latch *latch)
 {
     latch->visitor.visit_entry = (const_list_entry_visit_func) list_latch_visit_entry;
-    latch->visitor.previous_item = NULL;
+    latch->visitor.prev_item = NULL;
     latch->last_seen_item = NULL;
 }
 

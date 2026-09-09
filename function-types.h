@@ -29,6 +29,7 @@ typedef struct toy_function_struct toy_function;
 struct toy_function_struct {
     toy_str name;
     toy_str_list *param_names;
+    size_t num_closures;
     toy_str doc;
     toy_func_type type;
     union {

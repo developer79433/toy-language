@@ -20,8 +20,10 @@
 
 void map_init(generic_map *map)
 {
-    assert(map->num_buckets);
-    memset(map->buckets, 0, map->num_buckets * sizeof(generic_map_entry_list *));
+    map->num_buckets = DEFAULT_NUM_BUCKETS;
+    assert(sizeof(map->buckets[0]) == sizeof(generic_map_entry_list *));
+    map->buckets = malloc(map->num_buckets * sizeof(map->buckets[0]));
+    memset(map->buckets, 0, map->num_buckets * sizeof(map->buckets[0]));
     map->num_items = 0;
 }
 
@@ -32,7 +34,7 @@ generic_map *map_alloc(void)
     assert(sizeof(map->buckets[0]) == sizeof(generic_map_entry_list *));
     map->num_buckets = num_buckets;
     map->buckets = (generic_map_entry_list **) (map + 1);
-    map_init(map);
+    map->num_items = 0;
     return map;
 }
 
@@ -91,6 +93,10 @@ void map_reset(generic_map *map)
 void map_free(generic_map *map)
 {
     free_buckets(map);
+    if (map->buckets != (generic_map_entry_list **) (map + 1)) {
+        free(map->buckets);
+        map->buckets = 0;
+    }
     free(map);
 }
 

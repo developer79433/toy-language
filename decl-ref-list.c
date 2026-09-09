@@ -32,7 +32,7 @@ static item_callback_result decl_ref_list_entry_assert_valid(const_list_visitor 
 
 void decl_ref_list_assert_valid(const decl_ref_list *list)
 {
-    const_list_visitor vis = { .visit_entry = (const_list_entry_visit_func) decl_ref_list_entry_assert_valid, .previous_item = NULL };
+    const_list_visitor vis = { .visit_entry = (const_list_entry_visit_func) decl_ref_list_entry_assert_valid, .prev_item = NULL };
     enumeration_result res = const_list_visitor_visit_list(&vis, (generic_list *) list);
     assert(ENUMERATION_COMPLETE == res);
 }
@@ -41,7 +41,7 @@ void decl_ref_list_dump(const decl_ref_list *list)
 {
     decl_ref_list_assert_valid(list);
     log_debug("decl_ref_list {\n");
-    const_list_visitor dump_vis = { .visit_entry = (const_list_entry_visit_func) decl_ref_list_entry_dump, .previous_item = NULL };
+    const_list_visitor dump_vis = { .visit_entry = (const_list_entry_visit_func) decl_ref_list_entry_dump, .prev_item = NULL };
     enumeration_result res = const_list_visitor_visit_list(&dump_vis, (const generic_list *) list);
     assert(ENUMERATION_COMPLETE == res);
     log_debug("}\n");
@@ -82,7 +82,7 @@ decl_ref *decl_ref_list_find_name(decl_ref_list *list, toy_str desired_name)
 {
     decl_ref_visitor decl_ref_vis = {
         .list_vis.visit_entry = (list_entry_visit_func) decl_ref_visitor_visit_decl,
-        .list_vis.previous_item = NULL,
+        .list_vis.prev_item = NULL,
         .desired_name = desired_name,
         .match = NULL
     };

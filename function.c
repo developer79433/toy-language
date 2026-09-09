@@ -34,7 +34,7 @@ void func_dump(const toy_function *func, toy_bool verbose)
     } else {
         str_list_dump(func->param_names, TOY_FALSE);
     }
-    log_debug(")");
+    log_debug(") num_closures: %zu\n", func->num_closures);
     if (verbose) {
         log_debug(" {\n");
         switch (func->type) {
@@ -62,6 +62,7 @@ void func_assert_valid(const toy_function *func)
     } else if (func->param_names) {
         str_list_assert_valid(func->param_names);
     }
+    assert(func->num_closures >= 0);
     if (func->type == FUNC_USER_DECLARED) {
         toy_block *block = func->code;
         block_assert_valid(block);

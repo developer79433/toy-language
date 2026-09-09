@@ -70,7 +70,7 @@ enumeration_result list_pipeline_visit_item(list_pipeline *pipeline, generic_lis
 {
     list_pipeline_item_visitor pipeline_item_vis = {
         .list_vis.visit_entry = (list_entry_visit_func) visit_pipeline_entry,
-        .list_vis.previous_item = NULL,
+        .list_vis.prev_item = NULL,
         .item = item,
         .item_index = item_index
     };
@@ -93,7 +93,7 @@ enumeration_result const_list_pipeline_visit_item(const_list_pipeline *pipeline,
 {
     const_list_pipeline_item_visitor pipeline_item_vis = {
         .list_vis.visit_entry = (const_list_entry_visit_func) const_visit_pipeline_entry,
-        .list_vis.previous_item = NULL,
+        .list_vis.prev_item = NULL,
         .item = item,
         .item_index = item_index
     };
@@ -119,7 +119,7 @@ enumeration_result list_pipeline_visit_list(list_pipeline *pipeline, generic_lis
 {
     list_pipeline_visitor list_pipeline_vis = {
         .list_vis.visit_entry = (list_entry_visit_func) list_entry_visit_pipeline,
-        .list_vis.previous_item = NULL,
+        .list_vis.prev_item = NULL,
         .pipeline = pipeline
     };
     return list_visitor_visit_list((list_visitor *) &list_pipeline_vis, list);
@@ -144,7 +144,7 @@ enumeration_result const_list_pipeline_visit_list(const_list_pipeline *pipeline,
 {
     const_list_pipeline_visitor list_pipeline_vis = {
         .list_vis.visit_entry = (const_list_entry_visit_func) const_list_entry_visit_pipeline,
-        .list_vis.previous_item = NULL,
+        .list_vis.prev_item = NULL,
         .pipeline = pipeline
     };
     return const_list_visitor_visit_list((const_list_visitor *) &list_pipeline_vis, list);
@@ -166,8 +166,8 @@ static item_callback_result print_entry_2(list_visitor *list_vis, size_t index, 
 
 void test_pipelines()
 {
-    list_visitor print_vis_1 = { .visit_entry = (list_entry_visit_func) print_entry_1, .previous_item = NULL };
-    list_visitor print_vis_2 = { .visit_entry = (list_entry_visit_func) print_entry_2, .previous_item = NULL };
+    list_visitor print_vis_1 = { .visit_entry = (list_entry_visit_func) print_entry_1, .prev_item = NULL };
+    list_visitor print_vis_2 = { .visit_entry = (list_entry_visit_func) print_entry_2, .prev_item = NULL };
     list_pipeline *pipeline = list_pipeline_alloc(&print_vis_1);
     pipeline = list_pipeline_append(pipeline, &print_vis_2);
     toy_str_list *str_list = str_list_alloc("First item");
