@@ -7,7 +7,8 @@
 #include "str-types.h"
 
 typedef struct generic_map_entry_struct {
-    toy_str key;
+    void *key;
+    size_t key_len;
 } generic_map_entry;
 
 typedef struct generic_map_entry_list_struct {

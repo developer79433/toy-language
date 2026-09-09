@@ -7,7 +7,8 @@
 #include "str-types.h"
 
 typedef struct map_ptr_entry_struct {
-    toy_str key;
+    void *key;
+    size_t key_len;
     void *ptr;
 } map_ptr_entry;
 

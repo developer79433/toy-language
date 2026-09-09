@@ -114,33 +114,36 @@ static uint32_t jenkins_one_at_a_time_hash(const uint8_t *key, size_t length) {
     return hash;
 }
 
-generic_map_entry_list **map_get_bucket_ptr(generic_map *map, toy_str key)
+generic_map_entry_list **map_get_bucket_ptr(generic_map *map, const void *key, size_t key_len)
 {
-    uint32_t hashval = jenkins_one_at_a_time_hash((uint8_t *) key, strlen(key));
+    uint32_t hashval = jenkins_one_at_a_time_hash((const uint8_t *) key, key_len);
     return &map->buckets[hashval % map->num_buckets];
 }
 
-generic_map_entry_list *map_get_bucket(generic_map *map, toy_str key)
+static generic_map_entry_list *map_get_bucket(generic_map *map, const void *key, size_t key_len)
 {
-    generic_map_entry_list **bucket_ptr = map_get_bucket_ptr(map, key);
+    generic_map_entry_list **bucket_ptr = map_get_bucket_ptr(map, key, key_len);
     return *bucket_ptr;
 }
 
-static toy_bool map_entry_has_desired_name(toy_str desired_name, size_t index, const generic_map_entry_list *item)
+static toy_bool map_entry_has_desired_key(const generic_map_entry *desired, size_t index, const generic_map_entry_list *item)
 {
     const generic_map_entry *entry = generic_map_entry_list_payload_const(item);
-    return str_equal(entry->key, desired_name);
+    return (
+        (entry->key_len == desired->key_len) && (0 == memcmp(entry->key, desired->key, desired->key_len))
+    );
 }
 
-static delete_result delete_from_bucket(generic_map *map, generic_map_entry_list **bucket, const toy_str key)
+static delete_result delete_from_bucket(generic_map *map, generic_map_entry_list **bucket, const void *key, size_t key_len)
 {
     assert(bucket);
     assert(*bucket);
+    generic_map_entry desired = { .key = (void *) key, .key_len = key_len };
     delete_result del_res;
     *bucket = (generic_map_entry_list *) list_delete_first(
         (generic_list *) *bucket,
-        (generic_list_filter_func) map_entry_has_desired_name,
-        key,
+        (generic_list_filter_func) map_entry_has_desired_key,
+        &desired,
         (list_entry_free_func) generic_map_entry_list_free,
         &del_res
     );
@@ -150,18 +153,18 @@ static delete_result delete_from_bucket(generic_map *map, generic_map_entry_list
     return del_res;
 }
 
-delete_result map_delete(generic_map *map, const toy_str key)
+delete_result map_delete(generic_map *map, const void *key, size_t key_len)
 {
-    generic_map_entry_list **bucket = map_get_bucket_ptr(map, key);
+    generic_map_entry_list **bucket = map_get_bucket_ptr(map, key, key_len);
     if (*bucket) {
-        return delete_from_bucket(map, bucket, key);
+        return delete_from_bucket(map, bucket, key, key_len);
     }
     return NOT_PRESENT; /* No bucket, so no entry */
 }
 
 static void dump_map_entry(const generic_map_entry *entry)
 {
-    str_dump(entry->key, TOY_FALSE);
+    hex_dump(entry->key, entry->key_len);
     log_debug(": %p", entry + 1);
 }
 
@@ -195,23 +198,32 @@ void map_dump(const generic_map *map)
 
 typedef struct map_get_visitor_struct {
     list_visitor list_vis;
-    toy_str desired_name;
+    void *desired_key;
+    size_t desired_key_len;
     generic_map_entry *entry_to_find;
 } map_get_visitor;
 
 static item_callback_result map_get_listentry_cb(map_get_visitor *map_get_vis, size_t index, generic_map_entry_list *list)
 {
     generic_map_entry *map_entry = generic_map_entry_list_payload(list);
-    if (str_equal(map_entry->key, map_get_vis->desired_name)) {
+    if (
+        (map_entry->key_len == map_get_vis->desired_key_len) &&
+        (0 == memcmp(map_entry->key, map_get_vis->desired_key, map_get_vis->desired_key_len))
+    ) {
         map_get_vis->entry_to_find = map_entry;
         return STOP_ENUMERATION;
     }
     return CONTINUE_ENUMERATION;
 }
 
-static generic_map_entry *map_bucket_get_key(generic_map_entry_list *bucket, const toy_str key)
+static generic_map_entry *map_bucket_get_key(generic_map_entry_list *bucket, const void *key, size_t key_len)
 {
-    map_get_visitor map_get_vis = { .list_vis.visit_entry = (list_entry_visit_func) map_get_listentry_cb, .desired_name = key, .entry_to_find = NULL };
+    map_get_visitor map_get_vis = {
+        .list_vis.visit_entry = (list_entry_visit_func) map_get_listentry_cb,
+        .desired_key = (void *) key,
+        .desired_key_len = key_len,
+        .entry_to_find = NULL
+    };
     // TODO: Use list_find_first()
     enumeration_result res = list_visitor_visit_list((list_visitor *) &map_get_vis, (generic_list *) bucket);
     assert(
@@ -222,13 +234,14 @@ static generic_map_entry *map_bucket_get_key(generic_map_entry_list *bucket, con
     return map_get_vis.entry_to_find;
 }
 
-generic_map_entry *map_get_entry(generic_map *map, const toy_str key)
+generic_map_entry *map_get_entry(generic_map *map, const void *key, size_t key_len)
 {
-    generic_map_entry_list *bucket = map_get_bucket(map, key);
+    generic_map_entry_list *bucket = map_get_bucket(map, key, key_len);
     if (bucket) {
-        generic_map_entry *existing_entry = map_bucket_get_key(bucket, key);
+        generic_map_entry *existing_entry = map_bucket_get_key(bucket, key, key_len);
         if (existing_entry) {
-            assert(str_equal(existing_entry->key, key));
+            assert(existing_entry->key_len == key_len);
+            assert(0 == memcmp(existing_entry->key, key, key_len));
             return existing_entry;
         }
         return NULL;
@@ -268,9 +281,9 @@ void map_assert_valid(const generic_map *map)
     /* TODO */
 }
 
-const generic_map_entry *map_get_entry_const(const generic_map *map, const toy_str key)
+const generic_map_entry *map_get_entry_const(const generic_map *map, const void *key, size_t key_len)
 {
-    return (const generic_map_entry *) map_get_entry((generic_map *) map, key);
+    return (const generic_map_entry *) map_get_entry((generic_map *) map, key, key_len);
 }
 
 typedef struct map_stop_filter_visitor_struct {
@@ -332,6 +345,7 @@ generic_map_entry *map_latch_filter_get_last_seen(map_latch_filter *latch_filt)
     return map_filter_last_match(filter);
 }
 
+/* FIXME: Overly complex, probably buggy, as the similar list implementation was, which was successfully rewritten */
 generic_map_entry *map_find(generic_map *map, generic_map_filter_func filter_func, void *filter_cookie, toy_bool inverted, toy_bool stop_on_first)
 {
     map_filter filter;

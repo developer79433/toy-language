@@ -1,10 +1,13 @@
 #ifndef TOY_MAP_VAL_ENTRY_LIST_TYPES_H
 #define TOY_MAP_VAL_ENTRY_LIST_TYPES_H 1
 
+#include <stddef.h>
+
 #include "val-types.h"
 
 typedef struct map_val_entry_struct {
-    toy_str key;
+    void *key;
+    size_t key_len;
     toy_val value;
 } map_val_entry;
 

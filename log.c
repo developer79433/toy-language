@@ -1,5 +1,7 @@
+#include <stdint.h>
 #include <assert.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include "str.h"
 #include "log.h"
@@ -115,5 +117,16 @@ void log_to_file(const char *filename)
     } else {
         perror("fopen");
         log_warn_file("Failed to open new log file '%s'\n");
+    }
+}
+
+void hex_dump(const void *ptr, size_t len)
+{
+    for (const uint8_t *p = (const uint8_t *) ptr; p < ((const uint8_t *) ptr) + len; p++) {
+        if (isprint(*p)) {
+            putchar(*p);
+        } else {
+            printf("\\x%02x", *p);
+        }
     }
 }

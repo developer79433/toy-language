@@ -1,6 +1,7 @@
 #ifndef TOY_LOG_H
 #define TOY_LOG_H 1
 
+#include <stddef.h>
 #include <stdarg.h>
 
 #include "log-types.h"
@@ -23,5 +24,6 @@ void log_debug(const char *fmt, ...);
 void log_info(const char *fmt, ...);
 void log_warn(const char *fmt, ...);
 void log_error(const char *fmt, ...);
+void hex_dump(const void *ptr, size_t len);
 
 #endif /* TOY_LOG_H */

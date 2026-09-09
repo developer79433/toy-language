@@ -7,7 +7,8 @@
 #include "str-types.h"
 
 typedef struct map_buf_entry_struct {
-    toy_str key;
+    void *key;
+    size_t key_len;
     uint8_t c; /* Really varable-size */
 } map_buf_entry;
 
