@@ -4,7 +4,6 @@
 #include <stddef.h>
 
 #include "map-buf-ptr-types.h"
-#include "buf-list.h"
 
 void map_buf_ptr_init(map_buf_ptr *map);
 map_buf_ptr *map_buf_ptr_alloc(void);

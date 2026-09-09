@@ -1,7 +1,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include "str.h"
 #include "map-buf-ptr.h"
 #include "map-buf.h"
 

@@ -2,7 +2,6 @@
 #define TOY_MAP_BUF_PTR_TYPES_H
 
 #include "iter-types.h"
-#include "str-types.h"
 #include "map-buf-ptr-entry-list-types.h"
 
 typedef struct map_buf_ptr_struct {

@@ -4,7 +4,6 @@
 #include <stddef.h>
 
 #include "iter-types.h"
-#include "str-types.h"
 
 typedef struct map_buf_ptr_entry_struct {
     void *key;
