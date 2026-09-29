@@ -10,7 +10,7 @@
 #include "generic-map.h"
 #include "errors.h"
 #include "constant.h"
-#include "map-val.h"
+#include "map-str-val.h"
 #include "debug.h"
 #include "log.h"
 #include "func-closure.h"
@@ -44,7 +44,7 @@ void val_dump(const toy_val *val, toy_bool verbose)
             val_list_dump(val->list);
             break;
         case VAL_MAP:
-            map_val_dump(val->obj);
+            map_str_val_dump(val->obj);
             break;
         case VAL_NULL:
             log_debug("null");
@@ -74,7 +74,7 @@ toy_bool val_truthy(const toy_val *val)
     case VAL_LIST:
         return val_list_len(val->list) != 0;
     case VAL_MAP:
-        return map_val_size(val->obj) != 0;
+        return map_str_val_size(val->obj) != 0;
     case VAL_NULL:
         return TOY_FALSE;
     case VAL_NUM:
@@ -120,7 +120,7 @@ toy_bool vals_equal(const toy_val *val1, const toy_val *val2)
             return val_list_equal(val1->list, val2->list);
             break;
         case VAL_MAP:
-            return map_val_equal(val1->obj, val2->obj);
+            return map_str_val_equal(val1->obj, val2->obj);
             break;
         case VAL_NULL:
             return TOY_TRUE;
@@ -239,7 +239,7 @@ void val_assert_valid(const toy_val *val)
         if (valid_check_depth < VALID_CHECK_RECURSION_DEPTH) {
             valid_check_depth++;
             if (val->obj) {
-                map_val_assert_valid(val->obj);
+                map_str_val_assert_valid(val->obj);
             }
             valid_check_depth--;
         }
@@ -279,7 +279,7 @@ void val_free(toy_val *val)
         val_list_free(val->list);
         break;
     case VAL_MAP:
-        map_val_free(val->obj);
+        map_str_val_free(val->obj);
         break;
     case VAL_NULL:
         break;

@@ -7,8 +7,8 @@
 #include "str-types.h"
 #include "num-types.h"
 
-struct map_val_struct;
-typedef struct map_val_struct map_val;
+struct map_str_val_struct;
+typedef struct map_str_val_struct map_str_val;
 
 enum toy_val_type_enum {
     VAL_BOOL = 0,
@@ -49,7 +49,7 @@ typedef struct toy_val_struct {
         /* List of values */
         toy_val_list *list;
         /* Object mapping string keys to values */
-        map_val *obj;
+        map_str_val *obj;
         /* null */
         /* Floating-point number */
         toy_num num;

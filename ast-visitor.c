@@ -6,7 +6,7 @@
 #include "if-arm-list.h"
 #include "expr-list.h"
 #include "val-list.h"
-#include "map-val.h"
+#include "map-str-val.h"
 #include "str-list.h"
 #include "list-visitor.h"
 #include "map-visitor.h"
@@ -251,7 +251,7 @@ item_callback_result visit_val_list(ast_visitor *v, toy_val_list *val_list)
     return default_val_list(v, val_list);
 }
 
-static item_callback_result map_val_cb(map_ast_visitor *v, map_val_entry *entry)
+static item_callback_result map_str_val_cb(map_ast_visitor *v, map_str_val_entry *entry)
 {
     ast_visitor *ast_vis = v->ast_vis;
     item_callback_result res;
@@ -262,9 +262,9 @@ static item_callback_result map_val_cb(map_ast_visitor *v, map_val_entry *entry)
     return visit_val(ast_vis, &entry->value);
 }
 
-item_callback_result default_map_val(ast_visitor *v, map_val *map)
+item_callback_result default_map_str_val(ast_visitor *v, map_str_val *map)
 {
-    map_ast_visitor val_visitor = { .map_vis.visit_entry = (map_entry_visit_func) map_val_cb, .ast_vis = v };
+    map_ast_visitor val_visitor = { .map_vis.visit_entry = (map_entry_visit_func) map_str_val_cb, .ast_vis = v };
     enumeration_result res = map_visitor_visit_map((map_visitor *) &val_visitor, (generic_map *) map);
     if (ENUMERATION_COMPLETE == res) {
         return CONTINUE_ENUMERATION;
@@ -273,12 +273,12 @@ item_callback_result default_map_val(ast_visitor *v, map_val *map)
     return STOP_ENUMERATION;
 }
 
-item_callback_result visit_map_val(ast_visitor *v, map_val *map)
+item_callback_result visit_map_str_val(ast_visitor *v, map_str_val *map)
 {
-    if (v->map_val) {
-        return v->map_val(v, map);
+    if (v->map_str_val) {
+        return v->map_str_val(v, map);
     }
-    return default_map_val(v, map);
+    return default_map_str_val(v, map);
 }
 
 item_callback_result default_null_val(ast_visitor *v)
@@ -333,7 +333,7 @@ item_callback_result default_val(ast_visitor *v, toy_val *val)
     case VAL_LIST:
         return visit_val_list(v, val->list);
     case VAL_MAP:
-        return visit_map_val(v, val->obj);
+        return visit_map_str_val(v, val->obj);
     case VAL_NULL:
         return visit_null_val(v);
     case VAL_NUM:

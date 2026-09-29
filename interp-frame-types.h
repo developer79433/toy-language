@@ -3,7 +3,7 @@
 
 #include "val-types.h"
 #include "stmt-list-types.h"
-#include "map-val-types.h"
+#include "map-str-val-types.h"
 #include "val-list-types.h"
 #include "var-types.h"
 

@@ -7,7 +7,7 @@
 #include "errors.h"
 #include "interp.h"
 #include "val-list.h"
-#include "map-val.h"
+#include "map-str-val.h"
 #include "val.h"
 #include "str.h"
 #include "constant.h"
@@ -48,7 +48,7 @@ static run_stmt_result predefined_obj_len(toy_interp *interp, const toy_var *arg
     toy_val *return_val = interp_get_return_value(interp);
     return_val->type = VAL_NUM;
     assert(arg->type == VAL_MAP);
-    return_val->num = map_val_size(arg->obj);
+    return_val->num = map_str_val_size(arg->obj);
     return REACHED_RETURN;
 }
 
@@ -76,7 +76,7 @@ static run_stmt_result predefined_obj_keys(toy_interp *interp, const toy_var *ar
     if (arg->type != VAL_MAP) {
         invalid_argument_type(VAL_MAP, arg);
     }
-    map_val *map = arg->obj;
+    map_str_val *map = arg->obj;
     map_keys_visitor map_keys_vis = { .map_vis.visit_entry = (const_map_entry_visit_func) obj_keys_visit_entry, .result = NULL };
     enumeration_result res = const_map_visitor_visit_map((const_map_visitor *) &map_keys_vis, (const generic_map *) map);
     assert(ENUMERATION_COMPLETE == res);
@@ -568,22 +568,22 @@ static run_stmt_result predefined_list_filter(toy_interp *interp, const toy_var 
     return REACHED_RETURN;
 }
 
-typedef struct map_val_foreach_visitor_struct {
+typedef struct map_str_val_foreach_visitor_struct {
     const_map_visitor map_vis;
     toy_interp *interp;
     func_closure *closure;
     size_t num_seen;
-} map_val_foreach_visitor;
+} map_str_val_foreach_visitor;
 
-static item_callback_result obj_foreach_callback(map_val_foreach_visitor *map_val_vis, const map_val_entry *entry)
+static item_callback_result obj_foreach_callback(map_str_val_foreach_visitor *map_str_val_vis, const map_str_val_entry *entry)
 {
-    map_val_vis->num_seen++;
+    map_str_val_vis->num_seen++;
     const toy_val key_val = { .type = VAL_STR, .str = entry->key };
     const toy_val_list value_arg = { .val = entry->value, .next = NULL };
     const toy_val_list func_args = { .val = key_val, .next = (toy_val_list *) &value_arg };
-    run_stmt_result run_result = interp_run_func_val_list(map_val_vis->interp, map_val_vis->closure, &func_args);
+    run_stmt_result run_result = interp_run_func_val_list(map_str_val_vis->interp, map_str_val_vis->closure, &func_args);
     if (run_result == REACHED_RETURN) {
-        toy_val *return_value = interp_get_return_value(map_val_vis->interp);
+        toy_val *return_value = interp_get_return_value(map_str_val_vis->interp);
         if (val_falsey(return_value)) {
             return STOP_ENUMERATION;
         }
@@ -597,10 +597,10 @@ static run_stmt_result predefined_obj_foreach(toy_interp *interp, const toy_var 
     const toy_val *arg1 = var_get_const(&args[0]);
     const toy_val *arg2 = var_get_const(&args[1]);
     if (arg1->type == VAL_MAP) {
-        map_val *map = arg1->obj;
+        map_str_val *map = arg1->obj;
         if (arg2->type == VAL_FUNC) {
             func_closure *closure = arg2->closure;
-            map_val_foreach_visitor map_val_vis = {
+            map_str_val_foreach_visitor map_val_vis = {
                 .map_vis.visit_entry = (const_map_entry_visit_func) obj_foreach_callback,
                 .closure = closure,
                 .interp = interp,
@@ -619,19 +619,19 @@ static run_stmt_result predefined_obj_foreach(toy_interp *interp, const toy_var 
     return REACHED_BLOCK_END;
 }
 
-typedef struct map_val_map_visitor_struct {
+typedef struct map_str_val_map_visitor_struct {
     const_map_visitor map_vis;
     toy_interp *interp;
     func_closure *closure;
-    map_val *result;
-} map_val_map_visitor;
+    map_str_val *result;
+} map_str_val_map_visitor;
 
-static item_callback_result obj_map_callback(map_val_map_visitor *map_val_vis, const map_val_entry *entry)
+static item_callback_result obj_map_callback(map_str_val_map_visitor *map_str_val_vis, const map_str_val_entry *entry)
 {
     const toy_val key_val = { .type = VAL_STR, .str = entry->key };
     const toy_val_list value_arg = { .val = entry->value, .next = NULL };
     const toy_val_list func_args = { .val = key_val, .next = (toy_val_list *) &value_arg };
-    func_closure *closure = map_val_vis->closure;
+    func_closure *closure = map_str_val_vis->closure;
     toy_function *func = closure->func;
     if (func->param_names && func->param_names != &INFINITE_PARAMS) {
         size_t params_len = str_list_len(func->param_names);
@@ -639,17 +639,17 @@ static item_callback_result obj_map_callback(map_val_map_visitor *map_val_vis, c
             incorrect_function_num_args(func, 2);
         }
     }
-    run_stmt_result run_result = interp_run_func_val_list(map_val_vis->interp, closure, &func_args);
+    run_stmt_result run_result = interp_run_func_val_list(map_str_val_vis->interp, closure, &func_args);
     const toy_val *return_value;
     if (run_result == REACHED_RETURN) {
-        return_value = interp_get_return_value(map_val_vis->interp);
+        return_value = interp_get_return_value(map_str_val_vis->interp);
     } else {
         return_value = &null_val;
     }
-    if (!map_val_vis->result) {
-        map_val_vis->result = map_val_alloc();
+    if (!map_str_val_vis->result) {
+        map_str_val_vis->result = map_str_val_alloc();
     }
-    map_val_set(map_val_vis->result, entry->key, return_value);
+    map_str_val_set(map_str_val_vis->result, entry->key, return_value);
     return CONTINUE_ENUMERATION;
 }
 
@@ -659,10 +659,10 @@ static run_stmt_result predefined_obj_map(toy_interp *interp, const toy_var *arg
     const toy_val *arg1 = var_get_const(&args[0]);
     const toy_val *arg2 = var_get_const(&args[1]);
     if (arg1->type == VAL_MAP) {
-        map_val *map = arg1->obj;
+        map_str_val *map = arg1->obj;
         if (arg2->type == VAL_FUNC) {
             func_closure *closure = arg2->closure;
-            map_val_map_visitor map_val_vis = {
+            map_str_val_map_visitor map_val_vis = {
                 .map_vis.visit_entry = (const_map_entry_visit_func) obj_map_callback,
                 .closure = closure,
                 .interp = interp,
@@ -684,15 +684,15 @@ static run_stmt_result predefined_obj_map(toy_interp *interp, const toy_var *arg
 }
 
 typedef struct map_filter_cb_args_struct {
-    map_val_foreach_visitor map_val_vis;
-    map_val *obj_to_insert_into;
+    map_str_val_foreach_visitor map_val_vis;
+    map_str_val *obj_to_insert_into;
 } map_filter_cb_args;
 
-static item_callback_result obj_filter_callback(void *cookie, const map_val_entry *entry)
+static item_callback_result obj_filter_callback(void *cookie, const map_str_val_entry *entry)
 {
     val_assert_valid(&entry->value);
     map_filter_cb_args *args = (map_filter_cb_args *) cookie;
-    map_val_assert_valid(args->obj_to_insert_into);
+    map_str_val_assert_valid(args->obj_to_insert_into);
     const toy_val key_val = { .type = VAL_STR, .str = entry->key };
     /* TODO: This aliases the args. Does that allow the user function to modify the value that gets inserted? */
     const toy_val_list func_arg_2 = { .val = entry->value, .next = NULL };
@@ -708,9 +708,9 @@ static item_callback_result obj_filter_callback(void *cookie, const map_val_entr
     }
     if (truthy_return) {
         assert(args->obj_to_insert_into != NULL);
-        set_result set_res = map_val_set(args->obj_to_insert_into, entry->key, &entry->value);
+        set_result set_res = map_str_val_set(args->obj_to_insert_into, entry->key, &entry->value);
         assert(SET_NEW == set_res);
-        map_val_assert_valid(args->obj_to_insert_into);
+        map_str_val_assert_valid(args->obj_to_insert_into);
     }
     return CONTINUE_ENUMERATION;
 }
@@ -721,12 +721,12 @@ static run_stmt_result predefined_obj_filter(toy_interp *interp, const toy_var *
     const toy_val *arg1 = var_get_const(&args[0]);
     const toy_val *arg2 = var_get_const(&args[1]);
     if (arg1->type == VAL_MAP) {
-        map_val *map = arg1->obj;
-        map_val_assert_valid(map);
+        map_str_val *map = arg1->obj;
+        map_str_val_assert_valid(map);
         if (arg2->type == VAL_FUNC) {
             func_closure *closure = arg2->closure;
-            toy_val map_to_return = { .type = VAL_MAP, .obj = map_val_alloc() };
-            map_val_assert_valid(map_to_return.obj);
+            toy_val map_to_return = { .type = VAL_MAP, .obj = map_str_val_alloc() };
+            map_str_val_assert_valid(map_to_return.obj);
             map_filter_cb_args filter_args = {
                 .map_val_vis.map_vis.visit_entry = (const_map_entry_visit_func) obj_filter_callback,
                 .map_val_vis.num_seen = 0,
@@ -737,7 +737,7 @@ static run_stmt_result predefined_obj_filter(toy_interp *interp, const toy_var *
             enumeration_result res = const_map_visitor_visit_map((const_map_visitor *) &filter_args, (const generic_map *) map);
             assert(res == ENUMERATION_COMPLETE);
             assert(map_to_return.type == VAL_MAP);
-            map_val_assert_valid(map_to_return.obj);
+            map_str_val_assert_valid(map_to_return.obj);
             interp_set_return_value(interp, &map_to_return);
         } else {
             invalid_argument_type(VAL_FUNC, arg2);
@@ -748,7 +748,7 @@ static run_stmt_result predefined_obj_filter(toy_interp *interp, const toy_var *
     return REACHED_RETURN;
 }
 
-static toy_bool obj_val_test_predicate(user_func_predicate *predicate, const map_val_entry *entry)
+static toy_bool obj_val_test_predicate(user_func_predicate *predicate, const map_str_val_entry *entry)
 {
     const toy_val key_val = { .type = VAL_STR, .str = entry->key };
     toy_val_list *func_args = val_list_alloc(&key_val);
@@ -781,7 +781,7 @@ static run_stmt_result predefined_obj_all(toy_interp *interp, const toy_var *arg
     const toy_val *arg2 = var_get_const(&args[1]);
     toy_bool ret;
     if (arg1->type == VAL_MAP) {
-        map_val *map = arg1->obj;
+        map_str_val *map = arg1->obj;
         if (arg2->type == VAL_FUNC) {
             func_closure *closure = arg2->closure;
             user_func_predicate predicate = { .closure = closure, .interp = interp };
@@ -804,7 +804,7 @@ static run_stmt_result predefined_obj_not_all(toy_interp *interp, const toy_var 
     const toy_val *arg2 = var_get_const(&args[1]);
     toy_bool ret;
     if (arg1->type == VAL_MAP) {
-        map_val *map = arg1->obj;
+        map_str_val *map = arg1->obj;
         if (arg2->type == VAL_FUNC) {
             func_closure *closure = arg2->closure;
             user_func_predicate predicate = { .closure = closure, .interp = interp };
@@ -827,7 +827,7 @@ static run_stmt_result predefined_obj_some(toy_interp *interp, const toy_var *ar
     const toy_val *arg2 = var_get_const(&args[1]);
     toy_bool ret;
     if (arg1->type == VAL_MAP) {
-        map_val *map = arg1->obj;
+        map_str_val *map = arg1->obj;
         if (arg2->type == VAL_FUNC) {
             func_closure *closure = arg2->closure;
             user_func_predicate predicate = { .closure = closure, .interp = interp };
@@ -850,7 +850,7 @@ static run_stmt_result predefined_obj_none(toy_interp *interp, const toy_var *ar
     const toy_val *arg2 = var_get_const(&args[1]);
     toy_bool ret;
     if (arg1->type == VAL_MAP) {
-        map_val *map = arg1->obj;
+        map_str_val *map = arg1->obj;
         if (arg2->type == VAL_FUNC) {
             func_closure *closure = arg2->closure;
             user_func_predicate predicate = { .closure = closure, .interp = interp };

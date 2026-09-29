@@ -27,7 +27,7 @@ typedef item_callback_result (*visit_if_stmt_func)(ast_visitor *v, toy_if_stmt *
 typedef item_callback_result (*visit_if_arm_func)(ast_visitor *v, toy_if_arm *if_arm);
 typedef item_callback_result (*visit_if_arm_list_func)(ast_visitor *v, toy_if_arm_list *if_arm_list);
 typedef item_callback_result (*visit_map_entry_list_func)(ast_visitor *v, toy_map_expr_entry_list *map_entry_list);
-typedef item_callback_result (*visit_map_val_func)(ast_visitor *v, map_val *map);
+typedef item_callback_result (*visit_map_str_val_func)(ast_visitor *v, map_str_val *map);
 typedef item_callback_result (*visit_method_call_func)(ast_visitor *v, toy_method_call *method_call);
 typedef item_callback_result (*visit_null_stmt_func)(ast_visitor *v);
 typedef item_callback_result (*visit_null_val_func)(ast_visitor *v);
@@ -72,7 +72,7 @@ struct ast_visitor_struct {
     visit_if_arm_func if_arm;
     visit_if_arm_list_func if_arm_list;
     visit_map_entry_list_func map_entry_list;
-    visit_map_val_func map_val;
+    visit_map_str_val_func map_str_val;
     visit_method_call_func method_call;
     visit_null_stmt_func null_stmt;
     visit_null_val_func null_val;

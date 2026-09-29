@@ -3,7 +3,7 @@
 #include "interp-frame.h"
 #include "interp.h"
 #include "mymalloc.h"
-#include "map-val.h"
+#include "map-str-val.h"
 #include "function.h"
 #include "symbol-table.h"
 #include "debug.h"

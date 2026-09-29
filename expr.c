@@ -4,7 +4,7 @@
 #include "expr.h"
 #include "mymalloc.h"
 #include "val.h"
-#include "map-val.h"
+#include "map-str-val.h"
 #include "function.h"
 #include "constant.h"
 #include "predef-function.h"

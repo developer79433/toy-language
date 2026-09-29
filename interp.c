@@ -20,7 +20,7 @@
 #include "function.h"
 #include "errors.h"
 #include "stmt-list.h"
-#include "map-val.h"
+#include "map-str-val.h"
 #include "var-decl-list.h"
 #include "interp-for.h"
 #include "interp-if.h"
@@ -244,11 +244,11 @@ static void list_lookup(toy_interp *interp, toy_val *result, const toy_val_list 
     }
 }
 
-static void map_lookup(toy_interp *interp, toy_val *result, const map_val *map, toy_val *index)
+static void map_lookup(toy_interp *interp, toy_val *result, const map_str_val *map, toy_val *index)
 {
     interp_assert_valid(interp);
     if (index->type == VAL_STR) {
-        const toy_val *retrieved_value = map_val_get_const(map, index->str);
+        const toy_val *retrieved_value = map_str_val_get_const(map, index->str);
         if (retrieved_value) {
             *result = *retrieved_value;
         } else {
@@ -468,7 +468,7 @@ static void op_prefix_increment(toy_interp *interp, toy_val *result, toy_identif
 typedef struct map_entry_visitor_struct {
     list_visitor list_vis;
     toy_interp *interp;
-    map_val *map;
+    map_str_val *map;
 } map_entry_visitor;
 
 static item_callback_result map_entry_callback(map_entry_visitor *map_entry_vis, size_t index, const toy_map_expr_entry_list *list)
@@ -478,9 +478,9 @@ static item_callback_result map_entry_callback(map_entry_visitor *map_entry_vis,
     interp_assert_valid(map_entry_vis->interp);
     interp_eval_val(map_entry_vis->interp, &value, map_entry->expr);
     if (!map_entry_vis->map) {
-        map_entry_vis->map = map_val_alloc();
+        map_entry_vis->map = map_str_val_alloc();
     }
-    set_result set_res = map_val_set(map_entry_vis->map, map_entry->key, &value);
+    set_result set_res = map_str_val_set(map_entry_vis->map, map_entry->key, &value);
     assert(SET_NEW == set_res);
     return CONTINUE_ENUMERATION;
 }
