@@ -6,7 +6,6 @@
 typedef struct set_buf_entry_struct {
     void *key;
     size_t key_len;
-    int value; /* TODO: Delete me */
 } set_buf_entry;
 
 typedef struct set_buf_entry_list_struct {
