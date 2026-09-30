@@ -14,7 +14,7 @@ static item_callback_result str_list_item_callback(list_visitor *list_vis, size_
     return CONTINUE_ENUMERATION;
 }
 
-void test_str_lists(void)
+void test_str_list(void)
 {
     toy_str first_str = "first string";
     toy_str_list *str_list = str_list_alloc(first_str);

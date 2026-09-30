@@ -14,7 +14,7 @@ static item_callback_result str_list_inline_item_callback(const_list_visitor *li
     return CONTINUE_ENUMERATION;
 }
 
-void test_str_list_inlines(void)
+void test_str_list_inline(void)
 {
     toy_str first_str = "first string";
     toy_str_list_inline *str_list = str_list_inline_alloc(first_str);

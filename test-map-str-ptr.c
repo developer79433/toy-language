@@ -3,7 +3,7 @@
 
 #include "util.h"
 #include "str.h"
-#include "test-map-str-ptrs.h"
+#include "test-map-str-ptr.h"
 #include "map-str-ptr.h"
 #include "val.h"
 #include "map-visitor.h"
@@ -192,7 +192,7 @@ static void test_find(void)
     /* log_printf("Found: { \"%s\" => %f }\n", found->key, val->num); */
 }
 
-void test_map_str_ptrs(void)
+void test_map_str_ptr(void)
 {
     test_map_str_ptr_basics();
     test_visitors();

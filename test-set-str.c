@@ -1,5 +1,5 @@
 #include <assert.h>
-#include "test-str-sets.h"
+#include "test-set-str.h"
 #include "set-str.h"
 #include "log.h"
 
@@ -47,7 +47,7 @@ void test_set(set_str *set)
     /* set_str_dump(set); */
 }
 
-void test_str_sets(void)
+void test_set_str(void)
 {
     set_str *set1 = set_str_alloc();
     test_set(set1);

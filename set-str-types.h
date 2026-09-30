@@ -6,7 +6,6 @@
 typedef struct set_str_entry_struct {
     toy_str key;
     size_t key_len;
-    int value; /* TODO: Delete me */
 } set_str_entry;
 
 typedef struct set_str_entry_list_struct {

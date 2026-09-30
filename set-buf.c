@@ -7,9 +7,6 @@
 #include "map-visitor.h"
 #include "log.h"
 
-/* TODO: Delete me */
-static const int dummy_value = 1;
-
 set_buf *set_buf_alloc(void)
 {
     set_buf *set = mymalloc(set_buf);
@@ -29,7 +26,6 @@ typedef struct set_buf_dump_vis_struct {
 
 static item_callback_result dump_entry(set_buf_dump_vis *visitor, set_buf_entry *entry)
 {
-    assert(entry->value == dummy_value);
     if (visitor->printed_anything) {
         log_debug(", ");
     }
@@ -49,9 +45,8 @@ void set_buf_dump(set_buf *set)
 
 toy_bool set_buf_contains(const set_buf *set, const void *buf, size_t size)
 {
-    int *val = (int *) map_buf_buf_get_const(&set->map, buf, size);
+    const void *val = map_buf_buf_get_const(&set->map, buf, size);
     if (val) {
-        assert(dummy_value == *val);
         return TOY_TRUE;
     }
     return TOY_FALSE;
@@ -60,7 +55,7 @@ toy_bool set_buf_contains(const set_buf *set, const void *buf, size_t size)
 void set_buf_add(set_buf *set, const void *buf, size_t size)
 {
     assert(!set_buf_contains(set, buf, size));
-    set_result set_res = map_buf_buf_set(&set->map, buf, size, &dummy_value, sizeof(dummy_value));
+    set_result set_res = map_buf_buf_set(&set->map, buf, size, NULL, 0);
     assert(SET_NEW == set_res);
 }
 

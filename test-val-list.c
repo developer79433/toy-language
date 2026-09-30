@@ -1,10 +1,10 @@
 #include <assert.h>
 
-#include "test-val-lists.h"
+#include "test-val-list.h"
 #include "val.h"
 #include "val-list.h"
 
-void test_val_lists(void)
+void test_val_list(void)
 {
     toy_val first_elem = { .type = VAL_BOOL, .boolean = TOY_TRUE };
     toy_val_list *val_list = val_list_alloc(&first_elem);

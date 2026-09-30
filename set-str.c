@@ -7,9 +7,6 @@
 #include "map-visitor.h"
 #include "log.h"
 
-/* TODO: Delete me */
-static const int dummy_value = 1;
-
 set_str *set_str_alloc(void)
 {
     set_str *set = (set_str *) set_buf_alloc();
@@ -29,7 +26,6 @@ typedef struct set_str_dump_vis_struct {
 
 static item_callback_result dump_entry(set_str_dump_vis *visitor, set_str_entry *entry)
 {
-    assert(entry->value == dummy_value);
     if (visitor->printed_anything) {
         log_debug(", ");
     }

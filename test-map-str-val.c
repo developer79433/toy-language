@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "str.h"
-#include "test-map-str-vals.h"
+#include "test-map-str-val.h"
 
 #include "val.h"
 #include "stmt-list.h"
@@ -31,7 +31,7 @@ static item_callback_result map_item_callback(test_visitor *test_vis, const map_
     return CONTINUE_ENUMERATION;
 }
 
-void test_map_str_vals(void)
+void test_map_str_val(void)
 {
     // Test create
     map_str_val *map1 = map_str_val_alloc();

@@ -1,10 +1,10 @@
 #include <assert.h>
 #include <string.h>
 
-#include "test-strings.h"
+#include "test-string.h"
 #include "str.h"
 
-void test_strings(void)
+void test_string(void)
 {
     assert(str_equal("same", "same") == TOY_TRUE);
     assert(str_equal("not", "same") == TOY_FALSE);

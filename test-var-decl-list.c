@@ -1,9 +1,9 @@
 #include <assert.h>
 
-#include "test-var-decl-lists.h"
+#include "test-var-decl-list.h"
 #include "var-decl-list.h"
 
-void test_var_decl_lists(void)
+void test_var_decl_list(void)
 {
     toy_val val = { .type = VAL_BOOL, .boolean = TOY_TRUE };
     toy_expr expr1 = { .type = EXPR_LITERAL, .val = &val };

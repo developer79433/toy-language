@@ -1,10 +1,10 @@
 #include <assert.h>
 
-#include "test-stmt-lists.h"
+#include "test-stmt-list.h"
 #include "stmt.h"
 #include "stmt-list.h"
 
-void test_stmt_lists(void)
+void test_stmt_list(void)
 {
     toy_val val = { .type = VAL_BOOL, .boolean = TOY_TRUE };
     toy_expr expr = { .type = EXPR_LITERAL, .val = &val };

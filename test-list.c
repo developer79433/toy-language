@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "test-lists.h"
+#include "test-list.h"
 #include "str.h"
 #include "generic-list.h"
 #include "str-list.h"
@@ -235,7 +235,7 @@ static void test_visitors(void)
     /* TODO: Test result */
 }
 
-void test_lists(void)
+void test_list(void)
 {
     toy_str_list *list = str_list_alloc("First item");
     list = str_list_append(list, "Second item");
