@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <wchar.h>
 
 #include "num-types.h"
 #include "str.h"
@@ -33,12 +34,12 @@ FALSE (?i:false)
 -?{DIGIT}+("."-?{DIGIT}*)?        { yylval.num = atof(yytext); return T_FLOAT; }
 
 \"([^"\n]*)\" {
-    yylval.str = (char *) malloc(strlen(yytext) - 1);
+    yylval.str = (wchar_t *) malloc(sizeof(wchar_t) * (mbstowcs(NULL, yytext, 0) - 1));
     str_backslash_decode(yylval.str, yytext + 1, yytext + strlen(yytext) - 2);
     return T_STRING;
 }
 \'([^'\n]*)\' {
-    yylval.str = (char *) malloc(strlen(yytext) - 1);
+    yylval.str = (wchar_t *) malloc(sizeof(wchar_t) * (mbstowcs(NULL, yytext, 0) - 1));
     str_backslash_decode(yylval.str, yytext + 1, yytext + strlen(yytext) - 2);
     return T_STRING;
 }
@@ -64,7 +65,7 @@ break { return T_BREAK; }
 continue { return T_CONTINUE; }
 null { return T_NULL; }
 
-{IDENTIFIER}        { yylval.str = strdup(yytext); return T_IDENTIFIER; }
+{IDENTIFIER}        { yylval.str = mbcs_to_wcs_alloc(yytext); return T_IDENTIFIER; }
 
 "**" { return T_ASTERISK_ASTERISK; }
 "++" { return T_PLUS_PLUS; }

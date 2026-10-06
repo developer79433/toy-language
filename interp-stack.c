@@ -46,7 +46,7 @@ const interp_frame *interp_stack_payload_const(const interp_stack *stack)
     return interp_frame_stack_payload_const(stack);
 }
 
-void interp_stack_dump(const char *context, const interp_stack *stack)
+void interp_stack_dump(const toy_str context, const interp_stack *stack)
 {
     interp_stack_assert_valid(stack);
     return interp_frame_stack_dump(context, stack);
@@ -82,7 +82,7 @@ interp_stack *interp_stack_push_if(interp_stack *stack, const toy_block *block)
     stack = interp_frame_stack_push(stack, &frame);
     interp_stack_assert_valid(stack);
 #ifdef DEBUG_INTERP_STACK
-    interp_frame_stack_dump("after push if body", stack);
+    interp_frame_stack_dump(L"after push if body", stack);
 #endif /* DEBUG_INTERP_STACK */
     return stack;
 }
@@ -102,7 +102,7 @@ interp_stack *interp_stack_push_loop(interp_stack *stack, const toy_block *block
     stack = interp_frame_stack_push(stack, &frame);
     interp_stack_assert_valid(stack);
 #ifdef DEBUG_INTERP_STACK
-    interp_frame_stack_dump("after push loop body", stack);
+    interp_frame_stack_dump(L"after push loop body", stack);
 #endif /* DEBUG_INTERP_STACK */
     return stack;
 }
@@ -157,7 +157,7 @@ interp_stack *interp_stack_push_predef_func(interp_stack *stack, const func_clos
     stack = interp_frame_stack_push(stack, &frame);
     interp_stack_assert_valid(stack);
 #ifdef DEBUG_INTERP_STACK
-    interp_frame_stack_dump("after push predef func", stack);
+    interp_frame_stack_dump(L"after push predef func", stack);
 #endif /* DEBUG_INTERP_STACK */
     return stack;
 }
@@ -191,7 +191,7 @@ interp_stack *interp_stack_push_user_func(interp_stack *stack, const func_closur
     stack = interp_frame_stack_push(stack, &frame);
     interp_stack_assert_valid(stack);
 #ifdef DEBUG_INTERP_STACK
-    interp_frame_stack_dump("after push user func", stack);
+    interp_frame_stack_dump(L"after push user func", stack);
 #endif /* DEBUG_INTERP_STACK */
     interp_stack_assert_valid(stack);
     return stack;
@@ -213,7 +213,7 @@ interp_stack *interp_stack_push_block(interp_stack *stack, const toy_block *bloc
     stack = interp_frame_stack_push(stack, &frame);
     interp_stack_assert_valid(stack);
 #ifdef DEBUG_INTERP_STACK
-    interp_frame_stack_dump("after push block stmt", stack);
+    interp_frame_stack_dump(L"after push block stmt", stack);
 #endif /* DEBUG_INTERP_STACK */
     return stack;
 }
@@ -223,7 +223,7 @@ interp_stack *interp_stack_pop(interp_stack *stack)
     interp_stack_assert_valid(stack);
     stack = interp_frame_stack_pop(stack, NULL);
 #ifdef DEBUG_INTERP_STACK
-    interp_frame_stack_dump("after pop", stack);
+    interp_frame_stack_dump(L"after pop", stack);
 #endif /* DEBUG_INTERP_STACK */
     return stack;
 }

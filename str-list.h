@@ -5,7 +5,7 @@
 
 #include "str-list-types.h"
 
-toy_str_list *str_list_alloc(const char * str);
+toy_str_list *str_list_alloc(const toy_str str);
 toy_str_list *str_list_append(toy_str_list *list, toy_str new_item);
 toy_str_list *str_list_concat(toy_str_list *orig, toy_str_list *new);
 #ifdef NDEBUG

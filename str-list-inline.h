@@ -4,7 +4,7 @@
 #include "str-types.h"
 #include "str-list-inline-types.h"
 
-toy_str_list_inline *str_list_inline_alloc(const char *str);
+toy_str_list_inline *str_list_inline_alloc(const toy_str str);
 size_t str_list_inline_len(const toy_str_list_inline *list);
 toy_str_list_inline *str_list_inline_append(toy_str_list_inline *list, toy_str new_item);
 toy_str str_list_inline_payload(toy_str_list_inline *list);

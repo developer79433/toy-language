@@ -14,15 +14,15 @@
 #include "var.h"
 #include "func-closure.h"
 
-static const char *frame_type_names[] = {
-    "Block statement",
-    "If body",
-    "Loop body",
-    "Pre-defined function",
-    "User-defined function"
+static const toy_str frame_type_names[] = {
+    L"Block statement",
+    L"If body",
+    L"Loop body",
+    L"Pre-defined function",
+    L"User-defined function"
 };
 
-const char *interp_frame_type_name(frame_type type)
+const toy_str interp_frame_type_name(frame_type type)
 {
     return frame_type_names[type];
 }
@@ -35,21 +35,21 @@ size_t interp_frame_num_vars(const interp_frame *frame)
 static void frame_dump_vars(const interp_frame *frame)
 {
     if (frame->num_variables) {
-        log_debug(" variables [");
+        log_debug(L" variables [");
     }
     var_array_dump(frame->variables, frame->num_variables, TOY_FALSE);
     if (frame->num_variables) {
-        log_debug("] ");
+        log_debug(L"] ");
     }
 }
 
 static void frame_dump_args(const func_call_frame *call_frame) {
     if (call_frame->num_arguments) {
-        log_debug(" arguments [");
+        log_debug(L" arguments [");
     }
     var_array_dump(call_frame->arguments, call_frame->num_arguments, TOY_FALSE);
     if (call_frame->num_arguments) {
-        log_debug("] ");
+        log_debug(L"] ");
     }
 }
 
@@ -58,15 +58,15 @@ void interp_frame_dump(const interp_frame *frame)
     interp_frame_assert_valid(frame);
     switch (frame->type) {
     case FRAME_BLOCK_STMT:
-        log_debug("Block_stmt %p ", frame->block_stmt.block);
+        log_debug(L"Block_stmt %p ", frame->block_stmt.block);
         frame_dump_vars(frame);
         break;
     case FRAME_IF_BODY:
-        log_debug("If_body %p ", frame->block_stmt.block);
+        log_debug(L"If_body %p ", frame->block_stmt.block);
         frame_dump_vars(frame);
         break;
     case FRAME_LOOP_BODY:
-        log_debug("Loop_body %p ", frame->block_stmt.block);
+        log_debug(L"Loop_body %p ", frame->block_stmt.block);
         frame_dump_vars(frame);
         break;
     case FRAME_PRE_DEF_FUNC:
@@ -74,7 +74,7 @@ void interp_frame_dump(const interp_frame *frame)
         const func_closure *predef_closure = predef_func_call->closure;
         assert(0 == predef_closure->num_closures);
         assert(NULL == predef_closure->closures);
-        log_debug("Call to predefined ");
+        log_debug(L"Call to predefined ");
         func_closure_dump(predef_closure, TOY_FALSE);
         frame_dump_args(predef_func_call);
         frame_dump_vars(frame);
@@ -82,7 +82,7 @@ void interp_frame_dump(const interp_frame *frame)
     case FRAME_USER_DEF_FUNC:
         const func_call_frame *user_func_call = &frame->func_call;
         const func_closure *user_closure = user_func_call->closure;
-        log_debug("Call to user-defined ");
+        log_debug(L"Call to user-defined ");
         func_closure_dump(user_closure, TOY_FALSE);
         frame_dump_args(user_func_call);
         frame_dump_vars(frame);

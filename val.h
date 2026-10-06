@@ -28,7 +28,7 @@ void assert_vals_equal(const toy_val *val1, const toy_val *val2);
 #define val_assert_valid_or_null(val) do {} while (0)
 #define assert_vals_equal(val1, val2) do {} while (0)
 #endif /* NDEBUG */
-const char *val_type_name(toy_val_type val_type);
+const toy_str val_type_name(toy_val_type val_type);
 void val_free(toy_val *val);
 toy_bool val_truthy(const toy_val *val);
 toy_bool val_falsey(const toy_val *val);

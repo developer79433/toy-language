@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <string.h>
+#include <wchar.h>
 
 #include "mymalloc.h"
 #include "bool.h"
@@ -15,17 +16,17 @@
 #include "log.h"
 #include "func-closure.h"
 
-static const char *toy_val_type_names[] = {
-    "boolean",
-    "function",
-    "list",
-    "object",
-    "null",
-    "numeric",
-    "string"
+static const toy_str toy_val_type_names[] = {
+    L"boolean",
+    L"function",
+    L"list",
+    L"object",
+    L"null",
+    L"numeric",
+    L"string"
 };
 
-const char *val_type_name(toy_val_type val_type)
+const toy_str val_type_name(toy_val_type val_type)
 {
     return toy_val_type_names[val_type];
 }
@@ -47,10 +48,10 @@ void val_dump(const toy_val *val, toy_bool verbose)
             map_str_val_dump(val->obj);
             break;
         case VAL_NULL:
-            log_debug("null");
+            log_debug(L"null");
             break;
         case VAL_NUM:
-            log_debug("%f", val->num);
+            log_debug(L"%f", val->num);
             break;
         case VAL_STR:
             str_dump(val->str, TOY_TRUE);
@@ -80,7 +81,7 @@ toy_bool val_truthy(const toy_val *val)
     case VAL_NUM:
         return val->num != 0;
     case VAL_STR:
-        return (val->str != NULL && strlen(val->str) != 0);
+        return (val->str != NULL && wcslen(val->str) != 0);
     default:
         invalid_value_type(val->type);
         break;
@@ -326,7 +327,7 @@ toy_val *val_alloc_func_decl(toy_str_list *formalparams, toy_block *body)
     val->closure->closures = NULL;
     val->closure->func = (toy_function *) (val->closure + 1);
     val->closure->func->type = FUNC_USER_DECLARED;
-    val->closure->func->name = ""; /* TODO: generated unique name */
+    val->closure->func->name = L""; /* TODO: generated unique name */
     val->closure->func->param_names = formalparams;
     val->closure->func->code->stmts = body->stmts;
     return val;
@@ -337,7 +338,7 @@ void val_array_dump(const toy_val *vals, size_t size)
     toy_bool printed_anything = TOY_FALSE;
     for (const toy_val *val = vals; val < &vals[size]; val++) {
         if (printed_anything) {
-            log_debug(", ");
+            log_debug(L", ");
         }
         val_dump(val, 1);
         printed_anything = TOY_TRUE;

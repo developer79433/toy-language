@@ -153,14 +153,14 @@ enumeration_result const_list_pipeline_visit_list(const_list_pipeline *pipeline,
 static item_callback_result print_entry_1(list_visitor *list_vis, size_t index, const toy_str_list *item)
 {
     toy_str str = str_list_payload_const(item);
-    log_debug("list-pipeline: item 1: %s\n", str);
+    log_debug(L"list-pipeline: item 1: %ls\n", str);
     return CONTINUE_ENUMERATION;
 }
 
 static item_callback_result print_entry_2(list_visitor *list_vis, size_t index, const toy_str_list *item)
 {
     toy_str str = str_list_payload_const(item);
-    log_debug("list-pipeline: item 2: %s\n", str);
+    log_debug(L"list-pipeline: item 2: %ls\n", str);
     return CONTINUE_ENUMERATION;
 }
 
@@ -170,7 +170,7 @@ void test_pipelines()
     list_visitor print_vis_2 = { .visit_entry = (list_entry_visit_func) print_entry_2, .prev_item = NULL };
     list_pipeline *pipeline = list_pipeline_alloc(&print_vis_1);
     pipeline = list_pipeline_append(pipeline, &print_vis_2);
-    toy_str_list *str_list = str_list_alloc("First item");
+    toy_str_list *str_list = str_list_alloc(L"First item");
     enumeration_result res = list_pipeline_visit_list(pipeline, (generic_list *) str_list);
     assert(ENUMERATION_COMPLETE == res);
     list_pipeline_free(pipeline);

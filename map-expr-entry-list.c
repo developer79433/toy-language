@@ -43,12 +43,12 @@ static item_callback_result map_entry_dump_callback(map_entry_dump_visitor *dump
 {
     const toy_map_expr_entry *entry = map_expr_entry_list_payload_const(item);
     if (dump_vis->printed_anything) {
-        log_debug(", ");
+        log_debug(L", ");
     } else {
-        log_putc(LOG_DEBUG, ' ');
+        log_putc(LOG_DEBUG, L' ');
     }
     str_dump(entry->key, TOY_FALSE);
-    log_debug(": ");
+    log_debug(L": ");
     expr_dump(entry->expr);
     dump_vis->printed_anything = TOY_TRUE;
     return CONTINUE_ENUMERATION;
@@ -61,7 +61,7 @@ void map_expr_entry_list_dump(const toy_map_expr_entry_list *list)
     enumeration_result res = const_list_visitor_visit_list((const_list_visitor *) &dump_vis, (const generic_list *) list);
     assert(ENUMERATION_COMPLETE == res);
     if (dump_vis.printed_anything) {
-        log_putc(LOG_DEBUG, ' ');
+        log_putc(LOG_DEBUG, L' ');
     }
-    log_putc(LOG_DEBUG, '}');
+    log_putc(LOG_DEBUG, L'}');
 }

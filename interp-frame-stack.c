@@ -61,15 +61,15 @@ void interp_frame_stack_assert_valid(const interp_frame_stack *stack)
 static item_callback_result frame_dump_callback(list_visitor *list_vis, size_t index, const interp_frame_stack *item)
 {
     const interp_frame *frame = interp_frame_stack_payload_const(item);
-    log_debug("  Frame %02zu: ", index);
+    log_debug(L"  Frame %02zu: ", index);
     interp_frame_dump(frame);
-    log_debug("\n");
+    log_debug(L"\n");
     return CONTINUE_ENUMERATION;
 }
 
-void interp_frame_stack_dump(const char *context, const interp_frame_stack *stack)
+void interp_frame_stack_dump(const toy_str context, const interp_frame_stack *stack)
 {
-    fprintf(stderr, "Interpreter stack %s:\n", context);
+    log_debug(L"Interpreter stack %ls:\n", context);
     const_list_visitor list_vis = { .visit_entry = (const_list_entry_visit_func) frame_dump_callback };
     enumeration_result res = const_list_visitor_visit_list(&list_vis, (const generic_list *) stack);
     assert(res == ENUMERATION_COMPLETE);

@@ -18,8 +18,8 @@
 
 static toy_function toplevel_function = {
     .code = &toplevel_block,
-    .doc = "Global top-level function",
-    .name = "global",
+    .doc = L"Global top-level function",
+    .name = L"global",
     .param_names = NULL,
     .type = FUNC_USER_DECLARED
 };
@@ -40,7 +40,7 @@ void parser_init(toy_parser *parser)
 
 void yyerror(const char *s)
 {  
-    log_debug("\nError: %s\n", s);  
+    log_debug(L"\nError: %s\n", s);  
 }
 
 toy_stmt_list *program_start;
@@ -53,7 +53,7 @@ toy_function *parser_parse(toy_parser *parser, FILE *in)
     if (0 == parse_res) {
         parser->toplevel_function.code->stmts = program_start;
     } else {
-        log_error("yyparse() returned %d\n", parse_res);
+        log_error(L"yyparse() returned %d\n", parse_res);
         parser->toplevel_function.code->stmts = NULL;
     }
     program_start = NULL;

@@ -37,21 +37,21 @@ static toy_bool matches_all_test_data_1(void *cookie, size_t index, const toy_st
 {
     assert(!cookie);
     toy_str str = str_list_payload_const(item);
-    return str_contains_nocase(str, "item");
+    return str_contains_nocase(str, L"item");
 }
 
 static toy_bool matches_none_test_data_1(void *cookie, size_t index, const toy_str_list *item)
 {
     assert(!cookie);
     toy_str str = str_list_payload_const(item);
-    return str_contains_nocase(str, "this should not be present and contains utter garbage like shinfandoodle");
+    return str_contains_nocase(str, L"this should not be present and contains utter garbage like shinfandoodle");
 }
 
 static toy_bool matches_proper_subset_test_data_1(void *cookie, size_t index, const toy_str_list *item)
 {
     assert(!cookie);
     toy_str str = str_list_payload_const(item);
-    return str_contains_nocase(str, "Third") || str_contains_nocase(str, "Fourth");
+    return str_contains_nocase(str, L"Third") || str_contains_nocase(str, L"Fourth");
 }
 
 static void test_set_algebra(toy_str_list *list)
@@ -95,16 +95,16 @@ static toy_bool is_edible(void *cookie, size_t index, const toy_str_list *item)
 {
     const toy_str str = str_list_payload_const(item);
     if (
-        str_equal(str, "Apples")
-        || str_equal(str, "Oranges")
-        || str_equal(str, "Watermelon")
-        || str_equal(str, "Bread")
-        || str_equal(str, "Rice")
+        str_equal(str, L"Apples")
+        || str_equal(str, L"Oranges")
+        || str_equal(str, L"Watermelon")
+        || str_equal(str, L"Bread")
+        || str_equal(str, L"Rice")
     ) {
         return TOY_TRUE;
     }
     if (
-        str_equal(str, "Concrete")
+        str_equal(str, L"Concrete")
     ) {
         return TOY_FALSE;
     }
@@ -115,16 +115,16 @@ static toy_bool is_fruit(void *cookie, size_t index, const toy_str_list *item)
 {
     const toy_str str = str_list_payload_const(item);
     if (
-        str_equal(str, "Apples")
-        || str_equal(str, "Oranges")
-        || str_equal(str, "Watermelon")
+        str_equal(str, L"Apples")
+        || str_equal(str, L"Oranges")
+        || str_equal(str, L"Watermelon")
     ) {
         return TOY_TRUE;
     }
     if (
-        str_equal(str, "Concrete")
-        || str_equal(str, "Bread")
-        || str_equal(str, "Rice")
+        str_equal(str, L"Concrete")
+        || str_equal(str, L"Bread")
+        || str_equal(str, L"Rice")
     ) {
         return TOY_FALSE;
     }
@@ -171,17 +171,17 @@ static item_callback_result test_entry_valid(list_visitor *list, size_t index, t
 
 static void test_backwards_visitors()
 {
-    toy_str_list *list = str_list_alloc("First item");
-    list = str_list_append(list, "Second item");
-    list = str_list_append(list, "Third item");
-    list = str_list_append(list, "Fourth item");
-    list = str_list_append(list, "Fifth item");
+    toy_str_list *list = str_list_alloc(L"First item");
+    list = str_list_append(list, L"Second item");
+    list = str_list_append(list, L"Third item");
+    list = str_list_append(list, L"Fourth item");
+    list = str_list_append(list, L"Fifth item");
 
-    toy_str_list *reversed = str_list_alloc("Fifth item");
-    reversed = str_list_append(reversed, "Fourth item");
-    reversed = str_list_append(reversed, "Third item");
-    reversed = str_list_append(reversed, "Second item");
-    reversed = str_list_append(reversed, "First item");
+    toy_str_list *reversed = str_list_alloc(L"Fifth item");
+    reversed = str_list_append(reversed, L"Fourth item");
+    reversed = str_list_append(reversed, L"Third item");
+    reversed = str_list_append(reversed, L"Second item");
+    reversed = str_list_append(reversed, L"First item");
     rev_list_compare_visitor rev_list_comp_vis_1;
     rev_list_compare_visitor_init(&rev_list_comp_vis_1, (list_entry_visit_func) compare_to_other_list, NULL, list);
     rev_list_subset_visitor_visit_list((rev_list_subset_visitor *) &rev_list_comp_vis_1, (generic_list *) list);
@@ -194,10 +194,10 @@ static void test_backwards_visitors()
     rev_list_subset_visitor_init(&rev_list_vis_2, (list_entry_visit_func) test_entry_valid, (generic_list *) list->next->next->next);
     rev_list_subset_visitor_visit_list(&rev_list_vis_2, (generic_list *) list);
 
-    toy_str_list *shorter = str_list_alloc("First item");
-    shorter = str_list_append(shorter, "Second item");
-    shorter = str_list_append(shorter, "Third item");
-    shorter = str_list_append(shorter, "Fourth item");
+    toy_str_list *shorter = str_list_alloc(L"First item");
+    shorter = str_list_append(shorter, L"Second item");
+    shorter = str_list_append(shorter, L"Third item");
+    shorter = str_list_append(shorter, L"Fourth item");
     rev_list_compare_visitor rev_list_comp_vis_2;
     rev_list_compare_visitor_init(&rev_list_comp_vis_2, (list_entry_visit_func) compare_to_other_list, (generic_list *) list->next->next->next, shorter);
     rev_list_subset_visitor_visit_list((rev_list_subset_visitor *) &rev_list_comp_vis_2, (generic_list *) list);
@@ -205,25 +205,25 @@ static void test_backwards_visitors()
 
 static void test_visitors(void)
 {
-    toy_str_list *list = str_list_alloc("Apples");
-    list = str_list_append(list, "Oranges");
-    const toy_str expected_values_1[] = { "Apples", "Oranges" };
+    toy_str_list *list = str_list_alloc(L"Apples");
+    list = str_list_append(list, L"Oranges");
+    const toy_str expected_values_1[] = { L"Apples", L"Oranges" };
     assert(str_list_equals_array(list, expected_values_1));
-    list = str_list_append(list, "Watermelon");
-    const toy_str expected_values_2[] = { "Apples", "Oranges", "Watermelon" };
+    list = str_list_append(list, L"Watermelon");
+    const toy_str expected_values_2[] = { L"Apples", L"Oranges", L"Watermelon" };
     assert(str_list_equals_array(list, expected_values_2));
     assert_all_match((generic_list *) list, (generic_list_filter_func) match_always);
     assert_none_match((generic_list *) list, (generic_list_filter_func) match_never);
     assert_all_match((generic_list *) list, (generic_list_filter_func) is_edible);
     assert_all_match((generic_list *) list, (generic_list_filter_func) is_fruit);
-    list = str_list_append(list, "Bread");
-    list = str_list_append(list, "Rice");
+    list = str_list_append(list, L"Bread");
+    list = str_list_append(list, L"Rice");
     assert_all_match((generic_list *) list, (generic_list_filter_func) match_always);
     assert_none_match((generic_list *) list, (generic_list_filter_func) match_never);
     assert_all_match((generic_list *) list, (generic_list_filter_func) is_edible);
     assert_some_match((generic_list *) list, (generic_list_filter_func) is_fruit);
     assert_not_all_match((generic_list *) list, (generic_list_filter_func) is_fruit);
-    list = str_list_append(list, "Concrete");
+    list = str_list_append(list, L"Concrete");
     assert_all_match((generic_list *) list, (generic_list_filter_func) match_always);
     assert_none_match((generic_list *) list, (generic_list_filter_func) match_never);
     assert_some_match((generic_list *) list, (generic_list_filter_func) is_edible);
@@ -237,11 +237,11 @@ static void test_visitors(void)
 
 void test_list(void)
 {
-    toy_str_list *list = str_list_alloc("First item");
-    list = str_list_append(list, "Second item");
-    list = str_list_append(list, "Third item");
-    list = str_list_append(list, "Fourth item");
-    list = str_list_append(list, "Fifth item");
+    toy_str_list *list = str_list_alloc(L"First item");
+    list = str_list_append(list, L"Second item");
+    list = str_list_append(list, L"Third item");
+    list = str_list_append(list, L"Fourth item");
+    list = str_list_append(list, L"Fifth item");
     test_backwards_visitors();
     test_set_algebra(list);
     str_list_free(list);

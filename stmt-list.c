@@ -75,10 +75,10 @@ void stmt_list_assert_contains_stmt(toy_stmt_list *stmt_list, toy_stmt *stmt)
 {
     const toy_stmt_list *match = (toy_stmt_list *) list_find_first_const((const generic_list *) stmt_list, (generic_list_filter_func) is_desired_stmt, stmt);
     if (!match) {
-        log_error_file("Statement should be in stmt_list. stmt:\n");
+        log_error_file(L"Statement should be in stmt_list. stmt:\n");
         stmt_dump(stmt, TOY_TRUE);
-        log_error("\n");
-        log_error_file("stmt_list:\n");
+        log_error(L"\n");
+        log_error_file(L"stmt_list:\n");
         stmt_list_dump(stmt_list);
     }
     assert(match);

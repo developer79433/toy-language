@@ -26,7 +26,7 @@ void str_list_dump(const toy_str_list *list, toy_bool quoted)
         int output_something = 0;
         for (cur = list; cur; cur = cur->next) {
             if (output_something) {
-                log_debug(", ");
+                log_debug(L", ");
             }
             str_dump(cur->str, quoted);
             output_something = 1;
@@ -40,7 +40,7 @@ toy_str str_list_index(toy_str_list *list, size_t index)
     return ptr_list_index((toy_ptr_list *) list, index);
 }
 
-toy_str_list *str_list_alloc(const char *str)
+toy_str_list *str_list_alloc(const toy_str str)
 {
     assert(offsetof(toy_str_list, str) == offsetof(toy_ptr_list, ptr));
     return (toy_str_list *) ptr_list_alloc((void *) str);

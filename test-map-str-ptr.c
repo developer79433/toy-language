@@ -56,7 +56,7 @@ void test_map_str_ptr_basics(void)
 
     // Test first insert
     toy_val val1 = { .type = VAL_NUM, .num = 42 };
-    set_result val1_set_res = map_str_ptr_set(map1, "first key", &val1);
+    set_result val1_set_res = map_str_ptr_set(map1, L"first key", &val1);
     assert(SET_NEW == val1_set_res);
     assert(1 == map_str_ptr_size(map1));
     assert(map1->num_items == 1);
@@ -65,52 +65,52 @@ void test_map_str_ptr_basics(void)
     map_str_ptr_entry_list *bucket = ptr_array_get_not_null((void **) map1->buckets, map1->num_buckets);
     assert(bucket != NULL);
     assert(bucket->next == NULL);
-    assert(str_equal(bucket->entry.key, "first key"));
+    assert(str_equal(bucket->entry.key, L"first key"));
     assert(bucket->entry.ptr != NULL);
     assert(bucket->entry.ptr == &val1);
 
     // Test retrieve
-    toy_val *get1 = map_str_ptr_get(map1, "first key");
+    toy_val *get1 = map_str_ptr_get(map1, L"first key");
     assert(get1 == &val1);
     assert(get1->type == VAL_NUM);
     assert(get1->num == 42);
 
     // Test second insert
-    toy_val val2 = { .type = VAL_STR, .str = "second value" };
-    set_result val2_set_res = map_str_ptr_set(map1, "second key", &val2);
+    toy_val val2 = { .type = VAL_STR, .str = L"second value" };
+    set_result val2_set_res = map_str_ptr_set(map1, L"second key", &val2);
     assert(SET_NEW == val2_set_res);
     assert(2 == map_str_ptr_size(map1));
-    toy_val *get2 = map_str_ptr_get(map1, "second key");
+    toy_val *get2 = map_str_ptr_get(map1, L"second key");
     assert(get2 == &val2);
     assert(get2->type == VAL_STR);
-    assert(str_equal(get2->str, "second value"));
-    toy_val *get3 = map_str_ptr_get(map1, "first key");
+    assert(str_equal(get2->str, L"second value"));
+    toy_val *get3 = map_str_ptr_get(map1, L"first key");
     assert(get3->type == VAL_NUM);
     assert(get3->num == 42);
 
     // Test delete
-    delete_result delete1_res = map_str_ptr_delete(map1, "first key");
+    delete_result delete1_res = map_str_ptr_delete(map1, L"first key");
     assert(delete1_res == DELETED);
     assert(1 == map_str_ptr_size(map1));
-    toy_val *get4 = map_str_ptr_get(map1, "first key");
+    toy_val *get4 = map_str_ptr_get(map1, L"first key");
     assert(NULL == get4);
-    toy_val *get5 = map_str_ptr_get(map1, "second key");
+    toy_val *get5 = map_str_ptr_get(map1, L"second key");
     assert(get5 == &val2);
     assert(get5->type == VAL_STR);
-    assert(str_equal(get5->str, "second value"));
+    assert(str_equal(get5->str, L"second value"));
 
     // Test overwrite
-    toy_val val3 = { .type = VAL_STR, .str = "new value" };
-    set_result val3_set_res = map_str_ptr_set(map1, "second key", &val3);
+    toy_val val3 = { .type = VAL_STR, .str = L"new value" };
+    set_result val3_set_res = map_str_ptr_set(map1, L"second key", &val3);
     assert(SET_EXISTING == val3_set_res);
     assert(1 == map_str_ptr_size(map1));
-    toy_val *get6 = map_str_ptr_get(map1, "second key");
+    toy_val *get6 = map_str_ptr_get(map1, L"second key");
     assert(get6 == &val3);
     assert(get6->type == VAL_STR);
-    assert(str_equal(get6->str, "new value"));
+    assert(str_equal(get6->str, L"new value"));
 
     // Test enumerate
-    test_visitor map_vis = { .map_vis.visit_entry = (map_entry_visit_func) map_item_callback, .intended_key = "second key", .intended_value = &val3};
+    test_visitor map_vis = { .map_vis.visit_entry = (map_entry_visit_func) map_item_callback, .intended_key = L"second key", .intended_value = &val3};
     enumeration_result res = map_visitor_visit_map((map_visitor *) &map_vis, (generic_map *) map1);
     assert(res == ENUMERATION_COMPLETE);
 
@@ -128,10 +128,10 @@ typedef struct test_tuple_struct {
 } test_tuple;
 
 static test_tuple test_data[] = {
-    { .key = "one", .value.type = VAL_NUM, .value.num = 1 },
-    { .key = "two", .value.type = VAL_NUM, .value.num = 2 },
-    { .key = "three", .value.type = VAL_NUM, .value.num = 3 },
-    { .key = "four", .value.type = VAL_NUM, .value.num = 4 }
+    { .key = L"one",   .value.type = VAL_NUM, .value.num = 1 },
+    { .key = L"two",   .value.type = VAL_NUM, .value.num = 2 },
+    { .key = L"three", .value.type = VAL_NUM, .value.num = 3 },
+    { .key = L"four",  .value.type = VAL_NUM, .value.num = 4 }
 };
 
 static void insert_test_data(map_str_ptr *map)
@@ -185,7 +185,7 @@ static void test_find(void)
     /* TODO: Create a ptr_map wrapper */
     map_str_ptr_entry *found = (map_str_ptr_entry *) map_find_first((generic_map *) map1, (generic_map_filter_func) compare_value, &val_to_find);
     assert(found);
-    assert(!strcmp(found->key, "three"));
+    assert(str_equal(found->key, L"three"));
     toy_val *val = (toy_val *) found->ptr;
     assert(VAL_NUM == val->type);
     assert(3 == val->num);

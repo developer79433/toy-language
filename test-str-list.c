@@ -9,19 +9,19 @@ static item_callback_result str_list_item_callback(list_visitor *list_vis, size_
 {
     // log_printf("Got string '%s'\n", list->str);
     assert(index == 0 || index == 1);
-    assert(index != 0 || str_equal(list->str, "first string"));
-    assert(index != 1 || str_equal(list->str, "second string"));
+    assert(index != 0 || str_equal(list->str, L"first string"));
+    assert(index != 1 || str_equal(list->str, L"second string"));
     return CONTINUE_ENUMERATION;
 }
 
 void test_str_list(void)
 {
-    toy_str first_str = "first string";
+    toy_str first_str = L"first string";
     toy_str_list *str_list = str_list_alloc(first_str);
     assert(str_equal(str_list->str, first_str));
     assert(NULL == str_list->next);
     assert(1 == str_list_len(str_list));
-    toy_str second_str = "second string";
+    toy_str second_str = L"second string";
     toy_str_list *retval = str_list_append(str_list, second_str);
     assert(str_equal(retval->str, first_str));
     assert(NULL != retval->next);

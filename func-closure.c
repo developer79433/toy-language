@@ -26,21 +26,21 @@ void func_closure_assert_valid(const func_closure *closure)
 static void dump_closures(const toy_var *vars, size_t count)
 {
     if (count) {
-        log_debug(" closed_vars [ ");
+        log_debug(L" closed_vars [ ");
         for (const toy_var *var = &vars[0]; var < &vars[count]; var++) {
             var_dump(var, TOY_FALSE);
         }
-        log_debug("]");
+        log_debug(L"]");
     }
 }
 
 void func_closure_dump(const func_closure *closure, toy_bool verbose)
 {
     if (closure->num_closures) {
-        log_debug("closure { ");
+        log_debug(L"closure { ");
         func_dump(closure->func, verbose);
         dump_closures(closure->closures, closure->num_closures);
-        log_debug(" }");
+        log_debug(L" }");
     } else {
         func_dump(closure->func, verbose);
     }

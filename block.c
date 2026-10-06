@@ -41,10 +41,10 @@ void block_assert_valid(const toy_block *block)
 
 void block_dump(const toy_block *block)
 {
-    log_debug("block { num_closures=%zu, ", block->num_closures);
+    log_debug(L"block { num_closures=%zu, ", block->num_closures);
     stmt_list_dump(block->stmts);
     decl_ref_list_dump(block->decls_rev);
-    log_debug("}");
+    log_debug(L"}");
 }
 
 void block_init(toy_block *block, toy_block *parent, toy_stmt_list *stmt_list)

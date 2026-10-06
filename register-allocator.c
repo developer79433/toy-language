@@ -49,7 +49,7 @@ static item_callback_result handle_identifier(register_allocator *allocator, toy
         /* Closure over a function parameter in an enclosing block */
         func_param_ref *param_ref = &ref->func_param;
         if (ref->frames_up) {
-            log_debug_file("Closure over parameter #%zu to function %s, %zu frames up\n", param_ref->param_index, param_ref->func->name, ref->frames_up);
+            log_debug_file(L"Closure over parameter #%zu to function %ls, %zu frames up\n", param_ref->param_index, param_ref->func->name, ref->frames_up);
             /* FIXME: This counts each reference to a parameter, whereas instead we want unique parameter references */
             allocator->cur_func->num_closures++;
         }
@@ -61,7 +61,7 @@ static item_callback_result handle_identifier(register_allocator *allocator, toy
         /* Closure over a variable in an enclosing block */
         toy_var_decl *var_decl = ref->var_decl;
         if (ref->frames_up) {
-            log_debug_file("Closure over variable %s, %zu frames up\n", var_decl->name, ref->frames_up);
+            log_debug_file(L"Closure over variable %ls, %zu frames up\n", var_decl->name, ref->frames_up);
             /* FIXME: This counts each reference to a variable, whereas instead we want unique variable references */
             allocator->cur_func->num_closures++;
         }

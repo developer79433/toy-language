@@ -25,7 +25,7 @@ void var_decl_dump(const toy_var_decl *decl)
 {
     log_debug(decl->name);
     if (decl->value) {
-        log_debug(" = ");
+        log_debug(L" = ");
         expr_dump(decl->value);
     }
 }

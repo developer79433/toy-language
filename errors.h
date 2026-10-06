@@ -9,7 +9,7 @@
 #include "function-types.h"
 #include "interp-frame-types.h"
 
-void fatal_error(const char *fmt, ...);
+void fatal_error(const toy_str fmt, ...);
 void undeclared_identifier(const toy_str name);
 void duplicate_identifier(const toy_str name);
 void readonly_identifier(const toy_str name);

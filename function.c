@@ -13,12 +13,12 @@
 #include "log.h"
 #include "block.h"
 
-static const char *func_type_names[FUNC_MAX - FUNC_MIN + 1] = {
-    "Predefined",
-    "User-defined"
+static const toy_str func_type_names[FUNC_MAX - FUNC_MIN + 1] = {
+    L"Predefined",
+    L"User-defined"
 };
 
-const char *function_type_name(toy_func_type func_type)
+const toy_str function_type_name(toy_func_type func_type)
 {
     return func_type_names[func_type - FUNC_MIN];
 }
@@ -28,18 +28,18 @@ const toy_str_list INFINITE_PARAMS = { .next = NULL, .str = NULL };
 void func_dump(const toy_function *func, toy_bool verbose)
 {
     func_assert_valid(func);
-    log_debug("func %s(", func->name);
+    log_debug(L"func %ls(", func->name);
     if (func->param_names == &INFINITE_PARAMS) {
-        log_debug("*");
+        log_debug(L"*");
     } else {
         str_list_dump(func->param_names, TOY_FALSE);
     }
-    log_debug(") num_closures: %zu\n", func->num_closures);
+    log_debug(L") num_closures: %zu\n", func->num_closures);
     if (verbose) {
-        log_debug(" {\n");
+        log_debug(L" {\n");
         switch (func->type) {
         case FUNC_PREDEFINED:
-            log_debug("/* Pre-defined function, code at %p */\n", func->predef);
+            log_debug(L"/* Pre-defined function, code at %p */\n", func->predef);
             break;
         case FUNC_USER_DECLARED:
             stmt_list_dump(func->code->stmts);
@@ -48,7 +48,7 @@ void func_dump(const toy_function *func, toy_bool verbose)
             assert(0);
             break;
         }
-        log_debug("}\n");
+        log_debug(L"}\n");
     }
 }
 

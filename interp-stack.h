@@ -8,7 +8,7 @@ void interp_stack_assert_valid(const interp_stack *stack);
 interp_frame *interp_stack_payload(interp_stack *stack);
 void interp_stack_free(interp_stack *stack);
 const interp_frame *interp_stack_payload_const(const interp_stack *stack);
-void interp_stack_dump(const char *context, const interp_stack *stack);
+void interp_stack_dump(const toy_str context, const interp_stack *stack);
 size_t interp_stack_len(const interp_stack *stack);
 /* TODO: Can these be unified? */
 interp_stack *interp_stack_push_predef_func(interp_stack *stack, const func_closure *closure, const toy_val_list *args);

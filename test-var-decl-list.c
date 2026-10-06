@@ -7,15 +7,15 @@ void test_var_decl_list(void)
 {
     toy_val val = { .type = VAL_BOOL, .boolean = TOY_TRUE };
     toy_expr expr1 = { .type = EXPR_LITERAL, .val = &val };
-    char *name1 = "name1";
+    toy_str name1 = L"name1";
     toy_var_decl decl1 = { .name = name1, .value = &expr1 };
     toy_var_decl_list *decl_list = var_decl_list_alloc(&decl1);
     assert(decl_list->decl.name == name1);
     assert(decl_list->decl.value == &expr1);
     assert(decl_list->next == NULL);
-    toy_val val2 = { .type = VAL_STR, .str = "value2" };
+    toy_val val2 = { .type = VAL_STR, .str = L"value2" };
     toy_expr expr2 = { .type = EXPR_LITERAL, .val = &val2 };
-    char *name2 = "name2";
+    toy_str name2 = L"name2";
     toy_var_decl decl2 = { .name = name2, .value = &expr2 };
     decl_list = var_decl_list_append(decl_list, &decl2);
     assert(decl_list->decl.name == name1);

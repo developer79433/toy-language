@@ -39,48 +39,48 @@ void test_map_str_val(void)
     assert(0 == map_str_val_size(map1));
     // Test first insert
     toy_val val1 = { .type = VAL_NUM, .num = 42 };
-    set_result val1_set_res = map_str_val_set(map1, "first key", &val1);
+    set_result val1_set_res = map_str_val_set(map1, L"first key", &val1);
     assert(SET_NEW == val1_set_res);
     assert(1 == map_str_val_size(map1));
 
     // Test retrieve
-    toy_val *get1 = map_str_val_get(map1, "first key");
+    toy_val *get1 = map_str_val_get(map1, L"first key");
     assert(get1->type == VAL_NUM);
     assert(get1->num == 42);
 
     // Test second insert
-    toy_val val2 = { .type = VAL_STR, .str = "second value" };
-    set_result val2_set_res = map_str_val_set(map1, "second key", &val2);
+    toy_val val2 = { .type = VAL_STR, .str = L"second value" };
+    set_result val2_set_res = map_str_val_set(map1, L"second key", &val2);
     assert(SET_NEW == val2_set_res);
     assert(2 == map_str_val_size(map1));
-    toy_val *get2 = map_str_val_get(map1, "second key");
+    toy_val *get2 = map_str_val_get(map1, L"second key");
     assert(get2->type == VAL_STR);
-    assert(str_equal(get2->str, "second value"));
-    toy_val *get3 = map_str_val_get(map1, "first key");
+    assert(str_equal(get2->str, L"second value"));
+    toy_val *get3 = map_str_val_get(map1, L"first key");
     assert(get3->type == VAL_NUM);
     assert(get3->num == 42);
 
     // Test delete
-    delete_result delete1_res = map_str_val_delete(map1, "first key");
+    delete_result delete1_res = map_str_val_delete(map1, L"first key");
     assert(delete1_res == DELETED);
     assert(1 == map_str_val_size(map1));
-    toy_val *get4 = map_str_val_get(map1, "first key");
+    toy_val *get4 = map_str_val_get(map1, L"first key");
     assert(NULL == get4);
-    toy_val *get5 = map_str_val_get(map1, "second key");
+    toy_val *get5 = map_str_val_get(map1, L"second key");
     assert(get5->type == VAL_STR);
-    assert(str_equal(get5->str, "second value"));
+    assert(str_equal(get5->str, L"second value"));
 
     // Test overwrite
-    toy_val val3 = { .type = VAL_STR, .str = "new value" };
-    set_result val3_set_res = map_str_val_set(map1, "second key", &val3);
+    toy_val val3 = { .type = VAL_STR, .str = L"new value" };
+    set_result val3_set_res = map_str_val_set(map1, L"second key", &val3);
     assert(SET_EXISTING == val3_set_res);
     assert(1 == map_str_val_size(map1));
-    toy_val *get6 = map_str_val_get(map1, "second key");
+    toy_val *get6 = map_str_val_get(map1, L"second key");
     assert(get6->type == VAL_STR);
-    assert(str_equal(get6->str, "new value"));
+    assert(str_equal(get6->str, L"new value"));
 
     // Test enumerate
-    test_visitor test_vis = { .map_vis.visit_entry = (const_map_entry_visit_func) map_item_callback, .intended_key = "second key", .intended_value = &val3};
+    test_visitor test_vis = { .map_vis.visit_entry = (const_map_entry_visit_func) map_item_callback, .intended_key = L"second key", .intended_value = &val3};
     enumeration_result res = const_map_visitor_visit_map((const_map_visitor *) &test_vis, (const generic_map *) map1);
     assert(res == ENUMERATION_COMPLETE);
 

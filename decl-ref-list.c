@@ -40,11 +40,11 @@ void decl_ref_list_assert_valid(const decl_ref_list *list)
 void decl_ref_list_dump(const decl_ref_list *list)
 {
     decl_ref_list_assert_valid(list);
-    log_debug("decl_ref_list {\n");
+    log_debug(L"decl_ref_list {\n");
     const_list_visitor dump_vis = { .visit_entry = (const_list_entry_visit_func) decl_ref_list_entry_dump, .prev_item = NULL };
     enumeration_result res = const_list_visitor_visit_list(&dump_vis, (const generic_list *) list);
     assert(ENUMERATION_COMPLETE == res);
-    log_debug("}\n");
+    log_debug(L"}\n");
 }
 
 decl_ref_list *decl_ref_list_alloc(decl_ref *ref)

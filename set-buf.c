@@ -27,7 +27,7 @@ typedef struct set_buf_dump_vis_struct {
 static item_callback_result dump_entry(set_buf_dump_vis *visitor, set_buf_entry *entry)
 {
     if (visitor->printed_anything) {
-        log_debug(", ");
+        log_debug(L", ");
     }
     hex_dump(entry->key, entry->key_len);
     visitor->printed_anything = TOY_TRUE;
@@ -37,9 +37,9 @@ static item_callback_result dump_entry(set_buf_dump_vis *visitor, set_buf_entry 
 void set_buf_dump(set_buf *set)
 {
     set_buf_dump_vis dump_vis = { .map_vis.visit_entry = (map_entry_visit_func) dump_entry, .printed_anything = TOY_FALSE };
-    log_debug("{ ");
+    log_debug(L"{ ");
     enumeration_result res = map_visitor_visit_map(&dump_vis.map_vis, (generic_map *) &set->map);
-    log_debug("} ");
+    log_debug(L"} ");
     assert(ENUMERATION_COMPLETE == res);
 }
 

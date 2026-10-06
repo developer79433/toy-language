@@ -35,7 +35,7 @@ decl_ref *decl_ref_alloc_predef(const toy_val *val)
 
 void decl_ref_dump(const decl_ref *ref)
 {
-    log_debug("decl_ref { %zu frames up, ", ref->frames_up);
+    log_debug(L"decl_ref { %zu frames up, ", ref->frames_up);
     switch (ref->type) {
     case DECL_REF_FUNC:
         toy_func_decl_stmt *func_decl_stmt = ref->func_decl;
@@ -47,14 +47,14 @@ void decl_ref_dump(const decl_ref *ref)
         const func_param_ref *param_ref = &ref->func_param;
         const toy_function *func = param_ref->func;
         toy_str param_name = str_list_index(func->param_names, param_ref->param_index);
-        log_debug("Function parameter #%zd '%s' to function ", param_ref->param_index, param_name);
+        log_debug(L"Function parameter #%zd '%ls' to function ", param_ref->param_index, param_name);
         func_dump(func, TOY_FALSE);
         // block_dump(ref->block);
         assert(ref->block);
         break;
     case DECL_REF_PREDEF:
         const toy_val *predef = ref->predef;
-        log_debug("Predefined %s", (VAL_FUNC == predef->type) ? "" : "const ");
+        log_debug(L"Predefined %ls", (VAL_FUNC == predef->type) ? L"" : L"const ");
         val_dump(predef, TOY_FALSE);
         assert(NULL == ref->block);
         break;
@@ -68,7 +68,7 @@ void decl_ref_dump(const decl_ref *ref)
         assert(0);
         break;
     }
-    log_debug(" }\n");
+    log_debug(L" }\n");
 }
 
 void decl_ref_assert_valid(const decl_ref *ref)

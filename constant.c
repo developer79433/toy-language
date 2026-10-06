@@ -14,9 +14,9 @@ const toy_val true_val = { .type = VAL_BOOL, .num = 1 };
 const toy_val false_val = { .type = VAL_BOOL, .num = 0 };
 
 static const predefined_constant predefined_constants[] = {
-    { "null", null_val },
-    { "true", true_val },
-    { "false", false_val }
+    { L"null",  null_val },
+    { L"true",  true_val },
+    { L"false", false_val }
 };
 
 static int compare_constant_names(const void *p1, const void *p2)

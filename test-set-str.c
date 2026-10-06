@@ -5,45 +5,45 @@
 
 void test_set(set_str *set)
 {
-    assert(!set_str_contains(set, "foo"));
-    assert(!set_str_contains(set, "bar"));
-    assert(!set_str_contains(set, "baz"));
+    assert(!set_str_contains(set, L"foo"));
+    assert(!set_str_contains(set, L"bar"));
+    assert(!set_str_contains(set, L"baz"));
     /* set_str_dump(set); */
 
-    set_str_add(set, "foo");
-    assert(set_str_contains(set, "foo"));
-    assert(!set_str_contains(set, "bar"));
-    assert(!set_str_contains(set, "baz"));
+    set_str_add(set, L"foo");
+    assert(set_str_contains(set, L"foo"));
+    assert(!set_str_contains(set, L"bar"));
+    assert(!set_str_contains(set, L"baz"));
     /* set_str_dump(set); */
 
-    set_str_add(set, "bar");
-    assert(set_str_contains(set, "foo"));
-    assert(set_str_contains(set, "bar"));
-    assert(!set_str_contains(set, "baz"));
+    set_str_add(set, L"bar");
+    assert(set_str_contains(set, L"foo"));
+    assert(set_str_contains(set, L"bar"));
+    assert(!set_str_contains(set, L"baz"));
     /* set_str_dump(set); */
 
-    set_str_remove(set, "bar");
-    assert(set_str_contains(set, "foo"));
-    assert(!set_str_contains(set, "bar"));
-    assert(!set_str_contains(set, "baz"));
+    set_str_remove(set, L"bar");
+    assert(set_str_contains(set, L"foo"));
+    assert(!set_str_contains(set, L"bar"));
+    assert(!set_str_contains(set, L"baz"));
     /* set_str_dump(set); */
 
-    set_str_add(set, "baz");
-    assert(set_str_contains(set, "foo"));
-    assert(!set_str_contains(set, "bar"));
-    assert(set_str_contains(set, "baz"));
+    set_str_add(set, L"baz");
+    assert(set_str_contains(set, L"foo"));
+    assert(!set_str_contains(set, L"bar"));
+    assert(set_str_contains(set, L"baz"));
     /* set_str_dump(set); */
 
-    set_str_add(set, "bar");
-    assert(set_str_contains(set, "foo"));
-    assert(set_str_contains(set, "bar"));
-    assert(set_str_contains(set, "baz"));
+    set_str_add(set, L"bar");
+    assert(set_str_contains(set, L"foo"));
+    assert(set_str_contains(set, L"bar"));
+    assert(set_str_contains(set, L"baz"));
     /* set_str_dump(set); */
 
-    set_str_remove(set, "foo");
-    assert(!set_str_contains(set, "foo"));
-    assert(set_str_contains(set, "bar"));
-    assert(set_str_contains(set, "baz"));
+    set_str_remove(set, L"foo");
+    assert(!set_str_contains(set, L"foo"));
+    assert(set_str_contains(set, L"bar"));
+    assert(set_str_contains(set, L"baz"));
     /* set_str_dump(set); */
 }
 

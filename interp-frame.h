@@ -4,7 +4,7 @@
 #include "interp-frame-types.h"
 #include "var-types.h"
 
-const char *interp_frame_type_name(frame_type type);
+const toy_str interp_frame_type_name(frame_type type);
 void interp_frame_assert_valid(const interp_frame *frame);
 void interp_frame_free(interp_frame *frame);
 void interp_frame_dump(const interp_frame *frame);

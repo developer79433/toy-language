@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <math.h>
+#include <wchar.h>
 
 #include "mymalloc.h"
 #include "str.h"
@@ -263,7 +264,7 @@ static void str_lookup(toy_interp *interp, toy_val *result, toy_str str, toy_val
 {
     interp_assert_valid(interp);
     if (index->type == VAL_NUM) {
-        if (index->num >= 0 && index->num < strlen(str)) {
+        if (index->num >= 0 && index->num < wcslen(str)) {
             result->type = VAL_NUM;
             result->num = str[(int) index->num];
         } else {
@@ -297,7 +298,7 @@ toy_var *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier)
     interp_assert_valid(interp);
     decl_ref *ref = identifier->decl;
 #ifdef DEBUG_INTERP_LOOKUPS
-    log_debug_file("retrieving lvalue: ");
+    log_debug_file(L"retrieving lvalue: ");
     decl_ref_dump(ref);
 #endif /* DEBUG_INTERP_LOOKUPS */
 
@@ -307,7 +308,7 @@ toy_var *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier)
     toy_block *ref_block = ref->block;
     size_t frames_up = ref->frames_up;
 #ifdef DEBUG_INTERP_LOOKUPS
-    log_debug_file("Reference to block %p, %zu frames up\n", ref_block, frames_up);
+    log_debug_file(L"Reference to block %p, %zu frames up\n", ref_block, frames_up);
 #endif /* DEBUG_INTERP_LOOKUPS */
 
     switch (ref->type) {
@@ -317,7 +318,7 @@ toy_var *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier)
         break;
     case DECL_REF_PARAM:
 #ifdef DEBUG_INTERP_LOOKUPS
-        log_debug_file("lvalue is func param\n");
+        log_debug_file(L"lvalue is func param\n");
 #endif /* DEBUG_INTERP_LOOKUPS */
         func_param_ref *param_ref = &ref->func_param;
         toy_var *param_var = interp_frame_get_func_arg(cur_frame, param_ref->param_index);
@@ -325,13 +326,13 @@ toy_var *interp_get_lvalue(toy_interp *interp, toy_identifier *identifier)
         return param_var;
     case DECL_REF_PREDEF:
 #ifdef DEBUG_INTERP_LOOKUPS
-        log_debug_file("lvalue is predef const or func\n");
+        log_debug_file(L"lvalue is predef const or func\n");
 #endif /* DEBUG_INTERP_LOOKUPS */
         invalid_lvalue(ref);
         break;
     case DECL_REF_VAR:
 #ifdef DEBUG_INTERP_LOOKUPS
-        log_debug_file("lvalue is var\n");
+        log_debug_file(L"lvalue is var\n");
 #endif /* DEBUG_INTERP_LOOKUPS */
         toy_var_decl *var_decl = ref->var_decl;
         if (frames_up) {
@@ -368,7 +369,7 @@ const toy_val *interp_get_rvalue(toy_interp *interp, const toy_identifier *ident
     interp_assert_valid(interp);
     decl_ref *ref = identifier->decl;
 #ifdef DEBUG_INTERP_LOOKUPS
-    log_debug_file("retrieving rvalue: ");
+    log_debug_file(L"retrieving rvalue: ");
     decl_ref_dump(ref);
 #endif /* DEBUG_INTERP_LOOKUPS */
 
@@ -378,13 +379,13 @@ const toy_val *interp_get_rvalue(toy_interp *interp, const toy_identifier *ident
     switch (ref->type) {
     case DECL_REF_FUNC:
 #ifdef DEBUG_INTERP_LOOKUPS
-        log_debug_file("rvalue is func decl\n");
+        log_debug_file(L"rvalue is func decl\n");
 #endif /* DEBUG_INTERP_LOOKUPS */
         const toy_func_decl_stmt *func_decl_stmt = ref->func_decl;
         return closure_create(func_decl_stmt->func);
     case DECL_REF_PARAM:
 #ifdef DEBUG_INTERP_LOOKUPS
-        log_debug_file("rvalue is func param\n");
+        log_debug_file(L"rvalue is func param\n");
 #endif /* DEBUG_INTERP_LOOKUPS */
         const func_param_ref *param_ref = &ref->func_param;
         toy_var *param_var = interp_frame_get_func_arg(cur_frame, param_ref->param_index);
@@ -393,14 +394,14 @@ const toy_val *interp_get_rvalue(toy_interp *interp, const toy_identifier *ident
         return param_val;
     case DECL_REF_PREDEF:
 #ifdef DEBUG_INTERP_LOOKUPS
-        log_debug_file("rvalue is predef const or func\n");
+        log_debug_file(L"rvalue is predef const or func\n");
 #endif /* DEBUG_INTERP_LOOKUPS */
         const toy_val *predef_const_val = ref->predef;
         val_assert_valid(predef_const_val);
         return predef_const_val;
     case DECL_REF_VAR:
 #ifdef DEBUG_INTERP_LOOKUPS
-        log_debug_file("rvalue is var\n");
+        log_debug_file(L"rvalue is var\n");
 #endif /* DEBUG_INTERP_LOOKUPS */
         toy_var_decl *var_decl = ref->var_decl;
         toy_var *var_decl_var = interp_frame_get_var(cur_frame, var_decl->decl_index);

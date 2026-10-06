@@ -155,7 +155,7 @@ static item_callback_result handle_func_expr(name_resolver *resolver, toy_functi
         assert(ENUMERATION_COMPLETE == res);
         /* log_printf("regalloc: function %s (%p, block %p) has %zd variables\n", func->name, func, &func->code, symbol_table_size(&func->code.variables)); */
     } else {
-        assert(str_equal(func->name, "global"));
+        assert(str_equal(func->name, L"global"));
     }
     return default_func_expr(&resolver->ast_vis, func);
 }

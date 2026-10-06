@@ -1,5 +1,6 @@
 #include <string.h>
 #include <assert.h>
+#include <wchar.h>
 
 #include "map-str-val.h"
 #include "map-str-val-entry-list.h"
@@ -30,21 +31,21 @@ set_result map_str_val_set(map_str_val *map, const toy_str key, const toy_val *v
     map_str_val_assert_valid(map);
     str_assert_valid(key);
     val_assert_valid(value);
-    return map_buf_buf_set((map_buf_buf *) map, key, strlen(key) + 1, value, sizeof(*value));
+    return map_buf_buf_set((map_buf_buf *) map, key, sizeof(wchar_t) * (wcslen(key) + 1), value, sizeof(*value));
 }
 
 toy_val *map_str_val_get(map_str_val *map, const toy_str key)
 {
     map_str_val_assert_valid(map);
     str_assert_valid(key);
-    toy_val *value = (toy_val *) map_buf_buf_get((map_buf_buf *) map, key, strlen(key) + 1);
+    toy_val *value = (toy_val *) map_buf_buf_get((map_buf_buf *) map, key, sizeof(wchar_t) * (wcslen(key) + 1));
     val_assert_valid_or_null(value);
     return value;
 }
 
 const toy_val *map_str_val_get_const(const map_str_val *map, const toy_str key)
 {
-    const toy_val *value = (const toy_val *) map_buf_buf_get_const((const map_buf_buf *) map, key, strlen(key) + 1);
+    const toy_val *value = (const toy_val *) map_buf_buf_get_const((const map_buf_buf *) map, key, sizeof(wchar_t) * (wcslen(key) + 1));
     val_assert_valid_or_null(value);
     return value;
 }
@@ -61,7 +62,7 @@ size_t map_str_val_size(const map_str_val *map)
 
 delete_result map_str_val_delete(map_str_val *map, const toy_str key)
 {
-    return map_buf_buf_delete((map_buf_buf *) map, key, strlen(key) + 1);
+    return map_buf_buf_delete((map_buf_buf *) map, key, sizeof(wchar_t) * (wcslen(key) + 1));
 }
 
 void map_str_val_reset(map_str_val *map)
@@ -77,9 +78,9 @@ typedef struct map_str_val_dump_visitor_struct {
 static item_callback_result dump_item_callback(map_str_val_dump_visitor *dump_vis, const map_str_val_entry *entry)
 {
     if (dump_vis->output_anything) {
-        log_debug(", ");
+        log_debug(L", ");
     } else {
-        log_putc(LOG_DEBUG, ' ');
+        log_putc(LOG_DEBUG, L' ');
     }
     map_str_val_entry_dump(entry);
     dump_vis->output_anything = 1;
@@ -95,9 +96,9 @@ void map_str_val_dump(const map_str_val *map)
         assert(res == ENUMERATION_COMPLETE);
     }
     if (dump_vis.output_anything) {
-        log_putc(LOG_DEBUG, ' ');
+        log_putc(LOG_DEBUG, L' ');
     }
-    log_putc(LOG_DEBUG, '}');
+    log_putc(LOG_DEBUG, L'}');
 }
 
 #ifndef NDEBUG

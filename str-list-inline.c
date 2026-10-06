@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stddef.h>
+#include <wchar.h>
 
 #include "str.h"
 #include "buf-list.h"
@@ -18,20 +19,20 @@ const toy_str str_list_inline_payload_const(const toy_str_list_inline *list)
 
 void str_list_inline_payload_set(const toy_str_list_inline *list, toy_str str)
 {
-    buf_list_payload_set((toy_buf_list *) list, str, strlen(str) + 1);
+    buf_list_payload_set((toy_buf_list *) list, str, sizeof(wchar_t) * (wcslen(str) + 1));
 }
 
-toy_str_list_inline *str_list_inline_alloc(const char *str)
+toy_str_list_inline *str_list_inline_alloc(const toy_str str)
 {
     assert(offsetof(toy_str_list_inline, c) == offsetof(toy_buf_list, c));
-    return (toy_str_list_inline *) buf_list_alloc((void *) str, strlen(str) + 1);
+    return (toy_str_list_inline *) buf_list_alloc((void *) str, sizeof(wchar_t) * (wcslen(str) + 1));
 }
 
 toy_str_list_inline *str_list_inline_append(toy_str_list_inline *list, toy_str new_item)
 {
     assert(offsetof(toy_str_list_inline, next) == offsetof(toy_buf_list, next));
     assert(offsetof(toy_str_list_inline, c) == offsetof(toy_buf_list, c));
-    return (toy_str_list_inline *) buf_list_append((toy_buf_list *) list, new_item, strlen(new_item) + 1);
+    return (toy_str_list_inline *) buf_list_append((toy_buf_list *) list, new_item, sizeof(wchar_t) * (wcslen(new_item) + 1));
 }
 
 size_t str_list_inline_len(const toy_str_list_inline *list)

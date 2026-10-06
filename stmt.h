@@ -15,6 +15,6 @@ void stmt_assert_valid(const toy_stmt *stmt);
 void func_decl_stmt_dump(const toy_func_decl_stmt *func_decl);
 toy_stmt *var_decl_stmt_alloc(toy_var_decl_list *var_decl_list);
 void var_decl_dump(const toy_var_decl *var_decl);
-const char *stmt_type_name(toy_stmt_type stmt_type);
+const toy_str stmt_type_name(toy_stmt_type stmt_type);
 
 #endif /* TOY_STMT_H */

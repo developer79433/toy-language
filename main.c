@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <locale.h>
+#include <assert.h>
 
 #include "expr.h"
 #include "stmt.h"
@@ -15,6 +17,9 @@
 
 int main(int argc, char **argv)
 {
+    char *setlocale_ret1 = setlocale(LC_ALL, "");
+    assert(setlocale_ret1 != NULL);
+
     run_tests();
 
     FILE *in;
